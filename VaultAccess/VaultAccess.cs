@@ -11,7 +11,6 @@ using System.IO;
 using VDF = Autodesk.DataManagement.Client.Framework;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using PrintPDF;
 using Autodesk.Connectivity.Explorer.Extensibility;
 
 namespace VaultAccess
@@ -2590,7 +2589,7 @@ namespace VaultAccess
 
         }
 
-        public Task <string> ExportVaultItemsByBatch(IProgress<string> prog, string batchName, ref List<string[]> returnList)
+        public Task<string> ExportVaultItemsByBatch(IProgress<string> prog, string batchName, ref List<string[]> returnList)
         {
             List<string[]> productList = returnList;
             string logMessage = "";
@@ -2621,12 +2620,12 @@ namespace VaultAccess
                             {
                                 searchItem = m_conn.WebServiceManager.ItemService.GetLatestItemByItemNumber(itemName);
                             }
-                            catch(Exception)
+                            catch (Exception)
                             {
                                 logMessage = "Error in retrieving item \"" + itemName + "\" from the Vault.\nBatch processing will be aborted.";
                                 return logMessage;
                             }
-                            
+
                             prog.Report("Retrieving " + itemName + " From the Vault.");
 
                             // update the item before we export it
@@ -2636,7 +2635,7 @@ namespace VaultAccess
                             //    return logMessage;
                             //}
 
-                            string filename = (string)AppSettings.Get("VaultExportFilePath") + "VaultExportData" + i + ".txt";
+                            string filename = (string)PrintPDF.AppSettings.Get("VaultExportFilePath") + "VaultExportData" + i + ".txt";
 
                             PackageService packageSvc = m_conn.WebServiceManager.PackageService;
 
@@ -2761,7 +2760,7 @@ namespace VaultAccess
                 }
                 return logMessage;
             });
-            
+
         }
 
         public bool UpdateItem(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
