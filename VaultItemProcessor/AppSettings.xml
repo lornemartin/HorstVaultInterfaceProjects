@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Setting>
+    <Key>VaultExportFilePath</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\Vault Export\</Value>
+  </Setting>
+  <Setting>
+    <Key>VaultExportFileName</Key>
+    <Value xsi:type="xsd:string">VaultExportData.txt</Value>
+  </Setting>
+  <Setting>
+    <Key>ExportFilePath</Key>
+    <Value xsi:type="xsd:string">M:\Shop Schedule Drawings\2017-09-20 SB4000 and SB5000 Blade Batch 4\</Value>
+  </Setting>
+  <Setting>
+    <Key>PdfPath</Key>
+    <Value xsi:type="xsd:string">M:\PDF Drawing Files\\</Value>
+  </Setting>
+  <Setting>
+    <Key>JobName</Key>
+    <Value xsi:type="xsd:string">JobName</Value>
+  </Setting>
+  <Setting>
+    <Key>VaultUserName</Key>
+    <Value xsi:type="xsd:string">craig</Value>
+  </Setting>
+  <Setting>
+    <Key>VaultPassword</Key>
+    <Value xsi:type="xsd:string">craig</Value>
+  </Setting>
+  <Setting>
+    <Key>VaultServer</Key>
+    <Value xsi:type="xsd:string">hlaadvault</Value>
+  </Setting>
+  <Setting>
+    <Key>VaultVault</Key>
+    <Value xsi:type="xsd:string">vault</Value>
+  </Setting>
+  <Setting>
+    <Key>DailyScheduleData</Key>
+    <Value xsi:type="xsd:string">AggregateData.xml</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFWorkingFolder</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\PrintPDF\\</Value>
+  </Setting>
+  <Setting>
+    <Key>GhostScriptWorkingFolder</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\gs\gs9.21\bin\\</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFExecutable</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\PrintPDF.exe</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFPrinter</Key>
+    <Value xsi:type="xsd:string">Bullzip PDF Printer</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFPS2PDF</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\gs\gs9.21\lib\ps2pdf.bat</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFreturnFile</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\PrintPDF\return.txt</Value>
+  </Setting>
+  <Setting>
+    <Key>ProcessOnlyIfReleased</Key>
+    <Value xsi:type="xsd:string">false</Value>
+  </Setting>
+</ArrayOfSetting>

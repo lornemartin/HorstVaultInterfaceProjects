@@ -1,0 +1,625 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using Autodesk.Connectivity.Explorer.Extensibility;
+using Microsoft.WindowsAPICodePack.Shell;
+using Microsoft.WindowsAPICodePack.ShellExtensions;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Reflection;
+
+using Autodesk.Connectivity.WebServices;
+using Autodesk.Connectivity.WebServicesTools;
+using VDF = Autodesk.DataManagement.Client.Framework;
+using ACW = Autodesk.Connectivity.WebServices;
+using ACWT = Autodesk.Connectivity.WebServicesTools;
+using Framework = Autodesk.DataManagement.Client.Framework;
+using Vault = Autodesk.DataManagement.Client.Framework.Vault;
+using Forms = Autodesk.DataManagement.Client.Framework.Vault.Forms;
+using ADSK = Autodesk.Connectivity.WebServices;
+
+
+using RadanInterface2;
+using RadProject;
+using BrightIdeasSoftware;
+
+
+
+namespace Camlink3_1
+{
+    public partial class ExportToSym : Form
+    {
+        private IEnumerable <Autodesk.Connectivity.Explorer.Extensibility.ISelection> selectionSet { get; set; }
+        private List<Autodesk.Connectivity.WebServices.File> selectedFiles { get; set; }
+        private List<PartToImport> PartsToImport { get; set; }
+        private VDF.Vault.Currency.Connections.Connection connection { get; set; }
+        private VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs { get; set; }
+        private RadanInterface radInterface { get; set; }
+
+        // read properties from settings file
+        private string symFolder = Properties.Settings.Default["symFolder"].ToString();
+        private string extensionFolder = Properties.Settings.Default["extensionFolder"].ToString();
+
+        #region objectListView delegates
+        private void objectListView1_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
+        {
+            PartToImport part = (PartToImport)e.Model;
+            if (!System.IO.File.Exists(symFolder + part.name + ".sym"))
+                e.Item.ForeColor = Color.Gray;
+        }
+        #endregion
+
+        #region constructors
+        public ExportToSym()
+        {
+            InitializeComponent();
+        }
+
+        public ExportToSym(IEnumerable <Autodesk.Connectivity.Explorer.Extensibility.ISelection> selection, VDF.Vault.Currency.Connections.Connection conn)
+        {
+            InitializeComponent();
+            selectionSet = selection;
+            connection = conn;
+
+            radInterface = new RadanInterface();
+            radInterface.Initialize();
+
+            selectedFiles = new List<ADSK.File>();
+
+            // structure to hold list of files plus some extra attributes
+            PartsToImport = new List<PartToImport>();       
+            
+            propDefs = new Vault.Currency.Properties.PropertyDefinitionDictionary();
+            propDefs =
+              connection.PropertyManager.GetPropertyDefinitions(
+                VDF.Vault.Currency.Entities.EntityClassIds.Files,
+                null,
+                VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeUserDefined
+              );
+
+            PopulateListBox();
+
+            txtBoxProject.Text = Properties.Settings.Default["radanProject"].ToString();
+            txtBoxSymFolder.Text = symFolder;
+        }
+
+        #endregion
+        
+        private void PopulateListBox()
+        {
+            PartsToImport.Clear();
+
+            foreach (ISelection selection in selectionSet)
+            {
+                Autodesk.Connectivity.WebServices.File selectedFile = null;
+                if (selection.TypeId == SelectionTypeId.File)
+                {
+                    // our ISelection.Id is really a File.MasterId
+                    selectedFile = connection.WebServiceManager.DocumentService.GetLatestFileByMasterId(selection.Id);
+                }
+                else if (selection.TypeId == SelectionTypeId.FileVersion)
+                {
+                    // our ISelection.Id is really a File.Id
+                    selectedFile = connection.WebServiceManager.DocumentService.GetFileById(selection.Id);
+                }
+                
+                if (selectedFile != null)
+                {
+                    if (selectedFile.Name.EndsWith(".ipt"))
+                    {
+                        PartToImport part = new PartToImport();
+                        part.name = selectedFile.Name.Replace(".ipt", "");
+
+                        VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, selectedFile);
+                        part.desc = GetERPDescriptionProperty(fileIter);
+
+                        part.thickness = radInterface.GetThicknessFromSym(symFolder + part.name + ".sym");
+                        part.materialType = radInterface.GetMaterialTypeFromSym(symFolder + part.name + ".sym");
+                        part.qty = 0;
+
+                        PartsToImport.Add(part);
+                        selectedFiles.Add(selectedFile);
+                    }
+                }
+            }
+            
+            if(PartsToImport.Count > 0)
+                objectListView1.SetObjects(PartsToImport);
+        }
+
+        private bool ConvertFile(string NameOfPartToConvert, ref string ErrorMessage)
+        {
+            toolStripStatusLabel.Text = "";
+            progressBar.Value = 0;
+            progressBar.PerformStep();
+            string selectedItemIptName = NameOfPartToConvert + ".ipt";
+            string errorMessage = "";
+            string materialName = "";
+            string partThickness = "";
+            string topPattern = "";
+            string partName = "";
+            string partDescription = "";
+            string partUnits = "in";
+            Boolean overWriteConfirm = true;
+            string openProjectName = "";
+            string openNestName = "";
+
+            try
+            {
+                openProjectName = radInterface.getOpenProjectName(ref errorMessage);
+
+                string symFileName = symFolder + NameOfPartToConvert + ".sym";
+                if (System.IO.File.Exists(symFileName))
+                {
+                    DialogResult result;
+                    MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+                    result = MessageBox.Show("The sym file already exists. Do you want to overwrite it?", "Confirm Overwrite", buttons);
+                    if (result == DialogResult.Yes)
+                    {
+                        overWriteConfirm = true;
+                    }
+                    else
+                    {
+                        overWriteConfirm = false;
+                        System.IO.File.SetLastWriteTimeUtc(symFileName, DateTime.UtcNow);
+                    }
+                }
+
+                if (overWriteConfirm == true)
+                {
+
+                    Autodesk.Connectivity.WebServices.File webServicesFile = selectedFiles.FirstOrDefault(sel => sel.Name == selectedItemIptName);
+                    VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, webServicesFile);
+                    PartToImport modifiedPart = new PartToImport();
+                    string filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileIter.EntityName);
+
+                    PartToImport partToModify = PartsToImport.FirstOrDefault(sel => sel.name == NameOfPartToConvert);
+                    int index = objectListView1.IndexOf(partToModify);
+                    modifiedPart.name = PartsToImport[index].name;
+
+                    partDescription = GetERPDescriptionProperty(fileIter);
+                    modifiedPart.desc = partDescription;
+
+                    // remove old ipt from temp folder to ensure we will use the lastest version
+                    if (System.IO.File.Exists(filePath))
+                        System.IO.File.SetAttributes(filePath, FileAttributes.Normal);
+                    System.IO.File.Delete(filePath);
+
+                    radInterface.SaveNest(ref errorMessage);
+                    openNestName = radInterface.getOpenNestName(ref errorMessage);
+
+                    toolStripStatusLabel.Text = "Downloading File...";
+                    DownloadFile(fileIter, filePath);
+                    progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Saving Radan Nest...";
+
+                    if (!radInterface.SaveNest(ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else
+                        progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Opening 3D File...";
+                    if (!radInterface.Open3DFileInRadan(filePath, "", ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Unfolding 3D File...";
+                    if (!radInterface.UnfoldActive3DFile(ref partName, ref materialName, ref partThickness, ref topPattern, ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Saving Sym File...";
+                    if (!radInterface.SavePart(topPattern, symFileName, ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Setting Radan Attributes...";
+                    if (!radInterface.InsertAttributes(symFileName, materialName, partThickness, partUnits, partDescription, ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else progressBar.PerformStep();
+
+                    toolStripStatusLabel.Text = "Done...";
+                    double thickness = double.Parse(partThickness);
+
+                    if (thickness <= 0.001)
+                    {
+                        toolStripStatusLabel.Text = "Part Thickness Could Not Be Calculated, Aborting Operation";
+                        return false;
+                    }
+                    else
+                    {
+                        modifiedPart.thickness = thickness.ToString();
+                        modifiedPart.materialType = materialName;
+                        progressBar.PerformStep();
+                    }
+
+                    PartsToImport[index] = modifiedPart;
+
+                    ShellFile shellFile = ShellFile.FromFilePath(symFileName);
+                    Bitmap shellThumb = shellFile.Thumbnail.Bitmap;
+                    this.picBoxSym.Image = ResizeImage(shellThumb, 115, 115);
+
+                    if (openProjectName != "")
+                    {
+                        radInterface.LoadProject(openProjectName);
+                    }
+
+                    if(openNestName != "")
+                    {
+                        radInterface.openNest(openNestName,ref errorMessage);
+                    }
+                }
+                return true;
+            }
+
+            catch (Exception)
+            {
+                errorMessage = "Error in converting File";
+                return false;
+            }
+        
+        }
+
+        private void btnConvertAll_Click(object sender, EventArgs e)
+        {
+            string errMessage = "";
+
+            for (int i = 0; i < PartsToImport.Count; i++)
+            {
+                errMessage = "";
+                if (!ConvertFile(PartsToImport[i].name, ref errMessage))
+                {
+                    statusStrip.Text = "Error in converting File";
+                }
+                else
+                {
+                    statusStrip.Text = PartsToImport[i].name + " converted successfully.";
+                }
+
+                int tItemIndex = objectListView1.TopItemIndex;
+                objectListView1.RefreshObjects(PartsToImport);
+                objectListView1.Refresh();
+                objectListView1.SetObjects(PartsToImport);
+                objectListView1.TopItemIndex = tItemIndex;
+                //objectListView1.SelectedItem.Focused = true;
+            }
+
+            statusStrip.Text = "Finished Converting List.";
+
+        }
+
+        private void btnProjectBrowse_Click(object sender, EventArgs e)
+        {
+            DialogResult result = openFileDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                txtBoxProject.Text = openFileDialog1.FileName;
+            }
+        }
+
+        private void txtBoxProject_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default["radanProject"] = txtBoxProject.Text;
+            Properties.Settings.Default.Save(); // Saves settings in application configuration file
+        }
+
+        private void btnAddToProject_Click(object sender, EventArgs e)
+        {
+            radInterface.SaveProject();
+
+            System.IO.Stream stream = null;
+            PartToImport part = new PartToImport();
+            RadanProject rPrj = new RadanProject();
+            string path = Properties.Settings.Default["radanProject"].ToString();
+            int numOfPartsImported = 0;
+
+            for (int i = 0; i < PartsToImport.Count; i++)
+            {
+                part = PartsToImport[i];
+                if (part.qty != 0)
+                {
+                    string partName = symFolder + part.name + ".sym";
+                    double partThickness = double.Parse(part.thickness);
+                    int partQty = part.qty;
+                    
+                    try
+                    {
+                        var timeOut = TimeSpan.FromSeconds(1);
+                        stream = System.IO.File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                        stream.Flush();
+                        using (StreamReader reader = new StreamReader(stream))
+                        {
+                            XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
+                            rPrj = (RadanProject)prjSerializer.Deserialize(reader);
+
+                            RadanPart prt = new RadanPart(partName,
+                                                          rPrj.Parts.NextID,
+                                                          PartsToImport[i].materialType,
+                                                          partThickness,
+                                                          "in",
+                                                          partQty);
+                            rPrj.Parts.NextID++;
+                            rPrj.Parts.Add(prt);
+
+                            stream.Close();
+                            reader.Close();
+                        }
+
+                        stream = System.IO.File.Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+                        //stream.Flush();
+                        using (StreamWriter Writer = new StreamWriter(stream))
+                        {
+                            XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
+
+                            stream = System.IO.File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                            prjSerializer.Serialize(stream, rPrj);
+
+                            stream.Close();
+                            Writer.Close();
+
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        //Console.WriteLine("Error opening XML file");
+                        if (stream != null)
+                            stream.Close();
+                    }
+                    numOfPartsImported++;
+                }
+            }
+            
+            radInterface.LoadProject(path);
+
+            toolStripStatusLabel.Text = numOfPartsImported + " items added to project";
+        }
+        
+        #region ListBox event handlers
+
+        private void objectListView1_SelectionChanged(object sender, EventArgs e)
+        {
+            if (objectListView1.SelectedItem != null)
+            {
+                string selectedItemName = ((PartToImport)objectListView1.SelectedItem.RowObject).name;
+
+                selectedItemName = selectedItemName + ".ipt";
+
+                Autodesk.Connectivity.WebServices.File webServicesFile = selectedFiles.FirstOrDefault(sel => sel.Name == selectedItemName);
+                VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, webServicesFile);
+
+                picBoxIpt.Image = ResizeImage(getThumbNail(fileIter), 115, 115);
+
+                string selectedSymName = symFolder + System.IO.Path.GetFileNameWithoutExtension(selectedItemName) + ".sym";
+
+                if (System.IO.File.Exists(selectedSymName))
+                {
+                    ShellFile shellFile = ShellFile.FromFilePath(selectedSymName);
+                    Bitmap shellThumb = shellFile.Thumbnail.Bitmap;
+                    this.picBoxSym.Image = ResizeImage(shellThumb, 115, 115);
+                }
+                else
+                {
+                    this.picBoxSym.Image = null;
+                }
+
+                toolStripStatusLabel.Text = "";
+                progressBar.Value = 0;
+
+                objectListView1.Refresh();
+            }
+        }
+        
+        private void objectListView1_DoubleClick(object sender, EventArgs e)
+        {
+            string selectedItemName = ((PartToImport)objectListView1.SelectedItem.RowObject).name;
+            PartToImport partToModify = PartsToImport.FirstOrDefault(sel => sel.name == selectedItemName);
+
+
+            string errorMessage = "";
+            if (!ConvertFile(partToModify.name, ref errorMessage))
+            {
+                statusStrip.Text = "Error in converting File";
+            }
+            
+            int tItemIndex = objectListView1.TopItemIndex;
+            objectListView1.RefreshObjects(PartsToImport);
+            objectListView1.Refresh();
+            objectListView1.SetObjects(PartsToImport);
+            objectListView1.TopItemIndex = tItemIndex;
+            //objectListView1.SelectedItem.Focused = true;
+        }
+        
+        
+        #endregion
+
+        #region Vault Access
+        private void DownloadFile(ADSK.File file, string filePath)
+        {
+            // remove the read-only attribute
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.SetAttributes(filePath, System.IO.FileAttributes.Normal);
+
+            VDF.Vault.Settings.AcquireFilesSettings settings = new VDF.Vault.Settings.AcquireFilesSettings(connection);
+
+            Vault.Currency.Entities.FileIteration fIter = new Vault.Currency.Entities.FileIteration(connection, file);
+            settings.AddFileToAcquire(fIter, VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download, new VDF.Currency.FilePathAbsolute(filePath));
+
+            connection.FileManager.AcquireFiles(settings);
+        }
+
+        string GetERPDescriptionProperty(VDF.Vault.Currency.Entities.FileIteration fileInteration)
+        {
+            object partDesc = connection.PropertyManager.GetPropertyValue(
+                        fileInteration, propDefs["Description"], null);
+
+            string partDescString = partDesc == null ? "" : partDesc.ToString();
+
+            return partDescString;
+        }
+
+        string GetERPPartNumberProperty(VDF.Vault.Currency.Entities.FileIteration fileInteration)
+        {
+            object partNumber = connection.PropertyManager.GetPropertyValue(
+                        fileInteration, propDefs["Keywords"], null);
+
+            string partNumberString = partNumber == null ? "" : partNumber.ToString();
+
+            return partNumberString;
+        }
+        #endregion
+
+        #region Thumbnail Routines
+        private System.Drawing.Image getThumbNail(VDF.Vault.Currency.Entities.FileIteration file)
+        {
+            try
+            {
+                VDF.Vault.Currency.Properties.PropertyDefinition thumbnailPropDef = connection.PropertyManager.GetPropertyDefinitionBySystemName("Thumbnail");
+                VDF.Vault.Currency.Properties.ThumbnailInfo thumbnailInfo = connection.PropertyManager.GetPropertyValue(file, thumbnailPropDef, null) as VDF.Vault.Currency.Properties.ThumbnailInfo;
+                byte[] thumbnailBytes = thumbnailInfo.Image;
+                return GetImage(thumbnailBytes, 200, 200);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
+        private System.Drawing.Image GetImage(byte[] thumbnailBytes, int width, int height)
+        {
+            byte[] thumbnailRaw = thumbnailBytes;
+            System.Drawing.Image retVal = null;
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(thumbnailRaw))
+            {
+                // we don't know what format the image is in, so we try a couple of formats 
+                try
+                {
+                    // try the meta file format 
+                    ms.Seek(12, System.IO.SeekOrigin.Begin);
+                    System.Drawing.Imaging.Metafile metafile =
+                        new System.Drawing.Imaging.Metafile(ms);
+                    retVal = metafile.GetThumbnailImage(width, height,
+                        new System.Drawing.Image.GetThumbnailImageAbort(GetThumbnailImageAbort),
+                        System.IntPtr.Zero);
+                }
+                catch
+                {
+                    // I guess it's not a metafile 
+                    retVal = null;
+                }
+
+
+                if (retVal == null)
+                {
+                    try
+                    {
+                        // try to stream to System.Drawing.Image 
+                        ms.Seek(0, System.IO.SeekOrigin.Begin);
+                        System.Drawing.Image rawImage = System.Drawing.Image.FromStream(ms, true);
+                        retVal = rawImage.GetThumbnailImage(width, height,
+                            new System.Drawing.Image.GetThumbnailImageAbort(GetThumbnailImageAbort),
+                            System.IntPtr.Zero);
+                    }
+                    catch
+                    {
+                        // not compatible Image object 
+                        retVal = null;
+                    }
+                }
+            }
+            return retVal;
+        }
+
+        private static bool GetThumbnailImageAbort()
+        {
+            return false;
+        }
+
+        private static System.Drawing.Bitmap ResizeImage(System.Drawing.Image image, int width, int height)
+        {
+            //a holder for the result
+            Bitmap result = new Bitmap(width, height);
+
+            //use a graphics object to draw the resized image into the bitmap
+            using (Graphics graphics = Graphics.FromImage(result))
+            {
+                //set the resize quality modes to high quality
+                graphics.CompositingQuality =
+                    System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode =
+                    System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode =
+                    System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                //draw the image into the target bitmap
+                graphics.DrawImage(image, 0, 0, result.Width, result.Height);
+            }
+            //return the resulting bitmap
+            return result;
+        }
+
+
+
+        #endregion
+
+        private void btnSymFolderBrowse_Click(object sender, EventArgs e)
+        {
+            DialogResult result = folderBrowserDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                symFolder = folderBrowserDialog1.SelectedPath;
+                if (!symFolder.EndsWith("\\")) symFolder += "\\";
+                txtBoxSymFolder.Text = symFolder;
+
+                Properties.Settings.Default["symFolder"] = symFolder;
+                Properties.Settings.Default.Save(); // Saves settings in application configuration file
+
+                PopulateListBox();
+
+                int tItemIndex = objectListView1.TopItemIndex;
+                objectListView1.RefreshObjects(PartsToImport);
+                objectListView1.Refresh();
+                objectListView1.SetObjects(PartsToImport);
+                objectListView1.TopItemIndex = tItemIndex;
+            }
+        }
+    }
+
+    public class PartToImport
+    {
+        public string name { get; set; }
+        public string desc { get; set; }
+        public string thickness { get; set; }
+        public string materialType { get; set; }
+        public int qty { get; set; }
+
+    }
+}

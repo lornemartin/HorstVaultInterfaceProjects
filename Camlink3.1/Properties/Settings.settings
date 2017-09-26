@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Camlink3_1.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="symFolder" Type="System.String" Scope="User">
+      <Value Profile="(Default)">\\hlavault\radan\Vault SYM files\</Value>
+    </Setting>
+    <Setting Name="extensionFolder" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\ProgramData\Autodesk\Vault 2016\Extensions\Camlink3.1\</Value>
+    </Setting>
+    <Setting Name="radanProject" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Radan\Projects\2014-12-22\2014-12-22.rpd</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
