@@ -112,13 +112,15 @@ namespace PrintPDF
                     myProcess.Start();
                     myProcess.WaitForExit();
 
+                    string argumentsFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\arguments.txt";
 
-                    using (StreamWriter writetext = new StreamWriter(myProcess.StartInfo.WorkingDirectory + "arguments.txt"))
+                    using (StreamWriter writetext = new StreamWriter(argumentsFileName))
                     {
                         writetext.WriteLine(myProcess.StartInfo.Arguments);
                     }
 
-                    int lineCount = System.IO.File.ReadLines(AppSettings.Get("PrintPDFreturnFile").ToString()).Count();
+                    string returnFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\" + AppSettings.Get("PrintPDFreturnFile").ToString();
+                    int lineCount = System.IO.File.ReadLines(returnFileName).Count();
 
                     // after a successful run of PrintPDF, the file 'return.txt' should contain a 
                     // list of files printed, the number of lines matching the number of sheets in the idw
@@ -130,7 +132,7 @@ namespace PrintPDF
 
                     // so I decided for now I will still log the error, but we won't return a fail status.
                     {
-                        errMessage = System.IO.File.ReadAllText(AppSettings.Get("PrintPDFreturnFile").ToString());
+                        errMessage = System.IO.File.ReadAllText(returnFileName);
                     }
                     else
                     {

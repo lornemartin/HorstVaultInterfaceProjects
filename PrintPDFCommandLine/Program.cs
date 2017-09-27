@@ -25,24 +25,29 @@ namespace PrintPDF
             // 2.  the number of pages in the idw file
             // 3.  a list of filenames (the count matching the number of pages), one for each page in the idw
 
-            // this program writes to a text file called return.txt that is created in the working directory.
+            // this program writes to a text file called return.txt that is created in the %appdata%\PrintPDFCommandLine directory.
             // it outputs each pdf filename on a line by itself as soon as it has successfully written it. 
 
             string printer = "";
             string outputFolder = "";
             string pdfConverter = "";
             string workingDir = "";
+            string IOFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\";
+            string returnFileName = IOFolder + "return.txt";
+            string callingParamsFileName = IOFolder + "callingparams.txt";
+
             List<idwFile> idwFiles = new List<idwFile>();
+
 
             try
             {
-                if (System.IO.File.Exists("return.txt")) System.IO.File.Delete("return.txt");
+                if (System.IO.File.Exists(returnFileName)) System.IO.File.Delete(returnFileName);
                 idwFile idw = new idwFile();
                 idw.sheetNames = new List<string>();
 
                 if (args == null)
                 {
-                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("return.txt", true))
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter(returnFileName, true))
                     {
                         file.WriteLine("Error: No arguments specified, aborting operation");
                     }
@@ -64,7 +69,7 @@ namespace PrintPDF
                     for (i = argIndex; i < (argIndex + idw.pageCount); i++)
                     {
                         idw.sheetNames.Add(args[i]);
-                        using (System.IO.StreamWriter file = new System.IO.StreamWriter("callingparams.txt", true))
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter(callingParamsFileName, true))
                         {
                             file.WriteLine(args[i]);
                             if (System.IO.File.Exists(outputFolder + args[i] + ".pdf"))
@@ -80,7 +85,7 @@ namespace PrintPDF
             }
             catch (Exception ex)
             {
-                using (System.IO.StreamWriter file = new System.IO.StreamWriter("return.txt", true))
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(returnFileName, true))
                 {
                     file.WriteLine("Error: Problems parsing arguments, aborting operation");
                 }
@@ -244,7 +249,7 @@ namespace PrintPDF
                                 }
                             }
 
-                            using (System.IO.StreamWriter file = new System.IO.StreamWriter("return.txt", true))
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter(returnFileName, true))
                             {
                                 file.WriteLine(pdfFileName);
                             }
@@ -264,7 +269,7 @@ namespace PrintPDF
             }
             catch (Exception x)
             {
-                using (System.IO.StreamWriter file = new System.IO.StreamWriter("return.txt", true))
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(returnFileName, true))
                 {
                     file.WriteLine("Error: Problems printing pdfs, aborting operation");
                     file.WriteLine(x.ToString());

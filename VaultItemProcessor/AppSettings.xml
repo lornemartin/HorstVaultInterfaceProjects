@@ -2,7 +2,7 @@
 <ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Setting>
     <Key>VaultExportFilePath</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\Vault Export\</Value>
+    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\</Value>
   </Setting>
   <Setting>
     <Key>VaultExportFileName</Key>
@@ -14,7 +14,7 @@
   </Setting>
   <Setting>
     <Key>PdfPath</Key>
-    <Value xsi:type="xsd:string">M:\PDF Drawing Files\\</Value>
+    <Value xsi:type="xsd:string">\\hlafilesrvr2\Engcommon\PDF Drawing Files\\</Value>
   </Setting>
   <Setting>
     <Key>JobName</Key>
@@ -42,7 +42,7 @@
   </Setting>
   <Setting>
     <Key>PrintPDFWorkingFolder</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\PrintPDF\\</Value>
+    <Value xsi:type="xsd:string">C:\Program Files\VaultItemProcessor\PrintPDFCommandLine\\</Value>
   </Setting>
   <Setting>
     <Key>GhostScriptWorkingFolder</Key>
@@ -50,7 +50,7 @@
   </Setting>
   <Setting>
     <Key>PrintPDFExecutable</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\Horst\VaultItemMaster\PrintPDF.exe</Value>
+    <Value xsi:type="xsd:string">C:\Program Files\VaultItemProcessor\PrintPDFCommandLine\PrintPDF.exe</Value>
   </Setting>
   <Setting>
     <Key>PrintPDFPrinter</Key>
@@ -62,7 +62,7 @@
   </Setting>
   <Setting>
     <Key>PrintPDFreturnFile</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\PrintPDF\return.txt</Value>
+    <Value xsi:type="xsd:string">return.txt</Value>
   </Setting>
   <Setting>
     <Key>ProcessOnlyIfReleased</Key>

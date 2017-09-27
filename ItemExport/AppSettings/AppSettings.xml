@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Setting>
+    <Key>VaultExportFilePath</Key>
+    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\</Value>
+  </Setting>
+  <Setting>
+    <Key>ExportFile</Key>
+    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\VaultExportData.txt</Value>
+  </Setting>
+</ArrayOfSetting>
