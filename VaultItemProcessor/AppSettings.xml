@@ -50,7 +50,7 @@
   </Setting>
   <Setting>
     <Key>PrintPDFExecutable</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\VaultItemProcessor\PrintPDFCommandLine\PrintPDF.exe</Value>
+    <Value xsi:type="xsd:string">C:\Program Files\VaultItemProcessor\PrintPDFCommandLine\PrintPDFCommandLine.exe</Value>
   </Setting>
   <Setting>
     <Key>PrintPDFPrinter</Key>
