@@ -21,12 +21,15 @@ using Autodesk.Connectivity.Extensibility.Framework;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
-
+using log4net.Config;
+using log4net;
+using log4net.Appender;
 
 namespace PrintPDF
 {
     public class PrintObject
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         // this routine was coded to use the ERP names instead of the part names
         // it needs to have a list of ERP names passed to it, each one matching its corresponding sheet in the IDW.
@@ -161,11 +164,34 @@ namespace PrintPDF
 
         // this is an attempt to get rid of the extra command line step for printing pdfs.  
         // it also uses the display names inside the idw for the pdf names rather than getting it from a Vault property.
-        public Boolean printToPDF(string idw, string outputFolder, ref string errMessage, ref string logMessage)
+        public Boolean printToPDF(string idw, string outputFolder, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder, ref string errMessage, ref string logMessage)
         {
             {
                 try
                 {
+                    // set log file location
+                    XmlConfigurator.Configure();
+                    log4net.Repository.Hierarchy.Hierarchy h =
+                    (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
+                    foreach (IAppender a in h.Root.Appenders)
+                    {
+                        if (a is FileAppender)
+                        {
+                            FileAppender fa = (FileAppender)a;
+                            // Programmatically set this to the desired location here
+                            string logFileLocation = outputFolder + "PDFPrint.log";
+
+                            // Uncomment the lines below if you want to retain the base file name
+                            // and change the folder name...
+                            //FileInfo fileInfo = new FileInfo(fa.File);
+                            //logFileLocation = string.Format(@"C:\MySpecialFolder\{0}", fileInfo.Name);
+
+                            fa.File = logFileLocation;
+                            fa.ActivateOptions();
+                            break;
+                        }
+                    }
+
                     InventorApprentice.ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
                     InventorApprentice.ApprenticeServerDrawingDocument drgDoc;
                     oApprentice.Open(idw);
@@ -183,10 +209,15 @@ namespace PrintPDF
                         if (sh.DrawingViews.Count > 0)
                         {
                             string modelName;
-                            string modelExtension;
                             modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                            modelName = Path.GetFileNameWithoutExtension(modelName);
-                            modelExtension = System.IO.Path.GetExtension(modelName);
+                            // this doesn't work right on files with special characters.
+                            //modelName = Path.GetFileNameWithoutExtension(modelName);
+
+                            if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
+                            {
+                                int index = modelName.LastIndexOf('.');
+                                modelName = index == -1 ? modelName: modelName.Substring(0, index);
+                            }
 
                             idwFileToPrint.sheetNames.Add(modelName);
                             pageCount++;
@@ -194,9 +225,14 @@ namespace PrintPDF
                         }
                     }
 
-                    string printer = AppSettings.Get("PrintPDFPrinter").ToString();
-                    string pdfConverter = AppSettings.Get("PrintPDFPS2PDF").ToString();
-                    string workingDir = AppSettings.Get("GhostScriptWorkingFolder").ToString();
+                    log.Info("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
+
+                    string printer = pdfPrinterName;
+                    string pdfConverter = psToPdfProgName;
+                    string workingDir = ghostScriptWorkingFolder;
+
+                    string psFileName = "";
+                    string pdfFileName = "";
 
                     try
                     {
@@ -210,12 +246,20 @@ namespace PrintPDF
                         foreach (Sheet sh in drgDoc.Sheets)
                         {
                             string modelName;
-                            string modelExtension;
+                            //string modelExtension;
                             if (sh.DrawingViews.Count > 0)  // added to make sure sheet has at least one drawing view
                             {
                                 modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                                modelName = Path.GetFileNameWithoutExtension(modelName);
-                                modelExtension = System.IO.Path.GetExtension(modelName);
+
+                                // this doesn't work right on files with special characters.
+                                //modelName = Path.GetFileNameWithoutExtension(modelName);
+
+                                if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
+                                {
+                                    int index = modelName.LastIndexOf('.');
+                                    modelName = index == -1 ? modelName : modelName.Substring(0, index);
+
+                                }
 
                                 string newName = "";
 
@@ -251,22 +295,36 @@ namespace PrintPDF
                                     }
                                 }
 
-                                string psFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".ps";
-                                string pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
+                                psFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".ps";
+                                pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
                                 // for some reason if a ps filename contains a comma it doesn't want to print.
                                 // we'll replace it with a tilde.
                                 if (psFileName.Contains(","))
                                 {
                                     psFileName = psFileName.Replace(',', '~');
+                                    log.Warn("One or more characters replaced with '~' in " + pdfFileName);
+                                    //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
                                 }
 
                                 if (psFileName.Contains("°"))
                                 {
                                     psFileName = psFileName.Replace('°', '~');
+                                    log.Warn("One or more characters replaced with '°' in " + pdfFileName);
+                                    //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
                                 }
 
                                 pMgr.PrintToFile(psFileName);
+
+                                if (System.IO.File.Exists(psFileName))
+                                {
+                                    log.Info("PS file generated for " + psFileName);
+                                }
+                                else
+                                {
+                                    log.Warn("PS file for " + psFileName + "could not be generated.");
+                                    continue;   // skip trying to create a pdf if we couldn't generate a ps
+                                }
 
                                 // notice:
                                 // gs doesn't seem to be able to handle the degree symbol
@@ -356,20 +414,35 @@ namespace PrintPDF
                                 actualSheetIndex++;   // still need to increment sheet index, even if no drawing view was found
                                                       // on current sheet...
                             }
+
+                            // double check to make sure file got generated and saved properly.
+                            if(!System.IO.File.Exists(pdfFileName))
+                            {
+                                log.Warn("No PDF Generated for " + pdfFileName);
+                                //logMessage += "No PDF Generated for " + pdfFileName + "\r\n";
+                            }
+                            else
+                            {
+                                log.Info("PDF Generated for " + pdfFileName);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        errMessage += "PDF Generation Error in printToPDF\r\n";
-                        errMessage += ex.Message + "\r\n";
+                        //errMessage += "PDF Generation Error in printToPDF\r\n";
+                        //errMessage += ex.Message + "\r\n";
+                        log.Error("PDF Generation Error in printToPDF");
+                        log.Error(ex.Message);
                         return false;
                     }
                 }
 
                 catch (Exception ex)
                 {
-                    errMessage += "IDW File Read Error in printToPDF\r\n";
-                    errMessage += ex.Message + "\r\n";
+                    //errMessage += "IDW File Read Error in printToPDF\r\n";
+                    //errMessage += ex.Message + "\r\n";
+                    log.Error("IDW File Read Error in printToPDF");
+                    log.Error(ex.Message);
                     return false;
                 }
                 return true;
