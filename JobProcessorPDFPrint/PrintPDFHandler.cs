@@ -13,7 +13,7 @@ PARTICULAR PURPOSE.
 using System;
 using System.Linq;
 using System.IO;
-using PrintPDF;
+using JobProcessorPrintPDF;
 using System.Collections.Generic;
 
 using ACJE = Autodesk.Connectivity.JobProcessor.Extensibility;
