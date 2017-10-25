@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="symFolder" Type="System.String" Scope="User">
-      <Value Profile="(Default)">\\hlavault\radan\Vault SYM files\</Value>
+      <Value Profile="(Default)">C:\Sym Files\</Value>
     </Setting>
     <Setting Name="extensionFolder" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\ProgramData\Autodesk\Vault 2016\Extensions\Camlink3.1\</Value>

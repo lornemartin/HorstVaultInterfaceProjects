@@ -25,7 +25,7 @@ namespace Camlink3_1.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("\\\\hlavault\\radan\\Vault SYM files\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Sym Files\\")]
         public string symFolder {
             get {
                 return ((string)(this["symFolder"]));
