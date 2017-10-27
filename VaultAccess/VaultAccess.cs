@@ -2311,6 +2311,176 @@ namespace VaultAccess
 
             try
             {
+                //string TargetFolder = System.IO.Path.GetTempPath();
+                //string VaultSearchEntity = "Name";
+
+                //// make sure folder exists for downloading idw into.
+                //logMessage += "Checking Target Directory...";
+                //System.IO.DirectoryInfo targetDir = new System.IO.DirectoryInfo(TargetFolder);
+                //if (!targetDir.Exists)
+                //{
+                //    targetDir.Create();
+                //}
+                //logMessage += "OK" + "\r\n";
+
+                //// download the idw from the vault
+                //logMessage += "Downloading idw from the vault...";
+                //VDF.Vault.Settings.AcquireFilesSettings downloadSettings = new VDF.Vault.Settings.AcquireFilesSettings(m_conn)
+                //{
+                //    LocalPath = new VDF.Currency.FolderPathAbsolute(targetDir.FullName),
+                //};
+                //downloadSettings.AddFileToAcquire(fileIter, VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download);
+                //m_conn.FileManager.AcquireFiles(downloadSettings);
+
+                //string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
+                //string modelName = "";
+
+                //logMessage += "OK" + "\r\n";
+
+                //// set up lists for storing the actual model names the sheets are referencing
+                //logMessage += "Setting up data structures to hold file names...";
+
+                //// two failures here Oct. 26th...
+
+                //List<string> modelNames = new List<string>();
+                //List<VDF.Vault.Currency.Entities.FileIteration> fIterations = new List<VDF.Vault.Currency.Entities.FileIteration>();
+
+                //VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs =
+                //               new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
+                //Inventor.ApprenticeServerComponent oApprentice = new Inventor.ApprenticeServerComponent();
+                //Inventor.ApprenticeServerDrawingDocument drgDoc;
+                //drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
+                //oApprentice.Open(fileName);
+                //drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
+                //PropDef[] filePropDefs =
+                //                m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
+                //PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
+
+                //logMessage += "OK" + "\r\n";
+                //logMessage += "Number of Sheets in drgDoc" + drgDoc.Sheets.Count + "\r\n";
+
+                //// for each sheet in the idw, search the vault for the sheet's corresponding ipt or iam 
+                //foreach (Inventor.Sheet sh in drgDoc.Sheets)
+                //{
+                //    logMessage += "Sheet Name: " + sh.Name + "\r\n";
+
+                //    // ...2 failures here Oct. 23rd...
+                //    // ...1 failure here Oct 28th....
+
+                //    if (sh.DrawingViews.Count > 0)
+                //    {
+                //        modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                //        VDF.Vault.Currency.Entities.FileIteration fIter;
+                //        try
+                //        {
+                //            logMessage += "Setting up to search condition...";
+
+                //            SrchCond vaultName = new SrchCond()
+                //            {
+                //                PropDefId = vaultNamePropDef.Id,
+                //                PropTyp = PropertySearchType.SingleProperty,
+                //                SrchOper = 3, // equals
+                //                SrchRule = SearchRuleType.Must,
+                //                SrchTxt = modelName
+                //            };
+
+
+                //            string bookmark = string.Empty;
+                //            SrchStatus status = null;
+                //            Autodesk.Connectivity.WebServices.File[] searchResults =
+                //                m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(
+                //                new SrchCond[] { vaultName },
+                //                null, null, false, true, ref bookmark, out status);
+
+
+
+                //            propDefs = new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
+                //            propDefs =
+                //              m_conn.PropertyManager.GetPropertyDefinitions(
+                //                VDF.Vault.Currency.Entities.EntityClassIds.Files,
+                //                null,
+                //                VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll
+                //              );
+
+                //            logMessage += "OK, search successful" + "\r\n";
+
+                //            if (searchResults == null)
+                //            {
+                //                logMessage += "No corresponding model file found for " + modelName + "\r\n";
+                //                ACW.File emptyFile = new ACW.File();
+                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
+                //                fIterations.Add(fIter);
+                //            }
+                //            else if (searchResults.Count() > 1)
+                //            {
+                //                logMessage += "Multiple corresponding models found for " + modelName + "\r\n";
+                //                ACW.File emptyFile = new ACW.File();
+                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
+                //                fIterations.Add(fIter);
+                //            }
+                //            else
+                //            {
+                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, searchResults[0]);
+                //                fIterations.Add(fIter);
+                //                logMessage += "Match found\r\n";
+                //            }
+                //        }
+                //        catch (Exception)
+                //        {
+                //            errMessage += "Unknown Error in function PrintPDF\r\n";
+                //            return false;
+                //        }
+                //    }
+                //}
+
+                //// now we have a list of model file names stored in 'fIterations', one for every sheet in the idw.
+                //// If we couldn't match the sheet up with a model, the list will have a blank entry.
+                //// next we have to match each name up with whatever vault field we are using to name the pdf files...
+                //// e.g. if we're using names, this is totally unnecessary, but if we want to use ERP Numbers, we have to 
+                //// search them out.
+                //// we'll then end up with a dictionary matching names up with the chosen vault field.
+
+                //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues propList =
+                //    new VDF.Vault.Currency.Properties.PropertyValues();
+
+                //System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
+                //                                      Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
+                //                                      propDict = new Dictionary<VDF.Vault.Currency.Entities.IEntity,
+                //                                                          VDF.Vault.Currency.Properties.PropertyValue>();
+
+                //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition propDef =
+                //    new VDF.Vault.Currency.Properties.PropertyDefinition(propDefs[VaultSearchEntity]);
+
+                //propList = m_conn.PropertyManager.GetPropertyValues(
+                //            fIterations, new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition[] { propDef }, null);
+                //logMessage += "propList count: " + propList.Entities.Count() + "\r\n";
+
+                //propDict = propList.GetValues(propDef);
+                //logMessage += "propDict count: " + propDict.Values.Count() + "\r\n";
+
+                //foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
+                //                     VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
+                //{
+                //    if (pair.Key.EntityMasterId != 0)
+                //    {
+                //        logMessage += "key: " + pair.Key + " value: " + pair.Value.Value + "\r\n";
+                //        modelNames.Add(pair.Value.Value.ToString());
+                //    }
+                //    else
+                //    {
+                //        logMessage += "Blank entry\r\n";
+                //        modelNames.Add("");
+                //    }
+                //}
+
+                //logMessage += "Defining Print Object...";
+
+                //...failed here one time Oct 28th...
+                PrintPDF.PrintObject printOb = new PrintPDF.PrintObject();
+                string errMsg = "";
+                string logMsg = "";
+
+
                 string TargetFolder = System.IO.Path.GetTempPath();
                 string VaultSearchEntity = "Name";
 
@@ -2333,155 +2503,9 @@ namespace VaultAccess
                 m_conn.FileManager.AcquireFiles(downloadSettings);
 
                 string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
-                string modelName = "";
-
-                logMessage += "OK" + "\r\n";
-
-                // set up lists for storing the actual model names the sheets are referencing
-                logMessage += "Setting up data structures to hold file names...";
-
-                // two failures here Oct. 26th...
-
-                List<string> modelNames = new List<string>();
-                List<VDF.Vault.Currency.Entities.FileIteration> fIterations = new List<VDF.Vault.Currency.Entities.FileIteration>();
-
-                VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs =
-                               new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                Inventor.ApprenticeServerComponent oApprentice = new Inventor.ApprenticeServerComponent();
-                Inventor.ApprenticeServerDrawingDocument drgDoc;
-                drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                oApprentice.Open(fileName);
-                drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                PropDef[] filePropDefs =
-                                m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
-                PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
-
-                logMessage += "OK" + "\r\n";
-                logMessage += "Number of Sheets in drgDoc" + drgDoc.Sheets.Count + "\r\n";
-
-                // for each sheet in the idw, search the vault for the sheet's corresponding ipt or iam 
-                foreach (Inventor.Sheet sh in drgDoc.Sheets)
-                {
-                    logMessage += "Sheet Name: " + sh.Name + "\r\n";
-
-                    // ...2 failures here Oct. 23rd...
-                    // ...1 failure here Oct 28th....
-
-                    if (sh.DrawingViews.Count > 0)
-                    {
-                        modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                        VDF.Vault.Currency.Entities.FileIteration fIter;
-                        try
-                        {
-                            logMessage += "Setting up to search condition...";
-
-                            SrchCond vaultName = new SrchCond()
-                            {
-                                PropDefId = vaultNamePropDef.Id,
-                                PropTyp = PropertySearchType.SingleProperty,
-                                SrchOper = 3, // equals
-                                SrchRule = SearchRuleType.Must,
-                                SrchTxt = modelName
-                            };
-
-
-                            string bookmark = string.Empty;
-                            SrchStatus status = null;
-                            Autodesk.Connectivity.WebServices.File[] searchResults =
-                                m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(
-                                new SrchCond[] { vaultName },
-                                null, null, false, true, ref bookmark, out status);
-
-
-
-                            propDefs = new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                            propDefs =
-                              m_conn.PropertyManager.GetPropertyDefinitions(
-                                VDF.Vault.Currency.Entities.EntityClassIds.Files,
-                                null,
-                                VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll
-                              );
-
-                            logMessage += "OK, search successful" + "\r\n";
-
-                            if (searchResults == null)
-                            {
-                                logMessage += "No corresponding model file found for " + modelName + "\r\n";
-                                ACW.File emptyFile = new ACW.File();
-                                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
-                                fIterations.Add(fIter);
-                            }
-                            else if (searchResults.Count() > 1)
-                            {
-                                logMessage += "Multiple corresponding models found for " + modelName + "\r\n";
-                                ACW.File emptyFile = new ACW.File();
-                                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
-                                fIterations.Add(fIter);
-                            }
-                            else
-                            {
-                                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, searchResults[0]);
-                                fIterations.Add(fIter);
-                                logMessage += "Match found\r\n";
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            errMessage += "Unknown Error in function PrintPDF\r\n";
-                            return false;
-                        }
-                    }
-                }
-
-                // now we have a list of model file names stored in 'fIterations', one for every sheet in the idw.
-                // If we couldn't match the sheet up with a model, the list will have a blank entry.
-                // next we have to match each name up with whatever vault field we are using to name the pdf files...
-                // e.g. if we're using names, this is totally unnecessary, but if we want to use ERP Numbers, we have to 
-                // search them out.
-                // we'll then end up with a dictionary matching names up with the chosen vault field.
-
-                Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues propList =
-                    new VDF.Vault.Currency.Properties.PropertyValues();
-
-                System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                                                      Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
-                                                      propDict = new Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                                                                          VDF.Vault.Currency.Properties.PropertyValue>();
-
-                Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition propDef =
-                    new VDF.Vault.Currency.Properties.PropertyDefinition(propDefs[VaultSearchEntity]);
-
-                propList = m_conn.PropertyManager.GetPropertyValues(
-                            fIterations, new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition[] { propDef }, null);
-                logMessage += "propList count: " + propList.Entities.Count() + "\r\n";
-
-                propDict = propList.GetValues(propDef);
-                logMessage += "propDict count: " + propDict.Values.Count() + "\r\n";
-
-                foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
-                                     VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
-                {
-                    if (pair.Key.EntityMasterId != 0)
-                    {
-                        logMessage += "key: " + pair.Key + " value: " + pair.Value.Value + "\r\n";
-                        modelNames.Add(pair.Value.Value.ToString());
-                    }
-                    else
-                    {
-                        logMessage += "Blank entry\r\n";
-                        modelNames.Add("");
-                    }
-                }
-
-                logMessage += "Defining Print Object...";
-
-                //...failed here one time Oct 28th...
-                PrintPDF.PrintObject printOb = new PrintPDF.PrintObject();
-                string errMsg = "";
-                string logMsg = "";
 
                 //if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
-                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                if (printOb.printToPDF(fileIter.EntityName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
                 {
                     logMessage += logMsg;
                     return true;
