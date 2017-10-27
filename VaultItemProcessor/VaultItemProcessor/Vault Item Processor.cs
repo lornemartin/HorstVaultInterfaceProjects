@@ -1492,7 +1492,7 @@ namespace VaultItemProcessor
                             //hlaVault.CloseVaultConnection();
                             toolStripStatusLabel1.Text = "Logging into Vault...";
                             statusStrip1.Refresh();
-                            hlaVault = new VaultAccess.VaultAccess(pdfPath);
+                            hlaVault = new VaultAccess.VaultAccess(pdfPath, AppSettings.Get("PrintPDFPrinter").ToString(), AppSettings.Get("PrintPDFPS2PDF").ToString(), AppSettings.Get("GhostScriptWorkingFolder").ToString());
                             hlaVault.LoginForItems("lorne", "lorne", vaultServer, vaultVault);
                             toolStripStatusLabel1.Text = "Logging into Vault...Done";
                         }
