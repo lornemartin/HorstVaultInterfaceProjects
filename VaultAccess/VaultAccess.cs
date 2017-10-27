@@ -22,16 +22,22 @@ namespace VaultAccess
         private Vault.Currency.Entities.Folder m_lastAccessedFolder { get; set; }
         private List<string> m_downloadedFiles { get; set; }
         private string m_PDFPath { get; set; }
+        private string m_pdfPrinterName { get; set; }
+        private string m_psToPdfProgName { get; set; }
+        private string m_ghostScriptWorkingFolder { get; set; }
 
         #endregion
 
         #region Constructors and Initialization Methods
-        public VaultAccess(string pdfPath)
+        public VaultAccess(string pdfPath, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder)
         {
             m_conn = null;
             m_lastAccessedFolder = null;
             m_downloadedFiles = new List<string>();
             m_PDFPath = pdfPath;
+            m_pdfPrinterName = pdfPrinterName;
+            m_psToPdfProgName = psToPdfProgName;
+            m_ghostScriptWorkingFolder = ghostScriptWorkingFolder;
         }
 
         public VaultAccess(Vault.Currency.Connections.Connection conn, string PDFPath)
@@ -2474,7 +2480,8 @@ namespace VaultAccess
                 string errMsg = "";
                 string logMsg = "";
 
-                if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
+                //if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
+                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
                 {
                     logMessage += logMsg;
                     return true;

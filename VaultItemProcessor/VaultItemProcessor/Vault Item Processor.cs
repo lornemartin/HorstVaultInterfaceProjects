@@ -1111,7 +1111,7 @@ namespace VaultItemProcessor
                 SplashScreenManager.ShowForm(this, typeof(WaitFormVaultLogin), true, true, false);
                 toolStripStatusLabel1.Text = "Logging into Vault...";
                 statusStrip1.Refresh();
-                hlaVault = new VaultAccess.VaultAccess(pdfPath);
+                hlaVault = new VaultAccess.VaultAccess(pdfPath,AppSettings.Get("PrintPDFPrinter").ToString(),AppSettings.Get("PrintPDFPS2PDF").ToString(),AppSettings.Get("GhostScriptWorkingFolder").ToString());
                 hlaVault.Login(vaultUserName, vaultPassword, vaultServer, vaultVault);
                 toolStripStatusLabel1.Text = "Logging into Vault...Done";
                 SplashScreenManager.CloseForm(false);
