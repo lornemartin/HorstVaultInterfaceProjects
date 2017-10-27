@@ -169,7 +169,7 @@ namespace JobProcessorPrintPDF
                     string errMsg = "";
                     string logMsg = "";
 
-                    if (printOb.printToPDF(fileName, PDFPath, PDFPrinterName, PS2PDFProgrameName, GSWorkingFolder, ref errMsg, ref logMsg))
+                    if (!printOb.printToPDF(fileName, PDFPath, PDFPrinterName, PS2PDFProgrameName, GSWorkingFolder, ref errMsg, ref logMsg))
                     {
                         return false;
                     }

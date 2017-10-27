@@ -2505,7 +2505,7 @@ namespace VaultAccess
                 string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
 
                 //if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
-                if (printOb.printToPDF(fileIter.EntityName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
                 {
                     logMessage += logMsg;
                     return true;
