@@ -116,27 +116,6 @@ namespace JobProcessorFileUpdate
                         jobOutComeStatus = ACJE.JobOutcome.Failure;
                     }
 
-                    // check for DB records
-                    //int dbUpdateVal = DBUpdate(fileIter);
-                    //if (dbUpdateVal == 1)
-                    //{
-                    //    logText += "Changed DB VaultSyncStatus for" + fileIter.ToString() + "...\n";
-                    //    context.Log(logText, ACJE.MessageType.eInformation);
-                    //    if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
-                    //}
-                    //else if (dbUpdateVal == 0)
-                    //{
-                    //    logText = "No DB match found for " + fileIter.ToString() + "...\n";
-                    //    context.Log(logText, ACJE.MessageType.eInformation);
-                    //    if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
-                    //}
-                    //else if (dbUpdateVal == -1)
-                    //{
-                    //    errText = "Error in processing Database for " + fileIter.ToString();
-                    //    context.Log(errText, ACJE.MessageType.eError);
-                    //    jobOutComeStatus = ACJE.JobOutcome.Failure;
-                    //}
-
                     // check for sym files
                     int symUpdateVal = processRadanFile(fileIter, false);
                     if (symUpdateVal == 1)
@@ -415,99 +394,6 @@ namespace JobProcessorFileUpdate
                 logMessage += logMessage;
                 errMessage += errMessage;
                 return false;
-            }
-        }
-
-        private int DBUpdate(VDF.Vault.Currency.Entities.FileIteration fileIter)
-        {
-            // this routine will return 1 if it successfully updates a flag,
-            //                          0 if it finds no record, or
-            //                          -1 if it encounters an error.
-            try
-            {
-                string vaultName = fileIter.EntityName;
-                int returnVal = 0;
-                int statusFlag = 0;
-
-                using (SqlConnection dbConnection = new SqlConnection(m_SqlConnectionString))
-                {
-                    dbConnection.Open();
-
-                    // First search for assembly with selected name.
-                    SqlCommand command = new SqlCommand("SELECT ID FROM Assembly WHERE VaultName = @0", dbConnection);
-                    // Add the parameters.
-                    command.Parameters.Add(new SqlParameter("0", vaultName));
-
-                    long vaultID = 0;
-
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            vaultID = (long)reader[0];
-                            // if we get a vault ID here we know we've found a matching assembly in the DB.
-                        }
-                    }
-
-                    // only modify status flag if we did find an assembly with a matching vault name
-                    if (vaultID != 0)
-                    {
-                        using (SqlCommand alterCommand = new SqlCommand("UPDATE Assembly SET SyncWithVault = @0 WHERE VaultName = @1", dbConnection))
-                        {
-                            {
-                                SqlParameter param1 = new SqlParameter();
-                                param1.DbType = DbType.String;
-                                param1.Direction = ParameterDirection.Input;
-                                param1.ParameterName = "0";
-                                param1.Value = statusFlag;   // this is the value to set
-                                alterCommand.Parameters.Add(param1);
-                                alterCommand.Parameters.Add(new SqlParameter("1", vaultName));
-                                returnVal = alterCommand.ExecuteNonQuery();
-
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        // no matching assembly found so we will search for a matching part.
-                        command = new SqlCommand("SELECT ID FROM Part WHERE VaultName = @0", dbConnection);
-                        // Add the parameters.
-                        command.Parameters.Add(new SqlParameter("0", vaultName));
-
-                        using (SqlDataReader reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                vaultID = (long)reader[0];
-                                // if we get a vault ID here we know we've found a matching part in the DB.
-                            }
-                        }
-
-                        // only modify status flag if we did find a part with a matching vault name
-                        if (vaultID != 0)
-                        {
-                            using (SqlCommand alterCommand = new SqlCommand("UPDATE Part SET SyncWithVault = @0 WHERE VaultName = @1", dbConnection))
-                            {
-                                {
-                                    SqlParameter param1 = new SqlParameter();
-                                    param1.DbType = DbType.String;
-                                    param1.Direction = ParameterDirection.Input;
-                                    param1.ParameterName = "0";
-                                    param1.Value = statusFlag;   // this is the value to set
-                                    alterCommand.Parameters.Add(param1);
-                                    alterCommand.Parameters.Add(new SqlParameter("1", vaultName));
-                                    returnVal = alterCommand.ExecuteNonQuery();
-                                }
-                            }
-                        }
-                    }
-                }
-                return returnVal;
-            }
-            catch (Exception)
-            {
-                return -1;
             }
         }
 
