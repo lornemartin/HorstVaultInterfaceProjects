@@ -118,6 +118,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppSettings.cs" />
     <Compile Include="FileUpdateHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileUpdate.cs" />
@@ -129,7 +130,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PrintPDF0.2\PrintPDF.csproj">
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
       <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
       <Name>PrintPDF</Name>
     </ProjectReference>

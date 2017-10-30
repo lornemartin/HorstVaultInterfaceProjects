@@ -30,6 +30,7 @@ using Autodesk.Connectivity.WebServicesTools;
 
 using System.Data.Sql;
 using System.Data.SqlClient;
+using JobProcessorPrintPDF;
 
 namespace JobProcessorFileUpdate
 {
@@ -47,9 +48,9 @@ namespace JobProcessorFileUpdate
         public FileUpdateHandler()
         {
             m_TargetFolder = System.IO.Path.GetTempPath();
-            m_PDFPath = @"M:\PDF Drawing Files\";
-            m_SqlConnectionString = "Data Source = HLAMFG; Initial Catalog = Horst Manufacturing DB; Integrated Security = True";
-            m_SymFolderName = @"\\hlavault\radan\Vault SYM files\";
+            m_PDFPath = JobProcessorPrintPDF.AppSettings.Get("PDFPath").ToString();
+            //m_SqlConnectionString = "Data Source = HLAMFG; Initial Catalog = Horst Manufacturing DB; Integrated Security = True";
+            m_SymFolderName = JobProcessorPrintPDF.AppSettings.Get("SymFileFolder").ToString();
         }
 
         #region IJobHandler Members
@@ -116,25 +117,25 @@ namespace JobProcessorFileUpdate
                     }
 
                     // check for DB records
-                    int dbUpdateVal = DBUpdate(fileIter);
-                    if (dbUpdateVal == 1)
-                    {
-                        logText += "Changed DB VaultSyncStatus for" + fileIter.ToString() + "...\n";
-                        context.Log(logText, ACJE.MessageType.eInformation);
-                        if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
-                    }
-                    else if (dbUpdateVal == 0)
-                    {
-                        logText = "No DB match found for " + fileIter.ToString() + "...\n";
-                        context.Log(logText, ACJE.MessageType.eInformation);
-                        if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
-                    }
-                    else if (dbUpdateVal == -1)
-                    {
-                        errText = "Error in processing Database for " + fileIter.ToString();
-                        context.Log(errText, ACJE.MessageType.eError);
-                        jobOutComeStatus = ACJE.JobOutcome.Failure;
-                    }
+                    //int dbUpdateVal = DBUpdate(fileIter);
+                    //if (dbUpdateVal == 1)
+                    //{
+                    //    logText += "Changed DB VaultSyncStatus for" + fileIter.ToString() + "...\n";
+                    //    context.Log(logText, ACJE.MessageType.eInformation);
+                    //    if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
+                    //}
+                    //else if (dbUpdateVal == 0)
+                    //{
+                    //    logText = "No DB match found for " + fileIter.ToString() + "...\n";
+                    //    context.Log(logText, ACJE.MessageType.eInformation);
+                    //    if (jobOutComeStatus != ACJE.JobOutcome.Failure) jobOutComeStatus = ACJE.JobOutcome.Success;
+                    //}
+                    //else if (dbUpdateVal == -1)
+                    //{
+                    //    errText = "Error in processing Database for " + fileIter.ToString();
+                    //    context.Log(errText, ACJE.MessageType.eError);
+                    //    jobOutComeStatus = ACJE.JobOutcome.Failure;
+                    //}
 
                     // check for sym files
                     int symUpdateVal = processRadanFile(fileIter, false);
