@@ -103,6 +103,10 @@
     <Reference Include="Connectivity.Explorer.ExtensibilityUtil">
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.Explorer.ExtensibilityUtil.dll</HintPath>
     </Reference>
+    <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\JobProcessorPDFPrint\PrintPDF.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -128,12 +132,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
-      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
-      <Name>PrintPDF</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
