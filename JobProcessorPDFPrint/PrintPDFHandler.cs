@@ -27,6 +27,7 @@ using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
 using PrintPDF;
+using System.Reflection;
 
 namespace JobProcessorPrintPDF
 {
@@ -49,6 +50,8 @@ namespace JobProcessorPrintPDF
             PDFPrinterName = AppSettings.Get("PrintPDFPrinter").ToString();
             PS2PDFProgrameName = AppSettings.Get("PrintPDFPS2PDF").ToString();
             GSWorkingFolder = AppSettings.Get("GhostScriptWorkingFolder").ToString();
+
+            
         }
 
         #region IJobHandler Members

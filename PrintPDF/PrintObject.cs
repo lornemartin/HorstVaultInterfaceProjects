@@ -24,11 +24,34 @@ using Autodesk.Connectivity.WebServicesTools;
 using log4net.Config;
 using log4net;
 using log4net.Appender;
+using System.Reflection;
 
 namespace PrintPDF
 {
+
     public class PrintObject
     {
+        public PrintObject()
+        {
+            if (!log4net.LogManager.GetRepository().Configured)
+            {
+                // my DLL is referenced by web service applications to log SOAP requests before
+                // execution is passed to the web method itself, so I load the log4net.config
+                // file that resides in the web application root folder
+                //var configFileDirectory = (new DirectoryInfo(TraceExtension.AssemblyDirectory)).Parent; // not the bin folder but up one level
+                var configFileDirectory = new DirectoryInfo(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+                var configFile = new FileInfo(configFileDirectory.FullName + "\\log4net.config");
+
+                if (!configFile.Exists)
+                {
+                    throw new FileLoadException(String.Format("The configuration file {0} does not exist", configFile));
+                }
+
+                log4net.Config.XmlConfigurator.Configure(configFile);
+            }
+
+        }
+
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         // this routine was coded to use the ERP names instead of the part names
