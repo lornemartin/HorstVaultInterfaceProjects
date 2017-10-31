@@ -88,10 +88,17 @@ namespace ItemExport
                 MultiSelectEnabled = false
             };
 
+            CommandItem BomExportOdooCmdItem = new CommandItem("BomItemExportOdooCommand", "Export Item &Odoo")
+            {
+                NavigationTypes = new SelectionTypeId[] { SelectionTypeId.Bom },
+                MultiSelectEnabled = false
+            };
+
             // The VaultViewCommandHandler function is called when the custom command is executed.
             ItemExportCmdItem.Execute += ItemExportCommandHandler;
             BomExportCmdItem.Execute += BomItemExportCommandHandler;
             BomExportPreviewCmdItem.Execute += BomItemExportPreviewCommandHandler;
+            BomExportOdooCmdItem.Execute += BomItemExportOdooCommandHandler;
 
 
             // Create a command site to hook the command to the right-click menu for Files.
@@ -115,6 +122,13 @@ namespace ItemExport
                 DeployAsPulldownMenu = false
             };
             bomExportCmdSite.AddCommand(BomExportPreviewCmdItem);
+
+            CommandSite bomExportOdooCmdSite = new CommandSite("BomItemExportOdooCommand", "Export Item Odoo")
+            {
+                Location = CommandSiteLocation.ItemBomToolbar,
+                DeployAsPulldownMenu = false
+            };
+            bomExportCmdSite.AddCommand(BomExportOdooCmdItem);
 
             // Now the custom command is available in 2 places.
 
@@ -310,8 +324,6 @@ namespace ItemExport
 
         void BomItemExportCommandHandler(object s, CommandItemEventArgs e)
         {
-            //MessageBox.Show("Exporting BOM...this functionality is not yet complete.");
-
             try
             {
                 VDF.Vault.Currency.Connections.Connection connection = e.Context.Application.Connection;
@@ -390,8 +402,6 @@ namespace ItemExport
 
         void BomItemExportPreviewCommandHandler(object s, CommandItemEventArgs e)
         {
-            //MessageBox.Show("Exporting BOM...this functionality is not yet complete.");
-
             try
             {
                 VDF.Vault.Currency.Connections.Connection connection = e.Context.Application.Connection;
@@ -440,6 +450,65 @@ namespace ItemExport
                     //Vault.Currency.Entities.FileIteration file = selFiles;
                     okToProcess = false;
                     Execute(selectedItem, connection, okToProcess);
+                }
+            }
+            catch (Exception ex)
+            {
+                // If something goes wrong, we don't want the exception to bubble up to Vault Explorer.
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        void BomItemExportOdooCommandHandler(object s, CommandItemEventArgs e)
+        {
+            try
+            {
+                VDF.Vault.Currency.Connections.Connection connection = e.Context.Application.Connection;
+
+                // The Context part of the event args tells us information about what is selected.
+                // Run some checks to make sure that the selection is valid.
+                if (e.Context.CurrentSelectionSet.Count() == 0)
+                    MessageBox.Show("Nothing is selected");
+                else if (e.Context.CurrentSelectionSet.Count() > 1)
+                    MessageBox.Show("This function does not support multiple selections");
+                else
+                {
+
+                    // we only have one item selected, which is the expected behavior
+                    ISelection selection = e.Context.CurrentSelectionSet.First();
+
+                    // Look of the File object.  How we do this depends on what is selected.
+                    Autodesk.Connectivity.WebServices.Item selectedItem = null;
+                    if (selection.TypeId == SelectionTypeId.Bom)
+                    {
+                        // our ISelection.Id is really a File.MasterId
+                        selectedItem = connection.WebServiceManager.ItemService.GetItemsByIds(new long[] { selection.Id }).First();
+                    }
+                    //else if (selection.TypeId == SelectionTypeId.FileVersion)
+                    //{
+                    //    // our ISelection.Id is really a File.Id
+                    //    selectedItem = connection.WebServiceManager.DocumentService.GetFileById(selection.Id);
+                    //}
+
+                    if (selectedItem == null)
+                    {
+                        MessageBox.Show("Selection is not an item.");
+                    }
+                    else
+                    {
+                        // this is the message we hope to see
+                        //MessageBox.Show(String.Format("Hello World! The file size is: {0} bytes",
+                        //selectedFile.FileSize));
+                    }
+
+                    VDF.Vault.Settings.AcquireFilesSettings settings = new VDF.Vault.Settings.AcquireFilesSettings(connection);
+
+                    //VDF.Vault.Currency.Entities.FileIteration selFiles = new Vault.Currency.Entities.FileIteration(connection, selectedFile);
+
+
+                    //Vault.Currency.Entities.FileIteration file = selFiles;
+                    okToProcess = false;
+                    ExecuteOdoo(selectedItem, connection, okToProcess);
                 }
             }
             catch (Exception ex)
@@ -816,6 +885,146 @@ namespace ItemExport
                     currentByte += partSize;
                 }
             }
+        }
+
+        void ExecuteOdoo(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection, bool okToProcess)
+        {
+            string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
+            using (StreamWriter writer = new StreamWriter(processFileName))
+            {
+                if (okToProcess == false)
+                    writer.WriteLine("false");
+                else
+                    writer.WriteLine("true");
+            }
+
+            //string filename = (string)AppSettings.Get("ExportFile");
+            string filename1 = @"C:\Users\lorne\Desktop\Vault Export\odoo1.csv";
+            string filename2 = @"C:\Users\lorne\Desktop\Vault Export\odoo2.csv";
+
+            PackageService packageSvc = connection.WebServiceManager.PackageService;
+
+            // export to CSV file
+            PkgItemsAndBOM pkgBom = packageSvc.GetLatestPackageDataByItemIds(new long[] { item.Id }, BOMTyp.Latest);
+
+            // Create a mapping between Item properties and columns in the CSV file
+            MapPair parentPair = new MapPair();
+            parentPair.ToName = "product";
+            parentPair.FromName = "BOMStructure-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
+
+            MapPair numberPair = new MapPair();
+            numberPair.ToName = "name";
+            numberPair.FromName = "Number";
+
+            MapPair titlePair = new MapPair();
+            titlePair.ToName = "Title (Item,CO)";
+            titlePair.FromName = "Title(Item,CO)";
+
+            MapPair descriptionPair = new MapPair();
+            descriptionPair.ToName = "description";
+            descriptionPair.FromName = "Description(Item,CO)";
+
+            MapPair categoryNamePair = new MapPair();
+            categoryNamePair.ToName = "CategoryName";
+            categoryNamePair.FromName = "CategoryName";
+
+            MapPair thicknessPair = new MapPair();
+            thicknessPair.ToName = "Thickness";
+            thicknessPair.FromName = "7c5169ad-9081-4aa7-b1a3-4670edae0b8c";
+
+            MapPair materialPair = new MapPair();
+            materialPair.ToName = "Material";
+            materialPair.FromName = "Material";
+
+            MapPair operationsPair = new MapPair();
+            operationsPair.ToName = "Operations";
+            operationsPair.FromName = "794d5b7d-49b5-49ba-938a-7e341a7ff8e4";
+
+            MapPair quantityPair = new MapPair();
+            quantityPair.ToName = "bom_line_ids/product_qty";
+            quantityPair.FromName = "Quantity-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
+
+            MapPair structCodePair = new MapPair();
+            structCodePair.ToName = "Structural Code";
+            structCodePair.FromName = "e3811c7a-a3ee-4f67-b34e-cbc892640616";
+
+            MapPair plantIDPair = new MapPair();
+            plantIDPair.ToName = "Plant ID";
+            plantIDPair.FromName = "eff195ae-da71-4929-b3df-2d6fd1e25f53";
+
+            MapPair isStockPair = new MapPair();
+            isStockPair.ToName = "Is Stock";
+            isStockPair.FromName = "f78c17cd-86d1-4728-96b5-8001fb58b67f";
+
+            MapPair requiresPDFPair = new MapPair();
+            requiresPDFPair.ToName = "Requires PDF";
+            requiresPDFPair.FromName = "6df4ae8b-fbd9-4e62-b801-a46097d4f9c5";
+
+            MapPair commentPair = new MapPair();
+            commentPair.ToName = "Comment";
+            commentPair.FromName = "Comment";
+
+            MapPair modDatePair = new MapPair();
+            modDatePair.ToName = "Date Modified";
+            modDatePair.FromName = "ModDate";
+
+            MapPair statePair = new MapPair();
+            statePair.ToName = "State";
+            statePair.FromName = "State";
+
+            MapPair stockNamePair = new MapPair();
+            stockNamePair.ToName = "Stock Name";
+            stockNamePair.FromName = "a42ca550-c503-4835-99dd-8c4d4ff6dbaf";
+
+            MapPair keywordsPair = new MapPair();
+            keywordsPair.ToName = "Keywords";
+            keywordsPair.FromName = "Keywords";
+
+            MapPair notesPair = new MapPair();
+            notesPair.ToName = "Notes";
+            notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
+
+            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_PARENT,
+                    new MapPair[] { numberPair, descriptionPair });
+
+            // write parts to file1
+            long currentByte = 0;
+            long partSize = connection.PartSizeInBytes;
+            using (FileStream fs = new FileStream(filename1, FileMode.Create))
+            {
+                while (currentByte < fileNameAndUrl.FileSize)
+                {
+                    long lastByte = currentByte + partSize < fileNameAndUrl.FileSize ? currentByte + partSize : fileNameAndUrl.FileSize;
+                    byte[] contents = packageSvc.DownloadPackagePart(fileNameAndUrl.Name, currentByte, lastByte);
+                    fs.Write(contents, 0, (int)(lastByte - currentByte));
+                    currentByte += partSize;
+                }
+            }
+
+            // write bom to file2
+
+            MapPair bomNumberPair = new MapPair();
+            bomNumberPair.ToName = "bom_line_ids/product_id";
+            bomNumberPair.FromName = "Number";
+
+            fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_PARENT,
+                    new MapPair[] { parentPair, bomNumberPair, quantityPair });
+
+            currentByte = 0;
+            partSize = connection.PartSizeInBytes;
+            using (FileStream fs = new FileStream(filename2, FileMode.Create))
+            {
+                while (currentByte < fileNameAndUrl.FileSize)
+                {
+                    long lastByte = currentByte + partSize < fileNameAndUrl.FileSize ? currentByte + partSize : fileNameAndUrl.FileSize;
+                    byte[] contents = packageSvc.DownloadPackagePart(fileNameAndUrl.Name, currentByte, lastByte);
+                    fs.Write(contents, 0, (int)(lastByte - currentByte));
+                    currentByte += partSize;
+                }
+            }
+
+
+
         }
 
         private static void downloadFile(VDF.Vault.Currency.Connections.Connection connection, VDF.Vault.Currency.Entities.FileIteration file, string folderPath)
