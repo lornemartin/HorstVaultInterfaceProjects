@@ -58,6 +58,8 @@ namespace PrintPDF
         // it needs to have a list of ERP names passed to it, each one matching its corresponding sheet in the IDW.
         //  the routine actually doesn't care whether it gets passed Vault Names or Epicor Numbers, 
         //  it'll just name the pdfs accordingly
+
+        // as of November 1 2017, it is no longer being used.
         public Boolean printToPDFNew(string idw, System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
                                                       Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
                                                       propDict, string outputFolder, ref string errMessage, ref string logMessage)

@@ -189,53 +189,9 @@ namespace JobProcessorFileUpdate
                 // ipts and iams are easier to deal with than idws
                 if (fileName.EndsWith(".ipt") || fileName.EndsWith(".iam"))
                 {
-                    List<VDF.Vault.Currency.Entities.FileIteration> fIterations = new List<VDF.Vault.Currency.Entities.FileIteration>();
-                    VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs =
-                                   new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                    propDefs =
-                      connection.PropertyManager.GetPropertyDefinitions(
-                        VDF.Vault.Currency.Entities.EntityClassIds.Files,
-                        null,
-                        VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll
-                      );
-
-                    fIterations.Add(fileIter);
-
-                    Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues propList =
-                        new VDF.Vault.Currency.Properties.PropertyValues();
-
-                    System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                                                          Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
-                                                          propDict = new Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                                                                              VDF.Vault.Currency.Properties.PropertyValue>();
-
-                    Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition propDef =
-                        new VDF.Vault.Currency.Properties.PropertyDefinition(propDefs[VaultSearchEntity]);
-
-                    propList = connection.PropertyManager.GetPropertyValues(
-                                fIterations, new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition[] { propDef }, null);
-
-                    propDict = propList.GetValues(propDef);
-
-                    string entityName = "";
-
-                    foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
-                                         VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
-                    {
-                        if (pair.Key.EntityMasterId != 0)
-                        {
-                            entityName = pair.Value.Value.ToString();
-                        }
-                        else
-                        {
-                            errMessage += "No match found for: " + fileName;
-                            return false;
-                        }
-                    }
-
                     PrintObject printOb = new PrintObject();
 
-                    if (printOb.deletePDF(entityName, m_PDFPath, ref logMessage, ref errMessage))
+                    if (printOb.deletePDF(fileName, m_PDFPath, ref logMessage, ref errMessage))
                         return true;
                     else
                         return false;
@@ -285,117 +241,8 @@ namespace JobProcessorFileUpdate
                                         errMessage += "Can not delete PDF Error1 in function FileUpdate\r\n";
                                         return false;
                                     }
-
-
-
-                                    ////////////////////////////////////////////////////////////
-
-
-                                    //VDF.Vault.Currency.Entities.FileIteration fIter;
-                                    //try
-                                    //{
-                                    //    ACW.SrchCond vaultName = new ACW.SrchCond()
-                                    //    {
-                                    //        PropDefId = vaultNamePropDef.Id,
-                                    //        PropTyp = ACW.PropertySearchType.SingleProperty,
-                                    //        SrchOper = 3, // equals
-                                    //        SrchRule = ACW.SearchRuleType.Must,
-                                    //        SrchTxt = modelName
-                                    //    };
-
-                                    //    string bookmark = string.Empty;
-                                    //    ACW.SrchStatus status = null;
-                                    //    Autodesk.Connectivity.WebServices.File[] searchResults =
-                                    //        connection.WebServiceManager.DocumentService.FindFilesBySearchConditions(
-                                    //        new ACW.SrchCond[] { vaultName },
-                                    //        null, null, false, true, ref bookmark, out status);
-
-                                    //    propDefs = new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                                    //    propDefs =
-                                    //      connection.PropertyManager.GetPropertyDefinitions(
-                                    //        VDF.Vault.Currency.Entities.EntityClassIds.Files,
-                                    //        null,
-                                    //        VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll
-                                    //      );
-
-                                    //    if (searchResults == null)
-                                    //    {
-                                    //        errMessage += "No corresponding model file found for " + modelName + "\r\n";
-                                    //        ACW.File emptyFile = new ACW.File();
-                                    //        fIter = new VDF.Vault.Currency.Entities.FileIteration(connection, emptyFile);
-                                    //        fIterations.Add(fIter);
-                                    //    }
-                                    //    else if (searchResults.Count() > 1)
-                                    //    {
-                                    //        errMessage += "Multiple corresponding models found for " + modelName + "\r\n";
-                                    //        ACW.File emptyFile = new ACW.File();
-                                    //        fIter = new VDF.Vault.Currency.Entities.FileIteration(connection, emptyFile);
-                                    //        fIterations.Add(fIter);
-                                    //    }
-                                    //    else
-                                    //    {
-                                    //        fIter = new VDF.Vault.Currency.Entities.FileIteration(connection, searchResults[0]);
-                                    //        fIterations.Add(fIter);
-                                    //    }
-                                    //}
-                                    //catch (Exception)
-                                    //{
-                                    //    logMessage += logMessage;
-                                    //    errMessage += "Error Matching Model Name to ERP Name in function FileUpdate\r\n";
-                                    //    return false;
-                                    //}
                                 }
                             }
-
-                            // now we have a list of model file names stored in 'fIterations', one for every sheet in the idw.
-                            // If we couldn't match the sheet up with a model, the list will have a blank entry.
-                            // next we have to match each name up with whatever vault field we are using to name the pdf files...
-                            // e.g. if we're using names, this is totally unnecessary, but if we want to use ERP Numbers, we have to 
-                            // search them out.
-                            // we'll then end up with a dictionary matching names up with the chosen vault field.
-
-                            //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues propList =
-                            //    new VDF.Vault.Currency.Properties.PropertyValues();
-
-                            //System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                            //                                      Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
-                            //                                      propDict = new Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                            //                                                          VDF.Vault.Currency.Properties.PropertyValue>();
-
-                            //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition propDef =
-                            //    new VDF.Vault.Currency.Properties.PropertyDefinition(propDefs[VaultSearchEntity]);
-
-                            //propList = connection.PropertyManager.GetPropertyValues(
-                            //            fIterations, new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition[] { propDef }, null);
-
-                            //propDict = propList.GetValues(propDef);
-
-                            //now loop through the dictionary, processing each entry.
-                            //foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
-                            //                     VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
-                            //{
-                            //    if (pair.Key.EntityMasterId != 0)
-                            //    {
-                            //        PrintObject printOb = new PrintObject();
-                            //        if (printOb.deletePDF(pair.Value.Value.ToString(), m_PDFPath, ref logMessage, ref errMessage))
-                            //        {
-                            //            logMessage += "Deleted PDF: " + pair.Value.Value.ToString() + "\r\n";
-                            //            we already logged a message in the deletePDF function
-                            //        }
-                            //        else
-                            //        {
-                            //            logMessage += logMessage;
-                            //            errMessage += "Can not delete PDF Error1 in function FileUpdate\r\n";
-                            //            return false;
-                            //        }
-                            //    }
-                            //    else
-                            //    {
-                            //        logMessage += "No model to delete for " + pair.Value.Value + "\r\n";
-                            //        errMessage += "Can not delete PDF Error2 in function FileUpdate\r\n";
-                            //        return false;
-                            //    }
-                            //}
                         }
                     }
                     catch (Exception ex)
