@@ -490,21 +490,26 @@ namespace PrintPDF
 
                 if (filesToDelete.Count > 0)
                 {
-                    logMessage += @" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ";
+                    //logMessage += @" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ";
+                    log.Info(@" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ");
+
 
                     foreach (string f in filesToDelete)
                     {
-                        logMessage += "File to delete: " + f + @" " + "\r\n" + @" ";
+                        //logMessage += "File to delete: " + f + @" " + "\r\n" + @" ";
+                        log.Info("File to delete: " + f + @" " + "\r\n" + @" ");
                         if (System.IO.File.Exists(f))
                         {
                             System.IO.File.Delete(f);
-                            logMessage += "Deleted File " + f + @" " + "\r\n" + @" ";
+                            //logMessage += "Deleted File " + f + @" " + "\r\n" + @" ";
+                            log.Info("Deleted File " + f + @" " + "\r\n" + @" ");
                         }
                     }
                 }
                 else
                 {
-                    logMessage += @" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ";
+                    //logMessage += @" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ";
+                    log.Info(@" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ");
                 }
 
                 return true;
