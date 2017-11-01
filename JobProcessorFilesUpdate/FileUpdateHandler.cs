@@ -163,7 +163,7 @@ namespace JobProcessorFileUpdate
 
         #endregion
     
-        //  use ERP names instead of file names.
+        //  remove pdfs based on filename
         private Boolean PDFfileUpdate(VDF.Vault.Currency.Entities.FileIteration fileIter, VDF.Vault.Currency.Connections.Connection connection, ref string logMessage, ref string errMessage)
         {
             try
