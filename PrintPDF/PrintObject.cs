@@ -479,6 +479,29 @@ namespace PrintPDF
         {
             try
             {
+                // set log file location
+                XmlConfigurator.Configure();
+                log4net.Repository.Hierarchy.Hierarchy h =
+                (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
+                foreach (IAppender a in h.Root.Appenders)
+                {
+                    if (a is FileAppender)
+                    {
+                        FileAppender fa = (FileAppender)a;
+                        // Programmatically set this to the desired location here
+                        string logFileLocation = folder + "PDFPrint.log";
+
+                        // Uncomment the lines below if you want to retain the base file name
+                        // and change the folder name...
+                        //FileInfo fileInfo = new FileInfo(fa.File);
+                        //logFileLocation = string.Format(@"C:\MySpecialFolder\{0}", fileInfo.Name);
+
+                        fa.File = logFileLocation;
+                        fa.ActivateOptions();
+                        break;
+                    }
+                }
+
                 List<string> filesToDelete = new List<string>();
                 string baseFileName = System.IO.Path.GetFileNameWithoutExtension(fileName);
 
