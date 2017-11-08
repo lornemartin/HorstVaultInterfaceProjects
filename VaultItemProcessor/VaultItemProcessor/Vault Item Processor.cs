@@ -1612,12 +1612,8 @@ namespace VaultItemProcessor
                 string Password = "openpgpwd";
                 string Port = "5432";
 
-                List<ExportLineItem> itemListwithMissingParents = new List<ExportLineItem>();
-
                 foreach (ExportLineItem item in itemList)
                 {
-                    
-
                     // Build connection string using parameters from portal
                     //
                     string connString =
@@ -1732,73 +1728,22 @@ namespace VaultItemProcessor
 
                             command.ExecuteNonQuery();
 
-                            if (item.Parent != "<top>")     // unless this is the top level item, it will also be a child
+                            command.CommandText = "SELECT id FROM product_product WHERE product_tmpl_id = '" + product_template_newRecord + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+
+                            reader.Read();
+
+                            if (reader.HasRows)
                             {
-                                command.CommandText = "SELECT id FROM product_template WHERE name = '" + item.Parent + "';";
-                                reader.Close();
-                                reader = command.ExecuteReader();
+                                product_product_newRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created product_product record
 
-                                reader.Read();
-
-                                int product_template_id = 0;
-                                int mrp_bom_id = 0;
-
-                                if (reader.HasRows)
-                                {
-                                    product_template_id = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
-                                }
-                                else
-                                {
-                                    itemListwithMissingParents.Add(item);
-                                    continue;
-                                }
-
-                                command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_id + "';";
-                                reader.Close();
-                                reader = command.ExecuteReader();
-
-                                reader.Read();
-
-                                if (reader.HasRows)
-                                {
-                                    mrp_bom_id = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
-                                }
-
-
-
-                                // item is not top level, so we need to create a parent child relationship in mrp_bom_line table
-                                conn.Close();
-                                conn = new NpgsqlConnection(connString);
-                                conn.Open();
-                                command = new NpgsqlCommand();
-                                command = conn.CreateCommand();
-                                command.CommandText = @"insert into mrp_bom_line (
-                                            create_uid, product_id, sequence, product_uom_id, 
-                                            create_date, write_date, product_qty, bom_id, write_uid
-                                            )" +
-                                            @"values(@create_uid, @product_id, @sequence, @product_uom_id,
-                                            @create_date, @write_date, @product_qty, @bom_id,@write_uid
-                                            ); ";
-
-                                command.Parameters.AddWithValue("@create_uid", 1);
-                                command.Parameters.AddWithValue("@product_id", product_product_newRecord);
-                                command.Parameters.AddWithValue("@sequence", 1);    // this should likely be incremented
-                                command.Parameters.AddWithValue("@product_uom_id", 1);
-                                command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
-                                command.Parameters.AddWithValue("write_date", NpgsqlTypes.NpgsqlDateTime.Now);
-                                command.Parameters.AddWithValue("product_qty", item.Qty);
-                                command.Parameters.AddWithValue("bom_id", mrp_bom_id);
-                                command.Parameters.AddWithValue("write_uid", 1);
-
-                                command.ExecuteNonQuery();
-                                childRelationNum++;
                             }
-                        }
 
 
-                        //if (item.Parent == "<top>")
-                        if (item.Category == "Assembly" || item.Category == "Product")        // all assemblies need a bom record created
-                                {
+                            //if (item.Parent == "<top>")
+                            if (item.Category == "Assembly" || item.Category == "Product")        // all assemblies need a bom record created
+                            {
                                 // item is top level so we create a record in mrp_bom table
                                 // create a bom item
                                 conn.Close();
@@ -1843,25 +1788,72 @@ namespace VaultItemProcessor
                                     mrp_bom_parentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
                                 }
                             }
-                            
+
+
+
+
+
+
+                            if (item.Parent != "<top>")     // unless this is the top level item, it will also be a child
+                            {
+                                command.CommandText = "SELECT id FROM product_template WHERE name = '" + item.Parent + "';";
+                                reader.Close();
+                                reader = command.ExecuteReader();
+
+                                reader.Read();
+
+                                int product_template_id = 0;
+                                int mrp_bom_id = 0;
+
+                                if (reader.HasRows)
+                                {
+                                    product_template_id = int.Parse(reader[0].ToString());    
+                                }
+
+                                command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_id + "';";
+                                reader.Close();
+                                reader = command.ExecuteReader();
+
+                                reader.Read();
+
+                                if (reader.HasRows)
+                                {
+                                    mrp_bom_id = int.Parse(reader[0].ToString());    
+                                }
+
+                                // item is not top level, so we need to create a parent child relationship in mrp_bom_line table
+                                conn.Close();
+                                conn = new NpgsqlConnection(connString);
+                                conn.Open();
+                                command = new NpgsqlCommand();
+                                command = conn.CreateCommand();
+                                command.CommandText = @"insert into mrp_bom_line (
+                                            create_uid, product_id, sequence, product_uom_id, 
+                                            create_date, write_date, product_qty, bom_id, write_uid
+                                            )" +
+                                            @"values(@create_uid, @product_id, @sequence, @product_uom_id,
+                                            @create_date, @write_date, @product_qty, @bom_id,@write_uid
+                                            ); ";
+
+                                command.Parameters.AddWithValue("@create_uid", 1);
+                                command.Parameters.AddWithValue("@product_id", product_product_newRecord);
+                                command.Parameters.AddWithValue("@sequence", 1);    // this should likely be incremented
+                                command.Parameters.AddWithValue("@product_uom_id", 1);
+                                command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("product_qty", item.Qty);
+                                command.Parameters.AddWithValue("bom_id", mrp_bom_id);
+                                command.Parameters.AddWithValue("write_uid", 1);
+
+                                command.ExecuteNonQuery();
+                                childRelationNum++;
+                            }
+                        }
                     }
 
-                    //command.ExecuteNonQuery();
 
                     Console.Out.WriteLine("Closing connection");
                     conn.Close();
-
-                    
-
-                }
-
-                if (itemListwithMissingParents.Count > 0)
-                {
-                    foreach(ExportLineItem item in itemListwithMissingParents)
-                    {
-                        lineItemList.Add(item);
-                    }
-                    processList(lineItemList);
                 }
 
                 return true;
