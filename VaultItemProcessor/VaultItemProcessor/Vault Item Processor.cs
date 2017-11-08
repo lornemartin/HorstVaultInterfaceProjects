@@ -1864,8 +1864,44 @@ namespace VaultItemProcessor
             }
         }
 
+        public List<ExportLineItem> sortList(List<ExportLineItem> itemList)
+        {
+            try
+            {
+                List<ExportLineItem> sortedList = new List<ExportLineItem>();
+
+                sortedList.Add(itemList.First());
+                itemList.Remove(itemList.First());
+
+                do
+                {
+                    foreach (ExportLineItem item in itemList.ToList())
+                    {
+
+                        string parentName = item.Parent;
+
+                        var value = sortedList.Find(x => x.Number == parentName);
+                        if (value != null)  // item's parent is already on sorted list
+                        {
+                            sortedList.Add(item);
+                            itemList.Remove(item);
+                        }
+                    }
+                }
+                while (itemList.Count > 0);
+                
+                return sortedList;
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
+        }
+
         private void btnOdoo_Click(object sender, EventArgs e)
         {
+
+            lineItemList = sortList(lineItemList);
             processList(lineItemList);
         }
     }
