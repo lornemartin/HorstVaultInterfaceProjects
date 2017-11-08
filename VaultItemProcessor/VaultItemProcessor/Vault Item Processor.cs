@@ -1637,7 +1637,7 @@ namespace VaultItemProcessor
 
                     reader.Read();
 
-                    if (reader.FieldCount < 0)
+                    if (reader.HasRows)
                     {
                         product_template_newRecord = int.Parse(reader[0].ToString());    // we found a record with this name already, don't create it again.
                         reader.Close();
@@ -1740,52 +1740,61 @@ namespace VaultItemProcessor
 
                             }
 
+                            // if we already have a bom record for this item, we don't want another one
+                            command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_newRecord + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
 
-                            //if (item.Parent == "<top>")
-                            if (item.Category == "Assembly" || item.Category == "Product")        // all assemblies need a bom record created
+                            reader.Read();
+
+                            if (!reader.HasRows)
                             {
-                                // item is top level so we create a record in mrp_bom table
-                                // create a bom item
-                                conn.Close();
-                                conn = new NpgsqlConnection(connString);
-                                conn.Open();
-                                command = new NpgsqlCommand();
-                                command = conn.CreateCommand();
-                                command.CommandText = @"insert into mrp_bom (
+                                if (item.Category == "Assembly" || item.Category == "Product")        // all assemblies need a bom record created
+                                {
+                                    // item is top level so we create a record in mrp_bom table
+                                    // create a bom item
+                                    conn.Close();
+                                    conn = new NpgsqlConnection(connString);
+                                    conn.Open();
+                                    command = new NpgsqlCommand();
+                                    command = conn.CreateCommand();
+                                    command.CommandText = @"insert into mrp_bom (
                                             create_date, sequence, write_uid, product_qty, create_uid, 
                                             company_id, product_tmpl_id, 
                                             type, ready_to_produce, write_date, active, product_uom_id
                                             )" +
-                                            @"values(@create_date, @sequence, @write_uid, @product_qty, @create_uid, 
+                                                @"values(@create_date, @sequence, @write_uid, @product_qty, @create_uid, 
                                             @company_id, @product_tmpl_id, 
                                             @type, @ready_to_produce, @write_date, @active, @product_uom_id 
                                             ); ";
 
-                                command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
-                                command.Parameters.AddWithValue("@sequence", 1);
-                                command.Parameters.AddWithValue("@write_uid", 1);
-                                command.Parameters.AddWithValue("@product_qty", item.Qty);
-                                command.Parameters.AddWithValue("@create_uid", 1);
-                                command.Parameters.AddWithValue("@company_id", 1);
-                                command.Parameters.AddWithValue("@product_tmpl_id", product_template_newRecord);
-                                command.Parameters.AddWithValue("@type", "normal");
-                                command.Parameters.AddWithValue("@ready_to_produce", "asap");
-                                command.Parameters.AddWithValue("@write_date", NpgsqlTypes.NpgsqlDateTime.Now);
-                                command.Parameters.AddWithValue("@active", true);
-                                command.Parameters.AddWithValue("@product_uom_id", 1);
+                                    command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                    command.Parameters.AddWithValue("@sequence", 1);
+                                    command.Parameters.AddWithValue("@write_uid", 1);
+                                    //command.Parameters.AddWithValue("@product_qty", item.Qty);
+                                    command.Parameters.AddWithValue("@product_qty", 1);
+                                    command.Parameters.AddWithValue("@create_uid", 1);
+                                    command.Parameters.AddWithValue("@company_id", 1);
+                                    command.Parameters.AddWithValue("@product_tmpl_id", product_template_newRecord);
+                                    command.Parameters.AddWithValue("@type", "normal");
+                                    command.Parameters.AddWithValue("@ready_to_produce", "asap");
+                                    command.Parameters.AddWithValue("@write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                    command.Parameters.AddWithValue("@active", true);
+                                    command.Parameters.AddWithValue("@product_uom_id", 1);
 
-                                command.ExecuteNonQuery();
+                                    command.ExecuteNonQuery();
 
-                                // we have to save the id of this parent record to insert into mrp_bom_line table in the last step
-                                command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_newRecord + "';";
-                                reader.Close();
-                                reader = command.ExecuteReader();
+                                    // we have to save the id of this parent record to insert into mrp_bom_line table in the last step
+                                    command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_newRecord + "';";
+                                    reader.Close();
+                                    reader = command.ExecuteReader();
 
-                                reader.Read();
+                                    reader.Read();
 
-                                if (reader.HasRows)
-                                {
-                                    mrp_bom_parentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
+                                    if (reader.HasRows)
+                                    {
+                                        mrp_bom_parentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
+                                    }
                                 }
                             }
 
@@ -1866,6 +1875,7 @@ namespace VaultItemProcessor
 
         public List<ExportLineItem> sortList(List<ExportLineItem> itemList)
         {
+            // sort list so that no items appear before their respective parents.
             try
             {
                 List<ExportLineItem> sortedList = new List<ExportLineItem>();
@@ -1881,7 +1891,7 @@ namespace VaultItemProcessor
                         string parentName = item.Parent;
 
                         var value = sortedList.Find(x => x.Number == parentName);
-                        if (value != null)  // item's parent is already on sorted list
+                        if (value != null)  // is item's parent already on sorted list?
                         {
                             sortedList.Add(item);
                             itemList.Remove(item);
@@ -1900,8 +1910,7 @@ namespace VaultItemProcessor
 
         private void btnOdoo_Click(object sender, EventArgs e)
         {
-
-            lineItemList = sortList(lineItemList);
+            lineItemList = sortList(lineItemList);  // sort list so that no items appear before their respective parents
             processList(lineItemList);
         }
     }
