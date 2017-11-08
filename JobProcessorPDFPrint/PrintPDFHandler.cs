@@ -141,7 +141,6 @@ namespace JobProcessorPrintPDF
         // prints each sheet of the idw(fileIter) to it's own pdf file.
         // if there's more than one sheet referencing the same assembly, they will be combined in one multi-page pdf
 
-        // this is not at all tested yet....
         private Boolean PrintPDF(VDF.Vault.Currency.Entities.FileIteration fileIter, VDF.Vault.Currency.Connections.Connection connection, ref string errMessage, ref string logMessage)
         {
             try

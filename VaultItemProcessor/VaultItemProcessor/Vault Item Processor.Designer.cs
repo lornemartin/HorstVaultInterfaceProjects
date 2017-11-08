@@ -88,6 +88,7 @@
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
+            this.btnOdoo = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -564,11 +565,22 @@
             this.btnProcessBatch.UseVisualStyleBackColor = true;
             this.btnProcessBatch.Click += new System.EventHandler(this.btnProcessBatch_Click);
             // 
+            // btnOdoo
+            // 
+            this.btnOdoo.Location = new System.Drawing.Point(1143, 608);
+            this.btnOdoo.Name = "btnOdoo";
+            this.btnOdoo.Size = new System.Drawing.Size(75, 23);
+            this.btnOdoo.TabIndex = 9;
+            this.btnOdoo.Text = "Odoo";
+            this.btnOdoo.UseVisualStyleBackColor = true;
+            this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
             this.Controls.Add(this.statusStrip1);
@@ -633,6 +645,7 @@
         private DevExpress.XtraTreeList.Columns.TreeListColumn requiresPDF;
         private System.Windows.Forms.Button btnProcessBatch;
         private System.Windows.Forms.Button btnGroupSawDrawings;
+        private System.Windows.Forms.Button btnOdoo;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

@@ -18,6 +18,7 @@ using DevExpress.XtraTreeList.Menu;
 using DevExpress.XtraSplashScreen;
 using System.Xml.Serialization;
 using PdfSharp.Drawing.Layout;
+using Npgsql;
 
 namespace VaultItemProcessor
 {
@@ -1595,6 +1596,252 @@ namespace VaultItemProcessor
             GroupBandSawDrawings(rootDir);
         }
 
+        public bool processList(List<ExportLineItem> itemList)
+        {
+            try
+            {
+                int product_template_newRecord = 0;
+                int product_product_newRecord = 0;
+                int mrp_bom_parentRecord = 0;
+
+                int childRelationNum = 1;
+
+                string Host = "127.0.0.1";
+                string User = "openpg";
+                string DBname = "Horst Production";
+                string Password = "openpgpwd";
+                string Port = "5432";
+
+                foreach (ExportLineItem item in itemList)
+                {
+                    // Build connection string using parameters from portal
+                    //
+                    string connString =
+                        String.Format(
+                            "Server={0}; User Id={1}; Database={2}; Port={3}; Password={4};",
+                            Host,
+                            User,
+                            DBname,
+                            Port,
+                            Password);
+
+                    var conn = new NpgsqlConnection(connString);
+
+                    Console.Out.WriteLine("Opening connection");
+                    conn.Open();
+
+                    var command = conn.CreateCommand();
+
+                    command.CommandText = "SELECT id FROM product_template WHERE name = '" + item.Number + "';";
+                    var reader = command.ExecuteReader();
+
+                    reader.Read();
+
+                    if (reader.FieldCount < 0)
+                    {
+                        product_template_newRecord = int.Parse(reader[0].ToString());    // we found a record with this name already, don't create it again.
+                        reader.Close();
+                    }
+                    else
+                    {
+                        conn.Close();
+                        conn = new NpgsqlConnection(connString);
+                        conn.Open();
+                        command = new NpgsqlCommand();
+                        command = conn.CreateCommand();
+                        command.CommandText = @"insert into product_template (
+                        warranty, list_price, weight, sequence, write_uid, 
+                        uom_id, create_date, create_uid, 
+                        sale_ok, purchase_ok, company_id, uom_po_id, 
+                        volume, write_date, active, categ_id, 
+                        name, rental, type, tracking, 
+                        sale_delay, produce_delay, sale_line_warn,
+                        track_service, sale_line_warn_msg,
+                        invoice_policy, expense_policy)" +
+                        @"values(@warranty, @list_price, @weight, @sequence, @write_uid, 
+                        @uom_id, @create_date, @create_uid, 
+                        @sale_ok, @purchase_ok, @company_id, @uom_po_id, 
+                        @volume, @write_date, @active, @categ_id, 
+                        @name, @rental, @type, @tracking, 
+                        @sale_delay, @produce_delay, @sale_line_warn,
+                        @track_service, @sale_line_warn_msg,
+                        @invoice_policy, @expense_policy); ";
+
+                        command.Parameters.AddWithValue("@warranty", 0);
+                        command.Parameters.AddWithValue("@list_price", 1);
+                        command.Parameters.AddWithValue("@weight", 0);
+                        command.Parameters.AddWithValue("@sequence", 1);
+                        command.Parameters.AddWithValue("@write_uid", 1);
+                        command.Parameters.AddWithValue("@uom_id", 1);
+                        command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                        command.Parameters.AddWithValue("@create_uid", 1);
+                        command.Parameters.AddWithValue("@sale_ok", false);
+                        command.Parameters.AddWithValue("@purchase_ok", true);
+                        command.Parameters.AddWithValue("@company_id", 1);
+                        command.Parameters.AddWithValue("@uom_po_id", 1);
+                        command.Parameters.AddWithValue("@volume", 0);
+                        command.Parameters.AddWithValue("@write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                        command.Parameters.AddWithValue("@active", true);
+                        command.Parameters.AddWithValue("@categ_id", 1);
+                        command.Parameters.AddWithValue("@name", item.Number);                    // define name here
+                        command.Parameters.AddWithValue("@rental", false);
+                        command.Parameters.AddWithValue("@type", "product");
+                        command.Parameters.AddWithValue("@tracking", "none");
+                        command.Parameters.AddWithValue("@sale_delay", 0);
+                        command.Parameters.AddWithValue("@produce_delay", 0);
+                        command.Parameters.AddWithValue("@sale_line_warn", "no-message");
+                        command.Parameters.AddWithValue("@track_service", "manual");
+                        command.Parameters.AddWithValue("@sale_line_warn_msg", "");
+                        command.Parameters.AddWithValue("@invoice_policy", "order");
+                        command.Parameters.AddWithValue("@expense_policy", "no");
+
+                        command.ExecuteNonQuery();  // this command should create the new record
+
+                        command.CommandText = "SELECT id FROM product_template WHERE name = '" + item.Number + "';";
+                        reader.Close();
+                        reader = command.ExecuteReader();
+
+                        reader.Read();
+
+                        if (reader.HasRows)
+                        {
+                            product_template_newRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
+
+                            //-----------------------create the record in the product_product table, we need a record number from this table in the last step
+                            conn.Close();
+                            conn = new NpgsqlConnection(connString);
+                            conn.Open();
+                            command = new NpgsqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into product_product (
+                                            create_date, product_tmpl_id, 
+                                            create_uid, write_uid, write_date, active)" +
+                                                    @"values(@create_date, @product_tmpl_id,
+                                            @create_uid, @write_uid, @write_date, @active); ";
+
+                            command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                            command.Parameters.AddWithValue("@product_tmpl_id", product_template_newRecord);   // this needs to be product_template record number created in the first step.
+                            command.Parameters.AddWithValue("@create_uid", 1);
+                            command.Parameters.AddWithValue("@write_uid", 1);
+                            command.Parameters.AddWithValue("@write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                            command.Parameters.AddWithValue("@active", true);
+
+                            command.ExecuteNonQuery();
+
+                            if (item.Parent == "<top>")
+                            {
+                                // item is top level so we create a record in mrp_bom table
+                                // create a bom item
+                                conn.Close();
+                                conn = new NpgsqlConnection(connString);
+                                conn.Open();
+                                command = new NpgsqlCommand();
+                                command = conn.CreateCommand();
+                                command.CommandText = @"insert into mrp_bom (
+                                            create_date, sequence, write_uid, product_qty, create_uid, 
+                                            company_id, product_tmpl_id, 
+                                            type, ready_to_produce, write_date, active, product_uom_id
+                                            )" +
+                                            @"values(@create_date, @sequence, @write_uid, @product_qty, @create_uid, 
+                                            @company_id, @product_tmpl_id, 
+                                            @type, @ready_to_produce, @write_date, @active, @product_uom_id 
+                                            ); ";
+
+                                command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("@sequence", 1);
+                                command.Parameters.AddWithValue("@write_uid", 1);
+                                command.Parameters.AddWithValue("@product_qty", item.Qty);
+                                command.Parameters.AddWithValue("@create_uid", 1);
+                                command.Parameters.AddWithValue("@company_id", 1);
+                                command.Parameters.AddWithValue("@product_tmpl_id", product_template_newRecord);
+                                command.Parameters.AddWithValue("@type", "normal");
+                                command.Parameters.AddWithValue("@ready_to_produce", "asap");
+                                command.Parameters.AddWithValue("@write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("@active", true);
+                                command.Parameters.AddWithValue("@product_uom_id", 1);
+
+                                command.ExecuteNonQuery();
+
+                                // we have to save the id of this parent record to insert into mrp_bom_line table in the last step
+                                command.CommandText = "SELECT id FROM mrp_bom WHERE product_tmpl_id = '" + product_template_newRecord + "';";
+                                reader.Close();
+                                reader = command.ExecuteReader();
+
+                                reader.Read();
+
+                                if (reader.HasRows)
+                                {
+                                    mrp_bom_parentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
+                                }
+                            }
+                            else
+                            {
+                                command.CommandText = "SELECT id FROM product_product WHERE product_tmpl_id = '" + product_template_newRecord + "';";
+                                reader.Close();
+                                reader = command.ExecuteReader();
+
+                                reader.Read();
+
+                                if (reader.HasRows)
+                                {
+                                    product_product_newRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created bom record
+                                }
+
+                                // item is not top level, so we need to create a parent child relationship in mrp_bom_line table
+                                conn.Close();
+                                conn = new NpgsqlConnection(connString);
+                                conn.Open();
+                                command = new NpgsqlCommand();
+                                command = conn.CreateCommand();
+                                command.CommandText = @"insert into mrp_bom_line (
+                                            create_uid, product_id, sequence, product_uom_id, 
+                                            create_date, write_date, product_qty, bom_id, write_uid
+                                            )" +
+                                            @"values(@create_uid, @product_id, @sequence, @product_uom_id,
+                                            @create_date, @write_date, @product_qty, @bom_id,@write_uid
+                                            ); ";
+
+                                command.Parameters.AddWithValue("@create_uid", 1);
+                                command.Parameters.AddWithValue("@product_id", product_product_newRecord);
+                                command.Parameters.AddWithValue("@sequence", 1);    // this should likely be incremented
+                                command.Parameters.AddWithValue("@product_uom_id", 1);
+                                command.Parameters.AddWithValue("@create_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("write_date", NpgsqlTypes.NpgsqlDateTime.Now);
+                                command.Parameters.AddWithValue("product_qty", item.Qty);
+                                command.Parameters.AddWithValue("bom_id", mrp_bom_parentRecord);
+                                command.Parameters.AddWithValue("write_uid", 1);
+
+                                command.ExecuteNonQuery();
+                                childRelationNum++;
+                            }
+                        }
+
+
+                        else
+                        {
+                            // this should never happen
+                        }
+                    }
+
+                    //command.ExecuteNonQuery();
+
+                    Console.Out.WriteLine("Closing connection");
+                    conn.Close();
+
+
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private void btnOdoo_Click(object sender, EventArgs e)
+        {
+            processList(lineItemList);
+        }
     }
 
 }
