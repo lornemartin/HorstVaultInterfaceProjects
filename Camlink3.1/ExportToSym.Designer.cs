@@ -41,16 +41,19 @@
             this.btnAddToProject = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtBoxSymFolder = new System.Windows.Forms.TextBox();
+            this.lblSymFolderName = new System.Windows.Forms.Label();
+            this.btnSymFolderBrowse = new System.Windows.Forms.Button();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.txtBoxSymFolder2 = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.btnBrowseForSym2 = new System.Windows.Forms.Button();
             this.objectListView1 = new BrightIdeasSoftware.ObjectListView();
             this.olvClmQuantity = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmDesc = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmThickness = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-            this.txtBoxSymFolder = new System.Windows.Forms.TextBox();
-            this.lblSymFolderName = new System.Windows.Forms.Label();
-            this.btnSymFolderBrowse = new System.Windows.Forms.Button();
-            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxIpt)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxSym)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -81,7 +84,7 @@
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.progressBar,
             this.toolStripStatusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 449);
+            this.statusStrip.Location = new System.Drawing.Point(0, 479);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(896, 22);
             this.statusStrip.TabIndex = 4;
@@ -100,7 +103,7 @@
             // btnOK
             // 
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnOK.Location = new System.Drawing.Point(761, 376);
+            this.btnOK.Location = new System.Drawing.Point(761, 399);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(106, 61);
             this.btnOK.TabIndex = 5;
@@ -109,7 +112,7 @@
             // 
             // btnConvertAll
             // 
-            this.btnConvertAll.Location = new System.Drawing.Point(761, 295);
+            this.btnConvertAll.Location = new System.Drawing.Point(761, 308);
             this.btnConvertAll.Name = "btnConvertAll";
             this.btnConvertAll.Size = new System.Drawing.Size(106, 57);
             this.btnConvertAll.TabIndex = 6;
@@ -166,10 +169,62 @@
             this.groupBox1.Controls.Add(this.txtBoxProject);
             this.groupBox1.Location = new System.Drawing.Point(26, 295);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(441, 129);
+            this.groupBox1.Size = new System.Drawing.Size(441, 166);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Projects";
+            // 
+            // txtBoxSymFolder
+            // 
+            this.txtBoxSymFolder.Location = new System.Drawing.Point(498, 314);
+            this.txtBoxSymFolder.Name = "txtBoxSymFolder";
+            this.txtBoxSymFolder.Size = new System.Drawing.Size(241, 20);
+            this.txtBoxSymFolder.TabIndex = 13;
+            // 
+            // lblSymFolderName
+            // 
+            this.lblSymFolderName.AutoSize = true;
+            this.lblSymFolderName.Location = new System.Drawing.Point(498, 295);
+            this.lblSymFolderName.Name = "lblSymFolderName";
+            this.lblSymFolderName.Size = new System.Drawing.Size(127, 13);
+            this.lblSymFolderName.TabIndex = 14;
+            this.lblSymFolderName.Text = "Primary Sym Folder Name";
+            // 
+            // btnSymFolderBrowse
+            // 
+            this.btnSymFolderBrowse.Location = new System.Drawing.Point(646, 341);
+            this.btnSymFolderBrowse.Name = "btnSymFolderBrowse";
+            this.btnSymFolderBrowse.Size = new System.Drawing.Size(93, 23);
+            this.btnSymFolderBrowse.TabIndex = 15;
+            this.btnSymFolderBrowse.Text = "Browse...";
+            this.btnSymFolderBrowse.UseVisualStyleBackColor = true;
+            this.btnSymFolderBrowse.Click += new System.EventHandler(this.btnSymFolderBrowse_Click);
+            // 
+            // txtBoxSymFolder2
+            // 
+            this.txtBoxSymFolder2.Location = new System.Drawing.Point(498, 410);
+            this.txtBoxSymFolder2.Name = "txtBoxSymFolder2";
+            this.txtBoxSymFolder2.Size = new System.Drawing.Size(241, 20);
+            this.txtBoxSymFolder2.TabIndex = 13;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(498, 391);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(144, 13);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "Secondary Sym Folder Name";
+            // 
+            // btnBrowseForSym2
+            // 
+            this.btnBrowseForSym2.Location = new System.Drawing.Point(646, 437);
+            this.btnBrowseForSym2.Name = "btnBrowseForSym2";
+            this.btnBrowseForSym2.Size = new System.Drawing.Size(93, 23);
+            this.btnBrowseForSym2.TabIndex = 15;
+            this.btnBrowseForSym2.Text = "Browse...";
+            this.btnBrowseForSym2.UseVisualStyleBackColor = true;
+            this.btnBrowseForSym2.Click += new System.EventHandler(this.btnBrowseForSym2_Click);
             // 
             // objectListView1
             // 
@@ -234,39 +289,16 @@
             this.olvClmType.Text = "Material Type";
             this.olvClmType.Width = 194;
             // 
-            // txtBoxSymFolder
-            // 
-            this.txtBoxSymFolder.Location = new System.Drawing.Point(498, 314);
-            this.txtBoxSymFolder.Name = "txtBoxSymFolder";
-            this.txtBoxSymFolder.Size = new System.Drawing.Size(241, 20);
-            this.txtBoxSymFolder.TabIndex = 13;
-            // 
-            // lblSymFolderName
-            // 
-            this.lblSymFolderName.AutoSize = true;
-            this.lblSymFolderName.Location = new System.Drawing.Point(498, 295);
-            this.lblSymFolderName.Name = "lblSymFolderName";
-            this.lblSymFolderName.Size = new System.Drawing.Size(90, 13);
-            this.lblSymFolderName.TabIndex = 14;
-            this.lblSymFolderName.Text = "Sym Folder Name";
-            // 
-            // btnSymFolderBrowse
-            // 
-            this.btnSymFolderBrowse.Location = new System.Drawing.Point(646, 341);
-            this.btnSymFolderBrowse.Name = "btnSymFolderBrowse";
-            this.btnSymFolderBrowse.Size = new System.Drawing.Size(93, 23);
-            this.btnSymFolderBrowse.TabIndex = 15;
-            this.btnSymFolderBrowse.Text = "Browse...";
-            this.btnSymFolderBrowse.UseVisualStyleBackColor = true;
-            this.btnSymFolderBrowse.Click += new System.EventHandler(this.btnSymFolderBrowse_Click);
-            // 
             // ExportToSym
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnOK;
-            this.ClientSize = new System.Drawing.Size(896, 471);
+            this.ClientSize = new System.Drawing.Size(896, 501);
+            this.Controls.Add(this.btnBrowseForSym2);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.btnSymFolderBrowse);
+            this.Controls.Add(this.txtBoxSymFolder2);
             this.Controls.Add(this.lblSymFolderName);
             this.Controls.Add(this.txtBoxSymFolder);
             this.Controls.Add(this.groupBox1);
@@ -315,5 +347,8 @@
         private System.Windows.Forms.Label lblSymFolderName;
         private System.Windows.Forms.Button btnSymFolderBrowse;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.TextBox txtBoxSymFolder2;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnBrowseForSym2;
     }
 }

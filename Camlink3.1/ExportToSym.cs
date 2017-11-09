@@ -45,14 +45,15 @@ namespace Camlink3_1
         private RadanInterface radInterface { get; set; }
 
         // read properties from settings file
-        private string symFolder = Properties.Settings.Default["symFolder"].ToString();
+        private string symFolderPrimary = Properties.Settings.Default["symFolder"].ToString();
+        private string symFolderSecondary = Properties.Settings.Default["symFolder2"].ToString();
         private string extensionFolder = Properties.Settings.Default["extensionFolder"].ToString();
 
         #region objectListView delegates
         private void objectListView1_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
         {
             PartToImport part = (PartToImport)e.Model;
-            if (!System.IO.File.Exists(symFolder + part.name + ".sym"))
+            if (!System.IO.File.Exists(symFolderPrimary + part.name + ".sym"))
                 e.Item.ForeColor = Color.Gray;
         }
         #endregion
@@ -88,7 +89,8 @@ namespace Camlink3_1
             PopulateListBox();
 
             txtBoxProject.Text = Properties.Settings.Default["radanProject"].ToString();
-            txtBoxSymFolder.Text = symFolder;
+            txtBoxSymFolder.Text = symFolderPrimary;
+            txtBoxSymFolder2.Text = symFolderSecondary;
         }
 
         #endregion
@@ -121,8 +123,8 @@ namespace Camlink3_1
                         VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, selectedFile);
                         part.desc = GetERPDescriptionProperty(fileIter);
 
-                        part.thickness = radInterface.GetThicknessFromSym(symFolder + part.name + ".sym");
-                        part.materialType = radInterface.GetMaterialTypeFromSym(symFolder + part.name + ".sym");
+                        part.thickness = radInterface.GetThicknessFromSym(symFolderPrimary + part.name + ".sym");
+                        part.materialType = radInterface.GetMaterialTypeFromSym(symFolderPrimary + part.name + ".sym");
                         part.qty = 0;
 
                         PartsToImport.Add(part);
@@ -156,8 +158,10 @@ namespace Camlink3_1
             {
                 openProjectName = radInterface.getOpenProjectName(ref errorMessage);
 
-                string symFileName = symFolder + NameOfPartToConvert + ".sym";
-                if (System.IO.File.Exists(symFileName))
+                string symFileNamePrimary = symFolderPrimary + NameOfPartToConvert + ".sym";
+                string symFileNameSecondary = symFolderSecondary + NameOfPartToConvert + ".sym";
+
+                if (System.IO.File.Exists(symFileNamePrimary))
                 {
                     DialogResult result;
                     MessageBoxButtons buttons = MessageBoxButtons.YesNo;
@@ -169,7 +173,9 @@ namespace Camlink3_1
                     else
                     {
                         overWriteConfirm = false;
-                        System.IO.File.SetLastWriteTimeUtc(symFileName, DateTime.UtcNow);
+                        System.IO.File.SetLastWriteTimeUtc(symFileNamePrimary, DateTime.UtcNow);
+                        if (System.IO.File.Exists(symFileNameSecondary))
+                            System.IO.File.SetLastWriteTimeUtc(symFileNameSecondary, DateTime.UtcNow);
                     }
                 }
 
@@ -230,7 +236,7 @@ namespace Camlink3_1
                     else progressBar.PerformStep();
 
                     toolStripStatusLabel.Text = "Saving Sym File...";
-                    if (!radInterface.SavePart(topPattern, symFileName, ref errorMessage))
+                    if (!radInterface.SavePart(topPattern, symFileNamePrimary, ref errorMessage))
                     {
                         ErrorMessage = errorMessage;
                         toolStripStatusLabel.Text = errorMessage;
@@ -238,14 +244,34 @@ namespace Camlink3_1
                     }
                     else progressBar.PerformStep();
 
+                    if (symFolderSecondary != null)
+                    {
+                        if (!radInterface.SavePart(topPattern, symFileNameSecondary, ref errorMessage))
+                        {
+                            ErrorMessage = errorMessage;
+                            toolStripStatusLabel.Text = errorMessage;
+                            return false;
+                        }
+                    }
+
                     toolStripStatusLabel.Text = "Setting Radan Attributes...";
-                    if (!radInterface.InsertAttributes(symFileName, materialName, partThickness, partUnits, partDescription, ref errorMessage))
+                    if (!radInterface.InsertAttributes(symFileNamePrimary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
                     {
                         ErrorMessage = errorMessage;
                         toolStripStatusLabel.Text = errorMessage;
                         return false;
                     }
                     else progressBar.PerformStep();
+
+                    if (symFolderSecondary != null)
+                    {
+                        if (!radInterface.InsertAttributes(symFileNameSecondary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
+                        {
+                            ErrorMessage = errorMessage;
+                            toolStripStatusLabel.Text = errorMessage;
+                            return false;
+                        }
+                    }
 
                     toolStripStatusLabel.Text = "Done...";
                     double thickness = double.Parse(partThickness);
@@ -264,7 +290,7 @@ namespace Camlink3_1
 
                     PartsToImport[index] = modifiedPart;
 
-                    ShellFile shellFile = ShellFile.FromFilePath(symFileName);
+                    ShellFile shellFile = ShellFile.FromFilePath(symFileNamePrimary);
                     Bitmap shellThumb = shellFile.Thumbnail.Bitmap;
                     this.picBoxSym.Image = ResizeImage(shellThumb, 115, 115);
 
@@ -347,7 +373,7 @@ namespace Camlink3_1
                 part = PartsToImport[i];
                 if (part.qty != 0)
                 {
-                    string partName = symFolder + part.name + ".sym";
+                    string partName = symFolderPrimary + part.name + ".sym";
                     double partThickness = double.Parse(part.thickness);
                     int partQty = part.qty;
                     
@@ -418,7 +444,7 @@ namespace Camlink3_1
 
                 picBoxIpt.Image = ResizeImage(getThumbNail(fileIter), 115, 115);
 
-                string selectedSymName = symFolder + System.IO.Path.GetFileNameWithoutExtension(selectedItemName) + ".sym";
+                string selectedSymName = symFolderPrimary + System.IO.Path.GetFileNameWithoutExtension(selectedItemName) + ".sym";
 
                 if (System.IO.File.Exists(selectedSymName))
                 {
@@ -595,11 +621,33 @@ namespace Camlink3_1
             DialogResult result = folderBrowserDialog1.ShowDialog();
             if (result == DialogResult.OK) // Test result.
             {
-                symFolder = folderBrowserDialog1.SelectedPath;
-                if (!symFolder.EndsWith("\\")) symFolder += "\\";
-                txtBoxSymFolder.Text = symFolder;
+                symFolderPrimary = folderBrowserDialog1.SelectedPath;
+                if (!symFolderPrimary.EndsWith("\\")) symFolderPrimary += "\\";
+                txtBoxSymFolder.Text = symFolderPrimary;
 
-                Properties.Settings.Default["symFolder"] = symFolder;
+                Properties.Settings.Default["symFolder"] = symFolderPrimary;
+                Properties.Settings.Default.Save(); // Saves settings in application configuration file
+
+                PopulateListBox();
+
+                int tItemIndex = objectListView1.TopItemIndex;
+                objectListView1.RefreshObjects(PartsToImport);
+                objectListView1.Refresh();
+                objectListView1.SetObjects(PartsToImport);
+                objectListView1.TopItemIndex = tItemIndex;
+            }
+        }
+
+        private void btnBrowseForSym2_Click(object sender, EventArgs e)
+        {
+            DialogResult result = folderBrowserDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                symFolderSecondary = folderBrowserDialog1.SelectedPath;
+                if (!symFolderSecondary.EndsWith("\\")) symFolderSecondary += "\\";
+                txtBoxSymFolder2.Text = symFolderSecondary;
+
+                Properties.Settings.Default["symFolder2"] = symFolderSecondary;
                 Properties.Settings.Default.Save(); // Saves settings in application configuration file
 
                 PopulateListBox();

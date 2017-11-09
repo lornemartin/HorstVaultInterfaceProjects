@@ -58,5 +58,17 @@ namespace Camlink3_1.Properties {
                 this["radanProject"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string symFolder2 {
+            get {
+                return ((string)(this["symFolder2"]));
+            }
+            set {
+                this["symFolder2"] = value;
+            }
+        }
     }
 }

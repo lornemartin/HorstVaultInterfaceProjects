@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\..\ProgramData\Autodesk\Vault 2017\Extensions\Camlink3.1\</OutputPath>
+    <OutputPath>..\..\..\..\..\..\..\ProgramData\Autodesk\Vault 2017\Extensions\Camlink3.1\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
