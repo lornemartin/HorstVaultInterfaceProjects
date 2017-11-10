@@ -246,12 +246,11 @@ namespace Camlink3_1
 
                     if (symFolderSecondary != null)
                     {
-                        if (!radInterface.SavePart(topPattern, symFileNameSecondary, ref errorMessage))
-                        {
-                            ErrorMessage = errorMessage;
-                            toolStripStatusLabel.Text = errorMessage;
-                            return false;
-                        }
+                        // delete the local file if it already exists
+                        if (System.IO.File.Exists(symFileNameSecondary))
+                            System.IO.File.Delete(symFileNameSecondary);
+                        // and then copy the server version to the local
+                        System.IO.File.Copy(symFileNamePrimary, symFileNameSecondary);
                     }
 
                     toolStripStatusLabel.Text = "Setting Radan Attributes...";
@@ -262,16 +261,6 @@ namespace Camlink3_1
                         return false;
                     }
                     else progressBar.PerformStep();
-
-                    if (symFolderSecondary != null)
-                    {
-                        if (!radInterface.InsertAttributes(symFileNameSecondary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
-                        {
-                            ErrorMessage = errorMessage;
-                            toolStripStatusLabel.Text = errorMessage;
-                            return false;
-                        }
-                    }
 
                     toolStripStatusLabel.Text = "Done...";
                     double thickness = double.Parse(partThickness);
