@@ -2518,7 +2518,7 @@ namespace VaultAccess
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 errMessage += "Unknown Error in function PrintPDF\r\n";
                 return false;
