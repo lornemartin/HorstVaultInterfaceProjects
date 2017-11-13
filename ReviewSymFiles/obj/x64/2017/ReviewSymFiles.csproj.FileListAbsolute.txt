@@ -1,0 +1,23 @@
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\ReviewSymFiles.exe.config
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.Connectivity.WebServices.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.Connectivity.WebServices.Interop.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.Connectivity.WebServices.WCF.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.Connectivity.WebServices.WSE.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.DataManagement.Client.Framework.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.DataManagement.Client.Framework.Vault.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Autodesk.Connectivity.Extensibility.Framework.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\2017\Microsoft.Web.Services3.dll
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x64\2017\ReviewSymFiles.pdb
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.pdb
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x64\2017\ReviewSymFiles.csprojResolveAssemblyReference.cache
+C:\Users\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.exe.config
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\ReviewSymFilesv4.0\obj\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\ReviewSymFilesv4.0\obj\x64\2017\ReviewSymFiles.pdb

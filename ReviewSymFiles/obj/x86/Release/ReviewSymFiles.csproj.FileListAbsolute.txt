@@ -1,0 +1,14 @@
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Release\ReviewSymFiles.exe.config
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Release\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Release\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Release\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Release\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Release\Autodesk.Connectivity.WebServices.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Release\ReviewSymFiles.exe.config
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Release\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Release\ReviewSymFiles.pdb
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFiles\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Release\ResolveAssemblyReference.cache

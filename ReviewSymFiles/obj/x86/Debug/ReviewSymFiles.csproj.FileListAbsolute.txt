@@ -1,0 +1,62 @@
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Debug\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\obj\x86\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe.config
+C:\Users\lorne\Documents\Visual Studio 2010\Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe.config
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Debug\ResolveAssemblyReference.cache
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\obj\x86\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\ReviewSymFiles.exe.config
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\obj\x86\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\obj\x86\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\Autodesk.Connectivity.WebServices.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\Autodesk.Connectivity.WebServices.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFiles v2.0\obj\x86\Debug\ResolveAssemblyReference.cache
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\ReviewSymFiles.exe.config
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\ReviewSymFiles.exe
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\ReviewSymFiles.pdb
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\Autodesk.Connectivity.WebServices.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\Autodesk.Connectivity.WebServices.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+L:\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Program Files\ReviewSymFilesv2.0\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFilesv2.0\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFilesv2.0\ReviewSymFiles.pdb
+\\HLADC2\Data\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.exe
+\\HLADC2\Data\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.pdb
+\\HLADC2\Data\Software\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ResolveAssemblyReference.cache
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.exe
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.pdb
+L:\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.exe
+L:\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv2.0\obj\x86\Debug\ReviewSymFiles.pdb
+L:\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv3.0\obj\x86\Debug\ReviewSymFiles.exe
+L:\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv3.0\obj\x86\Debug\ReviewSymFiles.pdb
+C:\Program Files\ReviewSymFilesv3.0\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFilesv3.0\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFilesv3.0\ReviewSymFiles.pdb
+L:\Source_Code\Lorne's Source Code\Projects\ReviewSymFilesv3.0\obj\x86\Debug\ReviewSymFiles.csprojResolveAssemblyReference.cache
+C:\Users\lorne\Documents\Visual Studio 2012\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2012\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2012\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.csprojResolveAssemblyReference.cache
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.exe.config
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.exe
+C:\Program Files\ReviewSymFilesv4.0\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\obj\x86\Debug\ReviewSymFiles.csprojResolveAssemblyReference.cache
