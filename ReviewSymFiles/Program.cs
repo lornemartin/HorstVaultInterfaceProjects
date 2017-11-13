@@ -253,14 +253,13 @@ namespace ConsoleApplication1
                                 {
                                     //file could still have been checked out and back in again without being modifed.
                                     //check for this yet, and flag it for speculation
-                                    iptDate = iptFile.File.CkInDate;
-                                    diff = symDate - iptDate;
-                                    if (diff.TotalSeconds < 0)
-                                    {
-                                       speculationList.Add(symFile.Name);
-                                        symFile.CreationTime = DateTime.Now;        // bump up the sym file timestamp so we won't flag it again tomorrow
-                                    }
-                                    int z = 10;//  this is  test line
+                                    //iptDate = iptFile.File.CkInDate;
+                                    //diff = symDate - iptDate;
+                                    //if (diff.TotalSeconds < 0)
+                                    //{
+                                    //   speculationList.Add(symFile.Name);
+                                    //   symFile.CreationTime = DateTime.Now;        // bump up the sym file timestamp so we won't flag it again tomorrow
+                                    //}
                                 }
                             }
                             else
