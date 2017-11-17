@@ -14,5 +14,8 @@
     <Setting Name="symFolder2" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="useSecondarySymLocation" Type="System.String" Scope="User">
+      <Value Profile="(Default)">yes</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

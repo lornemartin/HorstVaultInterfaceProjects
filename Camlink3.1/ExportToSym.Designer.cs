@@ -46,7 +46,6 @@
             this.btnSymFolderBrowse = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.txtBoxSymFolder2 = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.btnBrowseForSym2 = new System.Windows.Forms.Button();
             this.objectListView1 = new BrightIdeasSoftware.ObjectListView();
             this.olvClmQuantity = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
@@ -54,6 +53,7 @@
             this.olvClmDesc = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmThickness = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+            this.checkBoxSecondarySymFolder = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxIpt)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxSym)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -207,15 +207,6 @@
             this.txtBoxSymFolder2.Size = new System.Drawing.Size(241, 20);
             this.txtBoxSymFolder2.TabIndex = 13;
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(498, 391);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(144, 13);
-            this.label1.TabIndex = 14;
-            this.label1.Text = "Secondary Sym Folder Name";
-            // 
             // btnBrowseForSym2
             // 
             this.btnBrowseForSym2.Location = new System.Drawing.Point(646, 437);
@@ -289,14 +280,25 @@
             this.olvClmType.Text = "Material Type";
             this.olvClmType.Width = 194;
             // 
+            // checkBoxSecondarySymFolder
+            // 
+            this.checkBoxSecondarySymFolder.AutoSize = true;
+            this.checkBoxSecondarySymFolder.Location = new System.Drawing.Point(501, 387);
+            this.checkBoxSecondarySymFolder.Name = "checkBoxSecondarySymFolder";
+            this.checkBoxSecondarySymFolder.Size = new System.Drawing.Size(163, 17);
+            this.checkBoxSecondarySymFolder.TabIndex = 16;
+            this.checkBoxSecondarySymFolder.Text = "Secondary Sym Folder Name";
+            this.checkBoxSecondarySymFolder.UseVisualStyleBackColor = true;
+            this.checkBoxSecondarySymFolder.CheckedChanged += new System.EventHandler(this.checkBoxSecondarySymFolder_CheckedChanged);
+            // 
             // ExportToSym
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnOK;
             this.ClientSize = new System.Drawing.Size(896, 501);
+            this.Controls.Add(this.checkBoxSecondarySymFolder);
             this.Controls.Add(this.btnBrowseForSym2);
-            this.Controls.Add(this.label1);
             this.Controls.Add(this.btnSymFolderBrowse);
             this.Controls.Add(this.txtBoxSymFolder2);
             this.Controls.Add(this.lblSymFolderName);
@@ -348,7 +350,7 @@
         private System.Windows.Forms.Button btnSymFolderBrowse;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.TextBox txtBoxSymFolder2;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnBrowseForSym2;
+        private System.Windows.Forms.CheckBox checkBoxSecondarySymFolder;
     }
 }

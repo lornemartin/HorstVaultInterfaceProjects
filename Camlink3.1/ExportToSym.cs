@@ -48,6 +48,7 @@ namespace Camlink3_1
         private string symFolderPrimary = Properties.Settings.Default["symFolder"].ToString();
         private string symFolderSecondary = Properties.Settings.Default["symFolder2"].ToString();
         private string extensionFolder = Properties.Settings.Default["extensionFolder"].ToString();
+        private string useSecondarySymLocation = Properties.Settings.Default["useSecondarySymLocation"].ToString();
 
         #region objectListView delegates
         private void objectListView1_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
@@ -91,6 +92,19 @@ namespace Camlink3_1
             txtBoxProject.Text = Properties.Settings.Default["radanProject"].ToString();
             txtBoxSymFolder.Text = symFolderPrimary;
             txtBoxSymFolder2.Text = symFolderSecondary;
+
+            if (Properties.Settings.Default["useSecondarySymLocation"].ToString() == "yes")
+            {
+                checkBoxSecondarySymFolder.Checked = true;
+                txtBoxSymFolder2.Enabled = true;
+                btnBrowseForSym2.Enabled = true;
+            }
+            else
+            {
+                checkBoxSecondarySymFolder.Checked = false;
+                txtBoxSymFolder2.Enabled = false;
+                btnBrowseForSym2.Enabled = false;
+            }
         }
 
         #endregion
@@ -244,21 +258,33 @@ namespace Camlink3_1
                     }
                     else progressBar.PerformStep();
 
-                    if (symFolderSecondary != null)
+                    toolStripStatusLabel.Text = "Setting Radan Attributes...";
+
+                    // set up a list of strings containing all the Inventor material names.
+                    List<string> materialNameList = new List<string>();
+                    materialNameList.Add("Steel, Mild");
+                    materialNameList.Add("AR400");
+                    materialNameList.Add("T100");
+
+                    // if the material name we read from Radan does not match a name on the list, default it to 'Steel, Mild'
+                    if(!materialNameList.Contains(materialName))
+                        materialName = "Steel, Mild";
+
+                    if (!radInterface.InsertAttributes(symFileNamePrimary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
+                    {
+                        ErrorMessage = errorMessage;
+                        toolStripStatusLabel.Text = errorMessage;
+                        return false;
+                    }
+                    else progressBar.PerformStep();
+
+                    if (checkBoxSecondarySymFolder.Checked)
                     {
                         // delete the local file if it already exists
                         if (System.IO.File.Exists(symFileNameSecondary))
                             System.IO.File.Delete(symFileNameSecondary);
                         // and then copy the server version to the local
                         System.IO.File.Copy(symFileNamePrimary, symFileNameSecondary);
-                    }
-
-                    toolStripStatusLabel.Text = "Setting Radan Attributes...";
-                    if (!radInterface.InsertAttributes(symFileNamePrimary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
-                    {
-                        ErrorMessage = errorMessage;
-                        toolStripStatusLabel.Text = errorMessage;
-                        return false;
                     }
                     else progressBar.PerformStep();
 
@@ -646,6 +672,22 @@ namespace Camlink3_1
                 objectListView1.Refresh();
                 objectListView1.SetObjects(PartsToImport);
                 objectListView1.TopItemIndex = tItemIndex;
+            }
+        }
+
+        private void checkBoxSecondarySymFolder_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBoxSecondarySymFolder.Checked)
+            {
+                txtBoxSymFolder2.Enabled = true;
+                btnBrowseForSym2.Enabled = true;
+                Properties.Settings.Default["useSecondarySymLocation"] = "yes";
+            }
+            else
+            {
+                txtBoxSymFolder2.Enabled = false;
+                btnBrowseForSym2.Enabled = false;
+                Properties.Settings.Default["useSecondarySymLocation"] = "no";
             }
         }
     }

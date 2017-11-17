@@ -70,5 +70,17 @@ namespace Camlink3_1.Properties {
                 this["symFolder2"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("yes")]
+        public string useSecondarySymLocation {
+            get {
+                return ((string)(this["useSecondarySymLocation"]));
+            }
+            set {
+                this["useSecondarySymLocation"] = value;
+            }
+        }
     }
 }
