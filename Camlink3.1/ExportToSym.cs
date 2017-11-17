@@ -263,11 +263,14 @@ namespace Camlink3_1
                     // set up a list of strings containing all the Inventor material names.
                     List<string> materialNameList = new List<string>();
                     materialNameList.Add("Steel, Mild");
-                    materialNameList.Add("AR400");
-                    materialNameList.Add("T100");
+                    materialNameList.Add("44W");
+                    materialNameList.Add("Rubber");
+                    materialNameList.Add("1060 Carbon Steel");
+                    materialNameList.Add("Steel, Mild");
+                    materialNameList.Add("T-100,Steel");
 
                     // if the material name we read from Radan does not match a name on the list, default it to 'Steel, Mild'
-                    if(!materialNameList.Contains(materialName))
+                    if (!materialNameList.Contains(materialName))
                         materialName = "Steel, Mild";
 
                     if (!radInterface.InsertAttributes(symFileNamePrimary, materialName, partThickness, partUnits, partDescription, ref errorMessage))
