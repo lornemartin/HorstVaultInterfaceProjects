@@ -391,7 +391,12 @@ namespace Camlink3_1
                 part = PartsToImport[i];
                 if (part.qty != 0)
                 {
-                    string partName = symFolderPrimary + part.name + ".sym";
+                    string partName;
+                    if (!checkBoxSecondarySymFolder.Checked)
+                        partName = symFolderPrimary + part.name + ".sym";
+                    else
+                        partName = symFolderSecondary + part.name + ".sym";
+
                     double partThickness = double.Parse(part.thickness);
                     int partQty = part.qty;
                     
