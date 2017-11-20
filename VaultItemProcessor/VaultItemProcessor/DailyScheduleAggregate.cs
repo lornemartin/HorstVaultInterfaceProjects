@@ -45,6 +45,7 @@ namespace VaultItemProcessor
             {
                 XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("DailyScheduleData").ToString());
 
+                string batchName = orderNumber;
                 // are we processing an order or a batch?
                 bool isBatch = false;
                 if (orderNumber.IndexOf("batch", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -59,7 +60,7 @@ namespace VaultItemProcessor
                     // add a new line to the list
                     AggregateLineItem newAggregateLineItem = new AggregateLineItem(item, orderNumber, orderQty);
                     AggregateLineItemList.Add(newAggregateLineItem);
-                    PrintLineItem(newAggregateLineItem, isBatch, batchItemName, currentProduct);
+                    PrintLineItem(newAggregateLineItem, isBatch, batchItemName, currentProduct,batchName);
                 }
                 else
                 {
@@ -91,7 +92,7 @@ namespace VaultItemProcessor
             }
         }
 
-        private bool PrintLineItem(AggregateLineItem item, bool isBatch, string batchItemName, string currentProduct)
+        private bool PrintLineItem(AggregateLineItem item, bool isBatch, string batchItemName, string currentProduct, string batchName="")
         {
 
             try
@@ -106,7 +107,11 @@ namespace VaultItemProcessor
                     else
                         itemNumber = item.Number;
 
-                    string watermark = "Item Number: " + itemNumber + "      Desc: " + item.ItemDescription + "\n";
+                    string watermark = "";
+                    if (isBatch)
+                        watermark = "Batch Name: " + batchName + "\n";
+
+                    watermark += "Item Number: " + itemNumber + "      Desc: " + item.ItemDescription + "\n";
                     if (item.Category == "Part")
                     {
                         watermark += "Material: " + item.StructCode + "\n";
