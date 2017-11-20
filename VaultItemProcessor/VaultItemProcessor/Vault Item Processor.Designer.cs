@@ -48,6 +48,8 @@
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression8 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule9 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression9 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
+            DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule10 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
+            DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression10 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.colThickness = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.repositoryItemTextEdit1 = new DevExpress.XtraEditors.Repository.RepositoryItemTextEdit();
@@ -244,6 +246,13 @@
             formatConditionRuleExpression9.Appearance.Options.UseBorderColor = true;
             formatConditionRuleExpression9.Expression = "[HasPdf] = False And [RequiresPdf] = True";
             treeListFormatRule9.Rule = formatConditionRuleExpression9;
+            treeListFormatRule10.ApplyToRow = true;
+            treeListFormatRule10.Name = "CheckForPlant1and2";
+            formatConditionRuleExpression10.Appearance.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            formatConditionRuleExpression10.Appearance.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            formatConditionRuleExpression10.Appearance.Options.UseBackColor = true;
+            formatConditionRuleExpression10.Expression = "[PlantID] = \'Plant 1&2\'";
+            treeListFormatRule10.Rule = formatConditionRuleExpression10;
             this.exportTreeList.FormatRules.Add(treeListFormatRule1);
             this.exportTreeList.FormatRules.Add(treeListFormatRule2);
             this.exportTreeList.FormatRules.Add(treeListFormatRule3);
@@ -253,6 +262,7 @@
             this.exportTreeList.FormatRules.Add(treeListFormatRule7);
             this.exportTreeList.FormatRules.Add(treeListFormatRule8);
             this.exportTreeList.FormatRules.Add(treeListFormatRule9);
+            this.exportTreeList.FormatRules.Add(treeListFormatRule10);
             this.exportTreeList.KeyFieldName = "";
             this.exportTreeList.Location = new System.Drawing.Point(52, 46);
             this.exportTreeList.Name = "exportTreeList";

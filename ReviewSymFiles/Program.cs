@@ -226,7 +226,7 @@ namespace ConsoleApplication1
                                     debugFile.WriteLine(symFile.Name + " needs to be updated. It is older than its corresponding ipt file in the vault");
                                     debugFile.WriteLine("It will be moved to the non-controlled folder\n");
                                     outdatedList.Add(symFile.Name);
-                                    Console.WriteLine("Oudated File Found");
+                                    Console.WriteLine("Outdated File Found");
                                     DirectoryInfo symFolder = new DirectoryInfo(symRoot);
                                     DirectoryInfo symParentFolder = symFolder.Parent;
                                     DirectoryInfo symFolderNonControlled = new DirectoryInfo(symParentFolder.FullName + "\\Vault Sym Files - non controlled");
@@ -256,6 +256,7 @@ namespace ConsoleApplication1
                                     // only item master properties changed, so we don't flag this file as out of date
                                     debugFile.WriteLine("Only Item Master Properties Changed. " + symFile.Name);
                                     debugFile.WriteLine(" It will not be moved to the non-controlled folder\n");
+                                    symFile.LastWriteTime = DateTime.Now;
                                 }
                             }
 
@@ -288,6 +289,7 @@ namespace ConsoleApplication1
                             debugFile.WriteLine("No ipt file found for " + symFile.Name);
                             debugFile.WriteLine(" It will be moved to the non-controlled folder\n");
                             missingList.Add(symFile.Name);
+
                         }
 
                         Console.WriteLine(Path.GetFileName(symFile.Name) + " is up to date");
@@ -429,6 +431,7 @@ namespace ConsoleApplication1
                                     // only item master properties changed, so we don't flag this file as out of date
                                     debugFile.WriteLine("Only Item Master Properties Changed. " + pdfFile.Name);
                                     debugFile.WriteLine(" It will not be deleted");
+                                    pdfFile.LastWriteTime = DateTime.Now;
                                 }
                             }
 
