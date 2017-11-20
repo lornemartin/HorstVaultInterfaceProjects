@@ -209,17 +209,18 @@ namespace ConsoleApplication1
 
                             string comment = GetVaultCheckOutComment(searchFile, connection);
 
-                            if (comment != "IM")
+
+
+
+                            // we found a matching ipt file
+
+                            //DateTime symDate = symFile.CreationTime;
+                            DateTime symDate = symFile.LastWriteTime;
+                            DateTime iptDate = iptFile.File.ModDate;
+                            TimeSpan diff = symDate - iptDate;
+                            if (diff.TotalSeconds < 0)  // ipt file has been modified since sym was created.
                             {
-
-
-                                // we found a matching ipt file
-
-                                //DateTime symDate = symFile.CreationTime;
-                                DateTime symDate = symFile.LastWriteTime;
-                                DateTime iptDate = iptFile.File.ModDate;
-                                TimeSpan diff = symDate - iptDate;
-                                if (diff.TotalSeconds < 0)  // ipt file has been modified since sym was created.
+                                if (comment != "IM")
                                 {
                                     // sym file is out of date
                                     debugFile.WriteLine(symFile.Name + " needs to be updated. It is older than its corresponding ipt file in the vault");
@@ -248,6 +249,12 @@ namespace ConsoleApplication1
                                             debugFile.WriteLine("Error in copying file");
                                         }
                                     }
+                                    else
+                                    {
+                                        // only item master properties changed, so we don't flag this file as out of date
+                                        debugFile.WriteLine("Only Item Master Properties Changed. " + symFile.Name);
+                                        debugFile.WriteLine(" It will not be moved to the non-controlled folder\n");
+                                    }
                                 }
                                 else
                                 {
@@ -262,42 +269,37 @@ namespace ConsoleApplication1
                                     //}
                                 }
                             }
-                            else
+
+                        }
+                        else
+                        {
+                            // no matching ipt file found, it is not currently in the vault
+                            DirectoryInfo symFolder = new DirectoryInfo(symRoot);
+                            DirectoryInfo symParentFolder = symFolder.Parent;
+                            DirectoryInfo symFolderNonControlled = new DirectoryInfo(symParentFolder.FullName + "\\Vault Sym Files - non controlled");
+                            if (!symFolderNonControlled.Exists)
                             {
-                                // only item master properties changed, so we don't flag this file as out of date
-                                debugFile.WriteLine("Only Item Master Properties Changed. " + symFile.Name);
-                                debugFile.WriteLine(" It will not be moved to the non-controlled folder\n");
+                                symFolderNonControlled.Create();
                             }
-                            }
-                            else
+
+                            string nonControlledFileName = (symFolderNonControlled.FullName + "\\" + symFile.Name);
+                            FileInfo nonControlledFile = new FileInfo(nonControlledFileName);
+
+                            if (!simulate)
                             {
-                                // no matching ipt file found, it is not currently in the vault
-                                DirectoryInfo symFolder = new DirectoryInfo(symRoot);
-                                DirectoryInfo symParentFolder = symFolder.Parent;
-                                DirectoryInfo symFolderNonControlled = new DirectoryInfo(symParentFolder.FullName + "\\Vault Sym Files - non controlled");
-                                if (!symFolderNonControlled.Exists)
+                                if (nonControlledFile.Exists) nonControlledFile.Delete();
+                                symFile.MoveTo(nonControlledFile.FullName);
+                                nonControlledFile.LastWriteTime = DateTime.Now;
+                                if (!nonControlledFile.Exists)
                                 {
-                                    symFolderNonControlled.Create();
+                                    debugFile.WriteLine("Error in copying file");
                                 }
-
-                                string nonControlledFileName = (symFolderNonControlled.FullName + "\\" + symFile.Name);
-                                FileInfo nonControlledFile = new FileInfo(nonControlledFileName);
-
-                                if (!simulate)
-                                {
-                                    if (nonControlledFile.Exists) nonControlledFile.Delete();
-                                    symFile.MoveTo(nonControlledFile.FullName);
-                                    nonControlledFile.LastWriteTime = DateTime.Now;
-                                    if (!nonControlledFile.Exists)
-                                    {
-                                        debugFile.WriteLine("Error in copying file");
-                                    }
-                                }
-
-                                debugFile.WriteLine("No ipt file found for " + symFile.Name);
-                                debugFile.WriteLine(" It will be moved to the non-controlled folder\n");
-                                missingList.Add(symFile.Name);
                             }
+
+                            debugFile.WriteLine("No ipt file found for " + symFile.Name);
+                            debugFile.WriteLine(" It will be moved to the non-controlled folder\n");
+                            missingList.Add(symFile.Name);
+                        }
 
                         Console.WriteLine(Path.GetFileName(symFile.Name) + " is up to date");
                     }
@@ -461,21 +463,22 @@ namespace ConsoleApplication1
 
                             string comment = GetVaultCheckOutComment(searchFile, connection);
 
-                            if (comment != "IM")
-                            {
-                                // we found a matching ipt file
 
-                                //DateTime symDate = symFile.CreationTime;
-                                DateTime symDate = pdfFile.LastWriteTime;
-                                DateTime iptDate = iptFile.File.ModDate;
-                                TimeSpan diff = symDate - iptDate;
-                                if (diff.TotalSeconds < 0)  // ipt file has been modified since sym was created.
+                            // we found a matching ipt file
+
+                            //DateTime symDate = symFile.CreationTime;
+                            DateTime symDate = pdfFile.LastWriteTime;
+                            DateTime iptDate = iptFile.File.ModDate;
+                            TimeSpan diff = symDate - iptDate;
+                            if (diff.TotalSeconds < 0)  // ipt file has been modified since sym was created.
+                            {
+                                if (comment != "IM")
                                 {
                                     // sym file is out of date
                                     debugFile.WriteLine(pdfFile.Name + " needs to be deleted. It is older than its corresponding ipt file in the vault");
                                     outdatedList.Add(pdfFile.Name);
                                     Console.WriteLine("Oudated File Found");
-                                    
+
 
                                     if (!simulate)
                                     {
@@ -483,13 +486,14 @@ namespace ConsoleApplication1
                                         pdfFile.Delete();
                                     }
                                 }
+                                else
+                                {
+                                    // only item master properties changed, so we don't flag this file as out of date
+                                    debugFile.WriteLine("Only Item Master Properties Changed. " + pdfFile.Name);
+                                    debugFile.WriteLine(" It will not be deleted");
+                                }
                             }
-                            else
-                            {
-                                // only item master properties changed, so we don't flag this file as out of date
-                                debugFile.WriteLine("Only Item Master Properties Changed. " + pdfFile.Name);
-                                debugFile.WriteLine(" It will not be deleted");
-                            }
+
                         }
                         else
                         {
