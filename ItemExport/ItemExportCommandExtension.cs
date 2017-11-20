@@ -148,45 +148,47 @@ namespace ItemExport
         /// <returns>A collection of DetailTabs, each object represents a custom tab.</returns>
         public IEnumerable<DetailPaneTab> DetailTabs()
         {
-            //// Create a DetailPaneTab list to return from method
+            // Create a DetailPaneTab list to return from method
             List<DetailPaneTab> fileTabs = new List<DetailPaneTab>();
 
-            // Create Selection Info tab for Files
-            DetailPaneTab filePropertyTab = new DetailPaneTab("File.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.File,
-                                                        typeof(MyCustomTabControl));
+           //// Create Selection Info tab for Files
+           //DetailPaneTab filePropertyTab = new DetailPaneTab("File.Tab.PropertyGrid",
+           //                                            "Selection Info",
+           //                                            SelectionTypeId.File,
+           //                                            typeof(MyCustomTabControl));
 
-            // The propertyTab_SelectionChanged is called whenever our tab is active and the selection changes in the 
-            // main grid.
-            filePropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(filePropertyTab);
+           // //The propertyTab_SelectionChanged is called whenever our tab is active and the selection changes in the
 
-            // Create Selection Info tab for Folders
-            DetailPaneTab folderPropertyTab = new DetailPaneTab("Folder.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.Folder,
-                                                        typeof(MyCustomTabControl));
-            folderPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(folderPropertyTab);
+           // //main grid.
+           //filePropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+           // fileTabs.Add(filePropertyTab);
 
-            // Create Selection Info tab for Items
-            DetailPaneTab itemPropertyTab = new DetailPaneTab("Item.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.Item,
-                                                        typeof(MyCustomTabControl));
-            itemPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(itemPropertyTab);
+           // //Create Selection Info tab for Folders
+           //DetailPaneTab folderPropertyTab = new DetailPaneTab("Folder.Tab.PropertyGrid",
+           //                                            "Selection Info",
+           //                                            SelectionTypeId.Folder,
+           //                                            typeof(MyCustomTabControl));
+           //folderPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+           // fileTabs.Add(folderPropertyTab);
 
-            // Create Selection Info tab for Change Orders
-            DetailPaneTab coPropertyTab = new DetailPaneTab("Co.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.ChangeOrder,
-                                                        typeof(MyCustomTabControl));
-            coPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(coPropertyTab);
+           // //Create Selection Info tab for Items
+           //DetailPaneTab itemPropertyTab = new DetailPaneTab("Item.Tab.PropertyGrid",
+           //                                            "Selection Info",
+           //                                            SelectionTypeId.Item,
+           //                                            typeof(MyCustomTabControl));
+           //itemPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+           // fileTabs.Add(itemPropertyTab);
 
-            //// Return tabs
+           //// Create Selection Info tab for Change Orders
+
+           //DetailPaneTab coPropertyTab = new DetailPaneTab("Co.Tab.PropertyGrid",
+           //                                            "Selection Info",
+           //                                            SelectionTypeId.ChangeOrder,
+           //                                            typeof(MyCustomTabControl));
+           // coPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+           // fileTabs.Add(coPropertyTab);
+
+            // Return tabs
             return fileTabs;
         }
 
