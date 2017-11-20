@@ -26,6 +26,6 @@
     <StartArguments>"\\Cutter-hp\radan\Vault SYM files"                       "debug.txt" "sync.txt"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '2017|x64'">
-    <StartArguments>"M:\Radan Sym Files\Vault Sym Files\\" "changes.txt" "lorne" "lorne" "hlaadvault" "vault" "N" "M:\\PDF Drawing Files"</StartArguments>
+    <StartArguments>"M:\Radan Sym Files\Vault Sym Files\\" "changes.txt" "lorne" "lorne" "hlaadvault" "vault" "Y" "M:\\PDF Drawing Files"</StartArguments>
   </PropertyGroup>
 </Project>

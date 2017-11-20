@@ -249,24 +249,13 @@ namespace ConsoleApplication1
                                             debugFile.WriteLine("Error in copying file");
                                         }
                                     }
-                                    else
-                                    {
-                                        // only item master properties changed, so we don't flag this file as out of date
-                                        debugFile.WriteLine("Only Item Master Properties Changed. " + symFile.Name);
-                                        debugFile.WriteLine(" It will not be moved to the non-controlled folder\n");
-                                    }
+
                                 }
                                 else
                                 {
-                                    //file could still have been checked out and back in again without being modifed.
-                                    //check for this yet, and flag it for speculation
-                                    //iptDate = iptFile.File.CkInDate;
-                                    //diff = symDate - iptDate;
-                                    //if (diff.TotalSeconds < 0)
-                                    //{
-                                    //   speculationList.Add(symFile.Name);
-                                    //   symFile.CreationTime = DateTime.Now;        // bump up the sym file timestamp so we won't flag it again tomorrow
-                                    //}
+                                    // only item master properties changed, so we don't flag this file as out of date
+                                    debugFile.WriteLine("Only Item Master Properties Changed. " + symFile.Name);
+                                    debugFile.WriteLine(" It will not be moved to the non-controlled folder\n");
                                 }
                             }
 
@@ -394,57 +383,6 @@ namespace ConsoleApplication1
                     Console.WriteLine(e.Message);
                     continue;
                 }
-
-
-
-                //foreach (string file in files)
-                //{
-                //    try
-                //    {
-                //        System.IO.FileInfo pdfFile = new System.IO.FileInfo(file);
-
-                //        FileFolder iptFile = new FileFolder();
-
-                //        iptFile = SearchVaultPDF(pdfFile);
-
-                //        Console.Write("File Number " + fileCount++ + ":     Searching for " + System.IO.Path.GetFileName(pdfFile.Name) + " ");
-
-                //        if (iptFile == null)
-                //        {
-                //            // no matching ipt file found, it is not currently in the vault
-
-                //            if (!simulate)
-                //            {
-                //                pdfFile.Delete();
-                //            }
-
-                //            Console.Write("No file found\n");
-
-                //            debugFile.WriteLine("No ipt file found for " + pdfFile.Name);
-                //            debugFile.WriteLine(" It will be deleted\n");
-                //            missingList.Add(pdfFile.Name);
-                //        }
-                //        else
-                //        {
-                //            Console.Write("Found it\n");
-                //        }
-
-
-                //    }
-                //    catch (System.IO.FileNotFoundException e)
-                //    {
-                //        // If file was deleted by a separate application
-                //        //  or thread since the call to TravrerseSymTree()
-                //        // then just continue.
-                //        Console.WriteLine(e.Message);
-                //        continue;
-                //    }
-                //  }
-
-
-
-
-
 
                 foreach (string file in files)
                 {
