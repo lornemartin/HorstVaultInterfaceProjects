@@ -402,39 +402,46 @@ namespace Camlink3_1
                     
                     try
                     {
-                        var timeOut = TimeSpan.FromSeconds(1);
-                        stream = System.IO.File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                        stream.Flush();
-                        using (StreamReader reader = new StreamReader(stream))
+                        if (System.IO.File.Exists(partName))
                         {
-                            XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
-                            rPrj = (RadanProject)prjSerializer.Deserialize(reader);
-
-                            RadanPart prt = new RadanPart(partName,
-                                                          rPrj.Parts.NextID,
-                                                          PartsToImport[i].materialType,
-                                                          partThickness,
-                                                          "in",
-                                                          partQty);
-                            rPrj.Parts.NextID++;
-                            rPrj.Parts.Add(prt);
-
-                            stream.Close();
-                            reader.Close();
-                        }
-
-                        stream = System.IO.File.Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-                        //stream.Flush();
-                        using (StreamWriter Writer = new StreamWriter(stream))
-                        {
-                            XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
-
+                            var timeOut = TimeSpan.FromSeconds(1);
                             stream = System.IO.File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                            prjSerializer.Serialize(stream, rPrj);
+                            stream.Flush();
+                            using (StreamReader reader = new StreamReader(stream))
+                            {
+                                XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
+                                rPrj = (RadanProject)prjSerializer.Deserialize(reader);
 
-                            stream.Close();
-                            Writer.Close();
+                                RadanPart prt = new RadanPart(partName,
+                                                              rPrj.Parts.NextID,
+                                                              PartsToImport[i].materialType,
+                                                              partThickness,
+                                                              "in",
+                                                              partQty);
+                                rPrj.Parts.NextID++;
+                                rPrj.Parts.Add(prt);
 
+                                stream.Close();
+                                reader.Close();
+                            }
+
+                            stream = System.IO.File.Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+                            //stream.Flush();
+                            using (StreamWriter Writer = new StreamWriter(stream))
+                            {
+                                XmlSerializer prjSerializer = new XmlSerializer(typeof(RadanProject));
+
+                                stream = System.IO.File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                                prjSerializer.Serialize(stream, rPrj);
+
+                                stream.Close();
+                                Writer.Close();
+
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("No local sym file found, please try converting file again.");
                         }
                     }
                     catch (Exception)
