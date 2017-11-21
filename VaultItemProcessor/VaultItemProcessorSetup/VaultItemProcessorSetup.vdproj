@@ -135,12 +135,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_18746351832D49179076F5270DE8293D"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_1A5583D2087080B1555CE929D509AD21"
         "OwnerKey" = "8:_E7BA94A58FAF41AD920640A221DE6E64"
         "MsmSig" = "8:_UNDEFINED"
@@ -227,12 +221,6 @@
         {
         "MsmKey" = "8:_3356CF187F522CEBC11BFE17434D9535"
         "OwnerKey" = "8:_A6B8617F7715484CAE6C2AAA9CD7AC83"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_3356CF187F522CEBC11BFE17434D9535"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -490,12 +478,6 @@
         "Entry"
         {
         "MsmKey" = "8:_92C14777EE81ACA9A40BC63F751D908E"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_92C14777EE81ACA9A40BC63F751D908E"
         "OwnerKey" = "8:_935F8CE9A3D59FA64F142C65C13919A8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -557,12 +539,6 @@
         {
         "MsmKey" = "8:_936EFEF7B1C2CB9054CA0801AC6A74CA"
         "OwnerKey" = "8:_70F66A3C412B41ACB02D0C89D26D864D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_936EFEF7B1C2CB9054CA0801AC6A74CA"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1018,12 +994,6 @@
         "Entry"
         {
         "MsmKey" = "8:_BD0B9E5F18267AC3F86A81AA2E629356"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_BD0B9E5F18267AC3F86A81AA2E629356"
         "OwnerKey" = "8:_C31BD4FB08A4E65FC11F7EB56286A8FF"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1306,12 +1276,6 @@
         "Entry"
         {
         "MsmKey" = "8:_DA161A5472BF1FB0A8401BA9402467F2"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_DA161A5472BF1FB0A8401BA9402467F2"
         "OwnerKey" = "8:_C31BD4FB08A4E65FC11F7EB56286A8FF"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1407,12 +1371,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_E05794002DE2260089ABB48ACEB7FF45"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_E34DE4371DC2F8A522939E1911E687EF"
         "OwnerKey" = "8:_E7BA94A58FAF41AD920640A221DE6E64"
         "MsmSig" = "8:_UNDEFINED"
@@ -1439,12 +1397,6 @@
         {
         "MsmKey" = "8:_E71D8F7F4AAC87A8D9439E31B46654DC"
         "OwnerKey" = "8:_A6B8617F7715484CAE6C2AAA9CD7AC83"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_E71D8F7F4AAC87A8D9439E31B46654DC"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1511,12 +1463,6 @@
         {
         "MsmKey" = "8:_EC3A2843284EF1B492D0ED2546FA8FFB"
         "OwnerKey" = "8:_E71D8F7F4AAC87A8D9439E31B46654DC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_EC3A2843284EF1B492D0ED2546FA8FFB"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1600,12 +1546,6 @@
         "Entry"
         {
         "MsmKey" = "8:_FD258865C49E7B4ACEEEEF1AD93D0873"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_FD258865C49E7B4ACEEEEF1AD93D0873"
         "OwnerKey" = "8:_C31BD4FB08A4E65FC11F7EB56286A8FF"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1661,30 +1601,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_33F318D3587A8CB21665F38CEED97449"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_18746351832D49179076F5270DE8293D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -6110,7 +6026,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:VaultItemProcessor"
         "ProductCode" = "8:{384202AD-43EB-40A1-B018-657ADDACC9B6}"
-        "PackageCode" = "8:{6C7507F3-FCF2-43EE-BC30-641D591F2C60}"
+        "PackageCode" = "8:{548468AB-6276-4254-9CBC-DFE7C7393D85}"
         "UpgradeCode" = "8:{50776DE2-5D68-4677-A404-295DA426A3EA}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -6657,34 +6573,6 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_18746351832D49179076F5270DE8293D"
-            {
-            "SourcePath" = "8:..\\..\\JobProcessorPDFPrint\\obj\\x64\\Debug\\JobProcessorPrintPDF.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_1056BCFA007545B89FDF4B65D9A743F8"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:Debug|x64"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{98552653-01D6-4916-82C0-03B1D1B01F53}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_70F66A3C412B41ACB02D0C89D26D864D"
             {
             "SourcePath" = "8:..\\..\\PrintPDF\\obj\\x64\\Debug\\PrintPDF.dll"
