@@ -80,7 +80,7 @@ namespace VaultItemProcessor
 
                     // add new order information
                     searchLineItem.AssociatedOrders.Add(newOrder);
-                    PrintLineItem(searchLineItem, isBatch, batchItemName, currentProduct);
+                    PrintLineItem(searchLineItem, isBatch, batchItemName, currentProduct, batchName);
                 }
 
                

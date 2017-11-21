@@ -767,13 +767,17 @@ namespace VaultItemProcessor
                     //if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
                     //    currentProduct = item.Number;
 
+                    string watermark = "";
+                    if (isBatch)
+                        watermark = "Batch Name: " + txtBoxOrderNumber.Text + "\n";
+
                     if (item.AssociatedOrders.Count >= 1 && item.Category == "Part")
                     {
                         string outputPdfPath = ProcessPDF.CalculateSubFolder(pdfPath, exportFilePath, item, isBatch);
 
                         //string watermark = "Item Number: " + item.Number + "\n" +
                         //string watermark = "Product Number: " + currentProduct + "\n" +
-                        string watermark = "Item Number: " + item.Number + "      Desc: " + item.ItemDescription + "\n";
+                        watermark += "Item Number: " + item.Number + "      Desc: " + item.ItemDescription + "\n";
                         int totalQty = 0;
                         foreach (OrderData o in item.AssociatedOrders)
                         {
