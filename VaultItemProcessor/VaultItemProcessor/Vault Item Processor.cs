@@ -671,12 +671,17 @@ namespace VaultItemProcessor
 
                                     currentProduct = "";
 
+                                    
+
                                     foreach (ExportLineItem item in lineItemList)
                                     {
                                         if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
                                             currentProduct = item.Number;
 
                                         string watermark = "";
+                                        if (isBatch)
+                                            watermark = "Batch Name: " + txtBoxOrderNumber.Text + "\n";
+
                                         if (!isBatch)       // if we are processing a batch item, no need to sort out stock and make to order
                                         {
                                             if (item.IsStock == true)

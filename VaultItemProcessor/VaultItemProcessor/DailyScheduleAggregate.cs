@@ -99,6 +99,10 @@ namespace VaultItemProcessor
             {
                 string outputPdfPath = ProcessPDF.CalculateSubFolder(PdfInputPath, Path.GetDirectoryName(XmlFileName), item, isBatch);
 
+                string watermark = "";
+                if (isBatch)
+                    watermark = "Batch Name: " + batchName + "\n";
+
                 if (item.Category == "Part")  // only process parts at this level
                 {
                     string itemNumber = "";
@@ -106,10 +110,6 @@ namespace VaultItemProcessor
                         itemNumber = item.Keywords;
                     else
                         itemNumber = item.Number;
-
-                    string watermark = "";
-                    if (isBatch)
-                        watermark = "Batch Name: " + batchName + "\n";
 
                     watermark += "Item Number: " + itemNumber + "      Desc: " + item.ItemDescription + "\n";
                     if (item.Category == "Part")
