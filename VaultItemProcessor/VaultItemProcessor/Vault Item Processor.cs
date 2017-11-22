@@ -1112,6 +1112,8 @@ namespace VaultItemProcessor
 
             if (selectedItem.Category == "Assembly")
                 fileName += ".iam";
+            if(selectedItem.Category == "Product")
+                fileName += ".iam";
             if (selectedItem.Category == "Part")
                 fileName += ".ipt";
 
