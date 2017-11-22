@@ -111,19 +111,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppSettings.cs" />
-    <Compile Include="PrintPDFHandler.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
+    <Compile Include="PrintPDFHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueuePrintPDFCommandExtension.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
+    <Compile Include="QueuePrintPDFCommandExtension.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="JobProcessorPrintPDF.vcet.config">
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="JobProcessorPrintPDF.vcet.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
