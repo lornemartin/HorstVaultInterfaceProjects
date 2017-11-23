@@ -1117,13 +1117,23 @@ namespace VaultItemProcessor
             if (selectedItem.Category == "Part")
                 fileName += ".ipt";
 
-            if (hlaVault==null)
-            
+            if (hlaVault == null)
             {
                 SplashScreenManager.ShowForm(this, typeof(WaitFormVaultLogin), true, true, false);
                 toolStripStatusLabel1.Text = "Logging into Vault...";
                 statusStrip1.Refresh();
-                hlaVault = new VaultAccess.VaultAccess(pdfPath,AppSettings.Get("PrintPDFPrinter").ToString(),AppSettings.Get("PrintPDFPS2PDF").ToString(),AppSettings.Get("GhostScriptWorkingFolder").ToString());
+                hlaVault = new VaultAccess.VaultAccess(pdfPath, AppSettings.Get("PrintPDFPrinter").ToString(), AppSettings.Get("PrintPDFPS2PDF").ToString(), AppSettings.Get("GhostScriptWorkingFolder").ToString());
+                hlaVault.Login(vaultUserName, vaultPassword, vaultServer, vaultVault);
+                toolStripStatusLabel1.Text = "Logging into Vault...Done";
+                SplashScreenManager.CloseForm(false);
+            }
+
+            if(hlaVault!=null && !hlaVault.IsConnectionActive())
+            {
+                SplashScreenManager.ShowForm(this, typeof(WaitFormVaultLogin), true, true, false);
+                toolStripStatusLabel1.Text = "Logging into Vault...";
+                statusStrip1.Refresh();
+                hlaVault = new VaultAccess.VaultAccess(pdfPath, AppSettings.Get("PrintPDFPrinter").ToString(), AppSettings.Get("PrintPDFPS2PDF").ToString(), AppSettings.Get("GhostScriptWorkingFolder").ToString());
                 hlaVault.Login(vaultUserName, vaultPassword, vaultServer, vaultVault);
                 toolStripStatusLabel1.Text = "Logging into Vault...Done";
                 SplashScreenManager.CloseForm(false);

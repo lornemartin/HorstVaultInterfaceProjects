@@ -74,8 +74,13 @@ namespace VaultAccess
 
         public bool IsConnectionActive()
         {
-            if (m_conn != null) return true;
-            else return false;
+            if (m_conn != null)
+                if (m_conn.IsConnected)
+                    return true;
+                else
+                    return false;
+            else
+                return false;
         }
 
         public bool IsWebServiceManagerActive()
@@ -2175,7 +2180,7 @@ namespace VaultAccess
                     return null;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return null;
             }
