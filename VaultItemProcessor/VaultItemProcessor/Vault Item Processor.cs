@@ -59,6 +59,20 @@ namespace VaultItemProcessor
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            // first delete all the temp files from the previous run
+            string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+            if (Directory.Exists(tempDir))
+            {
+                DirectoryInfo dir = new DirectoryInfo(tempDir);
+                foreach (FileInfo f in dir.GetFiles())
+                {
+                    System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                    f.Delete();
+                }
+            }
+
+
+
             if (System.IO.File.Exists(exportFilePath + "AggregateData.xml"))
             {
                 XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
