@@ -22,6 +22,10 @@ namespace VaultItemProcessor
             //  with the filename matching the name of the first file to copy.  There needs to be an equal amount of files and watermarks passed in.
             try
             {
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+                System.IO.Directory.CreateDirectory(tempDir);
+
+
                 if (filesToCopy.Count != watermarks.Count)
                     return false;
 
@@ -71,7 +75,9 @@ namespace VaultItemProcessor
                             inputDocument.InsertPage(idx*2+1, watermarkPage);
                         }
 
-                        string randomFileName = Path.GetTempFileName();
+                        //string randomFileName = Path.GetTempFileName();
+                        string randomName = System.IO.Path.GetRandomFileName();
+                        string randomFileName = System.IO.Path.Combine(tempDir, randomName);
                         inputPdfName = randomFileName;
                         inputDocument.Save(randomFileName);
 
@@ -98,8 +104,11 @@ namespace VaultItemProcessor
                     if (!File.Exists(inputPdfName))
                     {
                         watermarks[fileCount] = "No Drawing Found For:\n" + watermarks[fileCount];
+                        System.IO.Directory.CreateDirectory(tempDir);
 
-                        string randomFileName = Path.GetTempFileName();
+                        //string randomFileName = Path.GetTempFileName();
+                        string randomName = System.IO.Path.GetRandomFileName();
+                        string randomFileName = System.IO.Path.Combine(tempDir, randomName);
                         inputPdfName = randomFileName;
 
                         // Create a new PDF document
@@ -289,6 +298,9 @@ namespace VaultItemProcessor
         {
             try
             {
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+                System.IO.Directory.CreateDirectory(tempDir);
+
                 PdfDocument outputDocument = new PdfDocument();
                 PdfDocument inputDocument = new PdfDocument();
                 PdfDocument editedDocument = new PdfDocument();
@@ -331,7 +343,9 @@ namespace VaultItemProcessor
                         inputDocument.InsertPage(idx * 2 + 1, watermarkPage);
                     }
 
-                    string randomFileName = Path.GetTempFileName();
+                    //string randomFileName = Path.GetTempFileName();
+                    string randomName = System.IO.Path.GetRandomFileName();
+                    string randomFileName = System.IO.Path.Combine(tempDir, randomName);
                     inputPdfName = randomFileName;
                     inputDocument.Save(randomFileName);
 
@@ -369,6 +383,8 @@ namespace VaultItemProcessor
         {
             try
             {
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+
                 PdfDocument outputDocument = new PdfDocument();
                 PdfDocument newDocument = new PdfDocument();
                 PdfDocument editedDocument = new PdfDocument();
@@ -397,7 +413,9 @@ namespace VaultItemProcessor
                 XBrush brush = new XSolidBrush(XColor.FromArgb(128, 255, 0, 0));
                 tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
 
-                string randomFileName = Path.GetTempFileName();
+                //string randomFileName = Path.GetTempFileName();
+                string randomName = System.IO.Path.GetRandomFileName();
+                string randomFileName = System.IO.Path.Combine(tempDir, randomName);
                 inputPdfName = randomFileName;
                 newDocument.Save(randomFileName);
 

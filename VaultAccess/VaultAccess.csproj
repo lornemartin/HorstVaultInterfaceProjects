@@ -216,6 +216,9 @@
     <None Include="app.config" />
     <None Include="ClassDiagram1.cd" />
     <None Include="Key.snk" />
+    <None Include="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
