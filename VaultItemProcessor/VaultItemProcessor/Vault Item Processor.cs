@@ -1486,9 +1486,23 @@ namespace VaultItemProcessor
                                 {
                                     ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                                     string path = Path.GetDirectoryName(outputPdfPath);
-                                    System.Threading.Thread.Sleep(1000);        // this is a terrible kludge, but it works to sort files properly
+
+                                    // I've had some trouble with saw drawings not being ordered properly. I originally only had a 1 second delay in here, but that wasn't
+                                    // enough when i tested on VM.  I then changed it to file check only, but that didn't seem to be enough either.  I then put in both file
+                                    // check and 100 ms delay, and that seems to be working.
+
+                                    // wait till file is done writing.
+                                    var file = new FileInfo(outputPdfPath);
+                                    // While File is not accesable because of writing process
+                                    while (IsFileLocked(file)) { }
+
+                                    // it seems the above wait still isn't quite enough so I put in a 1/2 second delay here.
+                                    System.Threading.Thread.Sleep(100);        // this is a terrible kludge, but it works to sort files properly
+
+
                                     string emptyBackFileName = path + "\\" + Path.GetFileNameWithoutExtension(outputPdfPath) + "-Back.pdf";
                                     ProcessPDF.CreateEmptyPageWithWatermark(emptyBackFileName, "");
+                                    
                                 }
                             }
                             index++;
@@ -1508,6 +1522,7 @@ namespace VaultItemProcessor
 
 
         }
+
 
         private void groupBoxOutput_Enter(object sender, EventArgs e)
         {
