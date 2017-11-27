@@ -398,6 +398,7 @@ namespace VaultItemProcessor
                 newDocument = new PdfDocument();
 
                 PdfPage page = newDocument.AddPage();
+                PdfPage blankpage = newDocument.AddPage();
                 // store page width and height in array list so we can reference again when we are producing output
                 height = page.Height;
                 width = page.Width;
@@ -424,6 +425,7 @@ namespace VaultItemProcessor
 
                 // Get the page from the external document...
                 PdfPage editedPage = editedDocument.Pages[0];
+                PdfPage editedPage2 = editedDocument.Pages[1];
 
                 XUnit[] outputPageDims = xUnitArrayList[0];
                 editedPage.Height = outputPageDims[0];
@@ -431,13 +433,14 @@ namespace VaultItemProcessor
 
                 // ...and add it to the output document.
                 outputDocument.AddPage(editedPage);
+                outputDocument.AddPage(editedPage2);
 
                 // save the watermarked file
                 outputDocument.Save(fileName);
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
             }

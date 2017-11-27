@@ -1492,16 +1492,16 @@ namespace VaultItemProcessor
                                     // check and 100 ms delay, and that seems to be working.
 
                                     // wait till file is done writing.
-                                    var file = new FileInfo(outputPdfPath);
+                                    //var file = new FileInfo(outputPdfPath);
                                     // While File is not accesable because of writing process
-                                    while (IsFileLocked(file)) { }
+                                    //while (IsFileLocked(file)) { }
 
                                     // it seems the above wait still isn't quite enough so I put in a 1/2 second delay here.
-                                    System.Threading.Thread.Sleep(100);        // this is a terrible kludge, but it works to sort files properly
+                                    //System.Threading.Thread.Sleep(100);        // this is a terrible kludge, but it works to sort files properly
 
 
-                                    string emptyBackFileName = path + "\\" + Path.GetFileNameWithoutExtension(outputPdfPath) + "-Back.pdf";
-                                    ProcessPDF.CreateEmptyPageWithWatermark(emptyBackFileName, "");
+                                    //string emptyBackFileName = path + "\\" + Path.GetFileNameWithoutExtension(outputPdfPath) + "-Back.pdf";
+                                    //ProcessPDF.CreateEmptyPageWithWatermark(emptyBackFileName, "");
                                     
                                 }
                             }
