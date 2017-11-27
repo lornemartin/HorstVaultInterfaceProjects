@@ -19,6 +19,7 @@ using DevExpress.XtraSplashScreen;
 using System.Xml.Serialization;
 using PdfSharp.Drawing.Layout;
 using Npgsql;
+using System.Security.AccessControl;
 
 namespace VaultItemProcessor
 {
@@ -1468,7 +1469,12 @@ namespace VaultItemProcessor
                             if (File.Exists(inputPdfPath))
                             {
                                 File.Copy(inputPdfPath, outputPdfPath);
-                                System.IO.File.SetLastWriteTime(outputPdfPath, DateTime.Now);
+
+                                // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
+                                FileInfo fileInfo = new FileInfo(outputPdfPath);
+                                fileInfo.IsReadOnly = false;
+
+                                System.IO.File.SetLastWriteTime(outputPdfPath, DateTime.Now);   // getting exceptions thrown on this line
 
                                 if(item.Category == "Assembly")
                                 {
