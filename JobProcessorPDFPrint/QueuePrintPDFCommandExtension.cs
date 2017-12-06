@@ -33,7 +33,6 @@ namespace JobProcessorPrintPDF
 {
     public class QueuePrintPDFCommandExtension : IExplorerExtension
     {
-
         public void QueuePrintPDFCommandHandler(object s, CommandItemEventArgs e)
         {
             // Queue a job
@@ -183,7 +182,6 @@ namespace JobProcessorPrintPDF
             return sites;
         }
 
-
         public IEnumerable<DetailPaneTab> DetailTabs()
         {
             return null;
@@ -209,19 +207,14 @@ namespace JobProcessorPrintPDF
             // NoOp;
         }
 
-
         public IEnumerable<string> HiddenCommands()
         {
             return null;
         }
 
-
         public IEnumerable<CustomEntityHandler> CustomEntityHandlers()
         {
             return null;
         }
-
-
-        
     }
 }

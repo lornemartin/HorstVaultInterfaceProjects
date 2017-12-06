@@ -33,6 +33,9 @@ namespace JobProcessorPrintPDF
     {
         private string TargetFolder { get; set; }
         private string PDFPath { get; set; }
+        private string pdfPrinterName { get; set; }
+        private string psToPdfProgName { get; set; }
+        private string ghostScriptWorkingFolder { get; set; }
 
         // this is what determines the pdf file naming convention, either by name, or by ERP Number
         //private const string VaultSearchEntity = "33da3ae9-2966-47a1-a049-7e57ace691a3";     // Vault ERPNumber
@@ -42,6 +45,10 @@ namespace JobProcessorPrintPDF
         {
             TargetFolder = System.IO.Path.GetTempPath();
             PDFPath = @"M:\PDF Drawing Files\\";
+            pdfPrinterName = @"Bullzip PDF Printer";
+            psToPdfProgName = @"C:\Program Files\gs\gs9.21\lib\ps2pdf.bat";
+            ghostScriptWorkingFolder = @"C:\Program Files\gs\gs9.21\bin\";
+
         }
 
         #region IJobHandler Members
@@ -187,6 +194,20 @@ namespace JobProcessorPrintPDF
                     {
                         logMessage += "Sheet Name: " + sh.Name + "\r\n";
 
+                        // attempt to fix bug where multiple instances of assembly drawing are printed
+                        // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
+                        // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
+                        if (sh.DrawingViews.Count > 0)
+                        {
+                            modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                            string pdfName = PDFPath + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
+
+                            if (System.IO.File.Exists(pdfName))
+                            {
+                                System.IO.File.Delete(pdfName);
+                            }
+                        }
+
                         // ...2 failures here Oct. 23rd...
                         // ...1 failure here Oct 28th....
 
@@ -302,7 +323,8 @@ namespace JobProcessorPrintPDF
                     PrintObject printOb = new PrintObject();
                     string errMsg = "";
                     string logMsg = "";
-                    if (printOb.printToPDFNew(fileName, propDict, PDFPath, ref errMsg, ref logMsg))
+                    //if (printOb.printToPDFNew(fileName, propDict, PDFPath, ref errMsg, ref logMsg))
+                    if (printOb.printToPDF(fileName,PDFPath,pdfPrinterName, psToPdfProgName,ghostScriptWorkingFolder, ref errMsg, ref logMsg))
                     {
                         logMessage += logMsg;
                         return true;
