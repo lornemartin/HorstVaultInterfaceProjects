@@ -336,7 +336,7 @@ namespace VaultItemProcessor
                         XTextFormatter tf = new XTextFormatter(gfx);
 
                         XRect rect = new XRect(40, 75, width - 40, height - 75);
-                        XBrush brush = new XSolidBrush(XColor.FromArgb(255,255, 0, 0));
+                        XBrush brush = new XSolidBrush(XColor.FromArgb(255,0, 0, 0));
                         tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
 
                         //inputDocument.AddPage(watermarkPage);
