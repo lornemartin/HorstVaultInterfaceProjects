@@ -288,16 +288,17 @@ namespace PrintPDF
 
                                 string newName = "";
 
-                                
-                                
+
+
                                 // attempt to fix bug where multiple instances of assembly drawing are printed
                                 // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
                                 // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
-                                string pdfName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
-                                if(System.IO.File.Exists(pdfName))
-                                {
-                                    System.IO.File.Delete(pdfName);
-                                }
+
+                                //string pdfName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
+                                //if (System.IO.File.Exists(pdfName))
+                                //{
+                                //    System.IO.File.Delete(pdfName);
+                                //}
 
 
 
