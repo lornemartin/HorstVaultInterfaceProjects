@@ -229,6 +229,43 @@ namespace PrintPDF
                     idwFileToPrint.idwName = idw;
                     idwFileToPrint.pageCount = drgDoc.Sheets.Count;
 
+
+
+
+                    // delete previous pdfs so we don't double up assembly drawings.
+                    foreach (Sheet sh in drgDoc.Sheets)
+                    {
+                        logMessage += "Sheet Name: " + sh.Name + "\r\n";
+
+                        if (sh.DrawingViews.Count > 0)
+                        {
+                            string modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                            string pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
+
+                            try
+                            {
+                                if (System.IO.File.Exists(pdfName))
+                                {
+                                    // make sure file is accessible....
+                                    System.IO.File.Delete(pdfName);
+                                }
+                            }
+                            catch(Exception ex)
+                            {
+                                logMessage += ex.Message;
+                                return false;
+                            }
+                        }
+                    }
+
+
+
+
+
+
+
+
+                    
                     foreach (Sheet sh in drgDoc.Sheets)
                     {
                         if (sh.DrawingViews.Count > 0)
@@ -287,20 +324,6 @@ namespace PrintPDF
                                 }
 
                                 string newName = "";
-
-
-
-                                // attempt to fix bug where multiple instances of assembly drawing are printed
-                                // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
-                                // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
-
-                                //string pdfName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
-                                //if (System.IO.File.Exists(pdfName))
-                                //{
-                                //    System.IO.File.Delete(pdfName);
-                                //}
-
-
 
                                 switch (sh.Orientation)
                                 {
