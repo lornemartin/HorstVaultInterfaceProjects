@@ -1130,11 +1130,20 @@ namespace VaultItemProcessor
             // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
             // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
 
-            string pdfName = pdfPath +  fileName+ ".pdf";
-            if (System.IO.File.Exists(pdfName))
-            {
-                System.IO.File.Delete(pdfName);
-            }
+            //string pdfName = pdfPath +  fileName+ ".pdf";
+            //if (System.IO.File.Exists(pdfName))
+            //{
+            //    FileInfo file = new FileInfo(pdfName);
+            //    if (IsFileLocked(file))
+            //    {
+            //        MessageBox.Show("Cannot print pdf if file is selected.");
+            //        return;
+            //    }
+            //    else
+            //    {
+            //        System.IO.File.Delete(pdfName);
+            //    }
+            //}
 
 
 
