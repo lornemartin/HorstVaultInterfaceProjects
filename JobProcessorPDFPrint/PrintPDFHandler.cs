@@ -204,6 +204,9 @@ namespace JobProcessorPrintPDF
 
                             if (System.IO.File.Exists(pdfName))
                             {
+                                // make sure file is accessible....
+                                FileInfo fileInfo = new FileInfo(pdfName);
+                                fileInfo.IsReadOnly = false;
                                 System.IO.File.Delete(pdfName);
                             }
                         }
