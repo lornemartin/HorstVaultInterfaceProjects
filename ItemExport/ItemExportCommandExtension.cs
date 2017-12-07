@@ -592,7 +592,6 @@ namespace ItemExport
                 GetPromoteOrderResults compO = itemSvc.GetPromoteComponentOrder(out now);
 
                 if (compO.PrimaryArray != null)     // the only time this should happen anymore is if an item has children with no associations, e.g. manually created top level assemblies
-
                 {
                     ArrayList compOrder = new ArrayList(compO.PrimaryArray);
                     ArrayList subSet = new ArrayList();
@@ -687,8 +686,8 @@ namespace ItemExport
             {
                 ItemService itemSvc = connection.WebServiceManager.ItemService;
 
-                // doesn't seem to be necessary to put items into edit state to update them
-                //itemSvc.EditItems(itemRevisionIds);     
+                // put item into edit state so that timedate stamp gets updated.
+                itemSvc.EditItems(itemRevisionIds);     
 
                 itemSvc.UpdatePromoteComponents(itemRevisionIds,ItemAssignAll.Default,false);
 
@@ -697,7 +696,6 @@ namespace ItemExport
                 GetPromoteOrderResults compO = itemSvc.GetPromoteComponentOrder(out now);
 
                 if (compO.PrimaryArray != null)     // the only time this should happen anymore is if an item has children with no associations, e.g. manually created top level assemblies
-                                                    
                 {
                     ArrayList compOrder = new ArrayList(compO.PrimaryArray);
                     ArrayList subSet = new ArrayList();
