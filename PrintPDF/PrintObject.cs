@@ -246,7 +246,11 @@ namespace PrintPDF
                             {
                                 if (System.IO.File.Exists(pdfName))
                                 {
-                                    // make sure file is accessible....
+                                    if(CheckIfFileIsBeingUsed(pdfName))
+                                    {
+                                        // if file is in use, can't delete it.
+                                        return false;
+                                    }
                                     System.IO.File.Delete(pdfName);
                                 }
                             }

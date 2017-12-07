@@ -1194,7 +1194,10 @@ namespace VaultItemProcessor
                     {
                         SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
                         long vaultIDToPrint = printDialog.SelectedID;
-                        hlaVault.PrintAssociatedIDWToPDF(vaultIDToPrint.ToString());
+                        if(!hlaVault.PrintAssociatedIDWToPDF(vaultIDToPrint.ToString()))
+                        {
+                            MessageBox.Show("Problem in printing pdfs. File may be open in windows explorer.");
+                        }
                         SplashScreenManager.CloseForm(false);
                     }
                 }

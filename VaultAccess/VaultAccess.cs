@@ -2066,7 +2066,8 @@ namespace VaultAccess
 
                     string logMessage = "";
                     string errMessage = "";
-                    PrintIDWToPDF(fIter, ref errMessage, ref logMessage);
+                    if (!PrintIDWToPDF(fIter, ref errMessage, ref logMessage))
+                        return false;
 
                     //string debugFileName = AppSettings.Get("VaultExportFilePath") + "debug.txt";
                     //System.IO.File.WriteAllText(debugFileName, logMessage);
