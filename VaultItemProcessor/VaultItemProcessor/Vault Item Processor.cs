@@ -1571,6 +1571,7 @@ namespace VaultItemProcessor
                 {
                     if (confirmBatchResult == DialogResult.OK)
                     {
+                        dailyScheduleData = new DailyScheduleAggregate(textBoxOutputFolder.Text, pdfPath);
                         if (hlaVault==null || (hlaVault!=null&&!hlaVault.IsWebServiceManagerActive()))
                         {
                             //hlaVault.CloseVaultConnection();
