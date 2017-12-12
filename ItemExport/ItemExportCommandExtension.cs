@@ -564,6 +564,7 @@ namespace ItemExport
             }
         }
 
+        // this function is not used
         void UpdateItems(Autodesk.Connectivity.WebServices.Item []itemArray , VDF.Vault.Currency.Connections.Connection connection)
         {
             long[] itemRevisionIds = new long[itemArray.Count()];
@@ -687,7 +688,10 @@ namespace ItemExport
                 ItemService itemSvc = connection.WebServiceManager.ItemService;
 
                 // put item into edit state so that timedate stamp gets updated.
-                itemSvc.EditItems(itemRevisionIds);     
+                List<Item> topLevelItems = new List<Item>();
+                topLevelItems = itemSvc.EditItems(itemRevisionIds).ToList();
+                itemSvc.UpdateAndCommitItems(topLevelItems.ToArray());
+
 
                 itemSvc.UpdatePromoteComponents(itemRevisionIds,ItemAssignAll.Default,false);
 
@@ -741,10 +745,9 @@ namespace ItemExport
                             itemsToCommit[itemsToCommit.Length - 1]
                                                           = items[i];
                         }
-
-
                     }
-                    //commit the updated items             
+                    // commit the updated items
+
                     itemSvc.UpdateAndCommitItems(itemsToCommit);
                     // Testing catch - this could cause error
                     // as items contains Items that may
