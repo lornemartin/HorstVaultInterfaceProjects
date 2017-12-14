@@ -1573,8 +1573,16 @@ namespace VaultItemProcessor
                     string currentProduct = "";
                     foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                     {
+                        //if (item.Category == "Product" || item.Category == "Assembly")
+                        //{
+                        //    if (!AssemblyHasSawParts(dailyScheduleData.AggregateLineItemList, item)) // if assembly has no saw or ironworker parts, no need to put these products in.
+                        //        continue;
+                        //}
                         if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
+                        {
                             currentProduct = item.Number;
+                        }
+
                         if (item.AssociatedOrders.Count >= 1 && item.IsStock == false && (item.Operations == "Bandsaw" || item.Operations == "Iron Worker" || item.Category == "Assembly" || item.Category == "Product"))
                         {
                             string inputPdfPath;
@@ -1597,7 +1605,7 @@ namespace VaultItemProcessor
                             string itemText = item.Number;
 
                             string watermark = "Product Number: " + currentProduct + "\n" +
-                                               "Description:" + item.ItemDescription + "\n" + 
+                                               "Description:" + item.ItemDescription + "\n" +
                                                "Item Number: " + itemText + "\n\n";
 
                             //if (item.Category == "Part")
@@ -1682,8 +1690,48 @@ namespace VaultItemProcessor
                 MessageBox.Show(ex.Message);
                 return false;
             }
+        }
 
-
+        // this is not yet working.
+        Boolean AssemblyHasSawParts(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
+        {
+            try
+            {
+                foreach(AggregateLineItem item in itemList)
+                {
+                    if (itemToCheck.Category == "Assembly" || itemToCheck.Category == "Product")
+                    {
+                        // find all items that are sub-assemblies of this assembly
+                        List<AggregateLineItem> childList = new List<AggregateLineItem>();
+                        foreach(AggregateLineItem i in itemList)
+                        {
+                            if(i.Parent == itemToCheck.Number)
+                            {
+                                childList.Add(i);
+                            }
+                        }
+                        foreach (AggregateLineItem child in childList)
+                        {
+                            if (AssemblyHasSawParts(itemList, child))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (item.Operations == "Bandsaw" || item.Operations == "Iron Worker")
+                            if (item.Parent == itemToCheck.Number)
+                                return true;    // found a saw or ironworker part, return true
+                    }
+                }
+                // if we get all the way through the list and find no saw or ironworker parts, return false
+                return false;
+            }
+            catch(Exception)
+            {
+                return true;
+            }
         }
 
         private void groupBoxOutput_Enter(object sender, EventArgs e)
