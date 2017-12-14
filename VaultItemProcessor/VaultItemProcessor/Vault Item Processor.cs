@@ -1596,7 +1596,8 @@ namespace VaultItemProcessor
 
                             string itemText = item.Number;
 
-                            string watermark = "Product Number: " + currentProduct + "\n\n\n" +
+                            string watermark = "Product Number: " + currentProduct + "\n" +
+                                               "Description:" + item.ItemDescription + "\n" + 
                                                "Item Number: " + itemText + "\n\n";
 
                             //if (item.Category == "Part")
