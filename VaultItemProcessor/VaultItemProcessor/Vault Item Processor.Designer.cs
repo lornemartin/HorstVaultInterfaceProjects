@@ -91,6 +91,7 @@
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
+            this.btnGroup2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -585,11 +586,22 @@
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
             // 
+            // btnGroup2
+            // 
+            this.btnGroup2.Location = new System.Drawing.Point(1116, 549);
+            this.btnGroup2.Name = "btnGroup2";
+            this.btnGroup2.Size = new System.Drawing.Size(121, 23);
+            this.btnGroup2.TabIndex = 11;
+            this.btnGroup2.Text = "Group Saw Drawings 2";
+            this.btnGroup2.UseVisualStyleBackColor = true;
+            this.btnGroup2.Click += new System.EventHandler(this.btnGroup2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.Controls.Add(this.btnGroup2);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
@@ -656,6 +668,7 @@
         private System.Windows.Forms.Button btnProcessBatch;
         private System.Windows.Forms.Button btnGroupSawDrawings;
         private System.Windows.Forms.Button btnOdoo;
+        private System.Windows.Forms.Button btnGroup2;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

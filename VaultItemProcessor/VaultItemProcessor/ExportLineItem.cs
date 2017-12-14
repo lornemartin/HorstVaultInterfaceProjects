@@ -95,7 +95,8 @@ namespace VaultItemProcessor
                             {
                                 if (this.StructCode == other.StructCode)
                                 {
-                                        return this.Number.CompareTo(other.Number);     // sort by part number
+                                    //return this.Number.CompareTo(other.Number);     // sort by part number
+                                    return 0;
                                 }
                                 else
                                 {

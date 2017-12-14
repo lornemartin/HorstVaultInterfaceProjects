@@ -1556,6 +1556,134 @@ namespace VaultItemProcessor
 
         }
 
+        private bool GroupBandSawDrawings2(System.IO.DirectoryInfo rootFolder)
+        {
+            try
+            {
+                SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
+                {
+                    bool isBatch;
+                    if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+                        isBatch = true;
+                    else
+                        isBatch = false;
+
+                    int index = 0;
+
+                    string currentProduct = "";
+                    foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
+                    {
+                        if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
+                            currentProduct = item.Number;
+                        if (item.AssociatedOrders.Count >= 1 && item.IsStock == false && (item.Operations == "Bandsaw" || item.Operations == "Iron Worker" || item.Category == "Assembly" || item.Category == "Product"))
+                        {
+                            string inputPdfPath;
+
+                            inputPdfPath = ProcessPDF.CalculateSubFolder(pdfPath, exportFilePath, item, isBatch);
+
+                            if (item.Category == "Assembly")
+                            {
+                                inputPdfPath = AppSettings.Get("PdfPath").ToString() + item.Number + ".pdf";
+                            }
+
+                            string plantString = item.PlantID;
+                            if (item.PlantID == "") plantString = "Plant 1";
+
+                            string outputPdfPath = rootFolder + "\\" + plantString + @"\Bandsaw Drawings\" + index + " - " + item.Number + ".pdf";
+
+                            System.IO.Directory.CreateDirectory(rootFolder + "\\" + plantString + @"\Bandsaw Drawings\");
+
+
+                            string itemText = item.Number;
+
+                            string watermark = "Product Number: " + currentProduct + "\n\n\n" +
+                                               "Item Number: " + itemText + "\n\n";
+
+                            //if (item.Category == "Part")
+                            //{
+                            //    watermark += "Material: " + item.StructCode + "\n" + "Operations: " + item.Operations + "\n";
+                            //    ProcessPDF.AddWatermark(outputPdfPath, watermark);
+                            //}
+
+
+                            watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "\n" +
+                                         "Quantity: " + item.AssociatedOrders[0].OrderQty + "\n\n";
+
+
+                            if ((item.Category == "Assembly") || (item.Category == "Product"))
+                            {
+                                if (item.AssociatedOrders.Count > 1)
+                                {
+                                    int i = 0;
+                                    int totalQty = item.AssociatedOrders[0].OrderQty;
+                                    foreach (OrderData orderItem in item.AssociatedOrders)
+                                    {
+                                        if (i != 0) // skip the first associated order, we already have it
+                                        {
+                                            watermark += "Order Number: " + orderItem.OrderNumber + "\n" +
+                                                          "Quantity: " + orderItem.OrderQty + "\n\n";
+                                            totalQty += orderItem.OrderQty;
+
+                                        }
+                                        i++;
+                                    }
+
+                                    watermark += "Total Order Qty: " + totalQty + "\n";
+                                }
+                            }
+
+
+
+                            if (!File.Exists(inputPdfPath) && item.HasPdf)
+                            {
+                                ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
+                            }
+
+                            if (File.Exists(inputPdfPath))
+                            {
+                                File.Copy(inputPdfPath, outputPdfPath);
+
+                                // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
+                                FileInfo fileInfo = new FileInfo(outputPdfPath);
+                                fileInfo.IsReadOnly = false;
+
+                                System.IO.File.SetLastWriteTime(outputPdfPath, DateTime.Now);   // getting exceptions thrown on this line
+
+                                if (item.Category == "Assembly")
+                                {
+                                    ProcessPDF.AddWatermark(outputPdfPath, watermark);
+                                }
+                                //if (item.Category == "Part")
+                                //{
+                                //    watermark += "Material: " + item.StructCode + "\n" + "Operations: " + item.Operations + "\n";
+                                //    ProcessPDF.AddWatermark(outputPdfPath, watermark);
+                                //}
+                            }
+                            else
+                            {
+                                if (item.Category == "Product")
+                                {
+                                    ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
+                                    string path = Path.GetDirectoryName(outputPdfPath);
+                                }
+                            }
+                            index++;
+                        }
+                    }
+                }
+                SplashScreenManager.CloseForm(false);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SplashScreenManager.CloseForm(false);
+                MessageBox.Show(ex.Message);
+                return false;
+            }
+
+
+        }
 
         private void groupBoxOutput_Enter(object sender, EventArgs e)
         {
@@ -1678,6 +1806,12 @@ namespace VaultItemProcessor
         {
             System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
             GroupBandSawDrawings(rootDir);
+        }
+
+        private void btnGroup2_Click(object sender, EventArgs e)
+        {
+            System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
+            GroupBandSawDrawings2(rootDir);
         }
 
         public bool processList(List<ExportLineItem> itemList)
@@ -1997,6 +2131,8 @@ namespace VaultItemProcessor
             lineItemList = sortList(lineItemList);  // sort list so that no items appear before their respective parents
             processList(lineItemList);
         }
+
+        
     }
 
 }
