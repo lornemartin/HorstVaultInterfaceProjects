@@ -1573,11 +1573,11 @@ namespace VaultItemProcessor
                     string currentProduct = "";
                     foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                     {
-                        //if (item.Category == "Product" || item.Category == "Assembly")
-                        //{
-                        //    if (!AssemblyHasSawParts(dailyScheduleData.AggregateLineItemList, item)) // if assembly has no saw or ironworker parts, no need to put these products in.
-                        //        continue;
-                        //}
+                        if (item.Category == "Product" || item.Category == "Assembly")
+                        {
+                            if (!AssemblyHasSawParts(dailyScheduleData.AggregateLineItemList, item)) // if assembly has no saw or ironworker parts, no need to put these products in.
+                                continue;
+                        }
                         if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
                         {
                             currentProduct = item.Number;
@@ -1692,36 +1692,23 @@ namespace VaultItemProcessor
             }
         }
 
-        // this is not yet working.
         Boolean AssemblyHasSawParts(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
         {
             try
             {
-                foreach(AggregateLineItem item in itemList)
+                // find all items that are sub-assemblies of this assembly
+                List<AggregateLineItem> childList = new List<AggregateLineItem>();
+                foreach (AggregateLineItem item in itemList)    
                 {
-                    if (itemToCheck.Category == "Assembly" || itemToCheck.Category == "Product")
+                    if (item.Parent == itemToCheck.Number && item.Category == "Assembly")
                     {
-                        // find all items that are sub-assemblies of this assembly
-                        List<AggregateLineItem> childList = new List<AggregateLineItem>();
-                        foreach(AggregateLineItem i in itemList)
-                        {
-                            if(i.Parent == itemToCheck.Number)
-                            {
-                                childList.Add(i);
-                            }
-                        }
-                        foreach (AggregateLineItem child in childList)
-                        {
-                            if (AssemblyHasSawParts(itemList, child))
-                            {
-                                return true;
-                            }
-                        }
+                        if (AssemblyHasSawParts(itemList, item))
+                            return true;
                     }
                     else
                     {
                         if (item.Operations == "Bandsaw" || item.Operations == "Iron Worker")
-                            if (item.Parent == itemToCheck.Number)
+                            if (item.Parent == itemToCheck.Number && !item.IsStock)
                                 return true;    // found a saw or ironworker part, return true
                     }
                 }

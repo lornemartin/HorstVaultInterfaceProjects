@@ -578,7 +578,7 @@
             // 
             // btnOdoo
             // 
-            this.btnOdoo.Location = new System.Drawing.Point(1143, 608);
+            this.btnOdoo.Location = new System.Drawing.Point(1142, 626);
             this.btnOdoo.Name = "btnOdoo";
             this.btnOdoo.Size = new System.Drawing.Size(75, 23);
             this.btnOdoo.TabIndex = 9;
@@ -590,9 +590,9 @@
             // 
             this.btnGroup2.Location = new System.Drawing.Point(1116, 549);
             this.btnGroup2.Name = "btnGroup2";
-            this.btnGroup2.Size = new System.Drawing.Size(121, 23);
+            this.btnGroup2.Size = new System.Drawing.Size(121, 53);
             this.btnGroup2.TabIndex = 11;
-            this.btnGroup2.Text = "Group Saw Drawings 2";
+            this.btnGroup2.Text = "Group Saw Drawings  Testing";
             this.btnGroup2.UseVisualStyleBackColor = true;
             this.btnGroup2.Click += new System.EventHandler(this.btnGroup2_Click);
             // 
