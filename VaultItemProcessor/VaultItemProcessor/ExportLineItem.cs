@@ -95,7 +95,7 @@ namespace VaultItemProcessor
                             {
                                 if (this.StructCode == other.StructCode)
                                 {
-                                    return 0;
+                                        return this.Number.CompareTo(other.Number);     // sort by part number
                                 }
                                 else
                                 {
@@ -119,6 +119,7 @@ namespace VaultItemProcessor
                         return -1;
                     else if ((this.Category == "Part") && (other.Category == "Assembly"))
                         return 1;
+                    
                     else
                         return 0;
                 }
