@@ -1312,16 +1312,23 @@ namespace VaultItemProcessor
         {
             System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
 
-            DialogResult r = MessageBox.Show("This command will combine all drawings in each folder together into one combined drawing set." + 
-                                             "  You will not be able to add any more orders to this project.  Are you sure you want to continue?  ", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
-            if (r == DialogResult.Yes)
+            if (dailyScheduleData.IsFinalized())
             {
-                SplashScreenManager.ShowForm(this, typeof(WaitForm2), true, true, false);
-                CombinePDFs(rootDir);
-                //GroupBandSawDrawings(rootDir);
-                dailyScheduleData.FinalizeData();
-                btnProcess.Enabled = false;
-                SplashScreenManager.CloseForm(false);
+                MessageBox.Show("Schedule is already finalized.");
+            }
+            else
+            {
+                DialogResult r = MessageBox.Show("This command will combine all drawings in each folder together into one combined drawing set." +
+                                                 "  You will not be able to add any more orders to this project.  Are you sure you want to continue?  ", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+                if (r == DialogResult.Yes)
+                {
+                    SplashScreenManager.ShowForm(this, typeof(WaitForm2), true, true, false);
+                    CombinePDFs(rootDir);
+                    //GroupBandSawDrawings(rootDir);
+                    dailyScheduleData.FinalizeData();
+                    btnProcess.Enabled = false;
+                    SplashScreenManager.CloseForm(false);
+                }
             }
         }
 
@@ -1724,7 +1731,7 @@ namespace VaultItemProcessor
                 AggregateLineItem nextItem;
                 do
                 {
-                    if (curIndex < itemList.Count)
+                    if (curIndex < itemList.Count-1)
                     {
                         nextItem = itemList[curIndex + 1];
                         if (nextItem.Operations == "Bandsaw" || nextItem.Operations == "Iron Worker")
@@ -1733,15 +1740,15 @@ namespace VaultItemProcessor
                             return false;
                         curIndex++;
                     }
-                } while (curIndex < itemList.Count);
+                } while (curIndex < itemList.Count-1);
 
-                return true;
+                return false;
 
                 
             }
             catch (Exception)
             {
-                return true;
+                return false;
             }
         }
 
