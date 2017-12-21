@@ -1735,14 +1735,15 @@ namespace VaultItemProcessor
                     {
                         nextItem = itemList[curIndex + 1];
                         if (nextItem.Operations == "Bandsaw" || nextItem.Operations == "Iron Worker")
-                            return true;
+                            if(nextItem.IsStock == false)
+                                return true;
                         if (nextItem.Category == "Product")
                             return false;
                         curIndex++;
                     }
                 } while (curIndex < itemList.Count-1);
 
-                return false;
+                return false;       // if no bandsaw or ironworker parts and no other products are found after the itemToCheck, we won't need to print it
 
                 
             }
