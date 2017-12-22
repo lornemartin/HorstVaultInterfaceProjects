@@ -1753,35 +1753,6 @@ namespace VaultItemProcessor
             }
         }
 
-        //Boolean AssemblyHasSawParts(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
-        //{
-        //    try
-        //    {
-        //        // find all items that are sub-assemblies of this assembly
-        //        List<AggregateLineItem> childList = new List<AggregateLineItem>();
-        //        foreach (AggregateLineItem item in itemList)    
-        //        {
-        //            if (item.Parent == itemToCheck.Number && item.Category == "Assembly")
-        //            {
-        //                if (AssemblyHasSawParts(itemList, item))
-        //                    return true;
-        //            }
-        //            else
-        //            {
-        //                if (item.Operations == "Bandsaw" || item.Operations == "Iron Worker")
-        //                    if (item.Parent == itemToCheck.Number && !item.IsStock)
-        //                        return true;    // found a saw or ironworker part, return true
-        //            }
-        //        }
-        //        // if we get all the way through the list and find no saw or ironworker parts, return false
-        //        return false;
-        //    }
-        //    catch(Exception)
-        //    {
-        //        return true;
-        //    }
-        //}
-
         private void groupBoxOutput_Enter(object sender, EventArgs e)
         {
 
