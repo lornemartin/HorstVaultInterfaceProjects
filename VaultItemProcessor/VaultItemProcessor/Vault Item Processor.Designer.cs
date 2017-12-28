@@ -92,7 +92,6 @@
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.btnGroup2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -470,7 +469,7 @@
             // 
             // groupBoxOutput
             // 
-            this.groupBoxOutput.Controls.Add(this.btnGroupSawDrawings);
+            this.groupBoxOutput.Controls.Add(this.btnGroup2);
             this.groupBoxOutput.Controls.Add(this.btnRemoveBatchItem);
             this.groupBoxOutput.Controls.Add(this.btnRemoveOrder);
             this.groupBoxOutput.Controls.Add(this.btnFinalize);
@@ -492,11 +491,11 @@
             // 
             // btnGroupSawDrawings
             // 
-            this.btnGroupSawDrawings.Location = new System.Drawing.Point(197, 88);
+            this.btnGroupSawDrawings.Location = new System.Drawing.Point(1237, 609);
             this.btnGroupSawDrawings.Name = "btnGroupSawDrawings";
-            this.btnGroupSawDrawings.Size = new System.Drawing.Size(121, 23);
+            this.btnGroupSawDrawings.Size = new System.Drawing.Size(121, 37);
             this.btnGroupSawDrawings.TabIndex = 11;
-            this.btnGroupSawDrawings.Text = "Group Saw Drawings";
+            this.btnGroupSawDrawings.Text = "Group Saw Drawings Original";
             this.btnGroupSawDrawings.UseVisualStyleBackColor = true;
             this.btnGroupSawDrawings.Click += new System.EventHandler(this.btnGroupSawDrawings_Click);
             // 
@@ -589,31 +588,21 @@
             // 
             // btnGroup2
             // 
-            this.btnGroup2.Location = new System.Drawing.Point(1242, 596);
+            this.btnGroup2.Location = new System.Drawing.Point(185, 88);
             this.btnGroup2.Name = "btnGroup2";
-            this.btnGroup2.Size = new System.Drawing.Size(121, 53);
+            this.btnGroup2.Size = new System.Drawing.Size(121, 23);
             this.btnGroup2.TabIndex = 11;
-            this.btnGroup2.Text = "Group Saw Drawings  Testing";
+            this.btnGroup2.Text = "Group Saw Drawings ";
             this.btnGroup2.UseVisualStyleBackColor = true;
             this.btnGroup2.Click += new System.EventHandler(this.btnGroup2_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(1086, 492);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 12;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.btnGroup2);
             this.Controls.Add(this.btnOdoo);
+            this.Controls.Add(this.btnGroupSawDrawings);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
             this.Controls.Add(this.statusStrip1);
@@ -680,7 +669,6 @@
         private System.Windows.Forms.Button btnGroupSawDrawings;
         private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroup2;
-        private System.Windows.Forms.Button button1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
