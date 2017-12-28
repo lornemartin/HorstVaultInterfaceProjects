@@ -755,6 +755,7 @@ namespace VaultItemProcessor
                     else
                     {
                         MessageBox.Show("This Order Number Already Exists. Please Enter a Different One.");
+                        return false;
                     }
                 }
                 else
@@ -904,14 +905,15 @@ namespace VaultItemProcessor
 
             if (thicknessOk && materialOk && structOk && operationsOk && cancelled == false)
             {
-                string fileName = textBoxOutputFolder.Text + "batch.csv";
-                string line = spinEditOrderQty.Value.ToString() + "," + lineItemList[0].Number + ",," + txtBoxOrderNumber.Text;
-                using (StreamWriter writer = new StreamWriter(fileName, true))
+                if(processOrder())
                 {
-                    writer.WriteLine(line);
+                    string fileName = textBoxOutputFolder.Text + "batch.csv";
+                    string line = spinEditOrderQty.Value.ToString() + "," + lineItemList[0].Number + ",," + txtBoxOrderNumber.Text;
+                    using (StreamWriter writer = new StreamWriter(fileName, true))
+                    {
+                        writer.WriteLine(line);
+                    }
                 }
-
-                processOrder();
             }
         }
 
