@@ -829,21 +829,29 @@ namespace VaultItemProcessor
             bool structOk = true;
             bool operationsOk = true;
             DialogResult result = new DialogResult();
+
+            exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
+            textBoxOutputFolder.Text = exportFilePath;
+            AppSettings.Set("ExportFilePath", exportFilePath);
+            string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
+
+            loadScheduleData(scheduleFileName);
+
             foreach (ExportLineItem lineItem in lineItemList)
             {
                 if (lineItem.Operations == "Laser" && lineItem.MaterialThickness == "")
                 {
                     thicknessOk = false;
                 }
-                if(lineItem.Operations == "Laser" && lineItem.Material == "")
+                if (lineItem.Operations == "Laser" && lineItem.Material == "")
                 {
                     materialOk = false;
                 }
-                if((lineItem.Operations =="Machine Shop" || lineItem.Operations == "Bandsaw" || lineItem.Operations == "Ironworker") && (lineItem.StructCode == ""))
+                if ((lineItem.Operations == "Machine Shop" || lineItem.Operations == "Bandsaw" || lineItem.Operations == "Ironworker") && (lineItem.StructCode == ""))
                 {
                     structOk = false;
                 }
-                if(lineItem.Operations == "")
+                if (lineItem.Operations == "")
                 {
                     operationsOk = false;
                 }
@@ -905,7 +913,7 @@ namespace VaultItemProcessor
 
             if (thicknessOk && materialOk && structOk && operationsOk && cancelled == false)
             {
-                if(processOrder())
+                if (processOrder())
                 {
                     string fileName = textBoxOutputFolder.Text + "batch.csv";
                     string line = spinEditOrderQty.Value.ToString() + "," + lineItemList[0].Number + ",," + txtBoxOrderNumber.Text;
@@ -1269,16 +1277,20 @@ namespace VaultItemProcessor
             folderBrowserDialogOutputFolderSelect.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
             folderBrowserDialogOutputFolderSelect.SelectedPath = exportFilePath;
             DialogResult result = folderBrowserDialogOutputFolderSelect.ShowDialog();
-            string batchItemName = "";
             if (result == DialogResult.OK) // Test result.
             {
                 exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
                 textBoxOutputFolder.Text = exportFilePath;
                 AppSettings.Set("ExportFilePath", exportFilePath);
             }
-
            
             string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
+
+            loadScheduleData(scheduleFileName);
+        }
+
+        private void loadScheduleData(string scheduleFileName)
+        {
             if (!File.Exists(scheduleFileName))
             {
                 dailyScheduleData = new DailyScheduleAggregate(scheduleFileName, pdfPath);
@@ -1767,6 +1779,13 @@ namespace VaultItemProcessor
 
                 try
                 {
+                    exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
+                    textBoxOutputFolder.Text = exportFilePath;
+                    AppSettings.Set("ExportFilePath", exportFilePath);
+                    string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
+
+                    loadScheduleData(scheduleFileName);
+
                     if (confirmBatchResult == DialogResult.OK)
                     {
                         dailyScheduleData = new DailyScheduleAggregate(textBoxOutputFolder.Text, pdfPath);
