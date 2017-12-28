@@ -92,6 +92,7 @@
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.btnGroup2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -588,7 +589,7 @@
             // 
             // btnGroup2
             // 
-            this.btnGroup2.Location = new System.Drawing.Point(1116, 549);
+            this.btnGroup2.Location = new System.Drawing.Point(1242, 596);
             this.btnGroup2.Name = "btnGroup2";
             this.btnGroup2.Size = new System.Drawing.Size(121, 53);
             this.btnGroup2.TabIndex = 11;
@@ -596,11 +597,21 @@
             this.btnGroup2.UseVisualStyleBackColor = true;
             this.btnGroup2.Click += new System.EventHandler(this.btnGroup2_Click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(1086, 492);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 12;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnGroup2);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
@@ -669,6 +680,7 @@
         private System.Windows.Forms.Button btnGroupSawDrawings;
         private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroup2;
+        private System.Windows.Forms.Button button1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

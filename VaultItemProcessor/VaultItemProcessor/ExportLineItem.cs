@@ -95,7 +95,7 @@ namespace VaultItemProcessor
                             {
                                 if (this.StructCode == other.StructCode)
                                 {
-                                    if(this.Category=="Assembly")
+                                    if (this.Category == "Assembly" && other.Category == "Assembly")
                                     {
                                         if (this.Parent == other.Parent)
                                         {
@@ -103,7 +103,12 @@ namespace VaultItemProcessor
                                         }
                                         else
                                         {
-                                            return this.Parent.CompareTo(other.Parent);
+                                            if (this.Parent.StartsWith("LA-"))
+                                                return -1;
+                                            else if (other.Parent.StartsWith("LA-"))
+                                                return 1;
+                                            else
+                                                return this.Parent.CompareTo(other.Parent);
                                         }
                                     }
                                     return 0;
@@ -130,7 +135,7 @@ namespace VaultItemProcessor
                         return -1;
                     else if ((this.Category == "Part") && (other.Category == "Assembly"))
                         return 1;
-                    
+
                     else
                         return 0;
                 }
