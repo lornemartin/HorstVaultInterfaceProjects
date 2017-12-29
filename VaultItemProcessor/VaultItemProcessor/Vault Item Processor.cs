@@ -830,8 +830,11 @@ namespace VaultItemProcessor
             bool operationsOk = true;
             DialogResult result = new DialogResult();
 
-            exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
-            textBoxOutputFolder.Text = exportFilePath;
+            //exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
+            //textBoxOutputFolder.Text = exportFilePath;
+
+            exportFilePath = textBoxOutputFolder.Text;
+
             AppSettings.Set("ExportFilePath", exportFilePath);
             string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
 
@@ -1779,8 +1782,11 @@ namespace VaultItemProcessor
 
                 try
                 {
-                    exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
-                    textBoxOutputFolder.Text = exportFilePath;
+                    //exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
+                    //textBoxOutputFolder.Text = exportFilePath;
+
+                    exportFilePath = textBoxOutputFolder.Text;
+
                     AppSettings.Set("ExportFilePath", exportFilePath);
                     string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
 
