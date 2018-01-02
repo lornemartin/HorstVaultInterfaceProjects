@@ -787,6 +787,14 @@ namespace VaultItemProcessor
                     if (isBatch)
                         watermark = "Batch Name: " + txtBoxOrderNumber.Text + "\n";
 
+                    if (!isBatch)       // if we are processing a batch item, no need to sort out stock and make to order
+                    {
+                        if (item.IsStock == true)
+                            watermark += "\nStock Item\n";
+                        else
+                            watermark += "\nMake To Order Item\n";
+                    }
+
                     if (item.AssociatedOrders.Count >= 1 && item.Category == "Part")
                     {
                         string outputPdfPath = ProcessPDF.CalculateSubFolder(pdfPath, exportFilePath, item, isBatch);
@@ -795,6 +803,13 @@ namespace VaultItemProcessor
                         //string watermark = "Product Number: " + currentProduct + "\n" +
                         watermark += "Item Number: " + item.Number + "      Desc: " + item.ItemDescription + "\n";
                         int totalQty = 0;
+
+                        if (item.Category == "Part")
+                        {
+                            watermark += "Material: " + item.StructCode + "\n";
+                            watermark += "Operation: " + item.Operations + "\n";
+                        }
+
                         foreach (OrderData o in item.AssociatedOrders)
                         {
                            
@@ -1475,7 +1490,8 @@ namespace VaultItemProcessor
                             string itemText = item.Number;
 
                             string watermark = "Product Number: " + currentProduct + "\n\n\n" +
-                                               "Item Number: " + itemText + "\n\n";
+                                               "Item Number: " + itemText + "\n\n" + 
+                                               "Material:" + item.StructCode;
 
                             //if (item.Category == "Part")
                             //{
@@ -1630,8 +1646,7 @@ namespace VaultItemProcessor
                             string itemText = item.Number;
 
                             string watermark = "Product Number: " + currentProduct + "\n" +
-                                               "Description:" + item.ItemDescription + "\n" +
-                                               "Item Number: " + itemText + "\n\n";
+                                               "Description:" + item.ItemDescription + "\n\n";
 
                             //if (item.Category == "Part")
                             //{
