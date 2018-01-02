@@ -3,6 +3,10 @@ using PdfSharp.Drawing;
 using PdfSharp.Drawing.Layout;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
+using MigraDoc;
+using MigraDoc.DocumentObjectModel;
+using MigraDoc.Rendering;
+using MigraDoc.RtfRendering;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,6 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MigraDoc.DocumentObjectModel.Tables;
 
 namespace VaultItemProcessor
 {
@@ -437,6 +442,116 @@ namespace VaultItemProcessor
 
                 // save the watermarked file
                 outputDocument.Save(fileName);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static bool CreateCoverPageWithCutList(string fileName, AggregateLineItem item, List<AggregateLineItem> cutList)
+        {
+            try
+            {
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+
+                Document document = new Document();
+                document.Info.Title = "Order Cover Page";
+
+                // item information
+                Section itemSection = document.AddSection();
+                itemSection.AddParagraph("Item Information", "Heading2");
+                //document.LastSection.AddParagraph("Item Information", "Heading2");
+
+                Table itemTable = new Table();
+                itemTable.Borders.Width = 0.75;
+
+                Column column = itemTable.AddColumn(Unit.FromInch(2));
+                column.Format.Alignment = ParagraphAlignment.Center;
+
+                itemTable.AddColumn(Unit.FromInch(4));
+
+                Row row = itemTable.AddRow();
+                row.Shading.Color = Colors.PaleGoldenrod;
+                Cell cell = row.Cells[0];
+                cell.AddParagraph("Item Number");
+                cell = row.Cells[1];
+                cell.AddParagraph("Description");
+
+                row = itemTable.AddRow();
+                cell = row.Cells[0];
+                cell.AddParagraph(item.Number);
+                cell = row.Cells[1];
+                cell.AddParagraph(item.ItemDescription);
+
+                itemSection.Add(itemTable);
+
+                // order information
+                Section orderSection = document.AddSection();
+
+                Table orderTable = new Table();
+                orderTable.Borders.Width = 0.75;
+
+                Column orderColumn = orderTable.AddColumn(Unit.FromInch(1));     // blank column to indent
+                orderTable.AddColumn(Unit.FromInch(1.5));                         // order number text
+                orderTable.AddColumn(Unit.FromInch(1.5));                         // order number actual value
+                orderTable.AddColumn(Unit.FromInch(1));                         // quantity text
+                orderTable.AddColumn(Unit.FromInch(1));                         // actual quantity
+                orderColumn.Format.Alignment = ParagraphAlignment.Center;
+
+                
+
+
+                int index = 0;
+                foreach (OrderData order in item.AssociatedOrders)
+                {
+                    Row orderRow = orderTable.AddRow();
+                    orderRow.Shading.Color = Colors.BlanchedAlmond;
+                    Cell orderCell = orderRow.Cells[0];
+
+                    orderCell = orderRow.Cells[1];
+                    orderCell.AddParagraph("Order Number");
+                    orderCell = orderRow.Cells[2];
+                    orderCell.AddParagraph(item.AssociatedOrders[index].OrderNumber);
+                    orderCell = orderRow.Cells[3];
+                    orderCell.AddParagraph("Qty");
+                    orderCell = orderRow.Cells[4];
+                    orderCell.AddParagraph(item.AssociatedOrders[index].OrderQty.ToString());
+
+                    index++;
+                }
+
+                //orderTable.SetEdge(0, 0, index-2, 3, Edge.Box, MigraDoc.DocumentObjectModel.BorderStyle.Single, 1.5, Colors.Black);
+
+                itemSection.Add(orderTable);
+
+
+
+
+
+                
+
+                PdfDocumentRenderer pdfRenderer = new PdfDocumentRenderer(false);
+
+                pdfRenderer.Document = document;
+
+                pdfRenderer.RenderDocument();
+
+                pdfRenderer.PdfDocument.Save(fileName);
+
+
+
+
+
+
+
+
+
+
+
+
 
                 return true;
             }
