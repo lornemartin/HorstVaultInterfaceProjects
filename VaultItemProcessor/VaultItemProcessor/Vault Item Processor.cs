@@ -1752,8 +1752,8 @@ namespace VaultItemProcessor
                     {
                         if (item.Category == "Product" || item.Category == "Assembly")
                         {
-                            if (!SawOrIronWorkerPartBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item)) // if assembly has no saw or ironworker parts, no need to put these products in.
-                                                                                                                      //if (!NextAssemblyisPart(dailyScheduleData.AggregateLineItemList, item))  // this should cull out doubled up products that have their children under an assembly further down the list.
+                            cutList = GetSawOrIronWorkerPartsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
+                            if (cutList.Count == 0) // if assembly has no saw or ironworker parts, no need to put these products in.
                                 continue;
                         }
                         else
@@ -1860,7 +1860,8 @@ namespace VaultItemProcessor
                             {
                                 if (item.Category == "Product")
                                 {
-                                    ProcessPDF.CreateCoverPageWithCutList(outputPdfPath, item, cutList);
+                                    if (!ProcessPDF.CreateCoverPageWithCutList(outputPdfPath, item, cutList))
+                                        MessageBox.Show("Error in generating cover page for " + item.Number);
                                     string path = Path.GetDirectoryName(outputPdfPath);
                                 }
                             }
@@ -1880,28 +1881,28 @@ namespace VaultItemProcessor
             }
         }
 
-        Boolean NextAssemblyisPart(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
-        {
-            try
-            {
-                int curIndex = itemList.IndexOf(itemToCheck);
-                AggregateLineItem nextItem;
+        //Boolean NextAssemblyisPart(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
+        //{
+        //    try
+        //    {
+        //        int curIndex = itemList.IndexOf(itemToCheck);
+        //        AggregateLineItem nextItem;
 
-                if (curIndex < itemList.Count)
-                    nextItem = itemList[curIndex + 1];
-                else
-                    return false;
+        //        if (curIndex < itemList.Count)
+        //            nextItem = itemList[curIndex + 1];
+        //        else
+        //            return false;
 
-                if (nextItem.Category == "Part" || nextItem.Category == "Assembly")
-                    return true;
-                else
-                    return false;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
-        }
+        //        if (nextItem.Category == "Part" || nextItem.Category == "Assembly")
+        //            return true;
+        //        else
+        //            return false;
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return true;
+        //    }
+        //}
 
         Boolean SawOrIronWorkerPartBeforeNextProduct(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
         {
@@ -1930,6 +1931,38 @@ namespace VaultItemProcessor
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        List<AggregateLineItem> GetSawOrIronWorkerPartsBeforeNextProduct(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
+        {
+            List<AggregateLineItem> cutList = new List<AggregateLineItem>();
+            try
+            {
+                int curIndex = itemList.IndexOf(itemToCheck);
+                AggregateLineItem nextItem;
+                do
+                {
+                    if (curIndex < itemList.Count - 1)
+                    {
+                        nextItem = itemList[curIndex + 1];
+                        if (nextItem.Operations == "Bandsaw" || nextItem.Operations == "Iron Worker")
+                            if (nextItem.IsStock == false)
+                                cutList.Add(nextItem);
+                        if (nextItem.Category == "Product")
+                            return cutList;
+                        curIndex++;
+                    }
+                } while (curIndex < itemList.Count - 1);
+
+                return cutList;       // if no bandsaw or ironworker parts and no other products are found after the itemToCheck, we won't need to print it
+
+
+            }
+            catch (Exception)
+            {
+                cutList = new List<AggregateLineItem>();
+                return cutList;     // return empty cutList on error
             }
         }
 

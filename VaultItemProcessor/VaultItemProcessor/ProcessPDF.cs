@@ -463,7 +463,6 @@ namespace VaultItemProcessor
                 // item information
                 Section itemSection = document.AddSection();
                 itemSection.AddParagraph("Item Information", "Heading2");
-                //document.LastSection.AddParagraph("Item Information", "Heading2");
 
                 Table itemTable = new Table();
                 itemTable.Borders.Width = 0.75;
@@ -528,10 +527,78 @@ namespace VaultItemProcessor
                 itemSection.Add(orderTable);
 
 
-
-
+                itemSection.AddParagraph("", "Heading2");
+                itemSection.AddParagraph("Cut List", "Heading2");
 
                 
+
+                foreach (AggregateLineItem cutItem in cutList)
+                {
+                    Table cutListTable = new Table();
+                    cutListTable.Borders.Width = 0.75;
+
+                    Column cutListcolumn = cutListTable.AddColumn(Unit.FromInch(1.5));
+                    column.Format.Alignment = ParagraphAlignment.Center;
+
+                    cutListTable.AddColumn(Unit.FromInch(2.0));
+                    cutListTable.AddColumn(Unit.FromInch(2.0));
+                    cutListTable.AddColumn(Unit.FromInch(1.0));
+
+                    Row cutListRow = cutListTable.AddRow();
+                    cutListTable.Shading.Color = Colors.PaleGoldenrod;
+                    Cell cutListCell = cutListRow.Cells[0];
+                    cutListCell.AddParagraph("Item Number");
+                    cutListCell = cutListRow.Cells[1];
+                    cutListCell.AddParagraph("Description");
+                    cutListCell = cutListRow.Cells[2];
+                    cutListCell.AddParagraph("Material");
+                    cutListCell = cutListRow.Cells[3];
+                    cutListCell.AddParagraph("Operations");
+
+                    cutListRow = cutListTable.AddRow();
+                    cutListCell = cutListRow.Cells[0];
+                    cutListCell.AddParagraph(cutItem.Number);
+                    cutListCell = cutListRow.Cells[1];
+                    cutListCell.AddParagraph(cutItem.ItemDescription);
+                    cutListCell = cutListRow.Cells[2];
+                    cutListCell.AddParagraph(cutItem.StructCode);
+                    cutListCell = cutListRow.Cells[3];
+                    cutListCell.AddParagraph(cutItem.Operations);
+
+                    itemSection.Add(cutListTable);
+
+                    int index2 = 0;
+                    orderTable = new Table();
+                    orderTable.Borders.Width = 0.75;
+
+                    orderColumn = orderTable.AddColumn(Unit.FromInch(1.5));           // blank column to indent
+                    orderTable.AddColumn(Unit.FromInch(1.5));                         // order number text
+                    orderTable.AddColumn(Unit.FromInch(1.5));                         // order number actual value
+                    orderTable.AddColumn(Unit.FromInch(1));                         // quantity text
+                    orderTable.AddColumn(Unit.FromInch(1));                         // actual quantity
+                    orderColumn.Format.Alignment = ParagraphAlignment.Center;
+
+                    foreach (OrderData order in cutItem.AssociatedOrders)
+                    {
+                        Row orderRow = orderTable.AddRow();
+                        orderRow.Shading.Color = Colors.BlanchedAlmond;
+                        Cell orderCell = orderRow.Cells[0];
+                        orderCell = orderRow.Cells[1];
+                        orderCell.AddParagraph("Order Number");
+                        orderCell = orderRow.Cells[2];
+                        orderCell.AddParagraph(cutItem.AssociatedOrders[index2].OrderNumber);
+                        orderCell = orderRow.Cells[3];
+                        orderCell.AddParagraph("Qty");
+                        orderCell = orderRow.Cells[4];
+                        orderCell.AddParagraph(cutItem.AssociatedOrders[index2].OrderQty.ToString());
+
+                        index2++;
+                    }
+                    itemSection.Add(orderTable);
+                }
+
+               
+
 
                 PdfDocumentRenderer pdfRenderer = new PdfDocumentRenderer(false);
 
