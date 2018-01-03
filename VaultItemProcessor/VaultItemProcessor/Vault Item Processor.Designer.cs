@@ -560,7 +560,7 @@
             // 
             this.btnGroupSawDrawings.Location = new System.Drawing.Point(1237, 609);
             this.btnGroupSawDrawings.Name = "btnGroupSawDrawings";
-            this.btnGroupSawDrawings.Size = new System.Drawing.Size(121, 37);
+            this.btnGroupSawDrawings.Size = new System.Drawing.Size(121, 52);
             this.btnGroupSawDrawings.TabIndex = 11;
             this.btnGroupSawDrawings.Text = "Group Saw Drawings Original";
             this.btnGroupSawDrawings.UseVisualStyleBackColor = true;
@@ -599,9 +599,9 @@
             // 
             // btnGroupSawDrawings3
             // 
-            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(1237, 516);
+            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(1237, 535);
             this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
-            this.btnGroupSawDrawings3.Size = new System.Drawing.Size(105, 23);
+            this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
             this.btnGroupSawDrawings3.TabIndex = 12;
             this.btnGroupSawDrawings3.Text = "Group Saw Drawings 3";
             this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;

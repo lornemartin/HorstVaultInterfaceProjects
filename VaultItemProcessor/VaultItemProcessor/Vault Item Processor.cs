@@ -1656,7 +1656,7 @@ namespace VaultItemProcessor
 
 
                             watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "\n" +
-                                         "Quantity: " + item.AssociatedOrders[0].UnitQty + "\n\n";
+                                         "Quantity: " + item.AssociatedOrders[0].OrderQty*item.AssociatedOrders[0].UnitQty + "\n\n";
 
 
                             if ((item.Category == "Assembly") || (item.Category == "Product"))
@@ -1664,14 +1664,14 @@ namespace VaultItemProcessor
                                 if (item.AssociatedOrders.Count > 1)
                                 {
                                     int i = 0;
-                                    int totalQty = item.AssociatedOrders[0].UnitQty;
+                                    int totalQty = item.AssociatedOrders[0].OrderQty * item.AssociatedOrders[0].UnitQty;
                                     foreach (OrderData orderItem in item.AssociatedOrders)
                                     {
                                         if (i != 0) // skip the first associated order, we already have it
                                         {
                                             watermark += "Order Number: " + orderItem.OrderNumber + "\n" +
-                                                          "Quantity: " + orderItem.UnitQty + "\n\n";
-                                            totalQty += orderItem.UnitQty;
+                                                          "Quantity: " + orderItem.OrderQty * orderItem.UnitQty + "\n\n";
+                                            totalQty += orderItem.OrderQty * orderItem.UnitQty;
 
                                         }
                                         i++;
@@ -1804,7 +1804,7 @@ namespace VaultItemProcessor
 
 
                             watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "\n" +
-                                         "Quantity: " + item.AssociatedOrders[0].UnitQty + "\n\n";
+                                         "Quantity: " + item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty + "\n\n";
 
 
                             if ((item.Category == "Assembly") || (item.Category == "Product"))
@@ -1812,14 +1812,14 @@ namespace VaultItemProcessor
                                 if (item.AssociatedOrders.Count > 1)
                                 {
                                     int i = 0;
-                                    int totalQty = item.AssociatedOrders[0].UnitQty;
+                                    int totalQty = item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty;
                                     foreach (OrderData orderItem in item.AssociatedOrders)
                                     {
                                         if (i != 0) // skip the first associated order, we already have it
                                         {
                                             watermark += "Order Number: " + orderItem.OrderNumber + "\n" +
-                                                          "Quantity: " + orderItem.UnitQty + "\n\n";
-                                            totalQty += orderItem.UnitQty;
+                                                          "Quantity: " + orderItem.UnitQty*orderItem.OrderQty  + "\n\n";
+                                            totalQty += orderItem.UnitQty*orderItem.OrderQty;
 
                                         }
                                         i++;
