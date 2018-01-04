@@ -1778,9 +1778,14 @@ namespace VaultItemProcessor
                     {
                         if (item.Category == "Product" || item.Category == "Assembly")
                         {
-                            cutList = GetSawOrIronWorkerPartsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
-                            if (cutList.Count == 0) // if assembly has no saw or ironworker parts, no need to put these products in.
+                            if (SawOrIronWorkerPartBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item))
+                            {
+                                cutList = GetSawOrIronWorkerPartsWithoutPDFsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
+                            }
+                            else
+                            {
                                 continue;
+                            }
                         }
                         else
                         {
@@ -1859,7 +1864,8 @@ namespace VaultItemProcessor
 
                             if (!File.Exists(inputPdfPath) && item.HasPdf)
                             {
-                                ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
+                                // this shouldn't be necessary anymore because we are doing cutlists on the cover page now.
+                                //ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
                             if (File.Exists(inputPdfPath))
@@ -1960,7 +1966,7 @@ namespace VaultItemProcessor
             }
         }
 
-        List<AggregateLineItem> GetSawOrIronWorkerPartsBeforeNextProduct(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
+        List<AggregateLineItem> GetSawOrIronWorkerPartsWithoutPDFsBeforeNextProduct(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
         {
             List<AggregateLineItem> cutList = new List<AggregateLineItem>();
             try
@@ -1973,7 +1979,7 @@ namespace VaultItemProcessor
                     {
                         nextItem = itemList[curIndex + 1];
                         if (nextItem.Operations == "Bandsaw" || nextItem.Operations == "Iron Worker")
-                            if (nextItem.IsStock == false)
+                            if (nextItem.IsStock == false && nextItem.HasPdf == false)
                                 cutList.Add(nextItem);
                         if (nextItem.Category == "Product")
                             return cutList;

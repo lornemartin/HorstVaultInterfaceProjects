@@ -488,7 +488,7 @@ namespace VaultItemProcessor
                 itemSection.Add(itemTable);
 
                 // order information
-                Section orderSection = document.AddSection();
+                //Section orderSection = document.AddSection();
 
                 Table orderTable = new Table();
                 orderTable.Borders.Width = 0.75;
@@ -527,10 +527,11 @@ namespace VaultItemProcessor
                 itemSection.Add(orderTable);
 
 
-                itemSection.AddParagraph("", "Heading2");
-                itemSection.AddParagraph("Cut List", "Heading2");
-
-                
+                if (cutList.Count > 0)
+                {
+                    itemSection.AddParagraph("", "Heading2");
+                    itemSection.AddParagraph("Cut List of Saw and Iron Worker Parts without Drawings.", "Heading2");
+                }
 
                 foreach (AggregateLineItem cutItem in cutList)
                 {
@@ -597,28 +598,19 @@ namespace VaultItemProcessor
                     itemSection.Add(orderTable);
                 }
 
-               
-
+                Sections docSections = document.Sections;
+                int pageCount = docSections.Count;
+                if (!(pageCount % 2 == 0))  // add a filler page if we have an odd number of pages.
+                {
+                    Section blankSection = document.AddSection();
+                    blankSection.AddParagraph("This page intentionally left blank.");
+                }
 
                 PdfDocumentRenderer pdfRenderer = new PdfDocumentRenderer(false);
-
                 pdfRenderer.Document = document;
-
                 pdfRenderer.RenderDocument();
 
                 pdfRenderer.PdfDocument.Save(fileName);
-
-
-
-
-
-
-
-
-
-
-
-
 
                 return true;
             }
