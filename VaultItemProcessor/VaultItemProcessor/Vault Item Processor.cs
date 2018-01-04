@@ -1716,7 +1716,7 @@ namespace VaultItemProcessor
 
                             if (File.Exists(inputPdfPath))
                             {
-                                File.Copy(inputPdfPath, outputPdfPath);
+                                File.Copy(inputPdfPath, outputPdfPath, true);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
@@ -1870,7 +1870,7 @@ namespace VaultItemProcessor
 
                             if (File.Exists(inputPdfPath))
                             {
-                                File.Copy(inputPdfPath, outputPdfPath);
+                                File.Copy(inputPdfPath, outputPdfPath,true);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
