@@ -65,8 +65,6 @@ namespace VaultItemProcessor
             AssociatedOrders = new List<OrderData>();
             AssociatedOrders.Add(order);
         }
-
-        
     }
 
     public class OrderData

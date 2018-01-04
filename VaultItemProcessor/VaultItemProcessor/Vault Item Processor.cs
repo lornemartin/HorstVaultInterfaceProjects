@@ -985,6 +985,7 @@ namespace VaultItemProcessor
                 {
                     int drawingsDeleted = 0;
                     int drawingsModified = 0;
+                    bool warningShown = false;
 
                     if (!dailyScheduleData.IsFinalized())
                     {
@@ -992,9 +993,33 @@ namespace VaultItemProcessor
 
                         foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                         {
+                            
                             foreach (var o in item.AssociatedOrders)
                             {
-                                if (o.OrderNumber == txtBoxOrderNumber.Text) matchingOrderFound = true;
+                                if (o.OrderNumber == txtBoxOrderNumber.Text)
+                                {
+                                    matchingOrderFound = true;
+                                    string otherMatchingOrders = "";
+                                    if (!warningShown) {
+                                        if (!item.IsStock && (item.Operations == "Bandsaw" || item.Operations == "Iron Worker"))
+                                        {
+                                            foreach (var o2 in item.AssociatedOrders)
+                                            {
+                                                if (o2.OrderNumber != txtBoxOrderNumber.Text)
+                                                {
+                                                    otherMatchingOrders += o2.OrderNumber.ToString() + "\n";
+                                                }
+                                            }
+
+                                            if (otherMatchingOrders != "")
+                                            {
+                                                MessageBox.Show("The following orders will also need to be removed because they contain parts linked to this order\n" + otherMatchingOrders);
+                                                warningShown = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                
                             }
                         }
 
@@ -1611,6 +1636,7 @@ namespace VaultItemProcessor
                     int index = 0;
 
                     string currentProduct = "";
+
                     foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                     {
                         if (item.Category == "Product" || item.Category == "Assembly")
