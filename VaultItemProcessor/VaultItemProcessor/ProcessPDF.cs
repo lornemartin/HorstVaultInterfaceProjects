@@ -63,6 +63,12 @@ namespace VaultItemProcessor
                             watermarkPage.Height = page.Height;
                             watermarkPage.Width = page.Width;
 
+                            if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
+                            {
+                                watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
+                                watermarkPage.Rotate = 0;
+                            }
+
                             XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
                             xUnitArrayList.Add(pageDims);       // drawing page
                             xUnitArrayList.Add(pageDims);       // watermark page
@@ -96,9 +102,9 @@ namespace VaultItemProcessor
                             // Get the page from the external document...
                             PdfPage editedPage = editedDocument.Pages[idx];
 
-                            XUnit[] outputPageDims = xUnitArrayList[idx];
-                            editedPage.Height = outputPageDims[0];
-                            editedPage.Width = outputPageDims[1];
+                            //XUnit[] outputPageDims = xUnitArrayList[idx];
+                            //editedPage.Height = outputPageDims[0];
+                            //editedPage.Width = outputPageDims[1];
 
                             // ...and add it to the output document.
                             outputDocument.AddPage(editedPage);
@@ -327,6 +333,7 @@ namespace VaultItemProcessor
                         // store page width and height in array list so we can reference again when we are producing output
                         height = page.Height;
                         width = page.Width;
+                        //rotate = page.Rotate;
                         XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
                         xUnitArrayList.Add(pageDims);       // drawing page
                         xUnitArrayList.Add(pageDims);       // watermark page
@@ -335,6 +342,12 @@ namespace VaultItemProcessor
                         watermarkPage.Height = page.Height;
                         watermarkPage.Width = page.Width;
 
+                        if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
+                        {
+                            watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
+                            watermarkPage.Rotate = 0;
+                        }
+                        
                         XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
 
                         XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
@@ -344,7 +357,6 @@ namespace VaultItemProcessor
                         XBrush brush = new XSolidBrush(XColor.FromArgb(255,0, 0, 0));
                         tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
 
-                        //inputDocument.AddPage(watermarkPage);
                         inputDocument.InsertPage(idx * 2 + 1, watermarkPage);
                     }
 
@@ -363,11 +375,7 @@ namespace VaultItemProcessor
                     {
                         // Get the page from the external document...
                         PdfPage editedPage = editedDocument.Pages[idx];
-
-                        XUnit[] outputPageDims = xUnitArrayList[idx];
-                        editedPage.Height = outputPageDims[0];
-                        editedPage.Width = outputPageDims[1];
-
+                        
                         // ...and add it to the output document.
                         outputDocument.AddPage(editedPage);
                     }
