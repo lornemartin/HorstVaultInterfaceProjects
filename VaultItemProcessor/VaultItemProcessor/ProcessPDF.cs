@@ -538,7 +538,7 @@ namespace VaultItemProcessor
                 if (cutList.Count > 0)
                 {
                     itemSection.AddParagraph("", "Heading2");
-                    itemSection.AddParagraph("Cut List of Saw and Iron Worker Parts without Drawings.", "Heading2");
+                    itemSection.AddParagraph("Cut List of Non-Stock Saw and Iron Worker Parts without Drawings.", "Heading2");
                 }
 
                 foreach (AggregateLineItem cutItem in cutList)

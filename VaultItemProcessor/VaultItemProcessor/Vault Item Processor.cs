@@ -1868,7 +1868,7 @@ namespace VaultItemProcessor
                                 //ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
-                            if (File.Exists(inputPdfPath))
+                            if (File.Exists(inputPdfPath) && item.HasPdf)
                             {
                                 File.Copy(inputPdfPath, outputPdfPath,true);
 
