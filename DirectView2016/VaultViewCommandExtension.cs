@@ -32,10 +32,10 @@ using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 
 // The extension ID needs to be unique for each extension.  
 // Make sure to generate your own ID when writing your own extension. 
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("784be8f0-6757-47d1-b450-2f1bbf3229ef")]                                                                   
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("689e45ae-b49b-4fcb-954f-181bc48cdf25")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("10.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("11.0")]
 
 
 namespace VaultView
