@@ -85,6 +85,7 @@ namespace JobProcessorFileUpdate
         public void OnLogOn(IApplication application)
         {
             // NoOp;
+            int i = 10;
         }
 
         public void OnLogOff(IApplication application)

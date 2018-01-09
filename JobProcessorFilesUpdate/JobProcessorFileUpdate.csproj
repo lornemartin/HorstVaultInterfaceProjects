@@ -68,29 +68,37 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.Extensibility.Framework">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Extensibility.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.JobProcessor.Extensibility">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.JobProcessor.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2017 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Inventor.Interop, Version=21.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
