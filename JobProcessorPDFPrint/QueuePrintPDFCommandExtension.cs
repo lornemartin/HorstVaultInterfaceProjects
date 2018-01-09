@@ -26,7 +26,7 @@ using ADSK = Autodesk.Connectivity.WebServices;
 [assembly: AssemblyCompany("Horst Welding")]
 [assembly: AssemblyProduct("JobProcessorPrintPDF")]
 [assembly: AssemblyDescription("PDFs an idw file")]
-[assembly: ApiVersion("10.0")]
+[assembly: ApiVersion("11.0")]
 [assembly: ExtensionId("525ae223-2486-4e02-98aa-77a617b47604")]
 
 namespace JobProcessorPrintPDF
