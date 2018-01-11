@@ -30,7 +30,7 @@ using Forms = Autodesk.DataManagement.Client.Framework.Vault.Forms;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("f87843c1-f332-4ba8-ad77-8ddb952d2332")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("10.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("11.0")]
 
 namespace Camlink3_1
 {
