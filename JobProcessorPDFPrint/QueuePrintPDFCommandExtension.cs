@@ -40,6 +40,7 @@ namespace JobProcessorPrintPDF
             const string PrintJobTypeName = "Horst.File.PrintPDF";
             const string PrintJob_EntityId = "EntityId";  // this was changed from FileMasterID to EntityID
 
+
             foreach (ISelection vaultObj in e.Context.CurrentSelectionSet)
             {
                 JobParam[] paramList = new JobParam[3];
@@ -82,6 +83,8 @@ namespace JobProcessorPrintPDF
                     VaultFoldertoPDF(rootFolder, e.Context.Application.Connection.WebServiceManager);
                 }
             }
+
+            
         }
 
         private void VaultFoldertoPDF(Folder folder,WebServiceManager mgr)
