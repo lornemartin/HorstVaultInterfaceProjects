@@ -44,7 +44,7 @@ namespace JobProcessorPrintPDF
         public PrintPDFHandler()
         {
             TargetFolder = System.IO.Path.GetTempPath();
-            PDFPath = @"M:\PDF Drawing Files\\";
+            PDFPath = @"\\filestorage.horst.local\EngCommon\PDF Drawing Files\";
             pdfPrinterName = @"Bullzip PDF Printer";
             psToPdfProgName = @"C:\Program Files\gs\gs9.21\lib\ps2pdf.bat";
             ghostScriptWorkingFolder = @"C:\Program Files\gs\gs9.21\bin\";
@@ -322,20 +322,32 @@ namespace JobProcessorPrintPDF
 
                     logMessage += "Defining Print Object...";
 
+                    logMessage += "\nPrintToPDF - filename: " + fileName + " PDFPath: " + PDFPath + " pdfPrinterName: " + pdfPrinterName + "psToPdfProgName: " + psToPdfProgName +
+                                  " ghostScriptWorkingFolder: " + ghostScriptWorkingFolder + "\n";
+
                     //...failed here one time Oct 28th...
                     PrintObject printOb = new PrintObject();
-                    string errMsg = "";
-                    string logMsg = "";
-                    //if (printOb.printToPDFNew(fileName, propDict, PDFPath, ref errMsg, ref logMsg))
-                    if (printOb.printToPDF(fileName,PDFPath,pdfPrinterName, psToPdfProgName,ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                    if (printOb != null)
                     {
-                        logMessage += logMsg;
-                        return true;
+                        string errMsg = "";
+                        string logMsg = "";
+
+
+                        if (printOb.printToPDF(fileName, PDFPath, pdfPrinterName, psToPdfProgName, ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                        {
+                            logMessage += logMsg;
+                            return true;
+                        }
+                        else
+                        {
+                            logMessage += logMsg;
+                            errMessage += errMsg;
+                            return false;
+                        }
                     }
                     else
                     {
-                        logMessage += logMsg;
-                        errMessage += errMsg;
+                        logMessage += "Problem initializing printOb.";
                         return false;
                     }
                 }
