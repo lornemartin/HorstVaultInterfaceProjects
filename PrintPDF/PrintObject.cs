@@ -125,10 +125,6 @@ namespace PrintPDF
                     }
 
                     string debugFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\debug.txt";
-                    using (StreamWriter writetext = new StreamWriter(debugFileName))
-                    {
-                        writetext.WriteLine(AppSettings.Get("PrintPDFWorkingFolder").ToString());
-                    }
 
                     Process myProcess = new Process();
                     myProcess.StartInfo.UseShellExecute = false;
