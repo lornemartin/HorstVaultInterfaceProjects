@@ -599,7 +599,8 @@ namespace VaultItemProcessor
                         orderCell = orderRow.Cells[3];
                         orderCell.AddParagraph("Qty");
                         orderCell = orderRow.Cells[4];
-                        orderCell.AddParagraph(cutItem.AssociatedOrders[index2].OrderQty.ToString());
+                        int cutQty = cutItem.AssociatedOrders[index2].OrderQty * cutItem.AssociatedOrders[index2].UnitQty;
+                        orderCell.AddParagraph(cutQty.ToString());
 
                         index2++;
                     }
