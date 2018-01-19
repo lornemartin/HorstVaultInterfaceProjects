@@ -1776,15 +1776,37 @@ namespace VaultItemProcessor
                     string currentProduct = "";
                     foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                     {
+                        cutList.Clear();
                         if (item.Category == "Product" || item.Category == "Assembly")
                         {
                             if (SawOrIronWorkerPartBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item))
                             {
                                 cutList = GetSawOrIronWorkerPartsWithoutPDFsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
                             }
-                            else
+
+                            else 
                             {
-                                continue;
+                                if (item.Category == "Product")
+                                {
+                                    List<string> associatedOrders = new List<string>();
+                                    associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
+                                    if (associatedOrders.Count > 0)
+                                    {
+                                        foreach (string order in associatedOrders)
+                                        {
+                                            item.Notes += order + "\n";
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    continue;
+
+                                    // if we continue here, we skip over assemblies that don't have saw cut parts
+                                    // we also skip over those which have parts that were printed with previous orders, which is likely not desireable.
+
+                                }
+
                             }
                         }
                         else
@@ -1995,6 +2017,36 @@ namespace VaultItemProcessor
             {
                 cutList = new List<AggregateLineItem>();
                 return cutList;     // return empty cutList on error
+            }
+        }
+
+        List<string> GetAssociatedOrders(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
+        {
+            List<string> associatedOrders = new List<string>();
+            try
+            {
+                foreach (AggregateLineItem item in itemList)
+                {
+                    if((item.Operations == "Bandsaw" || item.Category == "Iron Worker") && item.IsStock == false)
+                    if (item.AssociatedOrders.Count > 1)
+                    {
+                        foreach (OrderData o in item.AssociatedOrders)
+                        {
+
+                            if (o.OrderNumber == itemToCheck.AssociatedOrders[0].OrderNumber)
+                            {
+                                associatedOrders.Add(item.AssociatedOrders[0].OrderNumber);
+                                return associatedOrders;
+                            }
+                        }
+                    }
+                }
+                return associatedOrders;
+            }
+            catch (Exception)
+            {
+                associatedOrders = new List<string>();
+                return associatedOrders;     // return empty order list on error
             }
         }
 

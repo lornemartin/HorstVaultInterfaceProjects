@@ -472,6 +472,10 @@ namespace VaultItemProcessor
                 Section itemSection = document.AddSection();
                 itemSection.AddParagraph("Item Information", "Heading2");
 
+                itemSection.PageSetup.PageFormat = PageFormat.A4;
+                itemSection.PageSetup.PageWidth = Unit.FromInch(8);
+                itemSection.PageSetup.PageHeight = Unit.FromInch(5.25);
+
                 Table itemTable = new Table();
                 itemTable.Borders.Width = 0.75;
 
@@ -604,15 +608,25 @@ namespace VaultItemProcessor
 
                         index2++;
                     }
-                    itemSection.Add(orderTable);
                 }
+
+                if (item.Notes != "")
+                {
+                    Section notesSection = document.AddSection();
+                    notesSection.AddParagraph(item.Notes);
+                }
+
 
                 Sections docSections = document.Sections;
                 int pageCount = docSections.Count;
                 if (!(pageCount % 2 == 0))  // add a filler page if we have an odd number of pages.
                 {
                     Section blankSection = document.AddSection();
-                    blankSection.AddParagraph("This page intentionally left blank.");
+
+                    blankSection.PageSetup.PageFormat = PageFormat.A4;
+                    blankSection.PageSetup.PageWidth = Unit.FromInch(8);
+                    blankSection.PageSetup.PageHeight = Unit.FromInch(5.25);
+                    //blankSection.AddParagraph("This page intentionally left blank.");
                 }
 
                 PdfDocumentRenderer pdfRenderer = new PdfDocumentRenderer(false);
