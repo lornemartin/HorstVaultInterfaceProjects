@@ -1792,6 +1792,7 @@ namespace VaultItemProcessor
                                     associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
                                     if (associatedOrders.Count > 0)
                                     {
+                                        item.Notes += "The following order contains bandsaw or iron worker parts that also get used on this order: \n";
                                         foreach (string order in associatedOrders)
                                         {
                                             item.Notes += order + "\n";
@@ -1800,7 +1801,7 @@ namespace VaultItemProcessor
                                 }
                                 else
                                 {
-                                    continue;
+                                    //continue;
 
                                     // if we continue here, we skip over assemblies that don't have saw cut parts
                                     // we also skip over those which have parts that were printed with previous orders, which is likely not desireable.
