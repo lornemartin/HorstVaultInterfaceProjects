@@ -608,6 +608,7 @@ namespace VaultItemProcessor
 
                         index2++;
                     }
+                    itemSection.Add(orderTable);
                 }
 
                 if (item.Notes != "")
@@ -615,7 +616,6 @@ namespace VaultItemProcessor
                     Section notesSection = document.AddSection();
                     notesSection.AddParagraph(item.Notes);
                 }
-
 
                 Sections docSections = document.Sections;
                 int pageCount = docSections.Count;

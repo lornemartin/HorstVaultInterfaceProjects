@@ -1792,10 +1792,11 @@ namespace VaultItemProcessor
                                     associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
                                     if (associatedOrders.Count > 0)
                                     {
-                                        item.Notes += "The following order contains bandsaw or iron worker parts that also get used on this order: \n";
+                                        item.Notes += "See the following orders for parts that get used on this order: \n";
                                         foreach (string order in associatedOrders)
                                         {
-                                            item.Notes += order + "\n";
+                                            string productNumber = GetProductNumberOfOrderNumber(order);
+                                            item.Notes += "Order Number: " + order + "      Product: " + productNumber + "\n";
                                         }
                                     }
                                 }
@@ -1856,9 +1857,9 @@ namespace VaultItemProcessor
                             //    ProcessPDF.AddWatermark(outputPdfPath, watermark);
                             //}
 
-
-                            watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "\n" +
-                                         "Quantity: " + item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty + "\n\n";
+                            string productNumber = GetProductNumberOfOrderNumber(item.AssociatedOrders[0].OrderNumber);
+                            watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "            Product: " + productNumber + "\n" +
+                                        "Quantity: " + item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty + "\n\n";
 
 
                             if ((item.Category == "Assembly") || (item.Category == "Product"))
@@ -1871,7 +1872,8 @@ namespace VaultItemProcessor
                                     {
                                         if (i != 0) // skip the first associated order, we already have it
                                         {
-                                            watermark += "Order Number: " + orderItem.OrderNumber + "\n" +
+                                            productNumber = GetProductNumberOfOrderNumber(orderItem.OrderNumber);
+                                            watermark += "Order Number: " + orderItem.OrderNumber + "            Product: " + productNumber + "\n" +
                                                           "Quantity: " + orderItem.UnitQty*orderItem.OrderQty  + "\n\n";
                                             totalQty += orderItem.UnitQty*orderItem.OrderQty;
 
@@ -1934,6 +1936,18 @@ namespace VaultItemProcessor
                 MessageBox.Show(ex.Message);
                 return false;
             }
+        }
+
+        private string GetProductNumberOfOrderNumber(string orderNumber)
+        {
+            string productName = "";
+
+            foreach(AggregateLineItem lItem in dailyScheduleData.AggregateLineItemList)
+            {
+                if (lItem.AssociatedOrders[0].OrderNumber == orderNumber) return lItem.Number;
+            }
+
+            return productName;
         }
 
         //Boolean NextAssemblyisPart(List<AggregateLineItem> itemList, AggregateLineItem itemToCheck)
