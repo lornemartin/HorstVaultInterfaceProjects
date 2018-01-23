@@ -130,16 +130,7 @@ namespace VaultItemProcessor
                         int lineTotalQty = order.UnitQty * order.OrderQty;
                         if (!isBatch)
                         {
-                            string productName = "";
-
-                            foreach (AggregateLineItem lItem in AggregateLineItemList)
-                            {
-                                if (lItem.AssociatedOrders[0].OrderNumber == order.OrderNumber)
-                                {
-                                    productName = lItem.Number;
-                                    break;
-                                }
-                            }
+                            string productName = GetProductNumberOfOrderNumber(order.OrderNumber);
                             watermark += order.OrderNumber + "--" + productName + "--" + " Ordr Qty: " + order.OrderQty + " x unit Qty: " + order.UnitQty + "---Line Ttl Qty: " + lineTotalQty + "\n";
                         }
                         else
@@ -166,6 +157,24 @@ namespace VaultItemProcessor
                 MessageBox.Show("Error in Processing PDFs.\n" + ex.Message);
                 return false;
             }
+        }
+
+        private string GetProductNumberOfOrderNumber(string orderNumber)
+        {
+            string productName = "";
+
+            for (int i = 0; i < 10; i++)        // search up to 10 levels deep for the product number of this order
+            {
+                foreach (AggregateLineItem lItem in AggregateLineItemList)
+                {
+                    if (i < lItem.AssociatedOrders.Count())
+                    {
+                        if (lItem.AssociatedOrders[i].OrderNumber == orderNumber) return lItem.Number;
+                    }
+                }
+            }
+
+            return productName;
         }
 
         public bool SaveToFile()

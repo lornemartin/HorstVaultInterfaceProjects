@@ -1942,7 +1942,7 @@ namespace VaultItemProcessor
         {
             string productName = "";
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)        // search up to 10 levels deep for the product number of this order
             {
                 foreach (AggregateLineItem lItem in dailyScheduleData.AggregateLineItemList)
                 {
