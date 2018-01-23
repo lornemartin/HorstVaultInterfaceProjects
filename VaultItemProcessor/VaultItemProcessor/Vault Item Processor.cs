@@ -1942,9 +1942,15 @@ namespace VaultItemProcessor
         {
             string productName = "";
 
-            foreach(AggregateLineItem lItem in dailyScheduleData.AggregateLineItemList)
+            for (int i = 0; i < 10; i++)
             {
-                if (lItem.AssociatedOrders[0].OrderNumber == orderNumber) return lItem.Number;
+                foreach (AggregateLineItem lItem in dailyScheduleData.AggregateLineItemList)
+                {
+                    if (i < lItem.AssociatedOrders.Count())
+                    {
+                        if (lItem.AssociatedOrders[i].OrderNumber == orderNumber) return lItem.Number;
+                    }
+                }
             }
 
             return productName;

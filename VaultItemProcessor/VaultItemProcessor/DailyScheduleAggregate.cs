@@ -130,7 +130,17 @@ namespace VaultItemProcessor
                         int lineTotalQty = order.UnitQty * order.OrderQty;
                         if (!isBatch)
                         {
-                             watermark += "Order: " + order.OrderNumber + "--- Order Qty: " + order.OrderQty + " x per unit Qty: " + order.UnitQty + "---Line Total Qty: " + lineTotalQty + "\n";
+                            string productName = "";
+
+                            foreach (AggregateLineItem lItem in AggregateLineItemList)
+                            {
+                                if (lItem.AssociatedOrders[0].OrderNumber == order.OrderNumber)
+                                {
+                                    productName = lItem.Number;
+                                    break;
+                                }
+                            }
+                            watermark += order.OrderNumber + "--" + productName + "--" + " Ordr Qty: " + order.OrderQty + " x unit Qty: " + order.UnitQty + "---Line Ttl Qty: " + lineTotalQty + "\n";
                         }
                         else
                         {
