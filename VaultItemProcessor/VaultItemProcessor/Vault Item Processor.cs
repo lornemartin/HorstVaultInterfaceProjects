@@ -1784,39 +1784,35 @@ namespace VaultItemProcessor
                                 cutList = GetSawOrIronWorkerPartsWithoutPDFsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
                             }
 
-                            else 
+                            if (item.Category == "Product")
                             {
-                                if (item.Category == "Product")
+                                List<string> associatedOrders = new List<string>();
+                                associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
+                                if (associatedOrders.Count > 0)
                                 {
-                                    List<string> associatedOrders = new List<string>();
-                                    associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
-                                    if (associatedOrders.Count > 0)
+                                    item.Notes += "See the following orders for parts that get used on this order: \n";
+                                    foreach (string order in associatedOrders)
                                     {
-                                        item.Notes += "See the following orders for parts that get used on this order: \n";
-                                        foreach (string order in associatedOrders)
-                                        {
-                                            string productNumber = GetProductNumberOfOrderNumber(order);
-                                            item.Notes += "Order Number: " + order + "      Product: " + productNumber + "\n";
-                                        }
+                                        string productNumber = GetProductNumberOfOrderNumber(order);
+                                        item.Notes += "Order Number: " + order + "      Product: " + productNumber + "\n";
                                     }
                                 }
-                                else
-                                {
-                                    //continue;
-
-                                    // if we continue here, we skip over assemblies that don't have saw cut parts
-                                    // we also skip over those which have parts that were printed with previous orders, which is likely not desireable.
-
-                                }
-
                             }
+                            //else
+                            //{
+                            //    //continue;
+
+                            //    // if we continue here, we skip over assemblies that don't have saw cut parts
+                            //    // we also skip over those which have parts that were printed with previous orders, which is likely not desireable.
+
+                            //}
                         }
                         else
                         {
-                            
-                            foreach(AggregateLineItem item2 in dailyScheduleData.AggregateLineItemList)
+
+                            foreach (AggregateLineItem item2 in dailyScheduleData.AggregateLineItemList)
                             {
-                                if(item2.Parent == item.Number && item2.IsStock == false && (item2.Operations == "Bandsaw" || item2.Operations == "Iron Worker"))
+                                if (item2.Parent == item.Number && item2.IsStock == false && (item2.Operations == "Bandsaw" || item2.Operations == "Iron Worker"))
                                 {
                                     cutList.Add(item2);
                                 }
@@ -2048,16 +2044,15 @@ namespace VaultItemProcessor
             {
                 foreach (AggregateLineItem item in itemList)
                 {
-                    if((item.Operations == "Bandsaw" || item.Category == "Iron Worker") && item.IsStock == false)
-                    if (item.AssociatedOrders.Count > 1)
+                    if ((item.Operations == "Bandsaw" || item.Operations == "Iron Worker") && item.IsStock == false && item.AssociatedOrders.Count > 1)
                     {
                         foreach (OrderData o in item.AssociatedOrders)
                         {
-
                             if (o.OrderNumber == itemToCheck.AssociatedOrders[0].OrderNumber)
                             {
-                                associatedOrders.Add(item.AssociatedOrders[0].OrderNumber);
-                                return associatedOrders;
+                                if(!associatedOrders.Contains(item.AssociatedOrders[0].OrderNumber))
+                                    if(item.AssociatedOrders[0].OrderNumber!= itemToCheck.AssociatedOrders[0].OrderNumber) // added this line
+                                        associatedOrders.Add(item.AssociatedOrders[0].OrderNumber);
                             }
                         }
                     }
