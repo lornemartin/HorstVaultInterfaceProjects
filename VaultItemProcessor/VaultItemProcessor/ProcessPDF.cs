@@ -617,23 +617,34 @@ namespace VaultItemProcessor
                     notesSection.AddParagraph(item.Notes);
                 }
 
-                Sections docSections = document.Sections;
-                int pageCount = docSections.Count;
+                var pdfRenderer = new PdfDocumentRenderer(false);
+                pdfRenderer.Document = document;
+                //pdfRenderer.RenderDocument();
+
+
+                var tempDocument = document.Clone();
+                tempDocument.BindToRenderer(null);
+                var pdfRenderer3 = new PdfDocumentRenderer(true);
+                pdfRenderer3.Document = tempDocument;
+                pdfRenderer3.RenderDocument();
+                int pageCount = pdfRenderer3.PdfDocument.PageCount;
+
                 if (!(pageCount % 2 == 0))  // add a filler page if we have an odd number of pages.
                 {
                     Section blankSection = document.AddSection();
-
                     blankSection.PageSetup.PageFormat = PageFormat.A4;
                     blankSection.PageSetup.PageWidth = Unit.FromInch(8);
                     blankSection.PageSetup.PageHeight = Unit.FromInch(5.25);
+
+                    pdfRenderer.RenderDocument();
                     //blankSection.AddParagraph("This page intentionally left blank.");
+                    pdfRenderer.PdfDocument.Save(fileName);
                 }
-
-                PdfDocumentRenderer pdfRenderer = new PdfDocumentRenderer(false);
-                pdfRenderer.Document = document;
-                pdfRenderer.RenderDocument();
-
-                pdfRenderer.PdfDocument.Save(fileName);
+                else
+                {
+                    pdfRenderer.RenderDocument();
+                    pdfRenderer.PdfDocument.Save(fileName);
+                }
 
                 return true;
             }
