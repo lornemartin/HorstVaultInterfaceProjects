@@ -706,9 +706,9 @@ namespace VaultItemProcessor
                                         }
 
                                         string itemNumber = "";
-                                        if (item.Keywords != "")
-                                            itemNumber = item.Keywords;
-                                        else
+                                        //if (item.Keywords != "")
+                                        //    itemNumber = item.Keywords;
+                                        //else
                                             itemNumber = item.Number;
 
                                         watermark += "Product Number: " + currentProduct + "\n" +
