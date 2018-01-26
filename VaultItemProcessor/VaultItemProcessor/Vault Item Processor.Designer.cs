@@ -79,14 +79,12 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
-            this.btnGroup2 = new System.Windows.Forms.Button();
             this.btnRemoveBatchItem = new System.Windows.Forms.Button();
             this.btnRemoveOrder = new System.Windows.Forms.Button();
             this.btnFinalize = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
             this.outputFolderlbl = new System.Windows.Forms.Label();
             this.textBoxOutputFolder = new System.Windows.Forms.TextBox();
-            this.btnGroupSawDrawings = new System.Windows.Forms.Button();
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
@@ -470,8 +468,8 @@
             // 
             // groupBoxOutput
             // 
-            this.groupBoxOutput.Controls.Add(this.btnGroup2);
             this.groupBoxOutput.Controls.Add(this.btnRemoveBatchItem);
+            this.groupBoxOutput.Controls.Add(this.btnGroupSawDrawings3);
             this.groupBoxOutput.Controls.Add(this.btnRemoveOrder);
             this.groupBoxOutput.Controls.Add(this.btnFinalize);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
@@ -489,16 +487,6 @@
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
             this.groupBoxOutput.Enter += new System.EventHandler(this.groupBoxOutput_Enter);
-            // 
-            // btnGroup2
-            // 
-            this.btnGroup2.Location = new System.Drawing.Point(185, 88);
-            this.btnGroup2.Name = "btnGroup2";
-            this.btnGroup2.Size = new System.Drawing.Size(121, 23);
-            this.btnGroup2.TabIndex = 11;
-            this.btnGroup2.Text = "Group Saw Drawings ";
-            this.btnGroup2.UseVisualStyleBackColor = true;
-            this.btnGroup2.Click += new System.EventHandler(this.btnGroup2_Click);
             // 
             // btnRemoveBatchItem
             // 
@@ -556,16 +544,6 @@
             this.textBoxOutputFolder.Size = new System.Drawing.Size(332, 20);
             this.textBoxOutputFolder.TabIndex = 6;
             // 
-            // btnGroupSawDrawings
-            // 
-            this.btnGroupSawDrawings.Location = new System.Drawing.Point(1237, 609);
-            this.btnGroupSawDrawings.Name = "btnGroupSawDrawings";
-            this.btnGroupSawDrawings.Size = new System.Drawing.Size(121, 52);
-            this.btnGroupSawDrawings.TabIndex = 11;
-            this.btnGroupSawDrawings.Text = "Group Saw Drawings Original";
-            this.btnGroupSawDrawings.UseVisualStyleBackColor = true;
-            this.btnGroupSawDrawings.Click += new System.EventHandler(this.btnGroupSawDrawings_Click);
-            // 
             // groupBoxInput
             // 
             this.groupBoxInput.Controls.Add(this.btnProcessBatch);
@@ -589,7 +567,7 @@
             // 
             // btnOdoo
             // 
-            this.btnOdoo.Location = new System.Drawing.Point(1142, 626);
+            this.btnOdoo.Location = new System.Drawing.Point(1291, 629);
             this.btnOdoo.Name = "btnOdoo";
             this.btnOdoo.Size = new System.Drawing.Size(75, 23);
             this.btnOdoo.TabIndex = 9;
@@ -599,11 +577,11 @@
             // 
             // btnGroupSawDrawings3
             // 
-            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(1237, 535);
+            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 88);
             this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
             this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
             this.btnGroupSawDrawings3.TabIndex = 12;
-            this.btnGroupSawDrawings3.Text = "Group Saw Drawings 3";
+            this.btnGroupSawDrawings3.Text = "Group Saw Drawings";
             this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;
             this.btnGroupSawDrawings3.Click += new System.EventHandler(this.btnGroupSawDrawings3_Click);
             // 
@@ -612,9 +590,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
-            this.Controls.Add(this.btnGroupSawDrawings3);
             this.Controls.Add(this.btnOdoo);
-            this.Controls.Add(this.btnGroupSawDrawings);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
             this.Controls.Add(this.statusStrip1);
@@ -678,9 +654,7 @@
         private System.Windows.Forms.Button btnRemoveBatchItem;
         private DevExpress.XtraTreeList.Columns.TreeListColumn requiresPDF;
         private System.Windows.Forms.Button btnProcessBatch;
-        private System.Windows.Forms.Button btnGroupSawDrawings;
         private System.Windows.Forms.Button btnOdoo;
-        private System.Windows.Forms.Button btnGroup2;
         private System.Windows.Forms.Button btnGroupSawDrawings3;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
