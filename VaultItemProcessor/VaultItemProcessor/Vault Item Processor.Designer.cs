@@ -80,6 +80,7 @@
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
             this.btnRemoveBatchItem = new System.Windows.Forms.Button();
+            this.btnGroupSawDrawings3 = new System.Windows.Forms.Button();
             this.btnRemoveOrder = new System.Windows.Forms.Button();
             this.btnFinalize = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
@@ -90,7 +91,7 @@
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
-            this.btnGroupSawDrawings3 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -498,6 +499,16 @@
             this.btnRemoveBatchItem.UseVisualStyleBackColor = true;
             this.btnRemoveBatchItem.Click += new System.EventHandler(this.btnRemoveBatchItem_Click);
             // 
+            // btnGroupSawDrawings3
+            // 
+            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 88);
+            this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
+            this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
+            this.btnGroupSawDrawings3.TabIndex = 12;
+            this.btnGroupSawDrawings3.Text = "Group Saw Drawings";
+            this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;
+            this.btnGroupSawDrawings3.Click += new System.EventHandler(this.btnGroupSawDrawings3_Click);
+            // 
             // btnRemoveOrder
             // 
             this.btnRemoveOrder.Location = new System.Drawing.Point(20, 117);
@@ -575,15 +586,15 @@
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
             // 
-            // btnGroupSawDrawings3
+            // button1
             // 
-            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 88);
-            this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
-            this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
-            this.btnGroupSawDrawings3.TabIndex = 12;
-            this.btnGroupSawDrawings3.Text = "Group Saw Drawings";
-            this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;
-            this.btnGroupSawDrawings3.Click += new System.EventHandler(this.btnGroupSawDrawings3_Click);
+            this.button1.Location = new System.Drawing.Point(1291, 524);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 29);
+            this.button1.TabIndex = 12;
+            this.button1.Text = "Group 4";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.btnGroupSawDrawings4_Click);
             // 
             // Form1
             // 
@@ -591,6 +602,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
             this.Controls.Add(this.btnOdoo);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
             this.Controls.Add(this.statusStrip1);
@@ -656,6 +668,7 @@
         private System.Windows.Forms.Button btnProcessBatch;
         private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroupSawDrawings3;
+        private System.Windows.Forms.Button button1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

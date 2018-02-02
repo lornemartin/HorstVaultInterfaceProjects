@@ -1934,6 +1934,182 @@ namespace VaultItemProcessor
             }
         }
 
+        private bool GroupBandSawDrawings4(System.IO.DirectoryInfo rootFolder)
+        {
+            try
+            {
+                SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
+                {
+                    List<AggregateLineItem> cutList = new List<AggregateLineItem>();
+                    bool isBatch;
+                    if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+                        isBatch = true;
+                    else
+                        isBatch = false;
+
+                    int index = 0;
+
+                    string currentProduct = "";
+                    foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
+                    {
+                        cutList.Clear();
+                        if (item.Category == "Product" || item.Category == "Assembly")
+                        {
+                            if (SawOrIronWorkerPartBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item))
+                            {
+                                cutList = GetSawOrIronWorkerPartsWithoutPDFsBeforeNextProduct(dailyScheduleData.AggregateLineItemList, item);
+                            }
+
+                            if (item.Category == "Product")
+                            {
+                                List<string> associatedOrders = new List<string>();
+                                associatedOrders = GetAssociatedOrders(dailyScheduleData.AggregateLineItemList, item);
+                                if (associatedOrders.Count > 0)
+                                {
+                                    item.Notes += "See the following orders for parts that get used on this order: \n";
+                                    foreach (string order in associatedOrders)
+                                    {
+                                        string productNumber = GetProductNumberOfOrderNumber(order);
+                                        item.Notes += "Order Number: " + order + "      Product: " + productNumber + "\n";
+                                    }
+                                }
+                            }
+                            //else
+                            //{
+                            //    //continue;
+
+                            //    // if we continue here, we skip over assemblies that don't have saw cut parts
+                            //    // we also skip over those which have parts that were printed with previous orders, which is likely not desireable.
+
+                            //}
+                        }
+                        else
+                        {
+
+                            foreach (AggregateLineItem item2 in dailyScheduleData.AggregateLineItemList)
+                            {
+                                if (item2.Parent == item.Number && item2.IsStock == false && (item2.Operations == "Bandsaw" || item2.Operations == "Iron Worker"))
+                                {
+                                    cutList.Add(item2);
+                                }
+                            }
+                        }
+                        if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
+                        {
+                            currentProduct = item.Number;
+                        }
+
+                        if (item.AssociatedOrders.Count >= 1 && item.IsStock == false && (item.Operations == "Bandsaw" || item.Operations == "Iron Worker" || item.Category == "Assembly" || item.Category == "Product"))
+                        {
+                            string inputPdfPath;
+
+                            inputPdfPath = ProcessPDF.CalculateSubFolder(pdfPath, exportFilePath, item, isBatch);
+
+                            if (item.Category == "Assembly")
+                            {
+                                inputPdfPath = AppSettings.Get("PdfPath").ToString() + item.Number + ".pdf";
+                            }
+
+                            string plantString = item.PlantID;
+                            if (item.PlantID == "") plantString = "Plant 1";
+
+                            string outputPdfPath = rootFolder + "\\" + plantString + @"\Bandsaw Drawings\" + index + " - " + item.Number + ".pdf";
+
+                            System.IO.Directory.CreateDirectory(rootFolder + "\\" + plantString + @"\Bandsaw Drawings\");
+
+
+                            string itemText = item.Number;
+
+                            string watermark = "Product Number: " + currentProduct + "\n" +
+                                               "Description:" + item.ItemDescription + "\n\n";
+
+                            //if (item.Category == "Part")
+                            //{
+                            //    watermark += "Material: " + item.StructCode + "\n" + "Operations: " + item.Operations + "\n";
+                            //    ProcessPDF.AddWatermark(outputPdfPath, watermark);
+                            //}
+
+                            string productNumber = GetProductNumberOfOrderNumber(item.AssociatedOrders[0].OrderNumber);
+                            watermark += "Order Number: " + item.AssociatedOrders[0].OrderNumber + "            Product: " + productNumber + "\n" +
+                                        "Quantity: " + item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty + "\n\n";
+
+
+                            if ((item.Category == "Assembly") || (item.Category == "Product"))
+                            {
+                                if (item.AssociatedOrders.Count > 1)
+                                {
+                                    int i = 0;
+                                    int totalQty = item.AssociatedOrders[0].UnitQty * item.AssociatedOrders[0].OrderQty;
+                                    foreach (OrderData orderItem in item.AssociatedOrders)
+                                    {
+                                        if (i != 0) // skip the first associated order, we already have it
+                                        {
+                                            productNumber = GetProductNumberOfOrderNumber(orderItem.OrderNumber);
+                                            watermark += "Order Number: " + orderItem.OrderNumber + "            Product: " + productNumber + "\n" +
+                                                          "Quantity: " + orderItem.UnitQty * orderItem.OrderQty + "\n\n";
+                                            totalQty += orderItem.UnitQty * orderItem.OrderQty;
+
+                                        }
+                                        i++;
+                                    }
+
+                                    watermark += "Total Order Qty: " + totalQty + "\n";
+                                }
+                            }
+
+
+
+                            if (!File.Exists(inputPdfPath) && item.HasPdf)
+                            {
+                                // this shouldn't be necessary anymore because we are doing cutlists on the cover page now.
+                                //ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
+                            }
+
+                            if (File.Exists(inputPdfPath) && item.HasPdf)
+                            {
+                                File.Copy(inputPdfPath, outputPdfPath, true);
+
+                                // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
+                                FileInfo fileInfo = new FileInfo(outputPdfPath);
+                                fileInfo.IsReadOnly = false;
+
+                                System.IO.File.SetLastWriteTime(outputPdfPath, DateTime.Now);   // getting exceptions thrown on this line
+
+                                if (item.Category == "Assembly")
+                                {
+                                    ProcessPDF.AddWatermarkOnFrontAndDwgOnBack(outputPdfPath, watermark);
+                                }
+                                //if (item.Category == "Part")
+                                //{
+                                //    watermark += "Material: " + item.StructCode + "\n" + "Operations: " + item.Operations + "\n";
+                                //    ProcessPDF.AddWatermark(outputPdfPath, watermark);
+                                //}
+                            }
+                            else
+                            {
+                                if (item.Category == "Product")
+                                {
+                                    if (!ProcessPDF.CreateCoverPageWithCutList(outputPdfPath, item, cutList))
+                                        MessageBox.Show("Error in generating cover page for " + item.Number);
+                                    string path = Path.GetDirectoryName(outputPdfPath);
+                                }
+                            }
+                            index++;
+                        }
+                    }
+                }
+                SplashScreenManager.CloseForm(false);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SplashScreenManager.CloseForm(false);
+                MessageBox.Show(ex.Message);
+                return false;
+            }
+        }
+
         private string GetProductNumberOfOrderNumber(string orderNumber)
         {
             string productName = "";
@@ -2209,6 +2385,12 @@ namespace VaultItemProcessor
         {
             System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
             GroupBandSawDrawings3(rootDir);
+        }
+
+        private void btnGroupSawDrawings4_Click(object sender, EventArgs e)
+        {
+            System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
+            GroupBandSawDrawings4(rootDir);
         }
 
         public bool processList(List<ExportLineItem> itemList)
@@ -2528,6 +2710,8 @@ namespace VaultItemProcessor
             lineItemList = sortList(lineItemList);  // sort list so that no items appear before their respective parents
             processList(lineItemList);
         }
+
+        
     }
 
 }

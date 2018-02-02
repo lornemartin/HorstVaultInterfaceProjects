@@ -392,6 +392,95 @@ namespace VaultItemProcessor
             }
         }
 
+        public static bool AddWatermarkOnFrontAndDwgOnBack(string fileName, string watermark)
+        {
+            try
+            {
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+                System.IO.Directory.CreateDirectory(tempDir);
+
+                PdfDocument outputDocument = new PdfDocument();
+                PdfDocument inputDocument = new PdfDocument();
+                PdfDocument editedDocument = new PdfDocument();
+
+                //outputDocument.PageLayout = PdfPageLayout.TwoColumnLeft;
+
+                XUnit height = new XUnit();
+                XUnit width = new XUnit();
+                List<XUnit[]> xUnitArrayList = new List<XUnit[]>();
+
+                string inputPdfName = fileName;
+                xUnitArrayList.Clear();
+                if (File.Exists(inputPdfName))
+                {
+                    inputDocument = PdfReader.Open(inputPdfName, PdfDocumentOpenMode.Modify);
+
+                    int count = inputDocument.PageCount;
+                    for (int idx = 0; idx < count; idx++)
+                    {
+                        PdfPage page = inputDocument.Pages[idx];
+                        // store page width and height in array list so we can reference again when we are producing output
+                        height = page.Height;
+                        width = page.Width;
+                        //rotate = page.Rotate;
+                        XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
+                        xUnitArrayList.Add(pageDims);       // drawing page
+                        xUnitArrayList.Add(pageDims);       // watermark page
+
+                        PdfPage watermarkPage = new PdfPage(inputDocument);
+                        watermarkPage.Height = page.Height;
+                        watermarkPage.Width = page.Width;
+
+                        if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
+                        {
+                            watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
+                            watermarkPage.Rotate = 0;
+                        }
+
+                        XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
+
+                        XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                        XTextFormatter tf = new XTextFormatter(gfx);
+
+                        XRect rect = new XRect(40, 75, width - 40, height - 75);
+                        XBrush brush = new XSolidBrush(XColor.FromArgb(255, 0, 0, 0));
+                        tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
+
+                        inputDocument.InsertPage(idx * 2 + 1, watermarkPage);
+                    }
+
+                    //string randomFileName = Path.GetTempFileName();
+                    string randomName = System.IO.Path.GetRandomFileName();
+                    string randomFileName = System.IO.Path.Combine(tempDir, randomName);
+                    inputPdfName = randomFileName;
+                    inputDocument.Save(randomFileName);
+
+
+                    editedDocument = PdfReader.Open(randomFileName, PdfDocumentOpenMode.Import);
+
+                    // Iterate pages
+                    count = editedDocument.PageCount;
+                    for (int idx = 0; idx < count; idx++)
+                    {
+                        // Get the page from the external document...
+                        PdfPage editedPage = editedDocument.Pages[idx];
+
+                        // ...and add it to the output document.
+                        outputDocument.AddPage(editedPage);
+                    }
+
+                    // save the watermarked file
+                    outputDocument.Save(fileName);
+
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public static bool CreateEmptyPageWithWatermark(string fileName, string watermark)
         {
             try
