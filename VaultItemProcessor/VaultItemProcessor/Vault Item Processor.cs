@@ -1409,7 +1409,7 @@ namespace VaultItemProcessor
                 {
                     // sort bandsaw drawings by file name, they all start with a number
                     files = root.GetFiles("*.pdf");
-                    var orderedFiles = files.OrderBy(n => Regex.Replace(n.Name, @"\d+", f => f.Value.PadLeft(4, '0')));
+                    var orderedFiles = files.OrderBy(n => Regex.Replace(n.Name, @"\d+", f => f.Value.PadLeft(5, '0')));
                     files = orderedFiles.ToArray();
 
                 }
