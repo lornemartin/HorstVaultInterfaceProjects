@@ -20,6 +20,7 @@ using System.Xml.Serialization;
 using PdfSharp.Drawing.Layout;
 using Npgsql;
 using System.Security.AccessControl;
+using System.Text.RegularExpressions;
 
 namespace VaultItemProcessor
 {
@@ -1404,10 +1405,21 @@ namespace VaultItemProcessor
             // First, process all the files directly under this folder
             try
             {
-                // get all files in this folder sorted by creation time
-                files = root.GetFiles("*.pdf");
-                var orderedFiles = files.OrderBy(f => f.CreationTime);
-                files = orderedFiles.ToArray();
+                if (root.Name.Contains("Bandsaw Drawings"))
+                {
+                    // sort bandsaw drawings by file name, they all start with a number
+                    files = root.GetFiles("*.pdf");
+                    var orderedFiles = files.OrderBy(n => Regex.Replace(n.Name, @"\d+", f => f.Value.PadLeft(4, '0')));
+                    files = orderedFiles.ToArray();
+
+                }
+                else
+                {
+                    // otherwise sort by creation time
+                    files = root.GetFiles("*.pdf");
+                    var orderedFiles = files.OrderBy(f => f.CreationTime);
+                    files = orderedFiles.ToArray();
+                }
 
             }
             // This is thrown if even one of the files requires permissions greater
