@@ -396,83 +396,158 @@ namespace VaultItemProcessor
         {
             try
             {
-                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
-                System.IO.Directory.CreateDirectory(tempDir);
+                //string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+                //System.IO.Directory.CreateDirectory(tempDir);
 
+                //PdfDocument outputDocument = new PdfDocument();
+                //PdfDocument inputDocument = new PdfDocument();
+                //PdfDocument editedDocument = new PdfDocument();
+
+                ////outputDocument.PageLayout = PdfPageLayout.TwoColumnLeft;
+
+                //XUnit height = new XUnit();
+                //XUnit width = new XUnit();
+                //List<XUnit[]> xUnitArrayList = new List<XUnit[]>();
+
+                //string inputPdfName = fileName;
+                //xUnitArrayList.Clear();
+                //if (File.Exists(inputPdfName))
+                //{
+                //    inputDocument = PdfReader.Open(inputPdfName, PdfDocumentOpenMode.Modify);
+
+                //    int count = inputDocument.PageCount;
+                //    for (int idx = 0; idx < count; idx++)
+                //    {
+                //        PdfPage page = inputDocument.Pages[idx];
+                //        // store page width and height in array list so we can reference again when we are producing output
+                //        height = page.Height;
+                //        width = page.Width;
+                //        //rotate = page.Rotate;
+                //        XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
+                //        xUnitArrayList.Add(pageDims);       // drawing page
+                //        xUnitArrayList.Add(pageDims);       // watermark page
+
+                //        PdfPage watermarkPage = new PdfPage(inputDocument);
+                //        watermarkPage.Height = page.Height;
+                //        watermarkPage.Width = page.Width;
+
+                //        if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
+                //        {
+                //            watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
+                //            watermarkPage.Rotate = 0;
+                //        }
+
+                //        XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
+
+                //        XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                //        XTextFormatter tf = new XTextFormatter(gfx);
+
+                //        XRect rect = new XRect(40, 75, width - 40, height - 75);
+                //        XBrush brush = new XSolidBrush(XColor.FromArgb(255, 0, 0, 0));
+                //        tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
+
+                //        inputDocument.InsertPage(idx * 2 + 1, watermarkPage);
+
+                //        PdfPage backDrawingPage = new PdfPage(inputDocument);
+                //        backDrawingPage.Height = page.Height;
+                //        backDrawingPage.Width = page.Width;
+                //        backDrawingPage.Orientation = page.Orientation;
+                //    }
+
+                //    //string randomFileName = Path.GetTempFileName();
+                //    string randomName = System.IO.Path.GetRandomFileName();
+                //    string randomFileName = System.IO.Path.Combine(tempDir, randomName);
+                //    inputPdfName = randomFileName;
+                //    inputDocument.Save(randomFileName);
+
+
+                //    editedDocument = PdfReader.Open(randomFileName, PdfDocumentOpenMode.Import);
+
+                //    // Iterate pages
+                //    count = editedDocument.PageCount;
+                //    for (int idx = 0; idx < count; idx++)
+                //    {
+                //        // Get the page from the external document...
+                //        PdfPage editedPage = editedDocument.Pages[idx];
+
+                //        // ...and add it to the output document.
+                //        outputDocument.AddPage(editedPage);
+                //    }
+
+                //    // save the watermarked file
+                //    outputDocument.Save(fileName);
+
+                //}
+
+
+
+                string filename = fileName;
+
+                // Create the output document
                 PdfDocument outputDocument = new PdfDocument();
-                PdfDocument inputDocument = new PdfDocument();
-                PdfDocument editedDocument = new PdfDocument();
 
-                //outputDocument.PageLayout = PdfPageLayout.TwoColumnLeft;
+                outputDocument.PageLayout = PdfPageLayout.SinglePage;
 
-                XUnit height = new XUnit();
-                XUnit width = new XUnit();
-                List<XUnit[]> xUnitArrayList = new List<XUnit[]>();
+                XFont font = new XFont("Verdana", 8, XFontStyle.Bold);
+                XStringFormat format = new XStringFormat();
+                format.Alignment = XStringAlignment.Center;
+                format.LineAlignment = XLineAlignment.Far;
+                XGraphics gfx;
+                XRect box;
 
-                string inputPdfName = fileName;
-                xUnitArrayList.Clear();
-                if (File.Exists(inputPdfName))
+                // Open the external document as XPdfForm object
+                XPdfForm form = XPdfForm.FromFile(filename);
+
+                for (int idx = 0; idx < form.PageCount; idx += 2)
                 {
-                    inputDocument = PdfReader.Open(inputPdfName, PdfDocumentOpenMode.Modify);
+                    // Add a new page to the output document
+                    PdfPage page = outputDocument.AddPage();
+                    page.Orientation = PageOrientation.Portrait;
+                    double width = page.Width;
+                    double height = page.Height;
 
-                    int count = inputDocument.PageCount;
-                    for (int idx = 0; idx < count; idx++)
+                    gfx = XGraphics.FromPdfPage(page);
+
+                    // Set page number (which is one-based)
+                    form.PageNumber = idx + 1;
+
+                    double originalWidth = form.PixelWidth;
+                    double originalHeight = form.PixelHeight;
+                    double ratio = form.PixelWidth / form.PixelHeight;
+
+                    double newWidth = 0;
+                    double startX = 0;
+
+                    if (originalWidth == 612)
                     {
-                        PdfPage page = inputDocument.Pages[idx];
-                        // store page width and height in array list so we can reference again when we are producing output
-                        height = page.Height;
-                        width = page.Width;
-                        //rotate = page.Rotate;
-                        XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
-                        xUnitArrayList.Add(pageDims);       // drawing page
-                        xUnitArrayList.Add(pageDims);       // watermark page
-
-                        PdfPage watermarkPage = new PdfPage(inputDocument);
-                        watermarkPage.Height = page.Height;
-                        watermarkPage.Width = page.Width;
-
-                        if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
-                        {
-                            watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
-                            watermarkPage.Rotate = 0;
-                        }
-
-                        XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
-
-                        XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
-                        XTextFormatter tf = new XTextFormatter(gfx);
-
-                        XRect rect = new XRect(40, 75, width - 40, height - 75);
-                        XBrush brush = new XSolidBrush(XColor.FromArgb(255, 0, 0, 0));
-                        tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
-
-                        inputDocument.InsertPage(idx * 2 + 1, watermarkPage);
+                        newWidth = 306;
+                        startX = 153;
                     }
 
-                    //string randomFileName = Path.GetTempFileName();
-                    string randomName = System.IO.Path.GetRandomFileName();
-                    string randomFileName = System.IO.Path.Combine(tempDir, randomName);
-                    inputPdfName = randomFileName;
-                    inputDocument.Save(randomFileName);
-
-
-                    editedDocument = PdfReader.Open(randomFileName, PdfDocumentOpenMode.Import);
-
-                    // Iterate pages
-                    count = editedDocument.PageCount;
-                    for (int idx = 0; idx < count; idx++)
+                    else
                     {
-                        // Get the page from the external document...
-                        PdfPage editedPage = editedDocument.Pages[idx];
-
-                        // ...and add it to the output document.
-                        outputDocument.AddPage(editedPage);
+                        newWidth = 500;
+                        startX = 56;
                     }
 
-                    // save the watermarked file
-                    outputDocument.Save(fileName);
+                    box = new XRect(startX, 0, newWidth, height / 2);
+                    // Draw the page identified by the page number like an image
+                    gfx.DrawImage(form, box);
 
+                    if (idx + 1 < form.PageCount)
+                    {
+                        // Set page number (which is one-based)
+                        form.PageNumber = idx + 2;
+
+                        box = new XRect(startX, height / 2, newWidth, height / 2);
+                        // Draw the page identified by the page number like an image
+                        gfx.DrawImage(form, box);
+                    }
                 }
+
+                // Save output document
+                outputDocument.Save(fileName);
+
                 return true;
             }
             catch (Exception)
