@@ -757,6 +757,8 @@ namespace ItemExport
             }
             catch
             {
+                MessageBox.Show("There was a problem with updating this item.  Please manually update it and try again.");
+
                 // get the items that need to be undone
                 for (int i = 0; i < itemsToCommit.Length; i++)
                 {
