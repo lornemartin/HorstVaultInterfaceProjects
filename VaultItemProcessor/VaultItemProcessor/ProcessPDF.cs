@@ -487,8 +487,6 @@ namespace VaultItemProcessor
 
                     // add a full size dwg on the back of every page
                     outputDocument.AddPage(fullsizePage);
-
-                    
                 }
 
                 // Save output document
@@ -496,6 +494,101 @@ namespace VaultItemProcessor
 
 
 
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static bool AddWatermarkOnFrontAndDwgOnBackOfPartDwg(string fileName)
+        {
+            try
+            {
+                // Create the output document
+                PdfDocument outputDocument = new PdfDocument();
+
+                outputDocument.PageLayout = PdfPageLayout.SinglePage;
+
+                XFont font = new XFont("Verdana", 8, XFontStyle.Bold);
+                XStringFormat format = new XStringFormat();
+                format.Alignment = XStringAlignment.Center;
+                format.LineAlignment = XLineAlignment.Far;
+                XGraphics gfx;
+                XRect box;
+
+                // Open the external document as XPdfForm object
+                XPdfForm form = XPdfForm.FromFile(fileName);
+                PdfPage fullsizePage = form.Page;
+
+                for (int idx = 0; idx < form.PageCount; idx += 2)
+                {
+                    // Add a new page to the output document
+                    PdfPage page = outputDocument.AddPage();
+                    page.Orientation = PageOrientation.Portrait;
+                    double width = page.Width;
+                    double height = page.Height;
+
+                    gfx = XGraphics.FromPdfPage(page);
+
+                    // Set page number (which is one-based)
+                    form.PageNumber = idx + 1;
+
+                    double originalWidth = form.PixelWidth;
+                    double originalHeight = form.PixelHeight;
+                    double ratio = form.PixelWidth / form.PixelHeight;
+
+                    double newWidth,newHeight = 0;
+                    double startX,startY = 0;
+
+                    if (fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate == 90)
+                    {
+                        newWidth = 435; //306
+                        newHeight = 500;
+                        startX = 25;   //100
+                        startY = -100;
+                    }
+                    else
+                    {
+                        newWidth = 300;
+                        newHeight = 400;
+                        startX = 150;
+                        startY = 0;
+                    }
+
+                    //if (originalWidth == 612)
+                    //{
+                    //    newWidth = 306;
+                    //    startX = 153;
+                    //}
+
+                    //else
+                    //{
+                    //    newWidth = 500;
+                    //    startX = 56;
+                    //}
+
+                    box = new XRect(startX, startY, newWidth, newHeight);
+                    // Draw the page identified by the page number like an image
+                    gfx.DrawImage(form, box);
+
+                    if (idx + 1 < form.PageCount)
+                    {
+                        // Set page number (which is one-based)
+                        form.PageNumber = idx + 2;
+
+                        box = new XRect(startX, height / 2, newWidth, height / 2);
+                        // Draw the page identified by the page number like an image
+                        gfx.DrawImage(form, box);
+                    }
+
+                    // add a full size dwg on the back the page
+                    outputDocument.AddPage(fullsizePage);
+                }
+
+                // Save output document
+                outputDocument.Save(fileName);
                 return true;
             }
             catch (Exception ex)

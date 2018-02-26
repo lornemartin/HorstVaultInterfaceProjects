@@ -2087,6 +2087,11 @@ namespace VaultItemProcessor
 
                                 System.IO.File.SetLastWriteTime(outputPdfPath, DateTime.Now);   // getting exceptions thrown on this line
 
+                                if(item.Category == "Part")
+                                {
+                                    ProcessPDF.AddWatermarkOnFrontAndDwgOnBackOfPartDwg(outputPdfPath);
+                                }
+
                                 if (item.Category == "Assembly")
                                 {
                                     ProcessPDF.AddWatermarkOnFrontAndDwgOnBack(outputPdfPath, watermark);
