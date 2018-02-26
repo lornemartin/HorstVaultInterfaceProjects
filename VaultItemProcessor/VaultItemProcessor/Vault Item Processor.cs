@@ -1925,7 +1925,7 @@ namespace VaultItemProcessor
                             {
                                 if (item.Category == "Product")
                                 {
-                                    if (!ProcessPDF.CreateCoverPageWithCutList(outputPdfPath, item, cutList))
+                                    if (!ProcessPDF.CreateDoubleCoverPageWithCutList(outputPdfPath, item, cutList))
                                         MessageBox.Show("Error in generating cover page for " + item.Number);
                                     string path = Path.GetDirectoryName(outputPdfPath);
                                 }
