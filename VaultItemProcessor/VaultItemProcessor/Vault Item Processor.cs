@@ -2399,12 +2399,6 @@ namespace VaultItemProcessor
             GroupBandSawDrawings3(rootDir);
         }
 
-        private void btnGroupSawDrawings4_Click(object sender, EventArgs e)
-        {
-            System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
-            GroupBandSawDrawings4(rootDir);
-        }
-
         public bool processList(List<ExportLineItem> itemList)
         {
             try
@@ -2723,7 +2717,11 @@ namespace VaultItemProcessor
             processList(lineItemList);
         }
 
-        
+        private void button1_Click(object sender, EventArgs e)
+        {
+            System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
+            GroupBandSawDrawings4(rootDir);
+        }
     }
 
 }

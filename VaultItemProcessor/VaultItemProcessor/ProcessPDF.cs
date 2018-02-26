@@ -414,9 +414,13 @@ namespace VaultItemProcessor
 
                 // Open the external document as XPdfForm object
                 XPdfForm form = XPdfForm.FromFile(filename);
+                
 
                 for (int idx = 0; idx < form.PageCount; idx++)
                 {
+                    form.PageNumber = idx+1;
+                    PdfPage fullsizePage = form.Page;
+
                     // Add a new page to the output document
                     PdfPage page = outputDocument.AddPage();
                     page.Orientation = PageOrientation.Portrait;
@@ -477,32 +481,71 @@ namespace VaultItemProcessor
                     // Draw the page identified by the page number like an image
                     gfx.DrawImage(form, box);
 
-
-
-
-
                     // add a full size dwg on the back of every page
-                    PdfPage page2 = outputDocument.AddPage();
-                    //page.Orientation = PageOrientation.Portrait;
-                    //double width = page.Width;
-                    //double height = page.Height;
+                    outputDocument.AddPage(fullsizePage);
+
+                    
+                }
+
+                // Save output document
+                outputDocument.Save(fileName);
 
 
-                    page2.Orientation = PageOrientation.Portrait;
-                    width = page2.Width;
-                    height = page2.Height;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static bool AddWatermarkOnFrontAndDwgOnBackCopy(string fileName, string watermark)
+        {
+            // this is the first build that outputs a full size drawing on the back of a watermarked page.
+            // It doesn't orient properly yet and doesn't treat multi-page input pdfs properly.
+            try
+            {
+                string filename = fileName;
+
+                // Create the output document
+                PdfDocument outputDocument = new PdfDocument();
+                PdfDocument tempDocument = new PdfDocument();
+
+                outputDocument.PageLayout = PdfPageLayout.SinglePage;
+                tempDocument.PageLayout = PdfPageLayout.SinglePage;
+
+                XFont font = new XFont("Verdana", 8, XFontStyle.Bold);
+                XStringFormat format = new XStringFormat();
+                format.Alignment = XStringAlignment.Center;
+                format.LineAlignment = XLineAlignment.Far;
+                XGraphics gfx, gfx2;
+                XRect box;
+
+                // Open the external document as XPdfForm object
+                XPdfForm form = XPdfForm.FromFile(filename);
+                PdfPage fullsizePage = form.Page;
+
+                for (int idx = 0; idx < form.PageCount; idx++)
+                {
+                    // Add a new page to the output document
+                    PdfPage page = outputDocument.AddPage();
+                    page.Orientation = PageOrientation.Portrait;
+                    double width = page.Width;
+                    double height = page.Height;
 
                     gfx = XGraphics.FromPdfPage(page);
+                    gfx2 = gfx;
 
                     // Set page number (which is one-based)
-                    form.PageNumber = idx + 2;
+                    form.PageNumber = idx + 1;
 
-                    originalWidth = form.PixelWidth;
-                    originalHeight = form.PixelHeight;
-                    ratio = form.PixelWidth / form.PixelHeight;
+                    double originalWidth = form.PixelWidth;
+                    double originalHeight = form.PixelHeight;
+                    double ratio = form.PixelWidth / form.PixelHeight;
 
-                    newWidth = 0;
-                    startX = 0;
+                    double newWidth = 0;
+                    double startX = 0;
 
                     if (originalWidth == 612)
                     {
@@ -521,6 +564,83 @@ namespace VaultItemProcessor
                     gfx.DrawImage(form, box);
 
 
+                    // create a temporary watermark page
+                    PdfPage watermarkPage = new PdfPage(tempDocument);
+                    watermarkPage.Height = page.Height;
+                    watermarkPage.Width = page.Width;
+
+                    if (page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait)
+                    {
+                        watermarkPage.Orientation = PdfSharp.PageOrientation.Landscape;
+                        watermarkPage.Rotate = 0;
+                    }
+
+                    font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                    XTextFormatter tf = new XTextFormatter(gfx);
+
+                    XRect rect = new XRect(40, height / 2, width - 40, height - 75);
+                    XBrush brush = new XSolidBrush(XColor.FromArgb(255, 0, 0, 0));
+                    tf.DrawString(watermark, font, brush, rect, XStringFormats.TopLeft);
+
+                    gfx = XGraphics.FromPdfPage(watermarkPage);
+
+                    box = new XRect(startX, height / 2, newWidth, height / 2);
+
+                    // Draw the page identified by the page number like an image
+                    gfx.DrawImage(form, box);
+
+
+
+
+
+                    // add a full size dwg on the back of every page
+                    PdfPage page2 = (PdfPage) page.Clone();
+                    
+                    outputDocument.AddPage(fullsizePage);
+                    
+                    //page.Orientation = PageOrientation.Portrait;
+                    //double width = page.Width;
+                    //double height = page.Height;
+
+
+                    //page2.Orientation = PageOrientation.Portrait;
+                    //width = page2.Width;
+                    //height = page2.Height;
+
+                    //gfx.Dispose();
+
+                    //XGraphics gfx2;
+                    //gfx2 = XGraphics.FromPdfPage(page);
+
+
+
+                    // Set page number (which is one-based)
+                    //form.PageNumber = idx + 2;
+                    //form.PageNumber = idx + 1;
+
+                    //originalWidth = form.PixelWidth;
+                    //originalHeight = form.PixelHeight;
+                    //ratio = form.PixelWidth / form.PixelHeight;
+
+                    //newWidth = 0;
+                    //startX = 0;
+
+                    //if (originalWidth == 612)
+                    //{
+                    //    newWidth = 306;
+                    //    startX = 153;
+                    //}
+
+                    //else
+                    //{
+                    //    newWidth = 500;
+                    //    startX = 56;
+                    //}
+
+                    //box = new XRect(startX, 0, newWidth, height / 2);
+                    //// Draw the page identified by the page number like an image
+
+                    //gfx2.DrawImage(form, box);
 
                 }
 
