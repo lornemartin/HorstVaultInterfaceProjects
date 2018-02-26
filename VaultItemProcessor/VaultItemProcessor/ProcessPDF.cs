@@ -392,7 +392,7 @@ namespace VaultItemProcessor
             }
         }
 
-        public static bool AddWatermarkOnFrontAndDwgOnBack(string fileName, string watermark)
+        public static bool AddWatermarkOnFrontAndDwgOnBackOfAssyDwg(string fileName, string watermark)
         {
             try
             {

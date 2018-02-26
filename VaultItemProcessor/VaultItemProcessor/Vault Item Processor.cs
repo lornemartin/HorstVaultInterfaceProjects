@@ -2094,7 +2094,7 @@ namespace VaultItemProcessor
 
                                 if (item.Category == "Assembly")
                                 {
-                                    ProcessPDF.AddWatermarkOnFrontAndDwgOnBack(outputPdfPath, watermark);
+                                    ProcessPDF.AddWatermarkOnFrontAndDwgOnBackOfAssyDwg(outputPdfPath, watermark);
                                 }
                                 //if (item.Category == "Part")
                                 //{
