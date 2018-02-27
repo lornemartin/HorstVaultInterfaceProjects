@@ -469,6 +469,7 @@
             // 
             // groupBoxOutput
             // 
+            this.groupBoxOutput.Controls.Add(this.button1);
             this.groupBoxOutput.Controls.Add(this.btnRemoveBatchItem);
             this.groupBoxOutput.Controls.Add(this.btnGroupSawDrawings3);
             this.groupBoxOutput.Controls.Add(this.btnRemoveOrder);
@@ -588,11 +589,11 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1291, 580);
+            this.button1.Location = new System.Drawing.Point(334, 88);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(104, 51);
             this.button1.TabIndex = 10;
-            this.button1.Text = "button1";
+            this.button1.Text = "Group Saw Drawings Double Sided";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -601,7 +602,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
