@@ -217,6 +217,15 @@ namespace JobProcessorPrintPDF
                         if (sh.DrawingViews.Count > 0)
                         {
                             modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+
+                            // testing printing different levels of detail, didn't figure it out....
+                            //if (sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedLevelOfDetail == LevelOfDetailEnum.kMasterLevelOfDetail)
+                            //    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                            //else
+                            //{
+                            //    // remove the ' (*********************)' from the file name that represents the level of detail
+                            //}
+
                             VDF.Vault.Currency.Entities.FileIteration fIter;
                             try
                             {
