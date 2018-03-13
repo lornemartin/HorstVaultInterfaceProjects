@@ -224,6 +224,7 @@ namespace JobProcessorPrintPDF
                             //else
                             //{
                             //    // remove the ' (*********************)' from the file name that represents the level of detail
+                            //    // this wouldn't work because not all files with different levels of detail will have two sets of parenthises.
                             //}
 
                             VDF.Vault.Currency.Entities.FileIteration fIter;
