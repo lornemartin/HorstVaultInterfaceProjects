@@ -75,7 +75,13 @@ namespace VaultItemProcessor
 
                             XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
 
-                            XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                            // evaluate length of watermark and sheet height to determine font size.
+                            int fontSize = 15;
+                            int numOfLines = watermarks[fileCount].Split('\n').Length;
+                            fontSize = (int)page.Width / numOfLines/2;
+                            if (fontSize > 15) fontSize = 15;   // cap font at max of 15 
+
+                            XFont font = new XFont("Times New Roman", fontSize, XFontStyle.Bold);
                             XTextFormatter tf = new XTextFormatter(gfx);
 
                             XRect rect = new XRect(40, 75, width - 40, height - 75);
