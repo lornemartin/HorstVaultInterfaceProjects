@@ -54,7 +54,7 @@ item:=GetElementItem(x,y)
 if !item.1
 	return
 	
-path = \\filestorage.horst.local\EngCommon\PDF Drawing Files\
+path = M:\PDF Drawing Files\
 vaultName := item.2
 ;SplitPath, vaultName, name, dir, ext, name_no_ext, drive ; this was acting up with filenames with dots in them
 ;pdfName := name_no_ext
