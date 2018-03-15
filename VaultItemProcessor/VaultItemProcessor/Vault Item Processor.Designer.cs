@@ -79,6 +79,7 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.btnRemoveBatchItem = new System.Windows.Forms.Button();
             this.btnGroupSawDrawings3 = new System.Windows.Forms.Button();
             this.btnRemoveOrder = new System.Windows.Forms.Button();
@@ -91,7 +92,6 @@
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -490,6 +490,16 @@
             this.groupBoxOutput.Text = "Output Data";
             this.groupBoxOutput.Enter += new System.EventHandler(this.groupBoxOutput_Enter);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(334, 88);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(104, 51);
+            this.button1.TabIndex = 10;
+            this.button1.Text = "Group Saw Drawings Double Sided";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // btnRemoveBatchItem
             // 
             this.btnRemoveBatchItem.Location = new System.Drawing.Point(20, 146);
@@ -579,23 +589,13 @@
             // 
             // btnOdoo
             // 
-            this.btnOdoo.Location = new System.Drawing.Point(1291, 629);
+            this.btnOdoo.Location = new System.Drawing.Point(1290, 609);
             this.btnOdoo.Name = "btnOdoo";
             this.btnOdoo.Size = new System.Drawing.Size(75, 23);
             this.btnOdoo.TabIndex = 9;
             this.btnOdoo.Text = "Odoo";
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(334, 88);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(104, 51);
-            this.button1.TabIndex = 10;
-            this.button1.Text = "Group Saw Drawings Double Sided";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // Form1
             // 
