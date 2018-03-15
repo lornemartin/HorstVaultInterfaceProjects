@@ -14,7 +14,7 @@
   </Setting>
   <Setting>
     <Key>PdfPath</Key>
-    <Value xsi:type="xsd:string">M:\\EngCommon\PDF Drawing Files\</Value>
+    <Value xsi:type="xsd:string">M:\PDF Drawing Files\</Value>
   </Setting>
   <Setting>
     <Key>JobName</Key>
