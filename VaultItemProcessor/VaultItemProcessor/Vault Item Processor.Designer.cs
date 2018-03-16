@@ -457,6 +457,7 @@
             this.txtBoxOrderNumber.Size = new System.Drawing.Size(203, 20);
             this.txtBoxOrderNumber.TabIndex = 5;
             this.txtBoxOrderNumber.Text = "Order Number";
+            this.txtBoxOrderNumber.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // pdfViewer1
             // 
