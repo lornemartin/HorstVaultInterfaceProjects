@@ -588,11 +588,11 @@ namespace VaultItemProcessor
                 if (!dailyScheduleData.IsFinalized())
                 {
                     bool matchingOrderFound = false;
-                    
+
                     // are we processing an order or a batch?
                     bool isBatch = false;
                     string batchItemName = "";
-                    if(txtBoxOrderNumber.Text.IndexOf("batch", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (txtBoxOrderNumber.Text.IndexOf("batch", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         isBatch = true;
                         if (lineItemList != null)
@@ -609,6 +609,34 @@ namespace VaultItemProcessor
 
                     if (matchingOrderFound == false || isBatch == true) // batches can have matching order numbers
                     {
+
+                        // search for items that get manufactured at different location than their parent.
+                        int itemsFound = 0;
+                        foreach (ExportLineItem item in lineItemList)
+                        {
+
+                            ExportLineItem parentItem = lineItemList.Find(x => x.Parent == item.Parent);
+                            if (item.PlantID != "" && parentItem.PlantID != "")
+                            {
+                                if (parentItem.PlantID != item.PlantID)
+                                {
+                                    itemsFound++;
+                                }
+                            }
+                        }
+                        if (itemsFound > 0)
+                        {
+                            DialogResult continueResult = MessageBox.Show("Warning! Found " + itemsFound + " item(s) that gets manufactured at a different location than its parent.  Continue, yes or no?", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                            if (continueResult == DialogResult.No)
+                            {
+                                return false;
+                            }
+                        }
+                        itemsFound = 0;
+
+
+
+
                         if (spinEditOrderQty.Value != 0)
                         {
                             if (txtBoxOrderNumber.Text != "" && txtBoxOrderNumber.Text != "Order Number")
@@ -658,7 +686,7 @@ namespace VaultItemProcessor
 
                                 if (OkToContinue)
                                 {
-                                    
+
 
                                     SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
 
@@ -687,7 +715,7 @@ namespace VaultItemProcessor
 
                                     currentProduct = "";
 
-                                    
+
 
                                     foreach (ExportLineItem item in lineItemList)
                                     {
@@ -710,7 +738,7 @@ namespace VaultItemProcessor
                                         //if (item.Keywords != "")
                                         //    itemNumber = item.Keywords;
                                         //else
-                                            itemNumber = item.Number;
+                                        itemNumber = item.Number;
 
                                         watermark += "Product Number: " + currentProduct + "\n" +
                                         watermark + "Item Number: " + itemNumber + "     Desc: " + item.ItemDescription + "\n";
@@ -720,7 +748,7 @@ namespace VaultItemProcessor
                                             watermark += "Operation: " + item.Operations + "\n";
                                         }
 
-                                            if (item.Notes != "")
+                                        if (item.Notes != "")
                                         {
                                             watermark += "Notes: " + item.Notes + "\n";
                                         }
@@ -730,7 +758,7 @@ namespace VaultItemProcessor
                                         int totalQty = orderQty * unitQty;
                                         watermark += "Quantity: " + totalQty + "\n";
 
-                                        
+
 
                                         fileNamesToCopy.Add(item.Number + ".pdf");
                                         watermarksToCopy.Add(watermark);
