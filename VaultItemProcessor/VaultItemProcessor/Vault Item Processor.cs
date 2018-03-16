@@ -611,32 +611,34 @@ namespace VaultItemProcessor
                     {
 
                         // search for parts that get manufactured at different location than their parent assembly.
-                        int itemsFound = 0;
-                        foreach (ExportLineItem item in lineItemList)
+                        if (isBatch == false)
                         {
-
-                            ExportLineItem parentItem = lineItemList.Find(x => x.Parent == item.Parent);
-                            if (item.PlantID != "" && parentItem.PlantID != "" && item.Category=="Part")
+                            int itemsFound = 0;
+                            foreach (ExportLineItem item in lineItemList)
                             {
-                                string localPlant = AppSettings.Get("LocalPlantName").ToString();
-                                string remotePlant = AppSettings.Get("RemotePlantName").ToString();
 
-                                if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
+                                ExportLineItem parentItem = lineItemList.Find(x => x.Parent == item.Parent);
+                                if (item.PlantID != "" && parentItem.PlantID != "" && item.Category == "Part")
                                 {
-                                    itemsFound++;
+                                    string localPlant = AppSettings.Get("LocalPlantName").ToString();
+                                    string remotePlant = AppSettings.Get("RemotePlantName").ToString();
+
+                                    if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
+                                    {
+                                        itemsFound++;
+                                    }
                                 }
                             }
-                        }
-                        if (itemsFound > 0)
-                        {
-                            DialogResult continueResult = MessageBox.Show("Warning! Found " + itemsFound + " item(s) that gets manufactured at a different location than its parent.  Continue, yes or no?", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                            if (continueResult == DialogResult.No)
+                            if (itemsFound > 0)
                             {
-                                return false;
+                                DialogResult continueResult = MessageBox.Show("Warning! Found " + itemsFound + " item(s) that gets manufactured at a different location than its parent.  Continue, yes or no?", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                                if (continueResult == DialogResult.No)
+                                {
+                                    return false;
+                                }
                             }
+                            itemsFound = 0;
                         }
-                        itemsFound = 0;
-
 
 
 
