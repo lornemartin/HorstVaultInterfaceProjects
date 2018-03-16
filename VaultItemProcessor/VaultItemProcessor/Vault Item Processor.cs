@@ -610,15 +610,18 @@ namespace VaultItemProcessor
                     if (matchingOrderFound == false || isBatch == true) // batches can have matching order numbers
                     {
 
-                        // search for items that get manufactured at different location than their parent.
+                        // search for parts that get manufactured at different location than their parent assembly.
                         int itemsFound = 0;
                         foreach (ExportLineItem item in lineItemList)
                         {
 
                             ExportLineItem parentItem = lineItemList.Find(x => x.Parent == item.Parent);
-                            if (item.PlantID != "" && parentItem.PlantID != "")
+                            if (item.PlantID != "" && parentItem.PlantID != "" && item.Category=="Part")
                             {
-                                if (parentItem.PlantID != item.PlantID)
+                                string localPlant = AppSettings.Get("LocalPlantName").ToString();
+                                string remotePlant = AppSettings.Get("RemotePlantName").ToString();
+
+                                if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
                                 {
                                     itemsFound++;
                                 }

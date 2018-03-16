@@ -68,4 +68,12 @@
     <Key>ProcessOnlyIfReleased</Key>
     <Value xsi:type="xsd:string">false</Value>
   </Setting>
+  <Setting>
+    <Key>LocalPlantName</Key>
+    <Value xsi:type="xsd:string">Plant 1</Value>
+  </Setting>
+  <Setting>
+    <Key>RemotePlantName</Key>
+    <Value xsi:type="xsd:string">Plant 2</Value>
+  </Setting>
 </ArrayOfSetting>
