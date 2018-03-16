@@ -617,15 +617,18 @@ namespace VaultItemProcessor
                             foreach (ExportLineItem item in lineItemList)
                             {
 
-                                ExportLineItem parentItem = lineItemList.Find(x => x.Parent == item.Parent);
-                                if (item.PlantID != "" && parentItem.PlantID != "" && item.Category == "Part")
+                                ExportLineItem parentItem = lineItemList.Find(x => x.Number == item.Parent);
+                                if (parentItem!=null)
                                 {
-                                    string localPlant = AppSettings.Get("LocalPlantName").ToString();
-                                    string remotePlant = AppSettings.Get("RemotePlantName").ToString();
-
-                                    if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
+                                    if (item.PlantID != "" && parentItem.PlantID != "" && item.Category == "Part")
                                     {
-                                        itemsFound++;
+                                        string localPlant = AppSettings.Get("LocalPlantName").ToString();
+                                        string remotePlant = AppSettings.Get("RemotePlantName").ToString();
+
+                                        if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
+                                        {
+                                            itemsFound++;
+                                        }
                                     }
                                 }
                             }

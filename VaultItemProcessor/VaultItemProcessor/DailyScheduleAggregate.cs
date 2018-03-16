@@ -54,7 +54,9 @@ namespace VaultItemProcessor
                     orderNumber = batchItemName;
                 }
 
-                AggregateLineItem searchLineItem = AggregateLineItemList.Find(i => i.Number == item.Number);
+                if (item.PlantID == "") item.PlantID = AppSettings.Get("LocalPlantName").ToString();
+
+                AggregateLineItem searchLineItem = AggregateLineItemList.Find(i => i.Number == item.Number && i.IsStock==item.IsStock && i.PlantID == item.PlantID);
                 if (searchLineItem == null)
                 {
                     // add a new line to the list
