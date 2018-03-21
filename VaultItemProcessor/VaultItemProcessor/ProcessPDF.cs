@@ -302,6 +302,16 @@ namespace VaultItemProcessor
                 outputPdfPath += "\\" + item.Number + ".pdf";
             }
 
+            // sort out purchased parts that need to be printed
+            else if (item.Operations == "Purchased")
+            {
+                outputPdfPath = outputPdfPath + "\\" + item.Operations + "\\";
+                if (item.StructCode == "") item.StructCode = "Unknown Material Type";
+                outputPdfPath += item.StructCode;
+                System.IO.Directory.CreateDirectory(outputPdfPath);
+                outputPdfPath += "\\" + item.Number + ".pdf";
+            }
+
             // assemblies should drop through above logic down into here...
             else
             {
