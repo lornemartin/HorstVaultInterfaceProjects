@@ -44,11 +44,10 @@ namespace JobProcessorPrintPDF
         public PrintPDFHandler()
         {
             TargetFolder = System.IO.Path.GetTempPath();
-            PDFPath = @"M:\PDF Drawing Files\\";
-            pdfPrinterName = @"Bullzip PDF Printer";
-            psToPdfProgName = @"C:\Program Files\gs\gs9.21\lib\ps2pdf.bat";
-            ghostScriptWorkingFolder = @"C:\Program Files\gs\gs9.21\bin\";
-
+            PDFPath = AppSettings.Get("PDFPath").ToString();
+            pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
+            psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
+            ghostScriptWorkingFolder = AppSettings.Get("ghostScriptWorkingFolder").ToString();
         }
 
         #region IJobHandler Members
