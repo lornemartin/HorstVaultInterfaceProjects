@@ -171,7 +171,7 @@ namespace VaultItemProcessor
                 {
                     if (i < lItem.AssociatedOrders.Count())
                     {
-                        if (lItem.AssociatedOrders[i].OrderNumber == orderNumber) return lItem.Number;
+                        if (lItem.AssociatedOrders[i].OrderNumber == orderNumber && lItem.Parent == "<top>") return lItem.Number;
                     }
                 }
             }
