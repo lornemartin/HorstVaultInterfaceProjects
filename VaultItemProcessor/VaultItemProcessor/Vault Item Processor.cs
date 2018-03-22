@@ -26,11 +26,10 @@ namespace VaultItemProcessor
 {
     public partial class Form1 : Form
     {
-        // *March 19* 
-        // Added functionality to separate parts with identical
-        // part numbers but with different parameters.Such as stock and non-stock version
-        // of the same part.  Or different plants
-        // Tested fairly extensively, and I feel it is ready to install on Jake's computer.
+        // *March 22* 
+        // fixed bug in watermarking code that was acting up when properties were edited in 
+        // VaultItemProcessor Treelist before processing order.
+        // Tested somewhat, it was a fairly small change and I feel confident to use in production.
 
         public string vaultExportFile { get; set; }
         public string vaultExportFilePath { get; set; }
