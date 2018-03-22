@@ -170,24 +170,6 @@ namespace VaultItemProcessor
             toolStripStatusLabel1.Text = "Export File Loaded";
         }
 
-        private string getAncestorString(ExportLineItem item, List<ExportLineItem> itemList)
-        {
-            string ancestorString = item.Number;
-            string parentString = "";
-            string itemString = item.Number;
-
-            do
-            {
-                parentString = item.Parent;
-                ancestorString += "~~" + parentString;
-                itemString = parentString;
-                item = itemList.Where(i => i.Number == parentString).FirstOrDefault();
-            } while (parentString != "<top>");
-
-            return ancestorString;
-
-        }
-
         private int getCalculatedQty(ExportLineItem item, List<ExportLineItem> itemList)
         {
             try
