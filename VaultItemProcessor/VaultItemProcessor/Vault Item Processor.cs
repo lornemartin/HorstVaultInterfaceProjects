@@ -737,6 +737,8 @@ namespace VaultItemProcessor
 
                                         watermark += "Product Number: " + currentProduct + "\n" +
                                         watermark + "Item Number: " + itemNumber + "     Desc: " + item.ItemDescription + "\n";
+                                        watermark += "Manufacture Location: " + item.PlantID + "\n";
+
                                         if (item.Category == "Part")
                                         {
                                             watermark += "Material: " + item.StructCode + "\n";
