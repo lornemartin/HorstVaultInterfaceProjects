@@ -671,7 +671,11 @@ namespace ItemExport
         }
 
         void UpdateItem(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
+        //*************************************************************************************
+        // make sure this function gets updated in the VaultAccess Project if changes are made.
+        //*************************************************************************************
         {
+
             if (item == null)
             {
                 MessageBox.Show("Select an Item first");
@@ -779,6 +783,9 @@ namespace ItemExport
         }
 
         void Execute(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection, bool okToProcess)
+        //*************************************************************************************
+        // make sure this function gets updated in the VaultAccess Project if changes are made.
+        //*************************************************************************************
         {
             string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
             using (StreamWriter writer = new StreamWriter(processFileName))
@@ -893,6 +900,7 @@ namespace ItemExport
         }
 
         void ExecuteOdoo(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection, bool okToProcess)
+        
         {
             string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
             using (StreamWriter writer = new StreamWriter(processFileName))
@@ -1033,6 +1041,9 @@ namespace ItemExport
         }
 
         private static void downloadFile(VDF.Vault.Currency.Connections.Connection connection, VDF.Vault.Currency.Entities.FileIteration file, string folderPath)
+        //*************************************************************************************
+        // make sure this function gets updated in the VaultAccess Project if changes are made.
+        //*************************************************************************************
         {
             VDF.Vault.Settings.AcquireFilesSettings settings = new VDF.Vault.Settings.AcquireFilesSettings(connection);
             settings.AddEntityToAcquire(file);

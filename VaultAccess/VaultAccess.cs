@@ -257,6 +257,9 @@ namespace VaultAccess
 
         public bool downloadFile(Vault.Currency.Entities.FileIteration file, string folderPath)
         {
+            //*************************************************************************************
+            // make sure this function gets updated in the ItemExport Project if changes are made.
+            //*************************************************************************************
             try
             {
                 try
@@ -2628,6 +2631,9 @@ namespace VaultAccess
 
         public Task<string> ExportVaultItemsByBatch(IProgress<string> prog, string batchName, ref List<string[]> returnList)
         {
+            //*************************************************************************************
+            // make sure this function gets updated in the ItemExport Project if changes are made.
+            //*************************************************************************************
             List<string[]> productList = returnList;
             string logMessage = "";
 
@@ -2802,6 +2808,10 @@ namespace VaultAccess
 
         public bool UpdateItem(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
         {
+            //*************************************************************************************
+            // make sure this function gets updated in the ItemExport Project if changes are made.
+            //*************************************************************************************
+
             if (item == null)
             {
                 return false;
