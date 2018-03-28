@@ -2762,10 +2762,14 @@ namespace VaultAccess
                             notesPair.ToName = "Notes";
                             notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
 
+                            MapPair primaryLinkPair = new MapPair();
+                            primaryLinkPair.ToName = "Primary File Name";
+                            primaryLinkPair.FromName = "Primary File Name";
+
                             FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_PARENT,
                                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
-                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair});
+                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,primaryLinkPair});
 
                             long currentByte = 0;
                             long partSize = m_conn.PartSizeInBytes;
