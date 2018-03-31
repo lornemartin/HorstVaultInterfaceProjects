@@ -225,6 +225,7 @@ namespace VaultItemProcessor
                 lineItemList.Clear();
                 exportTreeList.ClearNodes();
                 spinEditOrderQty.Value = 0;
+                Dictionary<string, string> parentDict = new Dictionary<string, string>();
 
                 // set up a list that will contain all the duplicate items as well
                 List<ExportLineItem> allExportItemsList = new List<ExportLineItem>();
@@ -240,8 +241,10 @@ namespace VaultItemProcessor
                         line = line.Replace("\"", "");
 
                         string[] items = line.Split('\t');
-                        string parent = items[0];
-                        string number = items[1];
+
+                        
+                        
+                        string number = items[19];
                         string title = items[2];
                         string itemDesc = items[3];
                         string category = items[4];
@@ -286,7 +289,31 @@ namespace VaultItemProcessor
                         {
                             qty = 0;
                         }
-                        
+
+                        string level = items[0];
+                        string parentLevel = "";
+                        string parent = "";
+
+                        if (level.Contains('.'))
+                        {
+                            parentLevel = level.Remove(level.LastIndexOf('.'));
+
+                            if (!parentDict.ContainsKey(level))
+                            {
+                                parentDict.Add(level, number);
+                            }
+
+                            if (parentDict.ContainsKey(parentLevel))
+                            {
+                                parentDict.TryGetValue(parentLevel, out parent);
+                            }
+                        }
+                        else
+                        {
+                            parent = "<top>";
+                            number = items[1];
+                            parentDict.Add("1", "<top>");
+                        }
 
                         string keywords = items[17];
                         string notes = items[18];

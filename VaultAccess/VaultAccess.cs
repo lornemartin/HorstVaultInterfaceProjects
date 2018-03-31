@@ -2766,7 +2766,7 @@ namespace VaultAccess
                             primaryLinkPair.ToName = "Primary File Name";
                             primaryLinkPair.FromName = "Primary File Name";
 
-                            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_PARENT,
+                            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
                                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
                                     commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,primaryLinkPair});

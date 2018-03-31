@@ -796,7 +796,7 @@ namespace ItemExport
                     writer.WriteLine("true");
             }
 
-                string filename = (string)AppSettings.Get("ExportFile");
+            string filename = (string)AppSettings.Get("ExportFile");
 
             PackageService packageSvc = connection.WebServiceManager.PackageService;
 
@@ -880,14 +880,20 @@ namespace ItemExport
             notesPair.ToName = "Notes";
             notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
 
-            MapPair primaryLinkPair = new MapPair();
-            primaryLinkPair.ToName = "Primary File Name";
-            primaryLinkPair.FromName = "Primary File Name";
+            //MapPair primaryLinkPair = new MapPair();
+            //primaryLinkPair.ToName = "Primary File Name";
+            //primaryLinkPair.FromName = "XRefId";
+            //primaryLinkPair.FromName = "File Name01-{91E61FA5-5660-47DA-BDC4-DC3A620C4CEC}";
 
-            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_PARENT,
+            MapPair revisionNumberPair = new MapPair();
+            revisionNumberPair.ToName = "Revision";
+            revisionNumberPair.FromName = "Revision";
+            
+
+            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
-                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,primaryLinkPair});
+                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,revisionNumberPair});
 
             long currentByte = 0;
             long partSize = connection.PartSizeInBytes;
@@ -899,6 +905,62 @@ namespace ItemExport
                     byte[] contents = packageSvc.DownloadPackagePart(fileNameAndUrl.Name, currentByte, lastByte);
                     fs.Write(contents, 0, (int)(lastByte - currentByte));
                     currentByte += partSize;
+                }
+            }
+
+            // we now need to replace the item number with the primary file name field.  I can't figure out how to map it above, so we have to open the text file,
+            // search through it line by line, and query the vault for the primary file name link of of each item number.  We then save the text file again with the
+            // primary file name now in place of the item number....
+
+            List<string> lineList = new List<string>(); // create a list of lines to save the file text in.
+
+            using (StreamReader reader = System.IO.File.OpenText(filename))
+            {
+                string line;
+                line = reader.ReadLine();       // first line is header, just save it the the list, don't process it
+                lineList.Add(line);
+
+                int lineNum = 1;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    line = line.Replace("\"", "");
+
+                    string[] items = line.Split('\t');
+                    string origItemNumber = items[1];
+                    string revsionNumber = items[19];
+
+                    Item searchItem = connection.WebServiceManager.ItemService.GetItemByItemNumberAndRevisionNumber(origItemNumber, revsionNumber);
+                    BOMComp bc = connection.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(new long[] { searchItem.Id }).First();
+                    long primaryLinkID = bc.XRefId;
+                    if (primaryLinkID != -1)
+                    {
+                        Autodesk.Connectivity.WebServices.File primaryLinkFile = connection.WebServiceManager.DocumentService.GetFileById(primaryLinkID);
+                        string primaryLinkName = primaryLinkFile.Name;
+
+                        items[1] = primaryLinkName;
+
+                        string newItemString = "";
+
+                        foreach(string s in items)
+                        {
+                            newItemString += s + "\t";
+                        }
+                        lineList.Add(newItemString);
+                    }
+                    else
+                    {
+                        lineList.Add(items.ToString());
+                    }
+
+                    lineNum++;
+                }
+            }
+
+            using (StreamWriter writer = new StreamWriter(filename,false))
+            {
+                foreach(string s in lineList)
+                {
+                    writer.WriteLine(s);
                 }
             }
         }
