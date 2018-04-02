@@ -230,21 +230,30 @@ namespace VaultItemProcessor
                 // set up a list that will contain all the duplicate items as well
                 List<ExportLineItem> allExportItemsList = new List<ExportLineItem>();
 
+                
+
                 if (fileName == "") fileName = vaultExportFileWithPath;
                 using (StreamReader reader = File.OpenText(fileName))
                 {
                     string line;
                     line = reader.ReadLine();       // first line is header, we don't want it.
                     int lineNum = 1;
+
+                    
+
                     while ((line = reader.ReadLine()) != null)
                     {
+                        string level = "";
+                        string parentLevel = "";
+                        string parent = "";
+
                         line = line.Replace("\"", "");
 
                         string[] items = line.Split('\t');
 
                         
                         
-                        string number = items[19];
+                        string number = items[1];
                         string title = items[2];
                         string itemDesc = items[3];
                         string category = items[4];
@@ -262,8 +271,12 @@ namespace VaultItemProcessor
                         bool requiresPdfFlag = (requiresPdfString == "False" ? false : true);
                         string comment = items[13];
 
-                        if (lineNum == 1) orderNumber = comment;    // top level item should have order number in comment field
-                        comment = "";
+                        if (lineNum == 1)
+                        {
+                            orderNumber = comment;    // top level item should have order number in comment field
+                            comment = "";
+                        }
+
 
                         string dateString = items[14];
                         DateTime dateTime = new DateTime();
@@ -290,9 +303,11 @@ namespace VaultItemProcessor
                             qty = 0;
                         }
 
-                        string level = items[0];
-                        string parentLevel = "";
-                        string parent = "";
+                        level = items[0];
+                        parentLevel = "";
+                        parent = "";
+
+                        if (level == "1")  parent = "<top>";   ///////this is where I left off it seems to work now....
 
                         if (level.Contains('.'))
                         {
@@ -310,9 +325,7 @@ namespace VaultItemProcessor
                         }
                         else
                         {
-                            parent = "<top>";
-                            number = items[1];
-                            parentDict.Add("1", "<top>");
+                             parentDict.Add(level, number);
                         }
 
                         string keywords = items[17];

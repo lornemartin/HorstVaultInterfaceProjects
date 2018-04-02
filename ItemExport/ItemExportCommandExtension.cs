@@ -932,7 +932,7 @@ namespace ItemExport
                     Item searchItem = connection.WebServiceManager.ItemService.GetItemByItemNumberAndRevisionNumber(origItemNumber, revsionNumber);
                     BOMComp bc = connection.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(new long[] { searchItem.Id }).First();
                     long primaryLinkID = bc.XRefId;
-                    if (primaryLinkID != -1)
+                    if (primaryLinkID != -1)    // if we have a primary file name, use it
                     {
                         Autodesk.Connectivity.WebServices.File primaryLinkFile = connection.WebServiceManager.DocumentService.GetFileById(primaryLinkID);
                         string primaryLinkName = primaryLinkFile.Name;
@@ -947,9 +947,9 @@ namespace ItemExport
                         }
                         lineList.Add(newItemString);
                     }
-                    else
+                    else        // otherwise just use the item number, for example top level items will fall into this category
                     {
-                        lineList.Add(items.ToString());
+                        lineList.Add(line);
                     }
 
                     lineNum++;
