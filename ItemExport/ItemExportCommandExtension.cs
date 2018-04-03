@@ -938,7 +938,6 @@ namespace ItemExport
 
                     string[] items = line.Split('\t');
                     string origItemNumber = items[1];
-                    //string revsionNumber = items[19];
 
                     // download all the bom items into a list in one API call
                     bomList = connection.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(idList.ToArray()).ToList();

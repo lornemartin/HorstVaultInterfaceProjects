@@ -2762,14 +2762,14 @@ namespace VaultAccess
                             notesPair.ToName = "Notes";
                             notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
 
-                            MapPair primaryLinkPair = new MapPair();
-                            primaryLinkPair.ToName = "Primary File Name";
-                            primaryLinkPair.FromName = "Primary File Name";
+                            MapPair revisionNumberPair = new MapPair();
+                            revisionNumberPair.ToName = "Revision";
+                            revisionNumberPair.FromName = "Revision";
 
                             FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
                                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
-                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,primaryLinkPair});
+                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,revisionNumberPair});
 
                             long currentByte = 0;
                             long partSize = m_conn.PartSizeInBytes;
@@ -2783,6 +2783,97 @@ namespace VaultAccess
                                     currentByte += partSize;
                                 }
                             }
+
+                            // create a list to hold all the IDs of the BOM items
+                            List<long> idList = new List<long>();
+
+                            // create a dictionary to match up the exported ids with the exported item numbers
+                            Dictionary<string, long> bomDict = new Dictionary<string, long>();
+
+                            // loop through all the bomItems and extract the IDs along with the item numbers
+                            foreach (var v in pkgBom.PkgItemArray)
+                            {
+                                idList.Add(v.ID);
+                                bomDict.Add(v.ItemNum, v.ID);
+                            }
+
+                            // now create a list to store all the BOM items in
+                            List<BOMComp> bomList = new List<BOMComp>();
+
+                            // we now need to replace the item number with the primary file name field.  I can't figure out how to map it above, so we have to open the text file,
+                            // search through it line by line, and query the vault for the primary file name link of of each item number.  We then save the text file again with the
+                            // primary file name now in place of the item number....
+
+                            List<string> lineList = new List<string>(); // create a list of lines to save the file text in.
+
+                            using (StreamReader reader2 = System.IO.File.OpenText(filename))
+                            {
+                                string line2;
+                                line2 = reader2.ReadLine();       // first line is header, just save it the the list, don't process it
+                                lineList.Add(line2);
+
+                                int lineNum = 1;
+                                while ((line2 = reader2.ReadLine()) != null)
+                                {
+                                    line2 = line2.Replace("\"", "");
+
+                                    string[] items = line2.Split('\t');
+                                    string origItemNumber = items[1];
+
+                                    // download all the bom items into a list in one API call
+                                    bomList = m_conn.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(idList.ToArray()).ToList();
+
+                                    // create another dictionary to match up the IDs with the bomComps
+                                    Dictionary<long, BOMComp> bomDict2 = new Dictionary<long, BOMComp>();
+
+                                    // populate the second dictionary
+                                    int index2 = 0;
+                                    foreach (long l in idList)
+                                    {
+                                        bomDict2.Add(l, bomList[index2]);
+                                        index2++;
+                                    }
+
+                                    long searchID = 0;
+                                    bomDict.TryGetValue(origItemNumber, out searchID);
+
+                                    BOMComp searchbomComp = new BOMComp();
+                                    bomDict2.TryGetValue(searchID, out searchbomComp);
+
+                                    long primaryLinkID = searchbomComp.XRefId;  // get the id of the primary linked file
+                                    if (primaryLinkID != -1)    // if we have a primary file name, use it
+                                    {
+                                        // we could likely speed this up some more if we grouped this all into one call rather than one by one, but code would get messier yet...
+                                        Autodesk.Connectivity.WebServices.File primaryLinkFile = m_conn.WebServiceManager.DocumentService.GetFileById(primaryLinkID);
+                                        string primaryLinkName = primaryLinkFile.Name;
+
+                                        items[1] = primaryLinkName;
+
+                                        string newItemString = "";
+
+                                        foreach (string s in items)
+                                        {
+                                            newItemString += s + "\t";
+                                        }
+                                        lineList.Add(newItemString);
+                                    }
+                                    else        // otherwise just use the item number, for example top level items will fall into this category
+                                    {
+                                        lineList.Add(line2);
+                                    }
+
+                                    lineNum++;
+                                }
+                            }
+
+                            using (StreamWriter writer = new StreamWriter(filename, false))
+                            {
+                                foreach (string s in lineList)
+                                {
+                                    writer.WriteLine(s);
+                                }
+                            }
+
                             string[] returnVals;
                             returnVals = new string[5];
 
