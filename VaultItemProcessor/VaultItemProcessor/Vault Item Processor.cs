@@ -122,7 +122,7 @@ namespace VaultItemProcessor
             FileInfo f = new FileInfo(vaultExportFileWithPath);
             while (IsFileLocked(f))
             {
-
+                Thread.Sleep(TimeSpan.FromSeconds(0.5));
             }
             this.Invoke(new Action(
                 delegate ()
