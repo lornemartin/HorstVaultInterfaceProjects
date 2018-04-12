@@ -24,3 +24,6 @@ C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\Re
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.exe
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.pdb
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csprojResolveAssemblyReference.cache
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.exe.config
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.exe
+C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.pdb

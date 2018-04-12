@@ -51,7 +51,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\..\..\..\..\..\ProgramData\Autodesk\Vault 2017\Extensions\JobProcessorFileUpdate\</OutputPath>
+    <OutputPath>bin\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -70,35 +70,35 @@
   <ItemGroup>
     <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.Extensibility.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.JobProcessor.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Connectivity.WebServices.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Inventor.Interop, Version=21.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -106,10 +106,10 @@
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
     <Reference Include="Connectivity.Explorer.ExtensibilityRuntime">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.Explorer.ExtensibilityRuntime.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.Explorer.ExtensibilityRuntime.dll</HintPath>
     </Reference>
     <Reference Include="Connectivity.Explorer.ExtensibilityUtil">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.Explorer.ExtensibilityUtil.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.Explorer.ExtensibilityUtil.dll</HintPath>
     </Reference>
     <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>

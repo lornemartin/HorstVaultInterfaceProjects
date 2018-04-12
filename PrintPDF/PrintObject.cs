@@ -35,6 +35,7 @@ namespace PrintPDF
         {
             if (!log4net.LogManager.GetRepository().Configured)
             {
+                
                 // my DLL is referenced by web service applications to log SOAP requests before
                 // execution is passed to the web method itself, so I load the log4net.config
                 // file that resides in the web application root folder
@@ -49,7 +50,6 @@ namespace PrintPDF
 
                 log4net.Config.XmlConfigurator.Configure(configFile);
             }
-
         }
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -125,10 +125,6 @@ namespace PrintPDF
                     }
 
                     string debugFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\debug.txt";
-                    using (StreamWriter writetext = new StreamWriter(debugFileName))
-                    {
-                        writetext.WriteLine(AppSettings.Get("PrintPDFWorkingFolder").ToString());
-                    }
 
                     Process myProcess = new Process();
                     myProcess.StartInfo.UseShellExecute = false;

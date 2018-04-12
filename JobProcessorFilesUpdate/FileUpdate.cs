@@ -11,7 +11,7 @@ using Autodesk.Connectivity.WebServicesTools;
 [assembly: AssemblyCompany("Horst Welding")]
 [assembly: AssemblyProduct("JobProcessorUpdateFile")]
 [assembly: AssemblyDescription("Updates PDF files")]
-[assembly: ApiVersion("10.0")]
+[assembly: ApiVersion("11.0")]
 [assembly: ExtensionId("780d59d0-cacb-45c6-add7-8f0059219e09")]
 
 namespace JobProcessorFileUpdate
