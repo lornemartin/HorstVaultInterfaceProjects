@@ -70,21 +70,11 @@ namespace JobProcessorPrintPDF
 
         public void QueuePrintPDFFolderCommandHandler(object s, CommandItemEventArgs e)
         {
-            using (StreamWriter debugFile = new StreamWriter(@"C:\Users\lorne\Documents\Pdfs\debug10.txt", true))
+            foreach (ISelection vaultObj in e.Context.CurrentSelectionSet)
             {
-                foreach (ISelection vaultObj in e.Context.CurrentSelectionSet)
-                {
-                    //ISelection vaultObj = null;
-                    //vaultObj = (ISelection)e.Context.CurrentSelectionSet;
-
-                    debugFile.WriteLine(vaultObj.Id.ToString());
-                    Folder rootFolder = e.Context.Application.Connection.WebServiceManager.DocumentService.GetFolderById(vaultObj.Id);
-                    debugFile.WriteLine(rootFolder.ToString());
-                    VaultFoldertoPDF(rootFolder, e.Context.Application.Connection.WebServiceManager);
-                }
+                Folder rootFolder = e.Context.Application.Connection.WebServiceManager.DocumentService.GetFolderById(vaultObj.Id);
+                VaultFoldertoPDF(rootFolder, e.Context.Application.Connection.WebServiceManager);
             }
-
-            
         }
 
         private void VaultFoldertoPDF(Folder folder,WebServiceManager mgr)
