@@ -1,28 +1,11 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Setting>
     <Key>PDFPath</Key>
-    <Value xsi:type="xsd:string">\\HLAFILESRVR2\ENGCOMMON\PDF Drawing Files\\</Value>
+    <Value xsi:type="xsd:string">M:\\PDF Drawing Files\\</Value>
   </Setting>
   <Setting>
-    <Key>DBConString</Key>
-    <Value xsi:type="xsd:string">Data Source = HLAMFG; Initial Catalog = Horst Manufacturing DB; Integrated Security = True</Value> >
+    <Key>SymFileFolder</Key>
+    <Value xsi:type="xsd:string">M:\\Radan Sym Files\\Vault Sym Files\\</Value>
   </Setting>
-  <Setting>
-    <Key>VaultUserName</Key>
-    <Value xsi:type="xsd:string">lorne</Value>
-  </Setting>
-  <Setting>
-    <Key>Vaultpassword</Key>
-    <Value xsi:type="xsd:string">lorne</Value>
-  </Setting>
-  <Setting>
-    <Key>VaultServer</Key>
-    <Value xsi:type="xsd:string">HLACADVAULT</Value>
-  </Setting>
-  <Setting>
-    <Key>Vault</Key>
-    <Value xsi:type="xsd:string">Vault</Value>
-  </Setting>
-  
 </ArrayOfSetting>
