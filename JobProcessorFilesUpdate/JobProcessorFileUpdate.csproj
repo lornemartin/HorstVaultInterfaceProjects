@@ -138,8 +138,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="JobProcessorFileUpdate.vcet.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

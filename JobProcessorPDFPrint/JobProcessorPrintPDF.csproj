@@ -127,7 +127,9 @@
     <Compile Include="QueuePrintPDFCommandExtension.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="JobProcessorPrintPDF.vcet.config" />
+    <None Include="JobProcessorPrintPDF.vcet.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
