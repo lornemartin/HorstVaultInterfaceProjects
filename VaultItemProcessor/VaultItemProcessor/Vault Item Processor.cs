@@ -186,11 +186,16 @@ namespace VaultItemProcessor
 
                 if (parentItem == null)
                 {
-                    parentItem = itemList.Where(i => i.Number.Contains(parentString)).FirstOrDefault();
+                    parentItem = itemList.Where(i => i.Number == parentString).FirstOrDefault();    // first search for exact match
+                    if(parentItem==null)     // if not exact match, use contains instead of equals, I forget why this is necessary but I don't think it'll hurt....
+                        parentItem = itemList.Where(i => i.Number.Contains(parentString)).FirstOrDefault();
+
                     if (parentItem == null)        // if no parent found, try searching for item without .iam extension
                     {
-                        parentString = Path.GetFileNameWithoutExtension(parentString);
-                        parentItem = itemList.Where(i => i.Number.Contains(parentString)).FirstOrDefault();
+                        parentString = Path.GetFileNameWithoutExtension(parentString);          
+                        parentItem = itemList.Where(i => i.Number == parentString).FirstOrDefault();    // first search for exact match
+                        if (parentItem == null)             // if not exact match, use contains instead of equals, I forget why this is necessary but I don't think it'll hurt....
+                            parentItem = itemList.Where(i => i.Number.Contains(parentString)).FirstOrDefault();
                     }
 
                 }
