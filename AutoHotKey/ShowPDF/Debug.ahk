@@ -51,8 +51,21 @@ main:
 MouseGetPos,x,y
 ;DllCall(vt)
 item:=GetElementItem(x,y)
-if !item.1
-	return
+
+
+Gui, Submit ; This takes the user's input from above.
+	msg := item.2
+	MsgBox, Value Is: %msg%
+
+
+;index := 0
+;Loop 10
+;{
+;	Gui, Submit ; This takes the user's input from above.
+;	msg := item.index
+;	MsgBox, Value Is: %msg%
+;	index += 1
+;}
 	
 path = M:\PDF Drawing Files\
 vaultName := item.2
