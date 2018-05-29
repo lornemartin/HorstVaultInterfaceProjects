@@ -92,6 +92,7 @@
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
+            this.btnHorstMFG = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -170,6 +171,7 @@
             this.HasPdf,
             this.requiresPDF});
             this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
+            this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
             treeListFormatRule1.Name = "Format0";
             formatConditionRuleExpression1.Appearance.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
@@ -598,11 +600,22 @@
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
             // 
+            // btnHorstMFG
+            // 
+            this.btnHorstMFG.Location = new System.Drawing.Point(1290, 492);
+            this.btnHorstMFG.Name = "btnHorstMFG";
+            this.btnHorstMFG.Size = new System.Drawing.Size(75, 23);
+            this.btnHorstMFG.TabIndex = 10;
+            this.btnHorstMFG.Text = "HorstMfg";
+            this.btnHorstMFG.UseVisualStyleBackColor = true;
+            this.btnHorstMFG.Click += new System.EventHandler(this.btnHorstMFG_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.Controls.Add(this.btnHorstMFG);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
@@ -670,6 +683,7 @@
         private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroupSawDrawings3;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnHorstMFG;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
