@@ -2834,6 +2834,36 @@ namespace VaultItemProcessor
                             productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
                         }
 
+                        //-------------------------create the record in the file table
+                        if (item.RequiresPdf && item.HasPdf)
+                        {
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+
+                            string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
+                            FileStream fStream = File.OpenRead(fileName);
+
+                            byte[] contents = new byte[fStream.Length];
+
+                            fStream.Read(contents, 0, (int)fStream.Length);
+
+                            fStream.Close();
+
+                            command = new SqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId)" +
+                                                  @"values(@FileName, @ContentType, @Content, @FileType, @ProductId); ";
+
+                            command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
+                            command.Parameters.AddWithValue("@ContentType", "application/pdf");
+                            command.Parameters.AddWithValue("@Content", contents);
+                            command.Parameters.AddWithValue("@FileType", 1);
+                            command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
+
+                            command.ExecuteNonQuery();
+                        }
+
                         // find the id of the newly created record's parent record
                         if (item.Parent != "<top>")
                         {
