@@ -2778,8 +2778,38 @@ namespace VaultItemProcessor
 
                     if (reader.HasRows)
                     {
-                        productNewChildRecord = int.Parse(reader[0].ToString());    // we found a record with this name already, don't create it again.
+                        // we found a record with this name already, don't create it again.
+                        productNewChildRecord = int.Parse(reader[0].ToString());
                         reader.Close();
+
+                        // create a new child parent record 
+
+                        // find the id of the newly created record's parent record
+                        if (item.Parent != "<top>")
+                        {
+                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            reader.Read();
+                            if (reader.HasRows)
+                            {
+                                productNewParentRecord = int.Parse(reader[0].ToString());    // this is the parent ID that we want to create a relationship with
+                            }
+                        }
+                        conn = new SqlConnection(connectionString);
+                        conn.Open();
+                        command = new SqlCommand();
+                        command = conn.CreateCommand();
+                        command.CommandText = @"insert into ProductProduct (
+                                                            ParentProductID, ChildProductID, Qty)" +
+                                                @"values(@ParentProductID, @ChildProductID, @Qty); ";
+
+                        command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
+                        command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
+                        command.Parameters.AddWithValue("@Qty", item.Qty);
+
+                        command.ExecuteNonQuery();
+
                     }
                     else
                     {
@@ -2867,7 +2897,7 @@ namespace VaultItemProcessor
                         // find the id of the newly created record's parent record
                         if (item.Parent != "<top>")
                         {
-                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" +  Path.GetFileNameWithoutExtension(item.Parent) + "';";
+                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
                             reader.Close();
                             reader = command.ExecuteReader();
                             reader.Read();
