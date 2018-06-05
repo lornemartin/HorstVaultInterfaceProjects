@@ -1334,7 +1334,7 @@ namespace ItemExport
                             reader.Close();
                             reader = command.ExecuteReader();
                             reader.Read();
-                            if (!reader.HasRows)
+                            if (!reader.HasRows && productNewParentRecord != 0)            ///////////////////////////////
                             {
                                 conn.Close();
                                 conn = new SqlConnection(connectionString);
@@ -1352,7 +1352,7 @@ namespace ItemExport
                                 command.ExecuteNonQuery();
                             }
                         }
-                        else
+                        else          // create a new product record
                         {
                             // first write each row of the list to the product table
                             conn.Close();
@@ -1404,168 +1404,169 @@ namespace ItemExport
                             {
                                 productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
                             }
+                        }
 
 
-                            // for top level item, we need to create an order record if it doesn't already exist.
-                            if (l.Split('\t')[0] == "<top>")
+                        // for top level item, we need to create an order record if it doesn't already exist.
+                        if (l.Split('\t')[0] == "<top>")
+                        {
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = new SqlCommand();
+                            command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
+                            reader = command.ExecuteReader();
+                            reader.Read();
+
+                            if (!reader.HasRows)    // if no order exists with this order number, we'll create one.
                             {
-                                conn.Close();
-                                conn = new SqlConnection(connectionString);
-                                conn.Open();
-                                command = new SqlCommand();
-                                command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
-                                reader = command.ExecuteReader();
-                                reader.Read();
-
-                                if (!reader.HasRows)    // if no order exists with this order number, we'll create one.
-                                {
-                                    conn = new SqlConnection(connectionString);
-                                    conn.Open();
-                                    command = new SqlCommand();
-                                    command = conn.CreateCommand();
-                                    command.CommandText = @"insert into [Order] (OrderNumber, CustomerName, OrderDate, DueDate, IsComplete, IsBatch)" +
-                                                            @"values(@OrderNumber, @CustomerName, @OrderDate, @DueDate, @IsComplete, @IsBatch); ";
-
-                                    command.Parameters.AddWithValue("@OrderNumber", orderNumber);
-                                    command.Parameters.AddWithValue("@CustomerName", customerName);
-                                    command.Parameters.AddWithValue("@OrderDate", DateTime.Now);
-                                    command.Parameters.AddWithValue("@DueDate", DateTime.Now);
-                                    command.Parameters.AddWithValue("IsComplete", false);
-                                    command.Parameters.AddWithValue("IsBatch", false);
-
-                                    command.ExecuteNonQuery();
-
-                                    
-                                }
-
-                                // add an order detail to either an existing order or the new order created above
-                                // find ID of newly created order or existing order recrod
-                                conn.Close();
-                                conn = new SqlConnection(connectionString);
-                                conn.Open();
-                                command = new SqlCommand();
-                                command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
-                                reader = command.ExecuteReader();
-                                reader.Read();
-
-                                if (reader.HasRows)
-                                {
-                                    orderRecordID = int.Parse(reader[0].ToString());
-                                }
-
-
-                                conn.Close();
                                 conn = new SqlConnection(connectionString);
                                 conn.Open();
                                 command = new SqlCommand();
                                 command = conn.CreateCommand();
-                                command.CommandText = @"insert into OrderDetail (DueDate, IsComplete, Product_ID, Order_ID, Qty)" +
-                                                        @"values(@DueDate, @IsComplete, @Product_ID, @Order_ID, @Qty); ";
+                                command.CommandText = @"insert into [Order] (OrderNumber, CustomerName, OrderDate, DueDate, IsComplete, IsBatch)" +
+                                                        @"values(@OrderNumber, @CustomerName, @OrderDate, @DueDate, @IsComplete, @IsBatch); ";
 
+                                command.Parameters.AddWithValue("@OrderNumber", orderNumber);
+                                command.Parameters.AddWithValue("@CustomerName", customerName);
+                                command.Parameters.AddWithValue("@OrderDate", DateTime.Now);
                                 command.Parameters.AddWithValue("@DueDate", DateTime.Now);
-                                command.Parameters.AddWithValue("@IsComplete", false);
-                                command.Parameters.AddWithValue("@Product_ID", productNewChildRecord);
-                                command.Parameters.AddWithValue("@Order_ID", orderRecordID);
-                                command.Parameters.AddWithValue("Qty", exportQty);
+                                command.Parameters.AddWithValue("IsComplete", false);
+                                command.Parameters.AddWithValue("IsBatch", false);
 
                                 command.ExecuteNonQuery();
 
-                                // find ID of newly created order detail recrod
+
+                            }
+
+                            // add an order detail to either an existing order or the new order created above
+                            // find ID of newly created order or existing order recrod
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = new SqlCommand();
+                            command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
+                            reader = command.ExecuteReader();
+                            reader.Read();
+
+                            if (reader.HasRows)
+                            {
+                                orderRecordID = int.Parse(reader[0].ToString());
+                            }
+
+
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = new SqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into OrderDetail (DueDate, IsComplete, Product_ID, Order_ID, Qty)" +
+                                                    @"values(@DueDate, @IsComplete, @Product_ID, @Order_ID, @Qty); ";
+
+                            command.Parameters.AddWithValue("@DueDate", DateTime.Now);
+                            command.Parameters.AddWithValue("@IsComplete", false);
+                            command.Parameters.AddWithValue("@Product_ID", productNewChildRecord);
+                            command.Parameters.AddWithValue("@Order_ID", orderRecordID);
+                            command.Parameters.AddWithValue("Qty", exportQty);
+
+                            command.ExecuteNonQuery();
+
+                            // find ID of newly created order detail recrod
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = new SqlCommand();
+                            command = new SqlCommand("SELECT [ID] FROM [OrderDetail] WHERE Product_ID = '" + productNewChildRecord +  " 'AND Order_ID = '" + orderRecordID + "';", conn);
+                            reader = command.ExecuteReader();
+                            reader.Read();
+
+
+                            if (reader.HasRows)
+                            {
+                                orderDetailRecordID = int.Parse(reader[0].ToString());
+                            }
+
+                        }
+
+                        string fileName = @"M:\PDF Drawing Files\" + (l.Split('\t')[1]) + ".pdf";
+                        //-------------------------create the record in the file table
+                        if (System.IO.File.Exists(fileName))
+                        {
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+
+                            FileStream fStream = System.IO.File.OpenRead(fileName);
+
+                            byte[] contents = new byte[fStream.Length];
+
+                            fStream.Read(contents, 0, (int)fStream.Length);
+
+                            fStream.Close();
+
+                            command = new SqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId, OrderDetailID)" +
+                                                  @"values(@FileName, @ContentType, @Content, @FileType, @ProductId, @OrderDetailID); ";
+
+                            command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
+                            command.Parameters.AddWithValue("@ContentType", "application/pdf");
+                            command.Parameters.AddWithValue("@Content", contents);
+                            command.Parameters.AddWithValue("@FileType", 1);
+                            command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
+                            command.Parameters.AddWithValue("@OrderDetailID", orderDetailRecordID);
+
+                            command.ExecuteNonQuery();
+                        }
+
+                        // find the id of the newly created record's parent record
+                        if (l.Split('\t')[0] != "<top>")
+
+                        {
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = conn.CreateCommand();
+                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + l.Split('\t')[0] + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            reader.Read();
+                            if (reader.HasRows)
+                            {
+                                productNewParentRecord = int.Parse(reader[0].ToString());    // this is now the id of the parent record
+                            }
+
+                            // make sure we don't already have product-product record like this
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = conn.CreateCommand();
+                            command.CommandText = "SELECT * FROM ProductProduct WHERE ChildProductID = " + productNewChildRecord + " AND ParentProductID = " + productNewParentRecord + ";";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            reader.Read();
+                            if (!reader.HasRows)
+                            {
+                                //-----------------------only create the record in the product_product table if it doesnt' already exist.
                                 conn.Close();
                                 conn = new SqlConnection(connectionString);
                                 conn.Open();
                                 command = new SqlCommand();
-                                command = new SqlCommand("SELECT [ID] FROM [OrderDetail] WHERE Product_ID = '" + productNewChildRecord + "';", conn);
-                                reader = command.ExecuteReader();
-                                reader.Read();
-
-                                
-                                if (reader.HasRows)
-                                {
-                                    orderDetailRecordID = int.Parse(reader[0].ToString());
-                                }
-
-                            }
-
-                            string fileName = @"M:\PDF Drawing Files\" + (l.Split('\t')[1]) + ".pdf";
-                            //-------------------------create the record in the file table
-                            if (System.IO.File.Exists(fileName))
-                            {
-                                conn.Close();
-                                conn = new SqlConnection(connectionString);
-                                conn.Open();
-
-                                FileStream fStream = System.IO.File.OpenRead(fileName);
-
-                                byte[] contents = new byte[fStream.Length];
-
-                                fStream.Read(contents, 0, (int)fStream.Length);
-
-                                fStream.Close();
-
-                                command = new SqlCommand();
                                 command = conn.CreateCommand();
-                                command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId, OrderDetailID)" +
-                                                      @"values(@FileName, @ContentType, @Content, @FileType, @ProductId, @OrderDetailID); ";
-
-                                command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
-                                command.Parameters.AddWithValue("@ContentType", "application/pdf");
-                                command.Parameters.AddWithValue("@Content", contents);
-                                command.Parameters.AddWithValue("@FileType", 1);
-                                command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
-                                command.Parameters.AddWithValue("@OrderDetailID", orderDetailRecordID);
-
-                                command.ExecuteNonQuery();
-                            }
-
-                            // find the id of the newly created record's parent record
-                            if (l.Split('\t')[0] != "<top>")
-
-                            {
-                                conn.Close();
-                                conn = new SqlConnection(connectionString);
-                                conn.Open();
-                                command = conn.CreateCommand();
-                                command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + l.Split('\t')[0] + "';";
-                                reader.Close();
-                                reader = command.ExecuteReader();
-                                reader.Read();
-                                if (reader.HasRows)
-                                {
-                                    productNewParentRecord = int.Parse(reader[0].ToString());    // this is now the id of the parent record
-                                }
-
-                                // make sure we don't already have product-product record like this
-                                conn.Close();
-                                conn = new SqlConnection(connectionString);
-                                conn.Open();
-                                command = conn.CreateCommand();
-                                command.CommandText = "SELECT * FROM ProductProduct WHERE ChildProductID = " + productNewChildRecord + " AND ParentProductID = " + productNewParentRecord + ";";
-                                reader.Close();
-                                reader = command.ExecuteReader();
-                                reader.Read();
-                                if (!reader.HasRows)
-                                {
-                                    //-----------------------only create the record in the product_product table if it doesnt' already exist.
-                                    conn.Close();
-                                    conn = new SqlConnection(connectionString);
-                                    conn.Open();
-                                    command = new SqlCommand();
-                                    command = conn.CreateCommand();
-                                    command.CommandText = @"insert into ProductProduct (
+                                command.CommandText = @"insert into ProductProduct (
                                                             ParentProductID, ChildProductID, Qty)" +
-                                                            @"values(@ParentProductID, @ChildProductID, @Qty); ";
+                                                        @"values(@ParentProductID, @ChildProductID, @Qty); ";
 
-                                    command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
-                                    command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
-                                    command.Parameters.AddWithValue("@Qty", l.Split('\t')[8]);  //qty
+                                command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
+                                command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
+                                command.Parameters.AddWithValue("@Qty", l.Split('\t')[8]);  //qty
 
-                                    command.ExecuteNonQuery();
-                                }
+                                command.ExecuteNonQuery();
                             }
                         }
-                        conn.Close();
                     }
+                    conn.Close();
+
                 }
                 catch (Exception ex)
                 {
