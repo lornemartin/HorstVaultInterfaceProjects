@@ -1003,7 +1003,8 @@ namespace ItemExport
 
             string customerName = exportDialog.CustomerName;
             string orderNumber = exportDialog.OrderNumber;
-            
+            double exportQty = exportDialog.Qty;
+
             if (exportResult == DialogResult.OK)
             {
                 string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
@@ -1285,20 +1286,22 @@ namespace ItemExport
                 {
                     int productNewChildRecord = 0;
                     int productNewParentRecord = 0;
-                    int productProductNewRecord = 0;
+                    int orderRecordID = 0;
+                    int orderDetailRecordID = 0;
 
-                    foreach (string l in lineList3)
-                    {
-
-                        string connectionString;
-                        SqlConnection conn;
-                        connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;" +
+                    string connectionString;
+                    connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;" +
                                            @"AttachDbFilename=C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf;" +
                                            @"Initial Catalog=aspnet-HorstMFG;" +
                                            @"Integrated Security=True";
+                    SqlConnection conn;
+
+                    conn = new SqlConnection(connectionString);
+
+                    foreach (string l in lineList3)
+                    {
                         conn = new SqlConnection(connectionString);
                         conn.Open();
-
 
                         SqlCommand command = new SqlCommand("Select ID from Product where PartNumber = '" + l.Split('\t')[1] + "'", conn);
                         SqlDataReader reader = command.ExecuteReader();
@@ -1333,6 +1336,7 @@ namespace ItemExport
                             reader.Read();
                             if (!reader.HasRows)
                             {
+                                conn.Close();
                                 conn = new SqlConnection(connectionString);
                                 conn.Open();
                                 command = new SqlCommand();
@@ -1401,6 +1405,88 @@ namespace ItemExport
                                 productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
                             }
 
+
+                            // for top level item, we need to create an order record if it doesn't already exist.
+                            if (l.Split('\t')[0] == "<top>")
+                            {
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = new SqlCommand();
+                                command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
+                                reader = command.ExecuteReader();
+                                reader.Read();
+
+                                if (!reader.HasRows)    // if no order exists with this order number, we'll create one.
+                                {
+                                    conn = new SqlConnection(connectionString);
+                                    conn.Open();
+                                    command = new SqlCommand();
+                                    command = conn.CreateCommand();
+                                    command.CommandText = @"insert into [Order] (OrderNumber, CustomerName, OrderDate, DueDate, IsComplete, IsBatch)" +
+                                                            @"values(@OrderNumber, @CustomerName, @OrderDate, @DueDate, @IsComplete, @IsBatch); ";
+
+                                    command.Parameters.AddWithValue("@OrderNumber", orderNumber);
+                                    command.Parameters.AddWithValue("@CustomerName", customerName);
+                                    command.Parameters.AddWithValue("@OrderDate", DateTime.Now);
+                                    command.Parameters.AddWithValue("@DueDate", DateTime.Now);
+                                    command.Parameters.AddWithValue("IsComplete", false);
+                                    command.Parameters.AddWithValue("IsBatch", false);
+
+                                    command.ExecuteNonQuery();
+
+                                    
+                                }
+
+                                // add an order detail to either an existing order or the new order created above
+                                // find ID of newly created order or existing order recrod
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = new SqlCommand();
+                                command = new SqlCommand("SELECT [ID] FROM [Order] WHERE OrderNumber = '" + orderNumber + "';", conn);
+                                reader = command.ExecuteReader();
+                                reader.Read();
+
+                                if (reader.HasRows)
+                                {
+                                    orderRecordID = int.Parse(reader[0].ToString());
+                                }
+
+
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = new SqlCommand();
+                                command = conn.CreateCommand();
+                                command.CommandText = @"insert into OrderDetail (DueDate, IsComplete, Product_ID, Order_ID, Qty)" +
+                                                        @"values(@DueDate, @IsComplete, @Product_ID, @Order_ID, @Qty); ";
+
+                                command.Parameters.AddWithValue("@DueDate", DateTime.Now);
+                                command.Parameters.AddWithValue("@IsComplete", false);
+                                command.Parameters.AddWithValue("@Product_ID", productNewChildRecord);
+                                command.Parameters.AddWithValue("@Order_ID", orderRecordID);
+                                command.Parameters.AddWithValue("Qty", exportQty);
+
+                                command.ExecuteNonQuery();
+
+                                // find ID of newly created order detail recrod
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = new SqlCommand();
+                                command = new SqlCommand("SELECT [ID] FROM [OrderDetail] WHERE Product_ID = '" + productNewChildRecord + "';", conn);
+                                reader = command.ExecuteReader();
+                                reader.Read();
+
+                                
+                                if (reader.HasRows)
+                                {
+                                    orderDetailRecordID = int.Parse(reader[0].ToString());
+                                }
+
+                            }
+
                             string fileName = @"M:\PDF Drawing Files\" + (l.Split('\t')[1]) + ".pdf";
                             //-------------------------create the record in the file table
                             if (System.IO.File.Exists(fileName))
@@ -1419,21 +1505,27 @@ namespace ItemExport
 
                                 command = new SqlCommand();
                                 command = conn.CreateCommand();
-                                command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId)" +
-                                                      @"values(@FileName, @ContentType, @Content, @FileType, @ProductId); ";
+                                command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId, OrderDetailID)" +
+                                                      @"values(@FileName, @ContentType, @Content, @FileType, @ProductId, @OrderDetailID); ";
 
                                 command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
                                 command.Parameters.AddWithValue("@ContentType", "application/pdf");
                                 command.Parameters.AddWithValue("@Content", contents);
                                 command.Parameters.AddWithValue("@FileType", 1);
                                 command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
+                                command.Parameters.AddWithValue("@OrderDetailID", orderDetailRecordID);
 
                                 command.ExecuteNonQuery();
                             }
 
                             // find the id of the newly created record's parent record
                             if (l.Split('\t')[0] != "<top>")
+
                             {
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = conn.CreateCommand();
                                 command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + l.Split('\t')[0] + "';";
                                 reader.Close();
                                 reader = command.ExecuteReader();
@@ -1444,6 +1536,10 @@ namespace ItemExport
                                 }
 
                                 // make sure we don't already have product-product record like this
+                                conn.Close();
+                                conn = new SqlConnection(connectionString);
+                                conn.Open();
+                                command = conn.CreateCommand();
                                 command.CommandText = "SELECT * FROM ProductProduct WHERE ChildProductID = " + productNewChildRecord + " AND ParentProductID = " + productNewParentRecord + ";";
                                 reader.Close();
                                 reader = command.ExecuteReader();

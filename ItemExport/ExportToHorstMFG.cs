@@ -14,6 +14,7 @@ namespace ItemExport
     {
         public string OrderNumber { get; set; }
         public string CustomerName { get; set; }
+        public double Qty { get; set; }
 
         public ExportToHorstMFG()
         {
@@ -24,6 +25,7 @@ namespace ItemExport
         {
             OrderNumber = txtboxOrderNumber.Text;
             CustomerName = txtkBoxCustomerName.Text;
+            Qty = double.Parse(txtBoxQty.Text);
             DialogResult = DialogResult.OK;
         }
     }
