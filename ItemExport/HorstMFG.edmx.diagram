@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="e16747e43b0f437f95c60209eef971cb" Name="Diagram1">
+        <EntityTypeShape EntityType="HorstMFGModel.C__MigrationHistory" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.File" Width="1.5" PointX="5.25" PointY="4.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.Material" Width="1.5" PointX="0.75" PointY="6.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.Operation" Width="1.5" PointX="5.25" PointY="8.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.Order" Width="1.5" PointX="6" PointY="1" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.OrderDetail" Width="1.5" PointX="8.25" PointY="5.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.Product" Width="1.5" PointX="3" PointY="4.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.ProductProduct" Width="1.5" PointX="5.25" PointY="14.625" IsExpanded="true" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_File_dbo_OrderDetail_OrderDetailID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_File_dbo_Product_ProductId" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_Product_dbo_Material_Material_ID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_Operation_dbo_Product_Product_ID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_OrderDetail_dbo_Order_Order_ID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_OrderDetail_dbo_Product_Product_ID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_ProductProduct_dbo_Product_ChildProductID" ManuallyRouted="false" />
+        <AssociationConnector Association="HorstMFGModel.FK_dbo_ProductProduct_dbo_Product_ParentProductID" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
