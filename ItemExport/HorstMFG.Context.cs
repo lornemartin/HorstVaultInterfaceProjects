@@ -122,11 +122,17 @@ namespace ItemExport
                 SqlConnectionStringBuilder sqlBuilder = new SqlConnectionStringBuilder();
 
                 // Set the properties for the data source.
-                sqlBuilder.DataSource = @"(localdb)\ProjectsV13";
+                //sqlBuilder.DataSource = @"(localdb)\ProjectsV13";
+                sqlBuilder.DataSource = @"(LocalDb)\MSSQLLocalDB";
 
+                //sqlBuilder.InitialCatalog = "Horst Manufacturing DB";
                 sqlBuilder.InitialCatalog = "Horst Manufacturing DB";
 
-                //sqlBuilder.AttachDBFilename = @"C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf";
+                sqlBuilder.AttachDBFilename = @"C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf";
+
+                //sqlBuilder.UserID = "HW\\Lorne";
+
+                //sqlBuilder.Password = "L@rn@18";
 
                 sqlBuilder.IntegratedSecurity = true;
 

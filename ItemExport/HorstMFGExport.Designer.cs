@@ -42,14 +42,16 @@
             this.colThickness = new DevExpress.XtraGrid.Columns.GridColumn();
             this.colPartNumber = new DevExpress.XtraGrid.Columns.GridColumn();
             this.c__MigrationHistoryBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.productsBindingSource = new System.Windows.Forms.BindingSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.c__MigrationHistoryBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.productsBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // gridControl1
             // 
-            this.gridControl1.DataSource = this.c__MigrationHistoryBindingSource;
+            this.gridControl1.DataSource = this.productsBindingSource;
             this.gridControl1.Location = new System.Drawing.Point(49, 34);
             this.gridControl1.MainView = this.gridView1;
             this.gridControl1.Name = "gridControl1";
@@ -148,6 +150,10 @@
             // 
             this.c__MigrationHistoryBindingSource.DataSource = typeof(ItemExport.C__MigrationHistory);
             // 
+            // productsBindingSource
+            // 
+            this.productsBindingSource.DataSource = typeof(ItemExport.Product);
+            // 
             // HorstMFGExport
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -159,6 +165,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.c__MigrationHistoryBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.productsBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -178,5 +185,6 @@
         private DevExpress.XtraGrid.Columns.GridColumn colThickness;
         private DevExpress.XtraGrid.Columns.GridColumn colPartNumber;
         private System.Windows.Forms.BindingSource c__MigrationHistoryBindingSource;
+        private System.Windows.Forms.BindingSource productsBindingSource;
     }
 }
