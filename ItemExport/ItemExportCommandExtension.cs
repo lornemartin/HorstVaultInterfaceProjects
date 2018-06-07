@@ -79,7 +79,7 @@ namespace ItemExport
 
             CommandItem BomExportCmdItem = new CommandItem("BomItemExportCommand", "Export Item &Direct")
             {
-                NavigationTypes = new SelectionTypeId[] { SelectionTypeId.Bom},
+                NavigationTypes = new SelectionTypeId[] { SelectionTypeId.Bom },
                 MultiSelectEnabled = false
             };
 
@@ -152,42 +152,42 @@ namespace ItemExport
             // Create a DetailPaneTab list to return from method
             List<DetailPaneTab> fileTabs = new List<DetailPaneTab>();
 
-           //// Create Selection Info tab for Files
-           //DetailPaneTab filePropertyTab = new DetailPaneTab("File.Tab.PropertyGrid",
-           //                                            "Selection Info",
-           //                                            SelectionTypeId.File,
-           //                                            typeof(MyCustomTabControl));
+            //// Create Selection Info tab for Files
+            //DetailPaneTab filePropertyTab = new DetailPaneTab("File.Tab.PropertyGrid",
+            //                                            "Selection Info",
+            //                                            SelectionTypeId.File,
+            //                                            typeof(MyCustomTabControl));
 
-           // //The propertyTab_SelectionChanged is called whenever our tab is active and the selection changes in the
+            // //The propertyTab_SelectionChanged is called whenever our tab is active and the selection changes in the
 
-           // //main grid.
-           //filePropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-           // fileTabs.Add(filePropertyTab);
+            // //main grid.
+            //filePropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+            // fileTabs.Add(filePropertyTab);
 
-           // //Create Selection Info tab for Folders
-           //DetailPaneTab folderPropertyTab = new DetailPaneTab("Folder.Tab.PropertyGrid",
-           //                                            "Selection Info",
-           //                                            SelectionTypeId.Folder,
-           //                                            typeof(MyCustomTabControl));
-           //folderPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-           // fileTabs.Add(folderPropertyTab);
+            // //Create Selection Info tab for Folders
+            //DetailPaneTab folderPropertyTab = new DetailPaneTab("Folder.Tab.PropertyGrid",
+            //                                            "Selection Info",
+            //                                            SelectionTypeId.Folder,
+            //                                            typeof(MyCustomTabControl));
+            //folderPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+            // fileTabs.Add(folderPropertyTab);
 
-           // //Create Selection Info tab for Items
-           //DetailPaneTab itemPropertyTab = new DetailPaneTab("Item.Tab.PropertyGrid",
-           //                                            "Selection Info",
-           //                                            SelectionTypeId.Item,
-           //                                            typeof(MyCustomTabControl));
-           //itemPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-           // fileTabs.Add(itemPropertyTab);
+            // //Create Selection Info tab for Items
+            //DetailPaneTab itemPropertyTab = new DetailPaneTab("Item.Tab.PropertyGrid",
+            //                                            "Selection Info",
+            //                                            SelectionTypeId.Item,
+            //                                            typeof(MyCustomTabControl));
+            //itemPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+            // fileTabs.Add(itemPropertyTab);
 
-           //// Create Selection Info tab for Change Orders
+            //// Create Selection Info tab for Change Orders
 
-           //DetailPaneTab coPropertyTab = new DetailPaneTab("Co.Tab.PropertyGrid",
-           //                                            "Selection Info",
-           //                                            SelectionTypeId.ChangeOrder,
-           //                                            typeof(MyCustomTabControl));
-           // coPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-           // fileTabs.Add(coPropertyTab);
+            //DetailPaneTab coPropertyTab = new DetailPaneTab("Co.Tab.PropertyGrid",
+            //                                            "Selection Info",
+            //                                            SelectionTypeId.ChangeOrder,
+            //                                            typeof(MyCustomTabControl));
+            // coPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
+            // fileTabs.Add(coPropertyTab);
 
             // Return tabs
             return fileTabs;
@@ -278,7 +278,7 @@ namespace ItemExport
                     MessageBox.Show("This function does not support multiple selections");
                 else
                 {
-                    
+
                     // we only have one item selected, which is the expected behavior
                     ISelection selection = e.Context.CurrentSelectionSet.First();
 
@@ -543,7 +543,7 @@ namespace ItemExport
             }
         }
 
-        ItemAssoc [] GetChildItems(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
+        ItemAssoc[] GetChildItems(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
         {
             // returns all the direct children of an item.
             try
@@ -559,20 +559,20 @@ namespace ItemExport
                 // change second parameter to true to return all children recursively
                 return itemSvc.GetItemBOMAssociationsByItemIds(new long[] { item.Id }, false);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return null;
             }
         }
 
         // this function is not used
-        void UpdateItems(Autodesk.Connectivity.WebServices.Item []itemArray , VDF.Vault.Currency.Connections.Connection connection)
+        void UpdateItems(Autodesk.Connectivity.WebServices.Item[] itemArray, VDF.Vault.Currency.Connections.Connection connection)
         {
             long[] itemRevisionIds = new long[itemArray.Count()];
             //itemRevisionIds[0] = item.RevId;
 
             int index = 0;
-            foreach(Item item in itemArray)
+            foreach (Item item in itemArray)
             {
                 itemRevisionIds[index] = item.Id;
                 index++;
@@ -698,7 +698,7 @@ namespace ItemExport
                 itemSvc.UpdateAndCommitItems(topLevelItems.ToArray());
 
 
-                itemSvc.UpdatePromoteComponents(itemRevisionIds,ItemAssignAll.Default,false);
+                itemSvc.UpdatePromoteComponents(itemRevisionIds, ItemAssignAll.Default, false);
 
                 DateTime now = DateTime.Now;
 
@@ -884,7 +884,7 @@ namespace ItemExport
             MapPair revisionNumberPair = new MapPair();
             revisionNumberPair.ToName = "Revision";
             revisionNumberPair.FromName = "Revision";
-            
+
 
             FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
@@ -911,7 +911,7 @@ namespace ItemExport
             Dictionary<string, long> bomDict = new Dictionary<string, long>();
 
             // loop through all the bomItems and extract the IDs along with the item numbers
-            foreach(var v in pkgBom.PkgItemArray)
+            foreach (var v in pkgBom.PkgItemArray)
             {
                 idList.Add(v.ID);
                 bomDict.Add(v.ItemNum, v.ID);
@@ -948,7 +948,7 @@ namespace ItemExport
 
                     // populate the second dictionary
                     int index = 0;
-                    foreach(long l in idList)
+                    foreach (long l in idList)
                     {
                         bomDict2.Add(l, bomList[index]);
                         index++;
@@ -971,7 +971,7 @@ namespace ItemExport
 
                         string newItemString = "";
 
-                        foreach(string s in items)
+                        foreach (string s in items)
                         {
                             newItemString += s + "\t";
                         }
@@ -986,9 +986,9 @@ namespace ItemExport
                 }
             }
 
-            using (StreamWriter writer = new StreamWriter(filename,false))
+            using (StreamWriter writer = new StreamWriter(filename, false))
             {
-                foreach(string s in lineList)
+                foreach (string s in lineList)
                 {
                     writer.WriteLine(s);
                 }
@@ -1473,7 +1473,7 @@ namespace ItemExport
                             conn = new SqlConnection(connectionString);
                             conn.Open();
                             command = new SqlCommand();
-                            command = new SqlCommand("SELECT [ID] FROM [OrderDetail] WHERE Product_ID = '" + productNewChildRecord +  " 'AND Order_ID = '" + orderRecordID + "';", conn);
+                            command = new SqlCommand("SELECT [ID] FROM [OrderDetail] WHERE Product_ID = '" + productNewChildRecord + " 'AND Order_ID = '" + orderRecordID + "';", conn);
                             reader = command.ExecuteReader();
                             reader.Read();
 
@@ -1580,370 +1580,344 @@ namespace ItemExport
 
             //DialogResult exportResult = exportDialog.ShowDialog();
 
-            
-
-                string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
-                using (StreamWriter writer = new StreamWriter(processFileName))
-                {
-                    if (okToProcess == false)
-                        writer.WriteLine("false");
-                    else
-                        writer.WriteLine("true");
-                }
-
-                string filename = (string)AppSettings.Get("ExportFile");
-
-                PackageService packageSvc = connection.WebServiceManager.PackageService;
-
-                // export to CSV file
-                PkgItemsAndBOM pkgBom = packageSvc.GetLatestPackageDataByItemIds(new long[] { item.Id }, BOMTyp.Latest);
-
-                // Create a mapping between Item properties and columns in the CSV file
-                MapPair parentPair = new MapPair();
-                parentPair.ToName = "Parent";
-                parentPair.FromName = "BOMStructure-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
-
-                MapPair numberPair = new MapPair();
-                numberPair.ToName = "Number";
-                numberPair.FromName = "Number";
-
-                MapPair titlePair = new MapPair();
-                titlePair.ToName = "Title (Item,CO)";
-                titlePair.FromName = "Title(Item,CO)";
-
-                MapPair descriptionPair = new MapPair();
-                descriptionPair.ToName = "Item Description";
-                descriptionPair.FromName = "Description(Item,CO)";
-
-                MapPair categoryNamePair = new MapPair();
-                categoryNamePair.ToName = "CategoryName";
-                categoryNamePair.FromName = "CategoryName";
-
-                MapPair thicknessPair = new MapPair();
-                thicknessPair.ToName = "Thickness";
-                thicknessPair.FromName = "7c5169ad-9081-4aa7-b1a3-4670edae0b8c";
-
-                MapPair materialPair = new MapPair();
-                materialPair.ToName = "Material";
-                materialPair.FromName = "Material";
-
-                MapPair operationsPair = new MapPair();
-                operationsPair.ToName = "Operations";
-                operationsPair.FromName = "794d5b7d-49b5-49ba-938a-7e341a7ff8e4";
-
-                MapPair quantityPair = new MapPair();
-                quantityPair.ToName = "Quantity";
-                quantityPair.FromName = "Quantity-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
-
-                MapPair structCodePair = new MapPair();
-                structCodePair.ToName = "Structural Code";
-                structCodePair.FromName = "e3811c7a-a3ee-4f67-b34e-cbc892640616";
-
-                MapPair plantIDPair = new MapPair();
-                plantIDPair.ToName = "Plant ID";
-                plantIDPair.FromName = "eff195ae-da71-4929-b3df-2d6fd1e25f53";
-
-                MapPair isStockPair = new MapPair();
-                isStockPair.ToName = "Is Stock";
-                isStockPair.FromName = "f78c17cd-86d1-4728-96b5-8001fb58b67f";
-
-                MapPair requiresPDFPair = new MapPair();
-                requiresPDFPair.ToName = "Requires PDF";
-                requiresPDFPair.FromName = "6df4ae8b-fbd9-4e62-b801-a46097d4f9c5";
-
-                MapPair commentPair = new MapPair();
-                commentPair.ToName = "Comment";
-                commentPair.FromName = "Comment";
-
-                MapPair modDatePair = new MapPair();
-                modDatePair.ToName = "Date Modified";
-                modDatePair.FromName = "ModDate";
-
-                MapPair statePair = new MapPair();
-                statePair.ToName = "State";
-                statePair.FromName = "State";
-
-                MapPair stockNamePair = new MapPair();
-                stockNamePair.ToName = "Stock Name";
-                stockNamePair.FromName = "a42ca550-c503-4835-99dd-8c4d4ff6dbaf";
-
-                MapPair keywordsPair = new MapPair();
-                keywordsPair.ToName = "Keywords";
-                keywordsPair.FromName = "Keywords";
-
-                MapPair notesPair = new MapPair();
-                notesPair.ToName = "Notes";
-                notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
-
-                MapPair revisionNumberPair = new MapPair();
-                revisionNumberPair.ToName = "Revision";
-                revisionNumberPair.FromName = "Revision";
 
 
-                FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
-                        new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
+            string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
+            using (StreamWriter writer = new StreamWriter(processFileName))
+            {
+                if (okToProcess == false)
+                    writer.WriteLine("false");
+                else
+                    writer.WriteLine("true");
+            }
+
+            string filename = (string)AppSettings.Get("ExportFile");
+
+            PackageService packageSvc = connection.WebServiceManager.PackageService;
+
+            // export to CSV file
+            PkgItemsAndBOM pkgBom = packageSvc.GetLatestPackageDataByItemIds(new long[] { item.Id }, BOMTyp.Latest);
+
+            // Create a mapping between Item properties and columns in the CSV file
+            MapPair parentPair = new MapPair();
+            parentPair.ToName = "Parent";
+            parentPair.FromName = "BOMStructure-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
+
+            MapPair numberPair = new MapPair();
+            numberPair.ToName = "Number";
+            numberPair.FromName = "Number";
+
+            MapPair titlePair = new MapPair();
+            titlePair.ToName = "Title (Item,CO)";
+            titlePair.FromName = "Title(Item,CO)";
+
+            MapPair descriptionPair = new MapPair();
+            descriptionPair.ToName = "Item Description";
+            descriptionPair.FromName = "Description(Item,CO)";
+
+            MapPair categoryNamePair = new MapPair();
+            categoryNamePair.ToName = "CategoryName";
+            categoryNamePair.FromName = "CategoryName";
+
+            MapPair thicknessPair = new MapPair();
+            thicknessPair.ToName = "Thickness";
+            thicknessPair.FromName = "7c5169ad-9081-4aa7-b1a3-4670edae0b8c";
+
+            MapPair materialPair = new MapPair();
+            materialPair.ToName = "Material";
+            materialPair.FromName = "Material";
+
+            MapPair operationsPair = new MapPair();
+            operationsPair.ToName = "Operations";
+            operationsPair.FromName = "794d5b7d-49b5-49ba-938a-7e341a7ff8e4";
+
+            MapPair quantityPair = new MapPair();
+            quantityPair.ToName = "Quantity";
+            quantityPair.FromName = "Quantity-41FF056B-8EEF-47E2-8F9E-490BC0C52C71";
+
+            MapPair structCodePair = new MapPair();
+            structCodePair.ToName = "Structural Code";
+            structCodePair.FromName = "e3811c7a-a3ee-4f67-b34e-cbc892640616";
+
+            MapPair plantIDPair = new MapPair();
+            plantIDPair.ToName = "Plant ID";
+            plantIDPair.FromName = "eff195ae-da71-4929-b3df-2d6fd1e25f53";
+
+            MapPair isStockPair = new MapPair();
+            isStockPair.ToName = "Is Stock";
+            isStockPair.FromName = "f78c17cd-86d1-4728-96b5-8001fb58b67f";
+
+            MapPair requiresPDFPair = new MapPair();
+            requiresPDFPair.ToName = "Requires PDF";
+            requiresPDFPair.FromName = "6df4ae8b-fbd9-4e62-b801-a46097d4f9c5";
+
+            MapPair commentPair = new MapPair();
+            commentPair.ToName = "Comment";
+            commentPair.FromName = "Comment";
+
+            MapPair modDatePair = new MapPair();
+            modDatePair.ToName = "Date Modified";
+            modDatePair.FromName = "ModDate";
+
+            MapPair statePair = new MapPair();
+            statePair.ToName = "State";
+            statePair.FromName = "State";
+
+            MapPair stockNamePair = new MapPair();
+            stockNamePair.ToName = "Stock Name";
+            stockNamePair.FromName = "a42ca550-c503-4835-99dd-8c4d4ff6dbaf";
+
+            MapPair keywordsPair = new MapPair();
+            keywordsPair.ToName = "Keywords";
+            keywordsPair.FromName = "Keywords";
+
+            MapPair notesPair = new MapPair();
+            notesPair.ToName = "Notes";
+            notesPair.FromName = "0d012a5c-cc28-443c-b44e-735372eee117";
+
+            MapPair revisionNumberPair = new MapPair();
+            revisionNumberPair.ToName = "Revision";
+            revisionNumberPair.FromName = "Revision";
+
+
+            FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
+                    new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
                                     commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,revisionNumberPair});
 
-                long currentByte = 0;
-                long partSize = connection.PartSizeInBytes;
-                using (FileStream fs = new FileStream(filename, FileMode.Create))
+            long currentByte = 0;
+            long partSize = connection.PartSizeInBytes;
+            using (FileStream fs = new FileStream(filename, FileMode.Create))
+            {
+                while (currentByte < fileNameAndUrl.FileSize)
                 {
-                    while (currentByte < fileNameAndUrl.FileSize)
-                    {
-                        long lastByte = currentByte + partSize < fileNameAndUrl.FileSize ? currentByte + partSize : fileNameAndUrl.FileSize;
-                        byte[] contents = packageSvc.DownloadPackagePart(fileNameAndUrl.Name, currentByte, lastByte);
-                        fs.Write(contents, 0, (int)(lastByte - currentByte));
-                        currentByte += partSize;
-                    }
+                    long lastByte = currentByte + partSize < fileNameAndUrl.FileSize ? currentByte + partSize : fileNameAndUrl.FileSize;
+                    byte[] contents = packageSvc.DownloadPackagePart(fileNameAndUrl.Name, currentByte, lastByte);
+                    fs.Write(contents, 0, (int)(lastByte - currentByte));
+                    currentByte += partSize;
                 }
+            }
 
-                // create a list to hold all the IDs of the BOM items
-                List<long> idList = new List<long>();
+            // create a list to hold all the IDs of the BOM items
+            List<long> idList = new List<long>();
 
-                // create a dictionary to match up the exported ids with the exported item numbers
-                Dictionary<string, long> bomDict = new Dictionary<string, long>();
+            // create a dictionary to match up the exported ids with the exported item numbers
+            Dictionary<string, long> bomDict = new Dictionary<string, long>();
 
-                // loop through all the bomItems and extract the IDs along with the item numbers
-                foreach (var v in pkgBom.PkgItemArray)
+            // loop through all the bomItems and extract the IDs along with the item numbers
+            foreach (var v in pkgBom.PkgItemArray)
+            {
+                idList.Add(v.ID);
+                bomDict.Add(v.ItemNum, v.ID);
+            }
+
+            // now create a list to store all the BOM items in
+            List<BOMComp> bomList = new List<BOMComp>();
+
+            // we now need to replace the item number with the primary file name field.  I can't figure out how to map it above, so we have to open the text file,
+            // search through it line by line, and query the vault for the primary file name link of of each item number.  We then save the text file again with the
+            // primary file name now in place of the item number....
+
+            List<string> lineList = new List<string>(); // create a list of lines to save the file text in.
+
+            using (StreamReader reader = System.IO.File.OpenText(filename))
+            {
+                string line;
+                line = reader.ReadLine();       // first line is header, just save it the the list, don't process it
+                lineList.Add(line);
+
+                int lineNum = 1;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    idList.Add(v.ID);
-                    bomDict.Add(v.ItemNum, v.ID);
+                    line = line.Replace("\"", "");
+
+                    string[] items = line.Split('\t');
+                    string origItemNumber = items[1];
+
+                    // download all the bom items into a list in one API call
+                    bomList = connection.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(idList.ToArray()).ToList();
+
+                    // create another dictionary to match up the IDs with the bomComps
+                    Dictionary<long, BOMComp> bomDict2 = new Dictionary<long, BOMComp>();
+
+                    // populate the second dictionary
+                    int index = 0;
+                    foreach (long l in idList)
+                    {
+                        bomDict2.Add(l, bomList[index]);
+                        index++;
+                    }
+
+                    long searchID = 0;
+                    bomDict.TryGetValue(origItemNumber, out searchID);
+
+                    BOMComp searchbomComp = new BOMComp();
+                    bomDict2.TryGetValue(searchID, out searchbomComp);
+
+                    long primaryLinkID = searchbomComp.XRefId;  // get the id of the primary linked file
+                    if (primaryLinkID != -1)    // if we have a primary file name, use it
+                    {
+                        // we could likely speed this up some more if we grouped this all into one call rather than one by one, but code would get messier yet...
+                        Autodesk.Connectivity.WebServices.File primaryLinkFile = connection.WebServiceManager.DocumentService.GetFileById(primaryLinkID);
+                        string primaryLinkName = primaryLinkFile.Name;
+
+                        items[1] = primaryLinkName;
+
+                        string newItemString = "";
+
+                        foreach (string s in items)
+                        {
+                            newItemString += s + "\t";
+                        }
+                        lineList.Add(newItemString);
+                    }
+                    else        // otherwise just use the item number, for example top level items will fall into this category
+                    {
+                        lineList.Add(line);
+                    }
+
+                    lineNum++;
                 }
+            }
 
-                // now create a list to store all the BOM items in
-                List<BOMComp> bomList = new List<BOMComp>();
+            // now we need to replace the level indicators with parent names
+            // I had to do it the hard way because of the primary file name / item name glitch
+            List<string> lineListOrig = new List<string>();
+            List<string> lineList2 = new List<string>();
+            List<string> lineList3 = new List<string>();
+            string parent = "";
+            string parentLevel = "";
+            string revisedLine = "";
 
-                // we now need to replace the item number with the primary file name field.  I can't figure out how to map it above, so we have to open the text file,
-                // search through it line by line, and query the vault for the primary file name link of of each item number.  We then save the text file again with the
-                // primary file name now in place of the item number....
+            lineListOrig = lineList;
 
-                List<string> lineList = new List<string>(); // create a list of lines to save the file text in.
 
-                using (StreamReader reader = System.IO.File.OpenText(filename))
+            foreach (string line in lineListOrig)
+            {
+                string level = line.Split('\t')[0]; // get the first group of chars on the line, which represents the item level
+                string name = line.Split('\t')[1];
+                if (level != "Parent")     // first line contains headers, we don't want it
                 {
-                    string line;
-                    line = reader.ReadLine();       // first line is header, just save it the the list, don't process it
-                    lineList.Add(line);
-
-                    int lineNum = 1;
-                    while ((line = reader.ReadLine()) != null)
+                    if (level == "1")
                     {
-                        line = line.Replace("\"", "");
-
-                        string[] items = line.Split('\t');
-                        string origItemNumber = items[1];
-
-                        // download all the bom items into a list in one API call
-                        bomList = connection.WebServiceManager.ItemService.GetPrimaryComponentsByItemIds(idList.ToArray()).ToList();
-
-                        // create another dictionary to match up the IDs with the bomComps
-                        Dictionary<long, BOMComp> bomDict2 = new Dictionary<long, BOMComp>();
-
-                        // populate the second dictionary
-                        int index = 0;
-                        foreach (long l in idList)
-                        {
-                            bomDict2.Add(l, bomList[index]);
-                            index++;
-                        }
-
-                        long searchID = 0;
-                        bomDict.TryGetValue(origItemNumber, out searchID);
-
-                        BOMComp searchbomComp = new BOMComp();
-                        bomDict2.TryGetValue(searchID, out searchbomComp);
-
-                        long primaryLinkID = searchbomComp.XRefId;  // get the id of the primary linked file
-                        if (primaryLinkID != -1)    // if we have a primary file name, use it
-                        {
-                            // we could likely speed this up some more if we grouped this all into one call rather than one by one, but code would get messier yet...
-                            Autodesk.Connectivity.WebServices.File primaryLinkFile = connection.WebServiceManager.DocumentService.GetFileById(primaryLinkID);
-                            string primaryLinkName = primaryLinkFile.Name;
-
-                            items[1] = primaryLinkName;
-
-                            string newItemString = "";
-
-                            foreach (string s in items)
-                            {
-                                newItemString += s + "\t";
-                            }
-                            lineList.Add(newItemString);
-                        }
-                        else        // otherwise just use the item number, for example top level items will fall into this category
-                        {
-                            lineList.Add(line);
-                        }
-
-                        lineNum++;
+                        parent = "<top>";
+                        revisedLine = line.Replace(level + '\t' + name, parent + '\t' + name);
                     }
+                    else
+                    {
+                        parentLevel = Path.GetFileNameWithoutExtension(level);  // trim the last .x off the level item to find the parent level
+                        foreach (string compLine in lineListOrig)
+                        {
+                            string compLevel = compLine.Split('\t')[0];
+                            if (compLevel == parentLevel)
+                            {
+                                parent = compLine.Split('\t')[1];
+                                revisedLine = line.Replace(level + '\t' + name, parent + '\t' + name);
+                                break;
+                            }
+                        }
+
+                    }
+                    lineList2.Add(revisedLine);
                 }
+            }
 
-                // now we need to replace the level indicators with parent names
-                // I had to do it the hard way because of the primary file name / item name glitch
-                List<string> lineListOrig = new List<string>();
-                List<string> lineList2 = new List<string>();
-                List<string> lineList3 = new List<string>();
-                string parent = "";
-                string parentLevel = "";
-                string revisedLine = "";
+            foreach (string line in lineList2)
+            {
+                string name = line.Split('\t')[1];
+                string parentName = line.Split('\t')[0];
 
-                lineListOrig = lineList;
-
-
-                foreach (string line in lineListOrig)
+                string newName = "";
+                if (name.EndsWith(".ipt") || name.EndsWith(".iam"))
                 {
-                    string level = line.Split('\t')[0]; // get the first group of chars on the line, which represents the item level
-                    string name = line.Split('\t')[1];
-                    if (level != "Parent")     // first line contains headers, we don't want it
-                    {
-                        if (level == "1")
-                        {
-                            parent = "<top>";
-                            revisedLine = line.Replace(level + '\t' + name, parent + '\t' + name);
-                        }
-                        else
-                        {
-                            parentLevel = Path.GetFileNameWithoutExtension(level);  // trim the last .x off the level item to find the parent level
-                            foreach (string compLine in lineListOrig)
-                            {
-                                string compLevel = compLine.Split('\t')[0];
-                                if (compLevel == parentLevel)
-                                {
-                                    parent = compLine.Split('\t')[1];
-                                    revisedLine = line.Replace(level + '\t' + name, parent + '\t' + name);
-                                    break;
-                                }
-                            }
-
-                        }
-                        lineList2.Add(revisedLine);
-                    }
+                    int index = name.LastIndexOf('.');
+                    newName = index == -1 ? name : name.Substring(0, index);
                 }
+                else newName = name;
 
-                foreach (string line in lineList2)
+
+                string newParentName = "";
+                if (parentName.EndsWith(".ipt") || parentName.EndsWith(".iam"))
                 {
-                    string name = line.Split('\t')[1];
-                    string parentName = line.Split('\t')[0];
+                    int index = parentName.LastIndexOf('.');
+                    newParentName = index == -1 ? parentName : parentName.Substring(0, index);
+                }
+                else newParentName = parentName;
 
-                    string newName = "";
-                    if (name.EndsWith(".ipt") || name.EndsWith(".iam"))
-                    {
-                        int index = name.LastIndexOf('.');
-                        newName = index == -1 ? name : name.Substring(0, index);
-                    }
-                    else newName = name;
+                string revisedLine2 = line.Replace(parentName + '\t' + name, newParentName + '\t' + newName);
+                lineList3.Add(revisedLine2);
+            }
+            #endregion
+
+            // we now have a list of lines in lineList3 that needs to be put into the sql database
+
+            List<Product> productList = new List<Product>();
 
 
-                    string newParentName = "";
-                    if (parentName.EndsWith(".ipt") || parentName.EndsWith(".iam"))
-                    {
-                        int index = parentName.LastIndexOf('.');
-                        newParentName = index == -1 ? parentName : parentName.Substring(0, index);
-                    }
-                    else newParentName = parentName;
 
-                    string revisedLine2 = line.Replace(parentName + '\t' + name, newParentName + '\t' + newName);
-                    lineList3.Add(revisedLine2);
-
-                #endregion
-
-                // we now have a list of lines in lineList3 that needs to be put into the sql database
-
-                List<Product> productList = new List<Product>();
-
-                using (var db = new HorstMFGEntities())
+            using (var db = new HorstMFGEntities())
+            {
+                foreach (string l in lineList3)
                 {
-                    foreach (string l in lineList3)
-                    {
-                        // calculate thickness
-                        double thickness = 0.0;
-                        if (l.Split('\t')[5] != "") thickness = double.Parse(l.Split('\t')[5].Remove(l.Split('\t')[5].Length - 2));
+                    // calculate thickness
+                    double thickness = 0.0;
+                    if (l.Split('\t')[5] != "") thickness = double.Parse(l.Split('\t')[5].Remove(l.Split('\t')[5].Length - 2));
 
-                        // calculate material
-                        Material mat = db.Materials.Where(m => m.StructuralCode == l.Split('\t')[6]).FirstOrDefault();
-                        if (mat == null)
-                        {
-                            if (db.Materials.Count() != 0)
-                                mat = db.Materials.First();
-                            else
-                            {
-                                if (mat == null)
-                                {
-                                    mat = new Material();
-                                    mat.Name = "Material1";
-                                    mat.Thickness = 0;
-                                    mat.StructuralCode = "MAT1";
-                                }
-                            }
-                        }
+                    // calculate material
+                    Material mat = new Material();
+                    mat.Name = l.Split('\t')[6];
 
-                        // calculate first operation
-                        Operation op1 = db.Operations.Where(o => o.Name == l.Split('\t')[7]).FirstOrDefault();
-                        if (op1 == null)
-                        {
-                            if (db.Operations.Count() != 0)
-                            {
-                                op1 = db.Operations.First();
-                            }
-                            else
-                            {
-                                if (op1 == null)
-                                {
-                                    op1 = new Operation();
-                                    op1.Name = "Operation1";
-                                    op1.Location = "PLANT1";
-                                }
-                            }
-                        }
+                    // calculate first operation
+                    //Operation op1 = db.Operations.Where(o => o.Name == l.Split('\t')[7]).FirstOrDefault();
 
-                        // calculate IsStock
-                        bool isStock = false;
-                        if (l.Split('\t')[11] == "true") isStock = true;
-                        else isStock = false;
+                    Operation op1 = new Operation();
+                    op1.Name = l.Split('\t')[7];
 
-                        // calculate RequriresPDF
-                        bool requiresPDF = false;
-                        if (l.Split('\t')[12] == "true") requiresPDF = true;
-                        else requiresPDF = false;
+                    // calculate IsStock
+                    bool isStock = false;
+                    if (l.Split('\t')[11] == "true") isStock = true;
+                    else isStock = false;
 
-                        // calculate modifiedDate
-                        DateTime dt = new DateTime();
-                        string dtString = l.Split('\t')[14];
-                        dt = DateTime.Parse(dtString);
+                    // calculate RequriresPDF
+                    bool requiresPDF = false;
+                    if (l.Split('\t')[12] == "true") requiresPDF = true;
+                    else requiresPDF = false;
+
+                    // calculate modifiedDate
+                    DateTime dt = new DateTime();
+                    string dtString = l.Split('\t')[14];
+                    dt = DateTime.Parse(dtString);
 
 
-                        Product prod = new Product();
-                        prod.ParentPartNumber = l.Split('\t')[0];
-                        prod.PartNumber = l.Split('\t')[1];
-                        prod.Title = l.Split('\t')[2];
-                        prod.Description = l.Split('\t')[3];
-                        prod.CategoryName = l.Split('\t')[4];
-                        prod.Thickness = thickness;
-                        prod.Material = mat;
-                        prod.Operations = new List<Operation> { op1 };
-                        prod.StructuralCode = l.Split('\t')[9];
-                        prod.PlantID = l.Split('\t')[10];
-                        prod.IsStock = isStock;
-                        prod.RequiresPDF = requiresPDF;
-                        prod.Comment = l.Split('\t')[13];
-                        prod.ModifiedDate = dt;
-                        prod.State = l.Split('\t')[15];
-                        // Stock Name here
-                        prod.Keywords = l.Split('\t')[17];
-                        prod.Notes = l.Split('\t')[18];
-                        prod.Revision = l.Split('\t')[19];
+                    Product prod = new Product();
+                    prod.ParentPartNumber = l.Split('\t')[0];
+                    prod.PartNumber = l.Split('\t')[1];
+                    prod.Title = l.Split('\t')[2];
+                    prod.Description = l.Split('\t')[3];
+                    prod.CategoryName = l.Split('\t')[4];
+                    prod.Thickness = thickness;
+                    prod.Material = mat;
+                    prod.Operations = new List<Operation> { op1 };
+                    prod.StructuralCode = l.Split('\t')[9];
+                    prod.PlantID = l.Split('\t')[10];
+                    prod.IsStock = isStock;
+                    prod.RequiresPDF = requiresPDF;
+                    prod.Comment = l.Split('\t')[13];
+                    prod.ModifiedDate = dt;
+                    prod.State = l.Split('\t')[15];
+                    // Stock Name here
+                    prod.Keywords = l.Split('\t')[17];
+                    prod.Notes = l.Split('\t')[18];
+                    prod.Revision = l.Split('\t')[19];
 
-                        productList.Add(prod);
-                    }
-
+                    productList.Add(prod);
                 }
 
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);
                 DialogResult exportResult = exportDialog.ShowDialog();
 
                 MessageBox.Show("Completed Writing To Database");
+
             }
         }
 
@@ -1975,6 +1949,4 @@ namespace ItemExport
             connection.FileManager.AcquireFiles(settings);
         }
     }
-
-   
 }

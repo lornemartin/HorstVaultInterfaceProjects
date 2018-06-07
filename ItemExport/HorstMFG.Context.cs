@@ -11,21 +11,23 @@ namespace ItemExport
 {
     using System;
     using System.Data.Entity;
+    using System.Data.Entity.Core.EntityClient;
     using System.Data.Entity.Infrastructure;
-    
+    using System.Data.SqlClient;
+
     public partial class HorstMFGEntities : DbContext
     {
         public HorstMFGEntities()
-        : base("name=HorstMFGEntities")
-        //: base("connectionString = provider=System.Data.SqlClient;provider connection string=data source=(localdb)\\MSSQLLocalDB;attachdbfilename=C:\\Users\\lorne\\source\repos\\HorstMFG\\HorstMFG\\App_Data\\HorstMFG.mdf;integrated security=True;MultipleActiveResultSets=True;App=EntityFramework\" providerName = \"System.Data.EntityClient")
+        //: base("name=HorstMFGEntities")
+          : base(BuildConnectionString)
         {
         }
-    
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             throw new UnintentionalCodeFirstException();
         }
-    
+
         public virtual DbSet<C__MigrationHistory> C__MigrationHistory { get; set; }
         public virtual DbSet<File> Files { get; set; }
         public virtual DbSet<Material> Materials { get; set; }
@@ -34,5 +36,150 @@ namespace ItemExport
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<ProductProduct> ProductProducts { get; set; }
+
+        private static string BuildConnectionStringOrig
+        {       // this code connects but doesn't pull any data.
+            get
+            {
+                // Specify the provider name, server and database.
+                string providerName = "System.Data.SqlClient";
+
+                // Initialize the connection string builder for the
+                // underlying provider.
+                SqlConnectionStringBuilder sqlBuilder = new SqlConnectionStringBuilder();
+
+                // Set the properties for the data source.
+                sqlBuilder.DataSource = @"(localdb)\MSSQLLocalDB";
+
+                sqlBuilder.InitialCatalog = "aspnet-HorstMFG";
+
+                sqlBuilder.AttachDBFilename = @"C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf";
+
+                //sqlBuilder.UserID = < user >;
+                //sqlBuilder.Password = < password >;
+
+                sqlBuilder.IntegratedSecurity = true;
+
+                sqlBuilder.PersistSecurityInfo = true;
+
+                sqlBuilder.MultipleActiveResultSets = true;
+
+                // Build the SqlConnection connection string.
+                string providerString = sqlBuilder.ToString();
+
+                // Initialize the EntityConnectionStringBuilder.
+                EntityConnectionStringBuilder entityBuilder = new EntityConnectionStringBuilder();
+
+                //Set the provider name.
+                entityBuilder.Provider = providerName;
+
+                // Set the provider-specific connection string.
+                entityBuilder.ProviderConnectionString = providerString;
+
+                //assembly full name
+                Type t = typeof(HorstMFGEntities);
+                string assemblyFullName = t.Assembly.FullName.ToString();
+
+                // Set the Metadata location.
+                //entityBuilder.Metadata = string.Format("res://{0}/", //Models.Model.csdl|Models.Model.ssdl|Models.Model.msl", 
+                //    assemblyFullName);
+
+                //entityBuilder.Metadata = "res://*/HorstMFG.csdl|res://*/HorstMFG.ssdl|res://*/HorstMFG.msl";
+
+                entityBuilder.Metadata = @"C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.csdl|
+                                           C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.ssdl|
+                                           C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.msl";
+
+                try
+                {
+                    //Test de conexion
+                    using (EntityConnection conn = new EntityConnection(entityBuilder.ToString()))
+                    {
+                        conn.Open();
+
+                        conn.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Connection error" + ex.Message);
+                }
+
+                return entityBuilder.ToString();
+            }
+
+        }
+
+        private static string BuildConnectionString
+        {
+            get
+            {
+                // Specify the provider name, server and database.
+                string providerName = "System.Data.SqlClient";
+
+                // Initialize the connection string builder for the
+                // underlying provider.
+                SqlConnectionStringBuilder sqlBuilder = new SqlConnectionStringBuilder();
+
+                // Set the properties for the data source.
+                sqlBuilder.DataSource = @"(localdb)\ProjectsV13";
+
+                sqlBuilder.InitialCatalog = "Horst Manufacturing DB";
+
+                //sqlBuilder.AttachDBFilename = @"C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf";
+
+                sqlBuilder.IntegratedSecurity = true;
+
+                sqlBuilder.PersistSecurityInfo = true;
+
+                sqlBuilder.MultipleActiveResultSets = true;
+
+                // Build the SqlConnection connection string.
+                string providerString = sqlBuilder.ToString();
+
+                // Initialize the EntityConnectionStringBuilder.
+                EntityConnectionStringBuilder entityBuilder = new EntityConnectionStringBuilder();
+
+                //Set the provider name.
+                entityBuilder.Provider = providerName;
+
+                // Set the provider-specific connection string.
+                entityBuilder.ProviderConnectionString = providerString;
+
+                //assembly full name
+                Type t = typeof(HorstMFGEntities);
+                string assemblyFullName = t.Assembly.FullName.ToString();
+
+                // Set the Metadata location.
+                //entityBuilder.Metadata = string.Format("res://{0}/", //Models.Model.csdl|Models.Model.ssdl|Models.Model.msl", 
+                //    assemblyFullName);
+
+                //entityBuilder.Metadata = @"res://*/HorstMFG.csdl|res://*/HorstMFG.ssdl|res://*/HorstMFG.msl";
+
+                entityBuilder.Metadata = @"C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.csdl|
+                                           C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.ssdl|
+                                           C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\obj\Debug\edmxResourcesToEmbed\HorstMFG.msl";
+
+
+                try
+                {
+                    //Test de conexion
+                    using (EntityConnection conn = new EntityConnection(entityBuilder.ToString()))
+                    {
+                        conn.Open();
+
+                        conn.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Connection error" + ex.Message);
+                }
+
+
+                return entityBuilder.ToString();
+            }
+
+        }
     }
 }

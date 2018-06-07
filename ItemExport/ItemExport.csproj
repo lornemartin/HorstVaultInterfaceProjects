@@ -249,10 +249,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="HorstMFG.edmx">
+    <EmbeddedResource Include="HorstMFG.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>HorstMFG.Designer.cs</LastGenOutput>
-    </None>
+    </EmbeddedResource>
     <None Include="HorstMFG.edmx.diagram">
       <DependentUpon>HorstMFG.edmx</DependentUpon>
     </None>

@@ -27,6 +27,10 @@ namespace ItemExport
 
         public HorstMFGExport(List <Product> productList)
         {
+            DataSet ds = new DataSet();
+            
+            gridView1.Columns.Clear();
+            gridControl1.DataSource = null;
             gridControl1.DataSource = productList;
 
         }
