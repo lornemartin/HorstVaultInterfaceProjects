@@ -1875,13 +1875,15 @@ namespace ItemExport
 
                     // calculate IsStock
                     bool isStock = false;
-                    if (l.Split('\t')[11] == "true") isStock = true;
-                    else isStock = false;
+                    string isStockString = l.Split('\t')[11];
+                    if (string.Equals(isStockString, "true", StringComparison.CurrentCultureIgnoreCase))
+                        isStock = true;
 
                     // calculate RequriresPDF
                     bool requiresPDF = false;
-                    if (l.Split('\t')[12] == "true") requiresPDF = true;
-                    else requiresPDF = false;
+                    string requiresPDFString = l.Split('\t')[12];
+                    if (string.Equals(requiresPDFString, "true", StringComparison.CurrentCultureIgnoreCase))
+                        requiresPDF = true;
 
                     // calculate modifiedDate
                     DateTime dt = new DateTime();
@@ -1911,6 +1913,7 @@ namespace ItemExport
                     prod.Revision = l.Split('\t')[19];
 
                     productList.Add(prod);
+
                 }
 
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);

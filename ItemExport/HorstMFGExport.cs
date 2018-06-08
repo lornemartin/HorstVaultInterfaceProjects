@@ -40,10 +40,13 @@ namespace ItemExport
                 productsBindingSource.DataSource = dbContext.Products.Local.ToBindingList();
             }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
 
-            
-            gridView1.Columns.Clear();
+
+            //gridView1.Columns.Clear();
+            gridView1.BeginDataUpdate();
             gridControl1.DataSource = null;
             gridControl1.DataSource = productList;
+            gridView1.EndDataUpdate();
+
 
         }
     }
