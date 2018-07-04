@@ -1914,6 +1914,15 @@ namespace ItemExport
 
                     productList.Add(prod);
 
+                    if(prod.ParentPartNumber != "<top>")
+                    {
+                        Product prnt = productList.Find(p => p.PartNumber == prod.ParentPartNumber);
+
+                        // add sub to parent here....
+                        //prnt.AddChildProduct(prod, )
+                        
+                    }
+
                 }
 
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);
