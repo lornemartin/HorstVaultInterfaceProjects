@@ -54,24 +54,5 @@ namespace ItemExport
         public virtual ICollection<ProductProduct> ProductProducts { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<ProductProduct> ProductProducts1 { get; set; }
-
-        public bool AddChildProduct(Product subProduct, int qty)
-        {
-            try
-            {
-                ProductProduct childProduct = new ProductProduct();
-
-                childProduct.ParentProduct = this;
-                childProduct.ChildProduct = subProduct;
-                childProduct.Qty = qty;
-                this.ProductProducts.Add(childProduct);
-
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
     }
 }

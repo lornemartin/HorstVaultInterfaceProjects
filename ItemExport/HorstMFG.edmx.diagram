@@ -12,7 +12,7 @@
         <EntityTypeShape EntityType="HorstMFGModel.Order" Width="1.5" PointX="6" PointY="1" IsExpanded="true" />
         <EntityTypeShape EntityType="HorstMFGModel.OrderDetail" Width="1.5" PointX="8.25" PointY="5.875" IsExpanded="true" />
         <EntityTypeShape EntityType="HorstMFGModel.Product" Width="1.5" PointX="3" PointY="4.5" IsExpanded="true" />
-        <EntityTypeShape EntityType="HorstMFGModel.ProductProduct" Width="1.5" PointX="5.25" PointY="14.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="HorstMFGModel.ProductProduct" Width="1.5" PointX="3.75" PointY="11.125" IsExpanded="true" />
         <AssociationConnector Association="HorstMFGModel.FK_dbo_File_dbo_OrderDetail_OrderDetailID" ManuallyRouted="false" />
         <AssociationConnector Association="HorstMFGModel.FK_dbo_File_dbo_Product_ProductId" ManuallyRouted="false" />
         <AssociationConnector Association="HorstMFGModel.FK_dbo_Product_dbo_Material_Material_ID" ManuallyRouted="false" />
