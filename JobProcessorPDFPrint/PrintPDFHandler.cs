@@ -43,7 +43,7 @@ namespace JobProcessorPrintPDF
 
         public PrintPDFHandler()
         {
-            TargetFolder = System.IO.Path.GetTempPath();
+            TargetFolder = System.IO.Path.GetTempPath() + @"\\PrintPDF";
             PDFPath = AppSettings.Get("PDFPath").ToString();
             pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
             psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
@@ -141,8 +141,29 @@ namespace JobProcessorPrintPDF
         {
             try
             {
+                // remove all downloaded files from previous run before we download more
                 if (fileIter.EntityName.EndsWith(".idw")) // only print idws
                 {
+                    try
+                    {
+                        if (Directory.Exists(TargetFolder))
+                        {
+                            DirectoryInfo dir = new DirectoryInfo(TargetFolder);
+                            foreach (FileInfo f in dir.GetFiles())
+                            {
+                                System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                                f.Delete();
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // cannot delete files, there is likely another Inventor View window open, but we won't worry about it, they'll get deleted next time
+                    }
+
+
+
+
                     // make sure folder exists for downloading idw into.
                     logMessage += "Checking Target Directory...";
                     System.IO.DirectoryInfo targetDir = new System.IO.DirectoryInfo(TargetFolder);
