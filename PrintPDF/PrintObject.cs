@@ -20,7 +20,6 @@ using VDF = Autodesk.DataManagement.Client.Framework;
 using Autodesk.Connectivity.Extensibility.Framework;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
-using Autodesk.Connectivity.WebServicesTools;
 using log4net.Config;
 using log4net;
 using log4net.Appender;
