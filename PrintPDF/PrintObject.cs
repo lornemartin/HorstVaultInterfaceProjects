@@ -372,14 +372,18 @@ namespace PrintPDF
                                     {
                                         psFileName = psFileName.Replace(',', '~');
                                         log.Warn("One or more characters replaced with '~' in " + pdfFileName);
-                                        //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
                                     }
 
                                     if (psFileName.Contains("°"))
                                     {
                                         psFileName = psFileName.Replace('°', '~');
                                         log.Warn("One or more characters replaced with '°' in " + pdfFileName);
-                                        //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
+                                    }
+
+                                    if (psFileName.Contains("/"))
+                                    {
+                                        psFileName = psFileName.Replace('/', '~');
+                                        log.Warn("One or more characters replaced with '°' in " + pdfFileName);
                                     }
 
                                     pMgr.PrintToFile(psFileName);
