@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="HorstMFGModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="HorstMFGModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="__MigrationHistory">
           <Key>
             <PropertyRef Name="MigrationId" />
@@ -62,10 +62,10 @@
             <PropertyRef Name="ID" />
           </Key>
           <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderID" Type="int" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
           <Property Name="DueDate" Type="datetime" Nullable="false" />
           <Property Name="IsComplete" Type="bit" Nullable="false" />
-          <Property Name="Product_ID" Type="int" />
-          <Property Name="Order_ID" Type="int" />
           <Property Name="Qty" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="Product">
@@ -75,14 +75,13 @@
           <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="PartNumber" Type="nvarchar(max)" Nullable="false" />
           <Property Name="Description" Type="nvarchar(max)" />
-          <Property Name="IsStock" Type="bit" Nullable="false" />
-          <Property Name="Material_ID" Type="int" />
           <Property Name="Title" Type="nvarchar(max)" />
           <Property Name="ParentPartNumber" Type="nvarchar(max)" />
           <Property Name="CategoryName" Type="nvarchar(max)" />
           <Property Name="Thickness" Type="float" Nullable="false" />
           <Property Name="StructuralCode" Type="nvarchar(max)" />
           <Property Name="PlantID" Type="nvarchar(max)" />
+          <Property Name="IsStock" Type="bit" Nullable="false" />
           <Property Name="RequiresPDF" Type="bit" Nullable="false" />
           <Property Name="Comment" Type="nvarchar(max)" />
           <Property Name="ModifiedDate" Type="datetime" Nullable="false" />
@@ -90,6 +89,7 @@
           <Property Name="Keywords" Type="nvarchar(max)" />
           <Property Name="Notes" Type="nvarchar(max)" />
           <Property Name="Revision" Type="nvarchar(max)" />
+          <Property Name="MaterialID" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="ProductProduct">
           <Key>
@@ -101,9 +101,7 @@
           <Property Name="Qty" Type="int" Nullable="false" />
         </EntityType>
         <Association Name="FK_dbo_File_dbo_OrderDetail_OrderDetailID">
-          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="1" />
           <End Role="File" Type="Self.File" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="OrderDetail">
@@ -115,9 +113,7 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_dbo_File_dbo_Product_ProductId">
-          <End Role="Product" Type="Self.Product" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="File" Type="Self.File" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
@@ -140,39 +136,39 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_OrderDetail_dbo_Order_Order_ID">
-          <End Role="Order" Type="Self.Order" Multiplicity="0..1" />
+        <Association Name="FK_dbo_OrderDetail_dbo_Order_OrderID">
+          <End Role="Order" Type="Self.Order" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Order">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="OrderDetail">
-              <PropertyRef Name="Order_ID" />
+              <PropertyRef Name="OrderID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_OrderDetail_dbo_Product_Product_ID">
-          <End Role="Product" Type="Self.Product" Multiplicity="0..1" />
+        <Association Name="FK_dbo_OrderDetail_dbo_Product_ProductID">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="OrderDetail">
-              <PropertyRef Name="Product_ID" />
+              <PropertyRef Name="ProductID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_Product_dbo_Material_Material_ID">
-          <End Role="Material" Type="Self.Material" Multiplicity="0..1" />
+        <Association Name="FK_dbo_Product_dbo_Material_MaterialID">
+          <End Role="Material" Type="Self.Material" Multiplicity="1" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Material">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="Product">
-              <PropertyRef Name="Material_ID" />
+              <PropertyRef Name="MaterialID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -189,9 +185,7 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_dbo_ProductProduct_dbo_Product_ParentProductID">
-          <End Role="Product" Type="Self.Product" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="ProductProduct" Type="Self.ProductProduct" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
@@ -223,15 +217,15 @@
             <End Role="Product" EntitySet="Product" />
             <End Role="Operation" EntitySet="Operation" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Order_Order_ID" Association="Self.FK_dbo_OrderDetail_dbo_Order_Order_ID">
+          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Order_OrderID" Association="Self.FK_dbo_OrderDetail_dbo_Order_OrderID">
             <End Role="Order" EntitySet="Order" />
             <End Role="OrderDetail" EntitySet="OrderDetail" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Product_Product_ID" Association="Self.FK_dbo_OrderDetail_dbo_Product_Product_ID">
+          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Product_ProductID" Association="Self.FK_dbo_OrderDetail_dbo_Product_ProductID">
             <End Role="Product" EntitySet="Product" />
             <End Role="OrderDetail" EntitySet="OrderDetail" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_Product_dbo_Material_Material_ID" Association="Self.FK_dbo_Product_dbo_Material_Material_ID">
+          <AssociationSet Name="FK_dbo_Product_dbo_Material_MaterialID" Association="Self.FK_dbo_Product_dbo_Material_MaterialID">
             <End Role="Material" EntitySet="Material" />
             <End Role="Product" EntitySet="Product" />
           </AssociationSet>
@@ -244,7 +238,8 @@
             <End Role="ProductProduct" EntitySet="ProductProduct" />
           </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="HorstMFGModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -280,7 +275,7 @@
           <Property Name="Name" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Thickness" Type="Single" Nullable="false" />
           <Property Name="StructuralCode" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Products" Relationship="Self.FK_dbo_Product_dbo_Material_Material_ID" FromRole="Material" ToRole="Product" />
+          <NavigationProperty Name="Products" Relationship="Self.FK_dbo_Product_dbo_Material_MaterialID" FromRole="Material" ToRole="Product" />
         </EntityType>
         <EntityType Name="Operation">
           <Key>
@@ -303,21 +298,21 @@
           <Property Name="DueDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="IsComplete" Type="Boolean" Nullable="false" />
           <Property Name="IsBatch" Type="Boolean" Nullable="false" />
-          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_dbo_OrderDetail_dbo_Order_Order_ID" FromRole="Order" ToRole="OrderDetail" />
+          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_dbo_OrderDetail_dbo_Order_OrderID" FromRole="Order" ToRole="OrderDetail" />
         </EntityType>
         <EntityType Name="OrderDetail">
           <Key>
             <PropertyRef Name="ID" />
           </Key>
           <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderID" Type="Int32" Nullable="false" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
           <Property Name="DueDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="IsComplete" Type="Boolean" Nullable="false" />
-          <Property Name="Product_ID" Type="Int32" />
-          <Property Name="Order_ID" Type="Int32" />
           <Property Name="Qty" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Files" Relationship="Self.FK_dbo_File_dbo_OrderDetail_OrderDetailID" FromRole="OrderDetail" ToRole="File" />
-          <NavigationProperty Name="Order" Relationship="Self.FK_dbo_OrderDetail_dbo_Order_Order_ID" FromRole="OrderDetail" ToRole="Order" />
-          <NavigationProperty Name="Product" Relationship="Self.FK_dbo_OrderDetail_dbo_Product_Product_ID" FromRole="OrderDetail" ToRole="Product" />
+          <NavigationProperty Name="Order" Relationship="Self.FK_dbo_OrderDetail_dbo_Order_OrderID" FromRole="OrderDetail" ToRole="Order" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_dbo_OrderDetail_dbo_Product_ProductID" FromRole="OrderDetail" ToRole="Product" />
         </EntityType>
         <EntityType Name="Product">
           <Key>
@@ -326,14 +321,13 @@
           <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="PartNumber" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="IsStock" Type="Boolean" Nullable="false" />
-          <Property Name="Material_ID" Type="Int32" />
           <Property Name="Title" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="ParentPartNumber" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CategoryName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Thickness" Type="Double" Nullable="false" />
           <Property Name="StructuralCode" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="PlantID" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="IsStock" Type="Boolean" Nullable="false" />
           <Property Name="RequiresPDF" Type="Boolean" Nullable="false" />
           <Property Name="Comment" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="ModifiedDate" Type="DateTime" Nullable="false" Precision="3" />
@@ -341,10 +335,11 @@
           <Property Name="Keywords" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Notes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Revision" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialID" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Files" Relationship="Self.FK_dbo_File_dbo_Product_ProductId" FromRole="Product" ToRole="File" />
-          <NavigationProperty Name="Material" Relationship="Self.FK_dbo_Product_dbo_Material_Material_ID" FromRole="Product" ToRole="Material" />
+          <NavigationProperty Name="Material" Relationship="Self.FK_dbo_Product_dbo_Material_MaterialID" FromRole="Product" ToRole="Material" />
           <NavigationProperty Name="Operations" Relationship="Self.FK_dbo_Operation_dbo_Product_Product_ID" FromRole="Product" ToRole="Operation" />
-          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_dbo_OrderDetail_dbo_Product_Product_ID" FromRole="Product" ToRole="OrderDetail" />
+          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_dbo_OrderDetail_dbo_Product_ProductID" FromRole="Product" ToRole="OrderDetail" />
           <NavigationProperty Name="ProductProducts" Relationship="Self.FK_dbo_ProductProduct_dbo_Product_ChildProductID" FromRole="Product" ToRole="ProductProduct" />
           <NavigationProperty Name="ProductProducts1" Relationship="Self.FK_dbo_ProductProduct_dbo_Product_ParentProductID" FromRole="Product" ToRole="ProductProduct" />
         </EntityType>
@@ -360,9 +355,7 @@
           <NavigationProperty Name="Product1" Relationship="Self.FK_dbo_ProductProduct_dbo_Product_ParentProductID" FromRole="ProductProduct" ToRole="Product" />
         </EntityType>
         <Association Name="FK_dbo_File_dbo_OrderDetail_OrderDetailID">
-          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="1" />
           <End Role="File" Type="Self.File" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="OrderDetail">
@@ -374,9 +367,7 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_dbo_File_dbo_Product_ProductId">
-          <End Role="Product" Type="Self.Product" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="File" Type="Self.File" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
@@ -387,15 +378,15 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_Product_dbo_Material_Material_ID">
-          <End Role="Material" Type="Self.Material" Multiplicity="0..1" />
+        <Association Name="FK_dbo_Product_dbo_Material_MaterialID">
+          <End Role="Material" Type="Self.Material" Multiplicity="1" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Material">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="Product">
-              <PropertyRef Name="Material_ID" />
+              <PropertyRef Name="MaterialID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -411,27 +402,27 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_OrderDetail_dbo_Order_Order_ID">
-          <End Role="Order" Type="Self.Order" Multiplicity="0..1" />
+        <Association Name="FK_dbo_OrderDetail_dbo_Order_OrderID">
+          <End Role="Order" Type="Self.Order" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Order">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="OrderDetail">
-              <PropertyRef Name="Order_ID" />
+              <PropertyRef Name="OrderID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_OrderDetail_dbo_Product_Product_ID">
-          <End Role="Product" Type="Self.Product" Multiplicity="0..1" />
+        <Association Name="FK_dbo_OrderDetail_dbo_Product_ProductID">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ID" />
             </Principal>
             <Dependent Role="OrderDetail">
-              <PropertyRef Name="Product_ID" />
+              <PropertyRef Name="ProductID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -448,9 +439,7 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_dbo_ProductProduct_dbo_Product_ParentProductID">
-          <End Role="Product" Type="Self.Product" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="ProductProduct" Type="Self.ProductProduct" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
@@ -478,7 +467,7 @@
             <End Role="Product" EntitySet="Products" />
             <End Role="File" EntitySet="Files" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_Product_dbo_Material_Material_ID" Association="Self.FK_dbo_Product_dbo_Material_Material_ID">
+          <AssociationSet Name="FK_dbo_Product_dbo_Material_MaterialID" Association="Self.FK_dbo_Product_dbo_Material_MaterialID">
             <End Role="Material" EntitySet="Materials" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
@@ -486,11 +475,11 @@
             <End Role="Product" EntitySet="Products" />
             <End Role="Operation" EntitySet="Operations" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Order_Order_ID" Association="Self.FK_dbo_OrderDetail_dbo_Order_Order_ID">
+          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Order_OrderID" Association="Self.FK_dbo_OrderDetail_dbo_Order_OrderID">
             <End Role="Order" EntitySet="Orders" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Product_Product_ID" Association="Self.FK_dbo_OrderDetail_dbo_Product_Product_ID">
+          <AssociationSet Name="FK_dbo_OrderDetail_dbo_Product_ProductID" Association="Self.FK_dbo_OrderDetail_dbo_Product_ProductID">
             <End Role="Product" EntitySet="Products" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
           </AssociationSet>
@@ -569,10 +558,10 @@
             <EntityTypeMapping TypeName="HorstMFGModel.OrderDetail">
               <MappingFragment StoreEntitySet="OrderDetail">
                 <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="DueDate" ColumnName="DueDate" />
                 <ScalarProperty Name="IsComplete" ColumnName="IsComplete" />
-                <ScalarProperty Name="Product_ID" ColumnName="Product_ID" />
-                <ScalarProperty Name="Order_ID" ColumnName="Order_ID" />
                 <ScalarProperty Name="Qty" ColumnName="Qty" />
               </MappingFragment>
             </EntityTypeMapping>
@@ -583,14 +572,13 @@
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="PartNumber" ColumnName="PartNumber" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
-                <ScalarProperty Name="IsStock" ColumnName="IsStock" />
-                <ScalarProperty Name="Material_ID" ColumnName="Material_ID" />
                 <ScalarProperty Name="Title" ColumnName="Title" />
                 <ScalarProperty Name="ParentPartNumber" ColumnName="ParentPartNumber" />
                 <ScalarProperty Name="CategoryName" ColumnName="CategoryName" />
                 <ScalarProperty Name="Thickness" ColumnName="Thickness" />
                 <ScalarProperty Name="StructuralCode" ColumnName="StructuralCode" />
                 <ScalarProperty Name="PlantID" ColumnName="PlantID" />
+                <ScalarProperty Name="IsStock" ColumnName="IsStock" />
                 <ScalarProperty Name="RequiresPDF" ColumnName="RequiresPDF" />
                 <ScalarProperty Name="Comment" ColumnName="Comment" />
                 <ScalarProperty Name="ModifiedDate" ColumnName="ModifiedDate" />
@@ -598,6 +586,7 @@
                 <ScalarProperty Name="Keywords" ColumnName="Keywords" />
                 <ScalarProperty Name="Notes" ColumnName="Notes" />
                 <ScalarProperty Name="Revision" ColumnName="Revision" />
+                <ScalarProperty Name="MaterialID" ColumnName="MaterialID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

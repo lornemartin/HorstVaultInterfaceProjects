@@ -1855,7 +1855,7 @@ namespace ItemExport
 
 
 
-            using (var db = new HorstMFGEntities())
+            using (var db = new HorstMFGEntities(HorstMFGEntities.GetEntityConnectionString(@"data source=(localdb)\MSSQLLocalDB;attachdbfilename=C:\Users\lorne\source\repos\HorstMFG2\HorstMFG\App_Data\HorstMFG2.mdf;integrated security=True;MultipleActiveResultSets=True;App=EntityFramework")))
             {
                 foreach (string l in lineList3)
                 {
@@ -1872,6 +1872,11 @@ namespace ItemExport
 
                     Operation op1 = new Operation();
                     op1.Name = l.Split('\t')[7];
+
+                    int qty = 0;
+                    string qtyString = l.Split('\t')[8];
+                    if (qtyString != "")
+                        qty = int.Parse(qtyString);
 
                     // calculate IsStock
                     bool isStock = false;
@@ -1919,11 +1924,11 @@ namespace ItemExport
                         Product prnt = productList.Find(p => p.PartNumber == prod.ParentPartNumber);
 
                         // add sub to parent here....
-                        //prnt.AddChildProduct(prod, )
-                        
+                        prnt.AddChildProduct(db,prod,qty);
                     }
-
                 }
+
+                db.SaveChanges();
 
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);
                 DialogResult exportResult = exportDialog.ShowDialog();

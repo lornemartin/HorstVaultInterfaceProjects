@@ -169,8 +169,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppSettings.cs" />
+    <Compile Include="ContextExtended.cs" />
     <Compile Include="C__MigrationHistory.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="ExportToHorstMFG.cs">
       <SubType>Form</SubType>
@@ -179,22 +180,7 @@
       <DependentUpon>ExportToHorstMFG.cs</DependentUpon>
     </Compile>
     <Compile Include="File.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
-    </Compile>
-    <Compile Include="HorstMFG.Context.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>HorstMFG.Context.tt</DependentUpon>
-    </Compile>
-    <Compile Include="HorstMFG.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>HorstMFG.tt</DependentUpon>
-    </Compile>
-    <Compile Include="HorstMFG.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>HorstMFG.edmx</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="HorstMFGExport.cs">
       <SubType>Form</SubType>
@@ -204,7 +190,22 @@
     </Compile>
     <Compile Include="ItemExportCommandExtension.cs" />
     <Compile Include="Material.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Model1.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model1.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Model1.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Model1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model1.edmx</DependentUpon>
     </Compile>
     <Compile Include="MyCustomTabControl.cs">
       <SubType>UserControl</SubType>
@@ -213,19 +214,20 @@
       <DependentUpon>MyCustomTabControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Operation.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="Order.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="OrderDetail.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="Product.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
+    <Compile Include="ProductExtended.cs" />
     <Compile Include="ProductProduct.cs">
-      <DependentUpon>HorstMFG.tt</DependentUpon>
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -248,19 +250,21 @@
     <EmbeddedResource Include="Properties\licenses.licx" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <EmbeddedResource Include="HorstMFG.edmx">
-      <Generator>EntityModelCodeGenerator</Generator>
-      <LastGenOutput>HorstMFG.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <None Include="HorstMFG.edmx.diagram">
-      <DependentUpon>HorstMFG.edmx</DependentUpon>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
     </None>
     <None Include="ItemExport.vcet.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </None>
     <None Include="Key.snk" />
+    <EntityDeploy Include="Model1.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>Model1.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <None Include="Model1.edmx.diagram">
+      <DependentUpon>Model1.edmx</DependentUpon>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -286,16 +290,16 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppSettings\AppSettings.xml" />
-    <Content Include="HorstMFG.Context.tt">
+    <Content Include="Model1.Context.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>HorstMFG.Context.cs</LastGenOutput>
-      <DependentUpon>HorstMFG.edmx</DependentUpon>
+      <DependentUpon>Model1.edmx</DependentUpon>
+      <LastGenOutput>Model1.Context.cs</LastGenOutput>
     </Content>
-    <None Include="HorstMFG.tt">
+    <Content Include="Model1.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <DependentUpon>HorstMFG.edmx</DependentUpon>
-      <LastGenOutput>HorstMFG.cs</LastGenOutput>
-    </None>
+      <DependentUpon>Model1.edmx</DependentUpon>
+      <LastGenOutput>Model1.cs</LastGenOutput>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
