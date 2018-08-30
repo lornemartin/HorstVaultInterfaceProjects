@@ -13,6 +13,9 @@ namespace ItemExport
 {
     public partial class HorstMFGExport : Form
     {
+        public string orderNumber = "";
+        public int quantity = 0;
+
         public HorstMFGExport()
         {
             InitializeComponent();
@@ -50,6 +53,29 @@ namespace ItemExport
             gridControl1.DataSource = productList;
             gridView1.EndDataUpdate();
 
+
+        }
+
+        private void HorstMFGExport_Load(object sender, EventArgs e)
+        {
+            btnExport.Enabled = false;
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            if (this.txtBoxOrderNumber.Text == "") btnExport.Enabled = false;
+            else
+            {
+                orderNumber = txtBoxOrderNumber.Text;
+                btnExport.Enabled = true;
+            }
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.OK;
+            if (txtBoxQty.Text != "")
+                quantity = int.Parse(txtBoxQty.Text);
 
         }
     }

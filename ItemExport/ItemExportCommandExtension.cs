@@ -1857,6 +1857,8 @@ namespace ItemExport
 
             using (var db = new HorstMFGEntities(HorstMFGEntities.GetEntityConnectionString(@"data source=(localdb)\MSSQLLocalDB;attachdbfilename=C:\Users\lorne\source\repos\HorstMFG2\HorstMFG\App_Data\HorstMFG2.mdf;integrated security=True;MultipleActiveResultSets=True;App=EntityFramework")))
             {
+                Product topLevelProd = new Product();
+
                 foreach (string l in lineList3)
                 {
                     // calculate thickness
@@ -1918,8 +1920,13 @@ namespace ItemExport
                     prod.Revision = l.Split('\t')[19];
 
                     productList.Add(prod);
+                    db.Products.Add(prod);
 
-                    if(prod.ParentPartNumber != "<top>")
+                    if(prod.ParentPartNumber == "<top>")
+                    {
+                        topLevelProd = prod;
+                    }
+                    else
                     {
                         Product prnt = productList.Find(p => p.PartNumber == prod.ParentPartNumber);
 
@@ -1928,12 +1935,37 @@ namespace ItemExport
                     }
                 }
 
-                db.SaveChanges();
-
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);
                 DialogResult exportResult = exportDialog.ShowDialog();
 
-                MessageBox.Show("Completed Writing To Database");
+                if (exportResult == DialogResult.OK)
+                {
+                    Order o = (db.Orders.Where(or => or.OrderNumber == exportDialog.orderNumber).FirstOrDefault());
+                    if(o==null)
+                    {
+                        o = new Order();
+                        o.CustomerName = "Cust1";
+                        o.DueDate = DateTime.Now;
+                        o.OrderDate = DateTime.Now;
+                        o.IsBatch = false;
+                        o.IsComplete = false;
+                        o.OrderNumber = exportDialog.orderNumber;
+
+                        db.Orders.Add(o);
+                    }
+
+                    OrderDetail od = new OrderDetail();
+                    od.DueDate = o.DueDate;
+                    od.IsComplete = false;
+                    od.Order = o;
+                    od.Product = topLevelProd;
+                    od.Qty = exportDialog.quantity;
+                    db.OrderDetails.Add(od);
+                    
+
+                    db.SaveChanges();
+                    MessageBox.Show("Completed Writing To Database");
+                }
 
             }
         }
