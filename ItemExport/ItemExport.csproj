@@ -306,10 +306,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>copy "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\x64\Debug\ItemExport.*" "C:\ProgramData\Autodesk\Vault 2018\Extensions\ItemExport\"</PostBuildEvent>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.VaultPro.exe</StartProgram>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
