@@ -317,6 +317,72 @@ namespace VaultAccess
             return true;
         }
 
+        public bool downloadFile(string fileName, string downloadFolder)
+        {
+            try
+            {
+                //try
+                //{
+                //    if (Directory.Exists(folderPath))
+                //    {
+                //        DirectoryInfo dir = new DirectoryInfo(folderPath);
+                //        foreach (FileInfo f in dir.GetFiles())
+                //        {
+                //            System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                //            f.Delete();
+                //        }
+                //    }
+                //}
+                //catch (Exception)
+                //{
+                //    // cannot delete files, there is likely another Inventor View window open, but we won't worry about it, they'll get deleted next time
+                //}
+
+                // initialize the settings
+
+                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+                Autodesk.Connectivity.WebServices.SrchCond searchCondition = new SrchCond();
+
+                searchCondition.PropTyp = PropertySearchType.SingleProperty;
+                searchCondition.SrchOper = 3;
+                searchCondition.SrchTxt = fileNameWithoutExtension;
+
+
+                string bookmark = "";
+                SrchStatus st = new SrchStatus();
+
+                Autodesk.Connectivity.WebServices.File[] files = m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(new SrchCond[] { searchCondition }, null, null,true,true, ref bookmark, out st);
+                Vault.Settings.AcquireFilesSettings settings = new Vault.Settings.AcquireFilesSettings(m_conn);
+
+                Vault.Currency.Entities.IEntity file = (Vault.Currency.Entities.IEntity) files[0];
+
+                settings.AddEntityToAcquire(file);
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeLibraryContents = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeAttachments = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeHiddenEntities = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeParents = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.RecurseChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.VersionGatheringOption =
+                    Vault.Currency.VersionGatheringOption.Latest;
+
+                // this forces all the files to go into one folder, it doesn't replicate the vault's folder structure..
+                // this is needed so that Inventor view knows where to find the file
+                settings.OrganizeFilesRelativeToCommonVaultRoot = false;
+
+                // this does the actual work.
+                settings.LocalPath = new Autodesk.DataManagement.Client.Framework.Currency.FolderPathAbsolute(downloadFolder);
+                m_conn.FileManager.AcquireFiles(settings);
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool downloadFileOrig(Vault.Currency.Entities.FileIteration file, string folderPath)
         {
             try
