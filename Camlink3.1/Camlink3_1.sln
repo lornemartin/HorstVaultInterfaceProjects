@@ -1,15 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Camlink3_1", "Camlink3_1.csproj", "{CA70B9D5-6F53-4E22-B145-ACB01EE23CC1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{33AAB76E-FFAB-4B0C-B6A4-F66D4726195A} = {33AAB76E-FFAB-4B0C-B6A4-F66D4726195A}
+		{2EE4097D-E0FE-4A4B-B913-DD38FEE62FCE} = {2EE4097D-E0FE-4A4B-B913-DD38FEE62FCE}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectListView2012", "..\..\ObjectListView\ObjectListView2012.csproj", "{18FEDA0C-D147-4286-B39A-01204808106A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanInterface2", "..\..\RadanInterface2\RadanInterface2.csproj", "{33AAB76E-FFAB-4B0C-B6A4-F66D4726195A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanInterface2", "..\..\Radan\RadanInterface2\RadanInterface2.csproj", "{33AAB76E-FFAB-4B0C-B6A4-F66D4726195A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanProject", "..\..\RadanProject\RadanProject.csproj", "{2EE4097D-E0FE-4A4B-B913-DD38FEE62FCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanProject", "..\..\Radan\RadanProject\RadanProject.csproj", "{2EE4097D-E0FE-4A4B-B913-DD38FEE62FCE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +40,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {278F6A48-C369-4DDE-8E17-0340510B1DEA}
 	EndGlobalSection
 EndGlobal

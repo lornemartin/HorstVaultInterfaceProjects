@@ -195,6 +195,22 @@ namespace VaultItemProcessor
             }
         }
 
+        public bool Load()
+        {
+            try
+            {
+                XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
+                TextReader tr = new StreamReader(XmlFileName, false);
+                xs.Deserialize(tr);
+                tr.Close();
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
+        }
+
         public void FinalizeData()
         {
             Finalized = true;
