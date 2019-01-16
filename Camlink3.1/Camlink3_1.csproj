@@ -145,11 +145,11 @@
       <Project>{18feda0c-d147-4286-b39a-01204808106a}</Project>
       <Name>ObjectListView2012</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\RadanInterface2\RadanInterface2.csproj">
+    <ProjectReference Include="..\..\Radan\RadanInterface2\RadanInterface2.csproj">
       <Project>{33aab76e-ffab-4b0c-b6a4-f66d4726195a}</Project>
       <Name>RadanInterface2</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\RadanProject\RadanProject.csproj">
+    <ProjectReference Include="..\..\Radan\RadanProject\RadanProject.csproj">
       <Project>{2ee4097d-e0fe-4a4b-b913-dd38fee62fce}</Project>
       <Name>RadanProject</Name>
     </ProjectReference>

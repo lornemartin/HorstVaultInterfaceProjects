@@ -30,6 +30,14 @@ namespace VaultAccess
         #endregion
 
         #region Constructors and Initialization Methods
+
+        public VaultAccess()
+        {
+            m_conn = null;
+            m_lastAccessedFolder = null;
+            m_downloadedFiles = new List<string>();
+            m_PDFPath = "";
+        }
         public VaultAccess(string pdfPath, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder)
         {
             m_conn = null;
