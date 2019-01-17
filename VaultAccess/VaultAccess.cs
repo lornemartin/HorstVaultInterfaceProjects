@@ -317,7 +317,7 @@ namespace VaultAccess
             return true;
         }
 
-        public bool downloadFile(string fileName, string downloadFolder)
+        public bool searrchAndDownloadFile(string fileName, string downloadFolder)
         {
             try
             {
