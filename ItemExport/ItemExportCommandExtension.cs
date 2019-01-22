@@ -1853,10 +1853,10 @@ namespace ItemExport
 
             List<Product> productList = new List<Product>();
 
-
-
-            using (var db = new HorstMFGEntities())
+            using (var db = new HorstMFGEntities(HorstMFGEntities.GetEntityConnectionString(@"data source=(localdb)\MSSQLLocalDB;attachdbfilename=C:\Users\lorne\source\repos\HorstMFG2\HorstMFG\App_Data\HorstMFG2.mdf;integrated security=True;MultipleActiveResultSets=True;App=EntityFramework")))
             {
+                Product topLevelProd = new Product();
+
                 foreach (string l in lineList3)
                 {
                     // calculate thickness
@@ -1872,6 +1872,11 @@ namespace ItemExport
 
                     Operation op1 = new Operation();
                     op1.Name = l.Split('\t')[7];
+
+                    int qty = 0;
+                    string qtyString = l.Split('\t')[8];
+                    if (qtyString != "")
+                        qty = int.Parse(qtyString);
 
                     // calculate IsStock
                     bool isStock = false;
@@ -1889,6 +1894,8 @@ namespace ItemExport
                     DateTime dt = new DateTime();
                     string dtString = l.Split('\t')[14];
                     dt = DateTime.Parse(dtString);
+
+
 
 
                     Product prod = new Product();
@@ -1914,21 +1921,145 @@ namespace ItemExport
 
                     productList.Add(prod);
 
-                    if(prod.ParentPartNumber != "<top>")
+                    // check for existing product and update if exists
+                    Product searchProd = db.Products.Where(p => p.PartNumber == prod.PartNumber).FirstOrDefault();
+                    if (searchProd != null)
                     {
-                        Product prnt = productList.Find(p => p.PartNumber == prod.ParentPartNumber);
+                        searchProd.CategoryName = prod.CategoryName;
+                        searchProd.Comment = prod.Comment;
+                        searchProd.Description = prod.Description;
+                        searchProd.Files = prod.Files;
+                        searchProd.IsStock = prod.IsStock;
+                        searchProd.Keywords = prod.Keywords;
+                        searchProd.Material = prod.Material;
+                        searchProd.MaterialID = prod.MaterialID;
+                        searchProd.ModifiedDate = DateTime.Now;
+                        searchProd.Notes = prod.Notes;
+                        searchProd.Operations = prod.Operations;
+                        searchProd.OrderDetails = prod.OrderDetails;
+                        searchProd.ParentPartNumber = prod.ParentPartNumber;
+                        searchProd.PartNumber = prod.PartNumber;
+                        searchProd.PlantID = prod.PlantID;
+                        searchProd.ProductProducts = prod.ProductProducts;
+                        searchProd.ProductProducts1 = prod.ProductProducts1;
+                        searchProd.RequiresPDF = prod.RequiresPDF;
+                        searchProd.Revision = prod.Revision;
+                        searchProd.State = prod.State;
+                        searchProd.StructuralCode = prod.StructuralCode;
+                        searchProd.Thickness = prod.Thickness;
+                        searchProd.Title = prod.Title;
 
-                        // add sub to parent here....
-                        //prnt.AddChildProduct(prod, )
-                        
+                        db.Entry(searchProd).State = System.Data.Entity.EntityState.Modified;
+
+                        if (searchProd.ParentPartNumber == "<top>")
+                        {
+                            topLevelProd = searchProd;
+                        }
+                        else
+                        {
+                            Product prnt = productList.Find(p => p.PartNumber == searchProd.ParentPartNumber);
+
+                            // add sub to parent here....
+                            prnt.AddChildProduct(db, searchProd, qty);
+                            // was getting errors with this, but likely still need it.
+                        }
+                        prod = searchProd;  // copy searchProd into prod so we can use it to initialize file object later
+                    }
+                    else
+                    {
+                        db.Products.Add(prod);
+
+                        if (prod.ParentPartNumber == "<top>")
+                        {
+                            topLevelProd = prod;
+                        }
+                        else
+                        {
+                            Product prnt = productList.Find(p => p.PartNumber == prod.ParentPartNumber);
+
+                            // add sub to parent here....
+                            prnt.AddChildProduct(db, prod, qty);
+                        }
                     }
 
+                    // save pdf into database
+                    string fileName = @"M:\PDF Drawing Files\" + (l.Split('\t')[1]) + ".pdf";
+                    //-------------------------create the record in the file table
+
+                    List<File> searchFileList = db.Files.Where(f => f.FileName == fileName).ToList();
+                    bool matchingFileFound = false;
+
+                    if (searchFileList != null)
+                    {
+                        foreach (File searchFile in searchFileList)
+                        {
+                            if (searchFile.Product.ModifiedDate == prod.ModifiedDate)
+                            {
+                                matchingFileFound = true;
+                                break;
+                            }
+                        }
+
+                    }
+
+                    if (!matchingFileFound)      // create a new file, if none found
+                    {
+                        if (System.IO.File.Exists(fileName))
+                        {
+                            FileStream fStream = System.IO.File.OpenRead(fileName);
+
+                            byte[] contents = new byte[fStream.Length];
+
+                            fStream.Read(contents, 0, (int)fStream.Length);
+
+                            fStream.Close();
+
+                            File f = new File();
+                            f.Content = contents;
+                            f.ContentType = "application/pdf";
+                            f.FileName = fileName;
+                            f.FileType = 1;
+                            //f.OrderDetail =
+                            f.Product = prod;
+                            //prod.Files.Add(f);
+                            db.Files.Add(f);
+                        }
+                    }
                 }
 
                 HorstMFGExport exportDialog = new HorstMFGExport(productList);
                 DialogResult exportResult = exportDialog.ShowDialog();
 
-                MessageBox.Show("Completed Writing To Database");
+                if (exportResult == DialogResult.OK)
+                {
+                    Order o = (db.Orders.Where(or => or.OrderNumber == exportDialog.orderNumber).FirstOrDefault());
+                    if(o==null)
+                    {
+                        o = new Order();
+                        o.CustomerName = "Cust1";
+                        o.DueDate = DateTime.Now;
+                        o.OrderDate = DateTime.Now;
+                        o.IsBatch = false;
+                        o.IsComplete = false;
+                        o.OrderNumber = exportDialog.orderNumber;
+                        //o.OrderDetails = new List<OrderDetail>();
+                        db.Orders.Add(o);
+
+                    }
+
+                    OrderDetail od = new OrderDetail();
+                    od.DueDate = o.DueDate;
+                    od.IsComplete = false;
+                    od.Order = o;
+                    od.Product = topLevelProd;
+                    od.Qty = exportDialog.quantity;
+                    db.OrderDetails.Add(od);
+
+                    
+
+                    db.SaveChanges();
+                    MessageBox.Show("Completed Writing To Database");
+                }
 
             }
         }

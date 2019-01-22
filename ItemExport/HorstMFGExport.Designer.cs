@@ -42,14 +42,16 @@
             this.colPlantID = new DevExpress.XtraGrid.Columns.GridColumn();
             this.colRequiresPDF = new DevExpress.XtraGrid.Columns.GridColumn();
             this.colOperations = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.btnExport = new System.Windows.Forms.Button();
+            this.btnCancel = new System.Windows.Forms.Button();
+            this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
+            this.txtBoxQty = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.productsBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).BeginInit();
             this.SuspendLayout();
-            // 
-            // productsBindingSource
-            // 
-            this.productsBindingSource.DataSource = typeof(ItemExport.Product);
             // 
             // gridControl1
             // 
@@ -160,18 +162,81 @@
             this.colOperations.VisibleIndex = 8;
             this.colOperations.Width = 189;
             // 
+            // btnExport
+            // 
+            this.btnExport.Location = new System.Drawing.Point(1164, 574);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(75, 23);
+            this.btnExport.TabIndex = 1;
+            this.btnExport.Text = "Export";
+            this.btnExport.UseVisualStyleBackColor = true;
+            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
+            // 
+            // btnCancel
+            // 
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnCancel.Location = new System.Drawing.Point(1067, 574);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.TabIndex = 1;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = true;
+            // 
+            // txtBoxOrderNumber
+            // 
+            this.txtBoxOrderNumber.Location = new System.Drawing.Point(404, 574);
+            this.txtBoxOrderNumber.Name = "txtBoxOrderNumber";
+            this.txtBoxOrderNumber.Size = new System.Drawing.Size(183, 20);
+            this.txtBoxOrderNumber.TabIndex = 2;
+            this.txtBoxOrderNumber.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
+            // txtBoxQty
+            // 
+            this.txtBoxQty.Location = new System.Drawing.Point(663, 574);
+            this.txtBoxQty.Name = "txtBoxQty";
+            this.txtBoxQty.Size = new System.Drawing.Size(100, 20);
+            this.txtBoxQty.TabIndex = 3;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(325, 577);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(73, 13);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "Order Number";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(611, 577);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(46, 13);
+            this.label2.TabIndex = 4;
+            this.label2.Text = "Quantity";
+            // 
             // HorstMFGExport
             // 
+            this.AcceptButton = this.btnExport;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1284, 562);
+            this.CancelButton = this.btnCancel;
+            this.ClientSize = new System.Drawing.Size(1284, 649);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtBoxQty);
+            this.Controls.Add(this.txtBoxOrderNumber);
+            this.Controls.Add(this.btnCancel);
+            this.Controls.Add(this.btnExport);
             this.Controls.Add(this.gridControl1);
             this.Name = "HorstMFGExport";
             this.Text = "HorstMFGExport";
+            this.Load += new System.EventHandler(this.HorstMFGExport_Load);
             ((System.ComponentModel.ISupportInitialize)(this.productsBindingSource)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -189,5 +254,11 @@
         private DevExpress.XtraGrid.Columns.GridColumn colPlantID;
         private DevExpress.XtraGrid.Columns.GridColumn colRequiresPDF;
         private DevExpress.XtraGrid.Columns.GridColumn colOperations;
+        private System.Windows.Forms.Button btnExport;
+        private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.TextBox txtBoxOrderNumber;
+        private System.Windows.Forms.TextBox txtBoxQty;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
     }
 }

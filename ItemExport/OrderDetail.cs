@@ -21,10 +21,10 @@ namespace ItemExport
         }
     
         public int ID { get; set; }
+        public int OrderID { get; set; }
+        public int ProductID { get; set; }
         public System.DateTime DueDate { get; set; }
         public bool IsComplete { get; set; }
-        public Nullable<int> Product_ID { get; set; }
-        public Nullable<int> Order_ID { get; set; }
         public int Qty { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

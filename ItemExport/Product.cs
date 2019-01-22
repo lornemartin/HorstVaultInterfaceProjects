@@ -27,14 +27,13 @@ namespace ItemExport
         public int ID { get; set; }
         public string PartNumber { get; set; }
         public string Description { get; set; }
-        public bool IsStock { get; set; }
-        public Nullable<int> Material_ID { get; set; }
         public string Title { get; set; }
         public string ParentPartNumber { get; set; }
         public string CategoryName { get; set; }
         public double Thickness { get; set; }
         public string StructuralCode { get; set; }
         public string PlantID { get; set; }
+        public bool IsStock { get; set; }
         public bool RequiresPDF { get; set; }
         public string Comment { get; set; }
         public System.DateTime ModifiedDate { get; set; }
@@ -42,6 +41,7 @@ namespace ItemExport
         public string Keywords { get; set; }
         public string Notes { get; set; }
         public string Revision { get; set; }
+        public int MaterialID { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<File> Files { get; set; }
