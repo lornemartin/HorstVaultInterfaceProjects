@@ -498,6 +498,11 @@ namespace PrintPDF
                                     log.Info("PDF Generated for " + pdfFileName);
                                 }
                             }
+                            else
+                            {
+                                actualSheetIndex++;   // still need to increment sheet index, if sheet is set not to print
+                                                      
+                            }
                         }
                     }
                     catch (Exception ex)
