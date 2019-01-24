@@ -368,10 +368,12 @@ namespace VaultView
                     string Path2 = @"C:\Program Files\Autodesk\Inventor2019\Bin\InventorView.exe";
                     if (System.IO.File.Exists(Path1))
                     {
+                        IvFullPath = Path1;
                         AppSettings.Set("Iv_FullPath", Path1);
                     }
                     else if (System.IO.File.Exists(Path2))
                     {
+                        IvFullPath = Path2;
                         AppSettings.Set("Iv_FullPath", Path2);
                     }
                     else
