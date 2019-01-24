@@ -367,9 +367,24 @@ namespace VaultView
                     selectDirectViewerApp();
                 }
             }
+
             else
             {
-                selectDirectViewerApp();
+                // first search the default locations for the InventorView executables
+                string Path1 = @"C:\\Program Files\\Autodesk\\Inventor View 2019\\Bin\InventorView.exe";
+                string Path2 = @"C:\\Program Files\\Autodesk\\Inventor2019\Bin\\InventorView.exe";
+                if (System.IO.File.Exists(Path1))
+                {
+                    AppSettings.Set("Iv_FullPath", Path1);
+                }
+                else if (System.IO.File.Exists(Path2))
+                {
+                    AppSettings.Set("Iv_FullPath", Path2);
+                }
+                else
+                {
+                    selectDirectViewerApp();
+                }
             }
 
             string filePath = Path.Combine(System.IO.Path.GetTempPath() + "\\DirectView\\", file.EntityName);

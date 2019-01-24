@@ -2204,7 +2204,7 @@
                         {
                             "{9EF0B969-E518-4E46-987F-47570745A589}:_E3D2560A1B794B3AAD5DD02047197413"
                             {
-                            "Name" = "8:Vault 2018"
+                            "Name" = "8:Vault 2019"
                             "AlwaysCreate" = "11:FALSE"
                             "Condition" = "8:"
                             "Transitive" = "11:FALSE"
@@ -2289,7 +2289,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DirectView 2019"
         "ProductCode" = "8:{E309BEF0-900A-4C3C-87AF-82A1A5FCBC8F}"
-        "PackageCode" = "8:{E35BE6AE-DBE7-4702-A895-5AD646D445EF}"
+        "PackageCode" = "8:{A69C4A93-4A46-424C-95A8-532D8201B146}"
         "UpgradeCode" = "8:{D7735C8C-75A5-4B39-9131-CA3BD8150516}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
