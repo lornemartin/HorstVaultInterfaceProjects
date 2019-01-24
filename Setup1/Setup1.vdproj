@@ -208,6 +208,12 @@
         "Entry"
         {
         "MsmKey" = "8:_4686EFBB847EEB4F6B4170F1031C8D53"
+        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_4686EFBB847EEB4F6B4170F1031C8D53"
         "OwnerKey" = "8:_622956EDB0634FD796498BE787D5DCA2"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -215,12 +221,6 @@
         {
         "MsmKey" = "8:_4686EFBB847EEB4F6B4170F1031C8D53"
         "OwnerKey" = "8:_D14A654881149C7F36E807E51949FD93"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_4686EFBB847EEB4F6B4170F1031C8D53"
-        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -274,12 +274,6 @@
         "Entry"
         {
         "MsmKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
-        "OwnerKey" = "8:_C0DC8B46CFA5A69618C7E37C43560591"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "OwnerKey" = "8:_622956EDB0634FD796498BE787D5DCA2"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -287,6 +281,18 @@
         {
         "MsmKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "OwnerKey" = "8:_D14A654881149C7F36E807E51949FD93"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
+        "OwnerKey" = "8:_C0DC8B46CFA5A69618C7E37C43560591"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_602E47E164684460A871123795729940"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -328,6 +334,12 @@
         "Entry"
         {
         "MsmKey" = "8:_7D67ED0BE2E73ED7C311DBDB4950D051"
+        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7D67ED0BE2E73ED7C311DBDB4950D051"
         "OwnerKey" = "8:_622956EDB0634FD796498BE787D5DCA2"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -335,12 +347,6 @@
         {
         "MsmKey" = "8:_7D67ED0BE2E73ED7C311DBDB4950D051"
         "OwnerKey" = "8:_D14A654881149C7F36E807E51949FD93"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_7D67ED0BE2E73ED7C311DBDB4950D051"
-        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -388,6 +394,12 @@
         "Entry"
         {
         "MsmKey" = "8:_847A728D5E69D8D8F6AA3C57411C9266"
+        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_847A728D5E69D8D8F6AA3C57411C9266"
         "OwnerKey" = "8:_622956EDB0634FD796498BE787D5DCA2"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -395,12 +407,6 @@
         {
         "MsmKey" = "8:_847A728D5E69D8D8F6AA3C57411C9266"
         "OwnerKey" = "8:_D14A654881149C7F36E807E51949FD93"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_847A728D5E69D8D8F6AA3C57411C9266"
-        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -838,6 +844,12 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_AEEE66FEF48B4E07A1EE508B62C42D78"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -869,12 +881,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_C0DC8B46CFA5A69618C7E37C43560591"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5025A4CAAE67677C0E9D3F12810D53DD"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1532,6 +1538,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_602E47E164684460A871123795729940"
+            {
+            "SourcePath" = "8:..\\DirectView2016\\bin\\Debug\\AppSettings.xml"
+            "TargetName" = "8:AppSettings.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_251EA1D475CE4ACA958DF443BBD895B9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_74B48B6C777A340BE6263D17A0A3C8C2"
@@ -2239,6 +2265,17 @@
                     }
                 }
             }
+            "{1525181F-901A-416C-8A58-119130FE478E}:_62A9DF9185A24202AEB50CF86D611DCA"
+            {
+            "Name" = "8:#1918"
+            "AlwaysCreate" = "11:FALSE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Property" = "8:PersonalFolder"
+                "Folders"
+                {
+                }
+            }
             "{1525181F-901A-416C-8A58-119130FE478E}:_7C1ED80CD2C7457F999A73F6C0BD5080"
             {
             "Name" = "8:#1935"
@@ -2272,6 +2309,28 @@
                 {
                 }
             }
+            "{1525181F-901A-416C-8A58-119130FE478E}:_E24116F2088044469735A17FB6957273"
+            {
+            "Name" = "8:#1915"
+            "AlwaysCreate" = "11:FALSE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Property" = "8:AppDataFolder"
+                "Folders"
+                {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_251EA1D475CE4ACA958DF443BBD895B9"
+                    {
+                    "Name" = "8:DirectView"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_E8947AAD67D24B04BDFDA3B259D9E3E9"
+                        "Folders"
+                        {
+                        }
+                    }
+                }
+            }
         }
         "LaunchCondition"
         {
@@ -2289,7 +2348,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DirectView 2019"
         "ProductCode" = "8:{E309BEF0-900A-4C3C-87AF-82A1A5FCBC8F}"
-        "PackageCode" = "8:{A69C4A93-4A46-424C-95A8-532D8201B146}"
+        "PackageCode" = "8:{263DE5E9-4E3C-4DBA-AB89-F34F05317B48}"
         "UpgradeCode" = "8:{D7735C8C-75A5-4B39-9131-CA3BD8150516}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
