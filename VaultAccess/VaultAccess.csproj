@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VaultAccess</RootNamespace>
     <AssemblyName>VaultAccess</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -157,9 +157,8 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\Vault 2019 SDK Binaries\InventorInterop\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\PrintPDF\bin\x64\Debug\PrintPDF.dll</HintPath>
+    <Reference Include="PrintPDF">
+      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
