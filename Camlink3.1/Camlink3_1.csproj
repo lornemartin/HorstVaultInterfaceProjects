@@ -76,12 +76,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Microsoft WSE\v3.0\Microsoft.Web.Services3.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAPICodePack.Shell">
-      <HintPath>..\..\..\..\..\..\..\WindowsAPICodePack DLLs\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAPICodePack.ShellExtensions">
-      <HintPath>..\..\..\..\..\..\..\WindowsAPICodePack DLLs\Microsoft.WindowsAPICodePack.ShellExtensions.dll</HintPath>
-    </Reference>
     <Reference Include="radraft.interop">
       <HintPath>..\..\..\..\..\..\..\Program Files\Radan Software\Radan\bin\radraft.interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>

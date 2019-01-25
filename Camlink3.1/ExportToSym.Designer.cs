@@ -76,6 +76,7 @@
             this.picBoxSym.Location = new System.Drawing.Point(761, 153);
             this.picBoxSym.Name = "picBoxSym";
             this.picBoxSym.Size = new System.Drawing.Size(115, 115);
+            this.picBoxSym.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.picBoxSym.TabIndex = 1;
             this.picBoxSym.TabStop = false;
             // 
