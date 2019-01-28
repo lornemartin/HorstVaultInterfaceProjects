@@ -47,13 +47,13 @@
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.txtBoxSymFolder2 = new System.Windows.Forms.TextBox();
             this.btnBrowseForSym2 = new System.Windows.Forms.Button();
+            this.checkBoxSecondarySymFolder = new System.Windows.Forms.CheckBox();
             this.objectListView1 = new BrightIdeasSoftware.ObjectListView();
             this.olvClmQuantity = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmDesc = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmThickness = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvClmType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-            this.checkBoxSecondarySymFolder = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxIpt)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picBoxSym)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -67,6 +67,7 @@
             this.picBoxIpt.Location = new System.Drawing.Point(761, 12);
             this.picBoxIpt.Name = "picBoxIpt";
             this.picBoxIpt.Size = new System.Drawing.Size(115, 115);
+            this.picBoxIpt.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.picBoxIpt.TabIndex = 1;
             this.picBoxIpt.TabStop = false;
             // 
@@ -218,6 +219,17 @@
             this.btnBrowseForSym2.UseVisualStyleBackColor = true;
             this.btnBrowseForSym2.Click += new System.EventHandler(this.btnBrowseForSym2_Click);
             // 
+            // checkBoxSecondarySymFolder
+            // 
+            this.checkBoxSecondarySymFolder.AutoSize = true;
+            this.checkBoxSecondarySymFolder.Location = new System.Drawing.Point(501, 387);
+            this.checkBoxSecondarySymFolder.Name = "checkBoxSecondarySymFolder";
+            this.checkBoxSecondarySymFolder.Size = new System.Drawing.Size(163, 17);
+            this.checkBoxSecondarySymFolder.TabIndex = 16;
+            this.checkBoxSecondarySymFolder.Text = "Secondary Sym Folder Name";
+            this.checkBoxSecondarySymFolder.UseVisualStyleBackColor = true;
+            this.checkBoxSecondarySymFolder.CheckedChanged += new System.EventHandler(this.checkBoxSecondarySymFolder_CheckedChanged);
+            // 
             // objectListView1
             // 
             this.objectListView1.AllColumns.Add(this.olvClmQuantity);
@@ -280,17 +292,6 @@
             this.olvClmType.Sortable = false;
             this.olvClmType.Text = "Material Type";
             this.olvClmType.Width = 194;
-            // 
-            // checkBoxSecondarySymFolder
-            // 
-            this.checkBoxSecondarySymFolder.AutoSize = true;
-            this.checkBoxSecondarySymFolder.Location = new System.Drawing.Point(501, 387);
-            this.checkBoxSecondarySymFolder.Name = "checkBoxSecondarySymFolder";
-            this.checkBoxSecondarySymFolder.Size = new System.Drawing.Size(163, 17);
-            this.checkBoxSecondarySymFolder.TabIndex = 16;
-            this.checkBoxSecondarySymFolder.Text = "Secondary Sym Folder Name";
-            this.checkBoxSecondarySymFolder.UseVisualStyleBackColor = true;
-            this.checkBoxSecondarySymFolder.CheckedChanged += new System.EventHandler(this.checkBoxSecondarySymFolder_CheckedChanged);
             // 
             // ExportToSym
             // 

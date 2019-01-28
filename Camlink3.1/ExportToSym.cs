@@ -23,13 +23,13 @@ using Framework = Autodesk.DataManagement.Client.Framework;
 using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 using Forms = Autodesk.DataManagement.Client.Framework.Vault.Forms;
 using ADSK = Autodesk.Connectivity.WebServices;
+using Inventor;
 
 
 using RadanInterface2;
 using RadProject;
 using BrightIdeasSoftware;
-
-
+using Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties;
 
 namespace Camlink3_1
 {
@@ -53,7 +53,7 @@ namespace Camlink3_1
         {
             PartToImport part = (PartToImport)e.Model;
             if (!System.IO.File.Exists(symFolderPrimary + part.name + ".sym"))
-                e.Item.ForeColor = Color.Gray;
+                e.Item.ForeColor = System.Drawing.Color.Gray;
         }
         #endregion
 
@@ -474,6 +474,10 @@ namespace Camlink3_1
 
                 Autodesk.Connectivity.WebServices.File webServicesFile = selectedFiles.FirstOrDefault(sel => sel.Name == selectedItemName);
                 VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, webServicesFile);
+                PropertyDefinition thumbnailPropDef = connection.PropertyManager.GetPropertyDefinitionBySystemName("Thumbnail");
+                ThumbnailInfo thumbnailInfo = connection.PropertyManager.GetPropertyValue(fileIter, thumbnailPropDef, null) as ThumbnailInfo;
+                byte[] thumbnailBytes = thumbnailInfo.Image;
+                picBoxIpt.Image = ByteToImage(thumbnailBytes);
 
                 string selectedSymName = symFolderPrimary + System.IO.Path.GetFileNameWithoutExtension(selectedItemName) + ".sym";
 
