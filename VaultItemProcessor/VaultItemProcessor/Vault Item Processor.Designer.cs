@@ -170,6 +170,7 @@
             this.HasPdf,
             this.requiresPDF});
             this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
+            this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
             treeListFormatRule1.Name = "Format0";
             formatConditionRuleExpression1.Appearance.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
@@ -611,7 +612,7 @@
             this.Controls.Add(this.groupBoxOutput);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Vault Item Processor 2018";
+            this.Text = "Vault Item Processor 2019";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).EndInit();
