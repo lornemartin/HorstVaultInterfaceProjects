@@ -120,46 +120,37 @@
     </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.Interop, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.Interop.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices.Interop">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=22.0.56.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices.WCF">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>\\hwvsse01\folderredirection$\lorne\Documents\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Inventor.Interop, Version=22.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2018\Explorer\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\PrintPDF\bin\x64\Debug\PrintPDF.dll</HintPath>
+    <Reference Include="PrintPDF">
+      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
