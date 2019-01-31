@@ -49,19 +49,27 @@ namespace VaultItemProcessor
         public Form1()
         {
             InitializeComponent();
-            vaultExportFile = AppSettings.Get("VaultExportFileName").ToString();
-            vaultExportFilePath = AppSettings.Get("VaultExportFilePath").ToString();
-            vaultExportFileWithPath = vaultExportFilePath+ vaultExportFile;
-            exportFilePath = AppSettings.Get("ExportFilePath").ToString();
-            pdfPath = AppSettings.Get("PdfPath").ToString();        // need a double slash at the end, or else printPDF gets confused
-            jobName = AppSettings.Get("JobName").ToString();
-            lineItemList = new List<ExportLineItem>();
-            hlaVault = null;
-            vaultUserName = AppSettings.Get("VaultUserName").ToString();
-            vaultPassword = AppSettings.Get("VaultPassword").ToString();
-            vaultServer = AppSettings.Get("VaultServer").ToString();
-            vaultVault = AppSettings.Get("VaultVault").ToString();
-            dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
+            if (File.Exists(Path.Combine(AppSettings.SettingsFilePath, "AppSettings.xml")))
+                {
+                vaultExportFile = AppSettings.Get("VaultExportFileName").ToString();
+                vaultExportFilePath = AppSettings.Get("VaultExportFilePath").ToString();
+                vaultExportFileWithPath = vaultExportFilePath + vaultExportFile;
+                exportFilePath = AppSettings.Get("ExportFilePath").ToString();
+                pdfPath = AppSettings.Get("PdfPath").ToString();        // need a double slash at the end, or else printPDF gets confused
+                jobName = AppSettings.Get("JobName").ToString();
+                lineItemList = new List<ExportLineItem>();
+                hlaVault = null;
+                vaultUserName = AppSettings.Get("VaultUserName").ToString();
+                vaultPassword = AppSettings.Get("VaultPassword").ToString();
+                vaultServer = AppSettings.Get("VaultServer").ToString();
+                vaultVault = AppSettings.Get("VaultVault").ToString();
+                dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
+            }
+            else
+            {
+                MessageBox.Show("Cannot find app settings file in " + AppSettings.SettingsFilePath);
+                this.Close();
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)

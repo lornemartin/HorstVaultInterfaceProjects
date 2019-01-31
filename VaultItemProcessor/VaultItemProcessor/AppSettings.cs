@@ -16,7 +16,7 @@ using System.Xml;
 public static class AppSettings
 {
     //public static readonly string SettingsFilePath = new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName + @"\AppSettings.xml";
-    public static readonly string SettingsFilePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + @"\Vault Item Processor\AppSettings.xml";
+    public static readonly string SettingsFilePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + @"\Vault Item Processor 2019\AppSettings.xml";
 
     #region Get setting
     public static object Get(string key)
