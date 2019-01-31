@@ -9,7 +9,7 @@
 !define VERSION "3.00.00.00"
 !define COPYRIGHT "Lorne Martin  © 2019"
 !define DESCRIPTION ""
-!define INSTALLER_NAME "M:\temp\VaultItemProcessor\setup.exe"
+!define INSTALLER_NAME "M:\temp\VaultItemProcessor\Vault Item Processor Setup.exe"
 !define MAIN_APP_EXE "Vault Item Processor 2019.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
@@ -165,6 +165,23 @@ File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\Va
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\VaultAccess.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\VaultAccess.dll.config"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\VaultAccess.pdb"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2019 SDK Binaries\x64\clmloader.dll"
+
+SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\AppSettings.xml"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.Connectivity.Explorer.Extensibility.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.Connectivity.WebServices.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.DataManagement.Client.Framework.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.DataManagement.Client.Framework.Forms.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.dll"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.dll.config"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.vcet.config"
+
 SectionEnd
 
 ######################################################################
@@ -173,8 +190,7 @@ Section -Additional
 SetOutPath "$APPDATA\${APP_NAME}"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\AppSettings.xml"
 SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\AppSettings.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.vcet.config"
+
 SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
 SectionEnd

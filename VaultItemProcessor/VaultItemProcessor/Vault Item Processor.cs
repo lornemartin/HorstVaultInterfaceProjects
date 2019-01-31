@@ -49,8 +49,8 @@ namespace VaultItemProcessor
         public Form1()
         {
             InitializeComponent();
-            if (File.Exists(Path.Combine(AppSettings.SettingsFilePath, "AppSettings.xml")))
-                {
+            if (File.Exists(AppSettings.SettingsFilePath))
+            {
                 vaultExportFile = AppSettings.Get("VaultExportFileName").ToString();
                 vaultExportFilePath = AppSettings.Get("VaultExportFilePath").ToString();
                 vaultExportFileWithPath = vaultExportFilePath + vaultExportFile;
