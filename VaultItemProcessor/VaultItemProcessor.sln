@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultItemProcessor", "VaultItemProcessor\VaultItemProcessor.csproj", "{A5E1EAEF-EED3-4194-BE46-7CF540AB9EB2}"
 EndProject
@@ -13,8 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultAccess", "..\VaultAccess\VaultAccess.csproj", "{15635C05-BE90-4F08-8B87-21F85B406A00}"
-EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "VaultItemProcessorSetup", "VaultItemProcessorSetup\VaultItemProcessorSetup.vdproj", "{892471EA-DA54-443E-8946-1A8B72F13EF3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrintPDF", "..\PrintPDF\PrintPDF.csproj", "{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}"
 EndProject
@@ -106,23 +104,6 @@ Global
 		{15635C05-BE90-4F08-8B87-21F85B406A00}.Release|x64.Build.0 = Release|x64
 		{15635C05-BE90-4F08-8B87-21F85B406A00}.Release|x86.ActiveCfg = Release|x86
 		{15635C05-BE90-4F08-8B87-21F85B406A00}.Release|x86.Build.0 = Release|x86
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.64 bit|Any CPU.ActiveCfg = Release
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.64 bit|x64.ActiveCfg = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.64 bit|x64.Build.0 = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.64 bit|x86.ActiveCfg = Release
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Debug|Any CPU.ActiveCfg = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Debug|Any CPU.Build.0 = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Debug|x64.ActiveCfg = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Debug|x86.ActiveCfg = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|Any CPU.ActiveCfg = Lorne
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|Any CPU.Build.0 = Lorne
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|x64.ActiveCfg = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|x64.Build.0 = Debug
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|x86.ActiveCfg = Lorne
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Lorne|x86.Build.0 = Lorne
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Release|Any CPU.ActiveCfg = Release
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Release|x64.ActiveCfg = Release
-		{892471EA-DA54-443E-8946-1A8B72F13EF3}.Release|x86.ActiveCfg = Release
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.64 bit|Any CPU.ActiveCfg = Release|Any CPU
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.64 bit|Any CPU.Build.0 = Release|Any CPU
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.64 bit|x64.ActiveCfg = Release|x64
@@ -150,5 +131,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {993715CE-D1D9-4E4C-AE14-CB5E48A68662}
 	EndGlobalSection
 EndGlobal
