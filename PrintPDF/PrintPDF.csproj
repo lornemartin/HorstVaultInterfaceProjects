@@ -83,9 +83,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Vault 2019 SDK Binaries\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Interop.InventorApprentice">
-      <HintPath>obj\Debug\Interop.InventorApprentice.dll</HintPath>
+    <Reference Include="Autodesk.Inventor.Interop, Version=22.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>..\Vault 2019 SDK Binaries\InventorInterop\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
     <Reference Include="itextsharp, Version=5.5.1.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
