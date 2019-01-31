@@ -157,9 +157,6 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\Vault 2019 SDK Binaries\InventorInterop\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF">
-      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web.Services" />
@@ -268,6 +265,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ItemProcessor.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
+      <Name>PrintPDF</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
