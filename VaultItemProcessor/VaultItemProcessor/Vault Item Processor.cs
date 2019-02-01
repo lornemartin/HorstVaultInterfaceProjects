@@ -220,6 +220,8 @@ namespace VaultItemProcessor
             DateTime topLevelItemDateReleased = new DateTime();
             string processOnlyIfReleased = AppSettings.Get("ProcessOnlyIfReleased").ToString();
             string orderNumber = "";
+
+            radioGroup1.SelectedIndex = -1;
             try
             {
                 lineItemList.Clear();
@@ -2805,6 +2807,22 @@ namespace VaultItemProcessor
         {
             System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
             GroupBandSawDrawings4(rootDir);
+        }
+
+        private void radioGroup1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            bool allStock = false;
+            foreach (ExportLineItem item in lineItemList)
+            {
+                if (radioGroup1.SelectedIndex == 0)
+                    allStock = true;
+                else
+                    allStock = false;
+                    
+                item.IsStock = allStock;
+            }
+
+            exportTreeList.RefreshDataSource();
         }
     }
 
