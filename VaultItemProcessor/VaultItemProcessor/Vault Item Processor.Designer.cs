@@ -50,6 +50,8 @@
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression9 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule10 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression10 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
+            DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule11 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
+            DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression11 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.colThickness = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.repositoryItemTextEdit1 = new DevExpress.XtraEditors.Repository.RepositoryItemTextEdit();
@@ -92,6 +94,7 @@
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
+            this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.btnHorstMFG = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
@@ -169,7 +172,8 @@
             this.colIsStock,
             this.colPlantID,
             this.HasPdf,
-            this.requiresPDF});
+            this.requiresPDF,
+            this.colNotes});
             this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
             this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
@@ -256,6 +260,15 @@
             formatConditionRuleExpression10.Appearance.Options.UseBackColor = true;
             formatConditionRuleExpression10.Expression = "[PlantID] = \'Plant 1&2\'";
             treeListFormatRule10.Rule = formatConditionRuleExpression10;
+            treeListFormatRule11.ApplyToRow = true;
+            treeListFormatRule11.Name = "CheckForCheck";
+            formatConditionRuleExpression11.Appearance.BackColor = System.Drawing.Color.Chartreuse;
+            formatConditionRuleExpression11.Appearance.FontStyleDelta = System.Drawing.FontStyle.Underline;
+            formatConditionRuleExpression11.Appearance.Options.HighPriority = true;
+            formatConditionRuleExpression11.Appearance.Options.UseBackColor = true;
+            formatConditionRuleExpression11.Appearance.Options.UseFont = true;
+            formatConditionRuleExpression11.Expression = "[Notes] = \'Check\' Or [Notes] = \'check\' Or [Notes] = \'CHECK\'";
+            treeListFormatRule11.Rule = formatConditionRuleExpression11;
             this.exportTreeList.FormatRules.Add(treeListFormatRule1);
             this.exportTreeList.FormatRules.Add(treeListFormatRule2);
             this.exportTreeList.FormatRules.Add(treeListFormatRule3);
@@ -266,6 +279,7 @@
             this.exportTreeList.FormatRules.Add(treeListFormatRule8);
             this.exportTreeList.FormatRules.Add(treeListFormatRule9);
             this.exportTreeList.FormatRules.Add(treeListFormatRule10);
+            this.exportTreeList.FormatRules.Add(treeListFormatRule11);
             this.exportTreeList.KeyFieldName = "";
             this.exportTreeList.Location = new System.Drawing.Point(52, 46);
             this.exportTreeList.Name = "exportTreeList";
@@ -287,6 +301,8 @@
             this.Parent.Caption = "Parent";
             this.Parent.FieldName = "Parent";
             this.Parent.Name = "Parent";
+            this.Parent.Visible = true;
+            this.Parent.VisibleIndex = 11;
             // 
             // Number
             // 
@@ -610,6 +626,13 @@
             this.btnHorstMFG.UseVisualStyleBackColor = true;
             this.btnHorstMFG.Click += new System.EventHandler(this.btnHorstMFG_Click);
             // 
+            // colNotes
+            // 
+            this.colNotes.Caption = "Notes";
+            this.colNotes.FieldName = "Notes";
+            this.colNotes.Name = "colNotes";
+            this.colNotes.OptionsColumn.AllowEdit = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -684,6 +707,7 @@
         private System.Windows.Forms.Button btnGroupSawDrawings3;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btnHorstMFG;
+        private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
