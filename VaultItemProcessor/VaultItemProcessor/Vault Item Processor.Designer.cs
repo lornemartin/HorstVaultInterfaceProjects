@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1 = new DevExpress.XtraSplashScreen.SplashScreenManager(this, null, true, true);
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule1 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression1 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
@@ -70,6 +69,7 @@
             this.colPlantID = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.HasPdf = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.requiresPDF = new DevExpress.XtraTreeList.Columns.TreeListColumn();
+            this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.btnProcess = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -92,9 +92,8 @@
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
-            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
+            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
             this.btnOdoo = new System.Windows.Forms.Button();
-            this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
@@ -261,13 +260,18 @@
             formatConditionRuleExpression10.Appearance.Options.UseBackColor = true;
             formatConditionRuleExpression10.Expression = "[PlantID] = \'Plant 1&2\'";
             treeListFormatRule10.Rule = formatConditionRuleExpression10;
-            treeListFormatRule11.ApplyToRow = true;
+            treeListFormatRule11.Column = this.Number;
+            treeListFormatRule11.ColumnApplyTo = this.Number;
             treeListFormatRule11.Name = "CheckForCheck";
-            formatConditionRuleExpression11.Appearance.BackColor = System.Drawing.Color.Chartreuse;
+            formatConditionRuleExpression11.Appearance.BackColor = System.Drawing.Color.Lime;
+            formatConditionRuleExpression11.Appearance.BorderColor = System.Drawing.Color.Lime;
             formatConditionRuleExpression11.Appearance.FontStyleDelta = System.Drawing.FontStyle.Underline;
+            formatConditionRuleExpression11.Appearance.ForeColor = System.Drawing.Color.Black;
             formatConditionRuleExpression11.Appearance.Options.HighPriority = true;
             formatConditionRuleExpression11.Appearance.Options.UseBackColor = true;
+            formatConditionRuleExpression11.Appearance.Options.UseBorderColor = true;
             formatConditionRuleExpression11.Appearance.Options.UseFont = true;
+            formatConditionRuleExpression11.Appearance.Options.UseForeColor = true;
             formatConditionRuleExpression11.Expression = "[Notes] = \'Check\' Or [Notes] = \'check\' Or [Notes] = \'CHECK\'";
             treeListFormatRule11.Rule = formatConditionRuleExpression11;
             this.exportTreeList.FormatRules.Add(treeListFormatRule1);
@@ -392,6 +396,13 @@
             this.requiresPDF.Visible = true;
             this.requiresPDF.VisibleIndex = 10;
             this.requiresPDF.Width = 25;
+            // 
+            // colNotes
+            // 
+            this.colNotes.Caption = "Notes";
+            this.colNotes.FieldName = "Notes";
+            this.colNotes.Name = "colNotes";
+            this.colNotes.OptionsColumn.AllowEdit = false;
             // 
             // btnProcess
             // 
@@ -616,13 +627,6 @@
             this.btnOdoo.Text = "Odoo";
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
-            // 
-            // colNotes
-            // 
-            this.colNotes.Caption = "Notes";
-            this.colNotes.FieldName = "Notes";
-            this.colNotes.Name = "colNotes";
-            this.colNotes.OptionsColumn.AllowEdit = false;
             // 
             // radioGroup1
             // 
