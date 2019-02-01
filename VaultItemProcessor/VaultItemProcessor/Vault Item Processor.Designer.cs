@@ -95,6 +95,7 @@
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
+            this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.btnHorstMFG = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
@@ -104,6 +105,7 @@
             this.groupBoxOutput.SuspendLayout();
             this.groupBoxInput.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).BeginInit();
             this.SuspendLayout();
             // 
             // splashScreenManager1
@@ -405,7 +407,7 @@
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(19, 24);
+            this.btnLoad.Location = new System.Drawing.Point(19, 19);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 1;
@@ -591,14 +593,14 @@
             this.groupBoxInput.Controls.Add(this.btnLoad);
             this.groupBoxInput.Location = new System.Drawing.Point(52, 492);
             this.groupBoxInput.Name = "groupBoxInput";
-            this.groupBoxInput.Size = new System.Drawing.Size(228, 181);
+            this.groupBoxInput.Size = new System.Drawing.Size(228, 100);
             this.groupBoxInput.TabIndex = 8;
             this.groupBoxInput.TabStop = false;
             this.groupBoxInput.Text = "Input Data";
             // 
             // btnProcessBatch
             // 
-            this.btnProcessBatch.Location = new System.Drawing.Point(19, 60);
+            this.btnProcessBatch.Location = new System.Drawing.Point(19, 52);
             this.btnProcessBatch.Name = "btnProcessBatch";
             this.btnProcessBatch.Size = new System.Drawing.Size(100, 23);
             this.btnProcessBatch.TabIndex = 2;
@@ -633,12 +635,24 @@
             this.colNotes.Name = "colNotes";
             this.colNotes.OptionsColumn.AllowEdit = false;
             // 
+            // radioGroup1
+            // 
+            this.radioGroup1.Location = new System.Drawing.Point(52, 603);
+            this.radioGroup1.Name = "radioGroup1";
+            this.radioGroup1.Properties.Columns = 1;
+            this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as stock", true, "Mark all items as stock"),
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark All Items as Make To Order")});
+            this.radioGroup1.Size = new System.Drawing.Size(228, 61);
+            this.radioGroup1.TabIndex = 11;
+            this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
-            this.Controls.Add(this.btnHorstMFG);
+            this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
@@ -659,6 +673,7 @@
             this.groupBoxOutput.PerformLayout();
             this.groupBoxInput.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -708,6 +723,7 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btnHorstMFG;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
+        private DevExpress.XtraEditors.RadioGroup radioGroup1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
