@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1 = new DevExpress.XtraSplashScreen.SplashScreenManager(this, null, true, true);
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule1 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression1 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
@@ -50,6 +49,8 @@
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression9 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule10 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression10 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
+            DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule11 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
+            DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression11 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.colThickness = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.repositoryItemTextEdit1 = new DevExpress.XtraEditors.Repository.RepositoryItemTextEdit();
@@ -68,6 +69,7 @@
             this.colPlantID = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.HasPdf = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.requiresPDF = new DevExpress.XtraTreeList.Columns.TreeListColumn();
+            this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.btnProcess = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -90,8 +92,9 @@
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
-            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
+            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
             this.btnOdoo = new System.Windows.Forms.Button();
+            this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -100,6 +103,7 @@
             this.groupBoxOutput.SuspendLayout();
             this.groupBoxInput.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).BeginInit();
             this.SuspendLayout();
             // 
             // splashScreenManager1
@@ -168,7 +172,8 @@
             this.colIsStock,
             this.colPlantID,
             this.HasPdf,
-            this.requiresPDF});
+            this.requiresPDF,
+            this.colNotes});
             this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
             this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
@@ -255,6 +260,20 @@
             formatConditionRuleExpression10.Appearance.Options.UseBackColor = true;
             formatConditionRuleExpression10.Expression = "[PlantID] = \'Plant 1&2\'";
             treeListFormatRule10.Rule = formatConditionRuleExpression10;
+            treeListFormatRule11.Column = this.Number;
+            treeListFormatRule11.ColumnApplyTo = this.Number;
+            treeListFormatRule11.Name = "CheckForCheck";
+            formatConditionRuleExpression11.Appearance.BackColor = System.Drawing.Color.Lime;
+            formatConditionRuleExpression11.Appearance.BorderColor = System.Drawing.Color.Lime;
+            formatConditionRuleExpression11.Appearance.FontStyleDelta = System.Drawing.FontStyle.Underline;
+            formatConditionRuleExpression11.Appearance.ForeColor = System.Drawing.Color.Black;
+            formatConditionRuleExpression11.Appearance.Options.HighPriority = true;
+            formatConditionRuleExpression11.Appearance.Options.UseBackColor = true;
+            formatConditionRuleExpression11.Appearance.Options.UseBorderColor = true;
+            formatConditionRuleExpression11.Appearance.Options.UseFont = true;
+            formatConditionRuleExpression11.Appearance.Options.UseForeColor = true;
+            formatConditionRuleExpression11.Expression = "[Notes] = \'Check\' Or [Notes] = \'check\' Or [Notes] = \'CHECK\'";
+            treeListFormatRule11.Rule = formatConditionRuleExpression11;
             this.exportTreeList.FormatRules.Add(treeListFormatRule1);
             this.exportTreeList.FormatRules.Add(treeListFormatRule2);
             this.exportTreeList.FormatRules.Add(treeListFormatRule3);
@@ -265,6 +284,7 @@
             this.exportTreeList.FormatRules.Add(treeListFormatRule8);
             this.exportTreeList.FormatRules.Add(treeListFormatRule9);
             this.exportTreeList.FormatRules.Add(treeListFormatRule10);
+            this.exportTreeList.FormatRules.Add(treeListFormatRule11);
             this.exportTreeList.KeyFieldName = "";
             this.exportTreeList.Location = new System.Drawing.Point(52, 46);
             this.exportTreeList.Name = "exportTreeList";
@@ -286,6 +306,8 @@
             this.Parent.Caption = "Parent";
             this.Parent.FieldName = "Parent";
             this.Parent.Name = "Parent";
+            this.Parent.Visible = true;
+            this.Parent.VisibleIndex = 11;
             // 
             // Number
             // 
@@ -375,6 +397,13 @@
             this.requiresPDF.VisibleIndex = 10;
             this.requiresPDF.Width = 25;
             // 
+            // colNotes
+            // 
+            this.colNotes.Caption = "Notes";
+            this.colNotes.FieldName = "Notes";
+            this.colNotes.Name = "colNotes";
+            this.colNotes.OptionsColumn.AllowEdit = false;
+            // 
             // btnProcess
             // 
             this.btnProcess.Enabled = false;
@@ -388,7 +417,7 @@
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(19, 24);
+            this.btnLoad.Location = new System.Drawing.Point(19, 19);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 1;
@@ -574,14 +603,14 @@
             this.groupBoxInput.Controls.Add(this.btnLoad);
             this.groupBoxInput.Location = new System.Drawing.Point(52, 492);
             this.groupBoxInput.Name = "groupBoxInput";
-            this.groupBoxInput.Size = new System.Drawing.Size(228, 181);
+            this.groupBoxInput.Size = new System.Drawing.Size(228, 100);
             this.groupBoxInput.TabIndex = 8;
             this.groupBoxInput.TabStop = false;
             this.groupBoxInput.Text = "Input Data";
             // 
             // btnProcessBatch
             // 
-            this.btnProcessBatch.Location = new System.Drawing.Point(19, 60);
+            this.btnProcessBatch.Location = new System.Drawing.Point(19, 52);
             this.btnProcessBatch.Name = "btnProcessBatch";
             this.btnProcessBatch.Size = new System.Drawing.Size(100, 23);
             this.btnProcessBatch.TabIndex = 2;
@@ -599,11 +628,24 @@
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
             // 
+            // radioGroup1
+            // 
+            this.radioGroup1.Location = new System.Drawing.Point(52, 603);
+            this.radioGroup1.Name = "radioGroup1";
+            this.radioGroup1.Properties.Columns = 1;
+            this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as stock", true, "Mark all items as stock"),
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark All Items as Make To Order")});
+            this.radioGroup1.Size = new System.Drawing.Size(228, 61);
+            this.radioGroup1.TabIndex = 11;
+            this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
@@ -624,6 +666,7 @@
             this.groupBoxOutput.PerformLayout();
             this.groupBoxInput.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -671,6 +714,8 @@
         private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroupSawDrawings3;
         private System.Windows.Forms.Button button1;
+        private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
+        private DevExpress.XtraEditors.RadioGroup radioGroup1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

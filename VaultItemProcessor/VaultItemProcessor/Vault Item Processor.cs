@@ -26,11 +26,6 @@ namespace VaultItemProcessor
 {
     public partial class Form1 : Form
     {
-        // *March 22* 
-        // fixed bug in watermarking code that was acting up when properties were edited in 
-        // VaultItemProcessor Treelist before processing order.
-        // Tested somewhat, it was a fairly small change and I feel confident to use in production.
-
         public string vaultExportFile { get; set; }
         public string vaultExportFilePath { get; set; }
         public string exportFilePath { get; set; }
@@ -233,6 +228,8 @@ namespace VaultItemProcessor
             DateTime topLevelItemDateReleased = new DateTime();
             string processOnlyIfReleased = AppSettings.Get("ProcessOnlyIfReleased").ToString();
             string orderNumber = "";
+
+            radioGroup1.SelectedIndex = -1;
             try
             {
                 lineItemList.Clear();
@@ -922,6 +919,7 @@ namespace VaultItemProcessor
             bool materialOk = true;
             bool structOk = true;
             bool operationsOk = true;
+            int numOfPartsToCheck = 0;
             DialogResult result = new DialogResult();
 
             //exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
@@ -951,6 +949,10 @@ namespace VaultItemProcessor
                 if (lineItem.Operations == "")
                 {
                     operationsOk = false;
+                }
+                if (lineItem.Notes.ToUpper().Contains("CHECK"))
+                {
+                    numOfPartsToCheck++;
                 }
             }
 
@@ -1003,6 +1005,15 @@ namespace VaultItemProcessor
                     thicknessOk = true;
                 }
                 else
+                {
+                    cancelled = true;
+                }
+            }
+
+            if(numOfPartsToCheck>0)
+            {
+                result = MessageBox.Show("There are " + numOfPartsToCheck + "item(s) that raise a flag.  Did you want to continue?", "Items To Check", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.No)
                 {
                     cancelled = true;
                 }
@@ -2804,6 +2815,22 @@ namespace VaultItemProcessor
         {
             System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
             GroupBandSawDrawings4(rootDir);
+        }
+
+        private void radioGroup1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            bool allStock = false;
+            foreach (ExportLineItem item in lineItemList)
+            {
+                if (radioGroup1.SelectedIndex == 0)
+                    allStock = true;
+                else
+                    allStock = false;
+                    
+                item.IsStock = allStock;
+            }
+
+            exportTreeList.RefreshDataSource();
         }
     }
 
