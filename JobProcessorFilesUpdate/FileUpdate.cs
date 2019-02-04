@@ -12,7 +12,7 @@ using Autodesk.Connectivity.WebServicesTools;
 [assembly: AssemblyProduct("JobProcessorUpdateFile")]
 [assembly: AssemblyDescription("Updates PDF files")]
 [assembly: ApiVersion("12.0")]
-[assembly: ExtensionId("780d59d0-cacb-45c6-add7-8f0059219e09")]
+[assembly: ExtensionId("d270be0e-58ff-4ad7-8dab-6be289c5d21a")]
 
 namespace JobProcessorFileUpdate
 {
