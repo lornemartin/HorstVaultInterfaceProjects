@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("JobProcessorFileUpdate")]
+[assembly: AssemblyTitle("HelloWorld")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCopyright("Copyright © Horst Welding 2019")]
+[assembly: AssemblyCopyright("Copyright Â© Autodesk 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -17,7 +17,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("d270be0e-58ff-4ad7-8dab-6be289c5d21a")]
+[assembly: Guid("be64d02c-e39c-4326-9b10-e03956332cb1")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,9 +29,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("18.0.110.0")]
-[assembly: AssemblyFileVersion("18.0.110.0")]
-[assembly: AssemblyDescription("updates pdf files based on vault lifecycles")]
-[assembly: AssemblyCompany("Horst Welding")]
-[assembly: AssemblyProduct("JobProcessorFileUpdate")]
-
+[assembly: AssemblyVersion("24.1.42.0")]
+[assembly: AssemblyFileVersion("24.1.42.0")]

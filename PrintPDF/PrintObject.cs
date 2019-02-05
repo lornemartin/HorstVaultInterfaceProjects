@@ -68,8 +68,6 @@ namespace PrintPDF
             {
                 try
                 {
-                    
-
                     ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
                     ApprenticeServerDrawingDocument drgDoc;
                     drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;

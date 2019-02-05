@@ -8,9 +8,9 @@ using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
 
 
-[assembly: AssemblyCompany("Horst Welding")]
-[assembly: AssemblyProduct("JobProcessorUpdateFile")]
-[assembly: AssemblyDescription("Updates PDF files")]
+//[assembly: AssemblyCompany("Horst Welding")]
+//[assembly: AssemblyProduct("JobProcessorUpdateFile")]
+//[assembly: AssemblyDescription("Updates PDF files")]
 [assembly: ApiVersion("12.0")]
 [assembly: ExtensionId("d270be0e-58ff-4ad7-8dab-6be289c5d21a")]
 
