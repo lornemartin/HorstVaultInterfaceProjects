@@ -43,11 +43,18 @@ namespace JobProcessorPrintPDF
 
         public PrintPDFHandler()
         {
-            TargetFolder = System.IO.Path.GetTempPath();
-            PDFPath = AppSettings.Get("PDFPath").ToString();
-            pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
-            psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
-            ghostScriptWorkingFolder = AppSettings.Get("ghostScriptWorkingFolder").ToString();
+            try
+            {
+                TargetFolder = System.IO.Path.GetTempPath();
+                PDFPath = AppSettings.Get("PDFPath").ToString();
+                pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
+                psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
+                ghostScriptWorkingFolder = AppSettings.Get("ghostScriptWorkingFolder").ToString();
+            }
+            catch(Exception)
+            {
+                
+            }
         }
 
         #region IJobHandler Members
