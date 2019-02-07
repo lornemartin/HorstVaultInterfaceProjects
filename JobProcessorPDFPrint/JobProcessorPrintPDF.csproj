@@ -118,7 +118,6 @@
     <Compile Include="AppSettings.cs" />
     <Compile Include="PrintPDFHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueuePrintPDFCommandExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="JobProcessorPrintPDF.vcet.config">

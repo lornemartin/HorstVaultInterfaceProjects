@@ -29,9 +29,9 @@ using ADSK = Autodesk.Connectivity.WebServices;
 [assembly: ApiVersion("12.0")]
 [assembly: ExtensionId("43a71358-dd7a-4237-a4ec-f8dda92ac446")]
 
-namespace JobProcessorPrintPDF
+namespace PrintPDFVaultExtension
 {
-    public class QueuePrintPDFCommandExtension : IExplorerExtension
+    public class PrintPDFVaultExtensionCommandExtension : IExplorerExtension
     {
         public void QueuePrintPDFCommandHandler(object s, CommandItemEventArgs e)
         {
