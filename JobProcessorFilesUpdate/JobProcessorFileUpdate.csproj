@@ -126,7 +126,6 @@
     <Compile Include="AppSettings.cs" />
     <Compile Include="FileUpdateHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FileUpdate.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="JobProcessorFileUpdate.vcet.config">
