@@ -14,7 +14,8 @@ namespace JobProcessorPrintPDF
 {
     public static class AppSettings
     {
-        public static readonly string SettingsFilePath = new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName + @"\AppSettings.xml";
+        //public static readonly string temp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VaultExtensions", "AppSettings.xml");
+        public static readonly string SettingsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VaultExtensions", "AppSettings.xml");
         #region Get setting
         public static object Get(string key)
         {
