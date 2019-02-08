@@ -226,7 +226,6 @@ namespace PrintPDF
 
 
 
-
                     // delete previous pdfs so we don't double up assembly drawings.
                     foreach (Sheet sh in drgDoc.Sheets)
                     {
