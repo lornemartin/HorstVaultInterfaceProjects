@@ -53,8 +53,7 @@ namespace JobProcessorFileUpdate
             try
             {
                 m_TargetFolder = System.IO.Path.GetTempPath();
-                m_PDFPath = JobProcessorPrintPDF.AppSettings.Get("PDFPath").ToString();
-                //m_SqlConnectionString = "Data Source = HLAMFG; Initial Catalog = Horst Manufacturing DB; Integrated Security = True";
+                m_PDFPath = JobProcessorPrintPDF.AppSettings.Get("PdfPath").ToString();
                 m_SymFolderName = JobProcessorPrintPDF.AppSettings.Get("SymFileFolder").ToString();
             }
             catch(Exception)

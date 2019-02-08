@@ -49,10 +49,10 @@ namespace JobProcessorPrintPDF
             try
             {
                 TargetFolder = System.IO.Path.GetTempPath();
-                PDFPath = AppSettings.Get("PDFPath").ToString();
-                pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
-                psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
-                ghostScriptWorkingFolder = AppSettings.Get("ghostScriptWorkingFolder").ToString();
+                PDFPath = AppSettings.Get("PdfPath").ToString();
+                pdfPrinterName = AppSettings.Get("PrintPDFPrinter").ToString();
+                psToPdfProgName = AppSettings.Get("PrintPDFExecutable").ToString();
+                ghostScriptWorkingFolder = AppSettings.Get("GhostScriptWorkingFolder").ToString();
             }
             catch(Exception)
             {
