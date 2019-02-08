@@ -203,38 +203,9 @@ namespace JobProcessorPrintPDF
                     {
                         logMessage += "Sheet Name: " + sh.Name + "\r\n";
 
-                        // attempt to fix bug where multiple instances of assembly drawing are printed
-                        // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
-                        // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
-                        //if (sh.DrawingViews.Count > 0)
-                        //{
-                        //    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                        //    string pdfName = PDFPath + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
-
-                        //    if (System.IO.File.Exists(pdfName))
-                        //    {
-                        //        // make sure file is accessible....
-                        //        FileInfo fileInfo = new FileInfo(pdfName);
-                        //        fileInfo.IsReadOnly = false;
-                        //        System.IO.File.Delete(pdfName);
-                        //    }
-                        //}
-
-                        // ...2 failures here Oct. 23rd...
-                        // ...1 failure here Oct 28th....
-
                         if (sh.DrawingViews.Count > 0)
                         {
                             modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-
-                            // testing printing different levels of detail, didn't figure it out....
-                            //if (sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedLevelOfDetail == LevelOfDetailEnum.kMasterLevelOfDetail)
-                            //    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                            //else
-                            //{
-                            //    // remove the ' (*********************)' from the file name that represents the level of detail
-                            //    // this wouldn't work because not all files with different levels of detail will have two sets of parenthises.
-                            //}
 
                             VDF.Vault.Currency.Entities.FileIteration fIter;
                             try
@@ -364,9 +335,9 @@ namespace JobProcessorPrintPDF
                     return true;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                errMessage += "Unknown Error in function PrintPDF\r\n";
+                errMessage += "Unknown Error in function PrintPDF\r\n" + ex.Message;
                 return false;
             }
         
