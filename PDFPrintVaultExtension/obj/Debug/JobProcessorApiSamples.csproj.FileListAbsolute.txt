@@ -1,0 +1,9 @@
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\bin\Debug\JobProcessorApiSamples.vcet.config
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\bin\Debug\JobProcessorApiSamples.dll
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\bin\Debug\JobProcessorApiSamples.pdb
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\obj\Debug\ResolveAssemblyReference.cache
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\obj\Debug\JobProcessorApiSamples.dll
+\\HLAFILESRVR\Data\Source_Code\Lorne's Source Code\Projects\JobProcessorApiSamples\obj\Debug\JobProcessorApiSamples.pdb
+C:\ProgramData\Autodesk\Vault 2014\Extensions\JobProcessorApiSamples\JobProcessorApiSamples.vcet.config
+C:\ProgramData\Autodesk\Vault 2014\Extensions\JobProcessorApiSamples\JobProcessorApiSamples.dll
+C:\ProgramData\Autodesk\Vault 2014\Extensions\JobProcessorApiSamples\JobProcessorApiSamples.pdb

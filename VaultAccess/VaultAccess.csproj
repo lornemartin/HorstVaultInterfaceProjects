@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VaultAccess</RootNamespace>
     <AssemblyName>VaultAccess</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -124,10 +124,10 @@
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices.Interop">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.Interop.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.Interop.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices.WCF">
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
@@ -138,8 +138,9 @@
     <Reference Include="Autodesk.DataManagement.Client.Framework.Forms">
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=23.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms">
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
@@ -148,6 +149,10 @@
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2018\Explorer\Autodesk.Inventor.Interop.dll</HintPath>
+    </Reference>
+    <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -257,12 +262,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ItemProcessor.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
-      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
-      <Name>PrintPDF</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
