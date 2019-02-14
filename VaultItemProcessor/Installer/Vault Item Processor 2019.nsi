@@ -187,18 +187,21 @@ SectionEnd
 ######################################################################
 
 Section -Additional
-SetOutPath "$APPDATA\${APP_NAME}"
+SetShellVarContext current
+SetOutPath "$APPDATA\VaultExtensions"
 
-IfFileExists $INSTDIR\AppSettings.xml 0 config_file_not_found
+IfFileExists $INSTDIR\VaultExtensions\AppSettings.xml 0 config_file_not_found
      DetailPrint "Skipping config file because it already exists"
      goto end_of_test
 
 config_file_not_found:
+	DetailPrint "Writing config file"
      File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
 end_of_test:
 
-SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
+;SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
 
+SetShellVarContext all
 SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
 SectionEnd
@@ -343,11 +346,11 @@ Delete "$INSTDIR\${APP_NAME} website.url"
 
 RmDir "$INSTDIR"
 
-!ifndef NEVER_UNINSTALL
-Delete "$APPDATA\${APP_NAME}\AppSettings.xml"
+;!ifndef NEVER_UNINSTALL
+;Delete "$APPDATA\${APP_NAME}\AppSettings.xml"
  
-RmDir "$APPDATA\${APP_NAME}"
-!endif
+;RmDir "$APPDATA\${APP_NAME}"
+;!endif
 
 !ifdef REG_START_MENU
 !insertmacro MUI_STARTMENU_GETFOLDER "Application" $SM_Folder
