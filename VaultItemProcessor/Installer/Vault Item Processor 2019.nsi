@@ -188,7 +188,15 @@ SectionEnd
 
 Section -Additional
 SetOutPath "$APPDATA\${APP_NAME}"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\AppSettings.xml"
+
+IfFileExists $INSTDIR\AppSettings.xml 0 config_file_not_found
+     DetailPrint "Skipping config file because it already exists"
+     goto end_of_test
+
+config_file_not_found:
+     File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
+end_of_test:
+
 SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
 
 SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
