@@ -2168,7 +2168,7 @@
             "SourcePath" = "8:..\\DirectView2016\\bin\\Debug\\AppSettings.xml"
             "TargetName" = "8:AppSettings.xml"
             "Tag" = "8:"
-            "Folder" = "8:_251EA1D475CE4ACA958DF443BBD895B9"
+            "Folder" = "8:_FB908F2AA5CE4E00BE65593D2E5161D6"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -3003,13 +3003,13 @@
             "Property" = "8:AppDataFolder"
                 "Folders"
                 {
-                    "{9EF0B969-E518-4E46-987F-47570745A589}:_251EA1D475CE4ACA958DF443BBD895B9"
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_FB908F2AA5CE4E00BE65593D2E5161D6"
                     {
-                    "Name" = "8:DirectView"
+                    "Name" = "8:VaultExtensions"
                     "AlwaysCreate" = "11:FALSE"
                     "Condition" = "8:"
                     "Transitive" = "11:FALSE"
-                    "Property" = "8:_E8947AAD67D24B04BDFDA3B259D9E3E9"
+                    "Property" = "8:_49683BF0A6D747C8BE894165B6DD66E6"
                         "Folders"
                         {
                         }
@@ -3033,7 +3033,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DirectView 2019"
         "ProductCode" = "8:{E309BEF0-900A-4C3C-87AF-82A1A5FCBC8F}"
-        "PackageCode" = "8:{A58AA2AD-1383-493D-A252-CA26845BD6D9}"
+        "PackageCode" = "8:{ED08B28B-FFF9-4371-A307-81025E822ACE}"
         "UpgradeCode" = "8:{D7735C8C-75A5-4B39-9131-CA3BD8150516}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
