@@ -187,7 +187,7 @@ SectionEnd
 ######################################################################
 
 Section -Additional
-SetShellVarContext current
+SetShellVarContext all
 SetOutPath "$APPDATA\VaultExtensions"
 
 IfFileExists $INSTDIR\VaultExtensions\AppSettings.xml 0 config_file_not_found
