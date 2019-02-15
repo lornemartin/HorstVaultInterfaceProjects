@@ -106,6 +106,8 @@ FunctionEnd
 Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
+
+StrCpy $INSTDIR "$PROGRAMFILES\Vault Item Processor 2019"
 SetOutPath "$INSTDIR"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml"

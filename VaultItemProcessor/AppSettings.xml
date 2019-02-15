@@ -2,7 +2,7 @@
 <ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Setting>
     <Key>VaultExportFilePath</Key>
-    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\</Value>
+    <Value xsi:type="xsd:string">C:\ProgramData\VaultExtensions\</Value>
   </Setting>
   <Setting>
     <Key>Iv_FullPath</Key>
@@ -10,7 +10,7 @@
   </Setting>
   <Setting>
     <Key>ExportFile</Key>
-    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\VaultExportData.txt</Value>
+    <Value xsi:type="xsd:string">C:\ProgramData\VaultExtensions\VaultExportData.txt</Value>
   </Setting>
   <Setting>
     <Key>VaultExportFileName</Key>
@@ -18,7 +18,7 @@
   </Setting>
   <Setting>
     <Key>ExportFilePath</Key>
-    <Value xsi:type="xsd:string">\\hwvsse01\folderredirection$\lorne\Desktop\2019-01-25 Blade Batch 7\</Value>
+    <Value xsi:type="xsd:string">\\hwvsse01\folderredirection$\lorne\Desktop\test2\</Value>
   </Setting>
   <Setting>
     <Key>SymFileFolder</Key>
@@ -38,7 +38,7 @@
   </Setting>
   <Setting>
     <Key>VaultPassword</Key>
-    <Value xsi:type="xsd:string"></Value>
+    <Value xsi:type="xsd:string" />
   </Setting>
   <Setting>
     <Key>VaultServer</Key>
