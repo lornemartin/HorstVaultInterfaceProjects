@@ -73,6 +73,34 @@ InstallDir "$PROGRAMFILES\Vault Item Processor 2019"
 
 !insertmacro MUI_LANGUAGE "English"
 
+Function .onInit
+		; This is important to have $APPDATA variable
+		; point to ProgramData folder
+		; instead of current user's Roaming folder
+		SetShellVarContext all
+		SetOutPath "$APPDATA\VaultExtensions"
+		StrCpy $INSTDIR "$APPDATA\VaultExtensions"
+		IfFileExists $APPDATA\VaultExtensions\AppSettings.xml 0 config_file_not_found
+			DetailPrint "Skipping config file because it already exists"
+			goto end_of_test
+
+		config_file_not_found:
+			DetailPrint "Writing config file"
+			File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
+		end_of_test:
+		
+		# Make the directory "$INSTDIR" read write accessible by all users
+		CreateDirectory $INSTDIR
+		AccessControl::GrantOnFile "$INSTDIR" "(BU)" "GenericRead + GenericWrite"
+		Pop $R0
+		${If} $R0 == error
+			Pop $R0
+			MessageBox MB_OK `AccessControl error: $R0, $\r$\n Installation will be aborted.`
+			Quit
+		${EndIf}
+FunctionEnd
+
+
 ######################################################################
 
 Section -MainProgram
@@ -93,55 +121,39 @@ File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\Va
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.Forms.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\Autodesk.DataManagement.Client.Framework.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Data.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Data.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Data.v17.2.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Images.v17.2.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Office.v16.1.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Office.v17.2.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Office.v17.2.Core.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v16.1.Core.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v16.1.Drawing.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v17.2.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v17.2.Core.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v17.2.Drawing.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Pdf.v17.2.Drawing.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Printing.v16.1.Core.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Printing.v17.2.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Printing.v17.2.Core.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.RichEdit.v16.1.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.RichEdit.v17.2.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.RichEdit.v17.2.Core.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.RichEdit.v17.2.Export.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Sparkline.v16.1.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Sparkline.v17.2.Core.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Sparkline.v17.2.Core.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Utils.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Utils.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.Utils.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraBars.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraBars.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraBars.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraEditors.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraEditors.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraEditors.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraGrid.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraGrid.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraGrid.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraLayout.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraLayout.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraLayout.v17.2.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraPdfViewer.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraPdfViewer.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraPrinting.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraPrinting.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraPrinting.v17.2.xml"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraTreeList.v16.1.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraTreeList.v17.2.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\DevExpress.XtraTreeList.v17.2.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\log4net.config"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\log4net.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\log4net.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\MigraDoc.DocumentObjectModel.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\MigraDoc.DocumentObjectModel.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\MigraDoc.Rendering.dll"
@@ -182,29 +194,16 @@ File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\
 File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.dll.config"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\ItemExport.vcet.config"
 
+SetShellVarContext all
+SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
+
 SectionEnd
 
 ######################################################################
 
-Section -Additional
-SetShellVarContext all
-SetOutPath "$APPDATA\VaultExtensions"
 
-IfFileExists $INSTDIR\VaultExtensions\AppSettings.xml 0 config_file_not_found
-     DetailPrint "Skipping config file because it already exists"
-     goto end_of_test
 
-config_file_not_found:
-	DetailPrint "Writing config file"
-     File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
-end_of_test:
-
-;SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\ItemExport"
-
-SetShellVarContext all
-SetOutPath "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
-SectionEnd
 
 ######################################################################
 
@@ -242,6 +241,8 @@ WriteRegStr ${REG_ROOT} "${UNINSTALL_PATH}"  "UninstallString" "$INSTDIR\uninsta
 WriteRegStr ${REG_ROOT} "${UNINSTALL_PATH}"  "DisplayIcon" "$INSTDIR\${MAIN_APP_EXE}"
 WriteRegStr ${REG_ROOT} "${UNINSTALL_PATH}"  "DisplayVersion" "${VERSION}"
 WriteRegStr ${REG_ROOT} "${UNINSTALL_PATH}"  "Publisher" "${COMP_NAME}"
+
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "DirectView" "$INSTDIR\ShowPDF.exe"
 
 !ifdef WEB_SITE
 WriteRegStr ${REG_ROOT} "${UNINSTALL_PATH}"  "URLInfoAbout" "${WEB_SITE}"
