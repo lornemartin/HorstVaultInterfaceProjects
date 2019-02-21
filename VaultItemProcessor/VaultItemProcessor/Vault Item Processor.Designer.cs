@@ -602,11 +602,11 @@
             // 
             // btnHorstMFG
             // 
-            this.btnHorstMFG.Location = new System.Drawing.Point(1290, 492);
+            this.btnHorstMFG.Location = new System.Drawing.Point(1258, 492);
             this.btnHorstMFG.Name = "btnHorstMFG";
-            this.btnHorstMFG.Size = new System.Drawing.Size(75, 23);
+            this.btnHorstMFG.Size = new System.Drawing.Size(107, 23);
             this.btnHorstMFG.TabIndex = 10;
-            this.btnHorstMFG.Text = "HorstMfg";
+            this.btnHorstMFG.Text = "ProductionMaster";
             this.btnHorstMFG.UseVisualStyleBackColor = true;
             this.btnHorstMFG.Click += new System.EventHandler(this.btnHorstMFG_Click);
             // 

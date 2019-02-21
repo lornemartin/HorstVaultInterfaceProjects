@@ -2933,6 +2933,187 @@ namespace VaultItemProcessor
             }
         }
 
+        public bool processProductionMasterList(List<ExportLineItem> itemList)
+        {
+            try
+            {
+                int productNewChildRecord = 0;
+                int productNewParentRecord = 0;
+                int productProductNewRecord = 0;
+
+                foreach (ExportLineItem item in itemList)
+                {
+
+                    string connectionString;
+                    SqlConnection conn;
+                    connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;" +
+                                       @"AttachDbFilename=C:\Users\lorne\source\repos\HorstMFG\HorstMFG\App_Data\HorstMFG.mdf;" +
+                                       @"Initial Catalog=aspnet-HorstMFG;" +
+                                       @"Integrated Security=True";
+                    conn = new SqlConnection(connectionString);
+                    conn.Open();
+
+
+                    SqlCommand command = new SqlCommand("Select ID from Product where PartNumber = '" + item.Number + "'", conn);
+                    SqlDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        // we found a record with this name already, don't create it again.
+                        productNewChildRecord = int.Parse(reader[0].ToString());
+                        reader.Close();
+
+                        // create a new child parent record 
+
+                        // find the id of the newly created record's parent record
+                        if (item.Parent != "<top>")
+                        {
+                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            reader.Read();
+                            if (reader.HasRows)
+                            {
+                                productNewParentRecord = int.Parse(reader[0].ToString());    // this is the parent ID that we want to create a relationship with
+                            }
+                        }
+                        conn = new SqlConnection(connectionString);
+                        conn.Open();
+                        command = new SqlCommand();
+                        command = conn.CreateCommand();
+                        command.CommandText = @"insert into ProductProduct (
+                                                            ParentProductID, ChildProductID, Qty)" +
+                                                @"values(@ParentProductID, @ChildProductID, @Qty); ";
+
+                        command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
+                        command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
+                        command.Parameters.AddWithValue("@Qty", item.Qty);
+
+                        command.ExecuteNonQuery();
+
+                    }
+                    else
+                    {
+                        // first write each row of the list to the product table
+                        conn.Close();
+                        conn = new SqlConnection(connectionString);
+                        conn.Open();
+
+                        command = new SqlCommand();
+                        command = conn.CreateCommand();
+                        command.CommandText = @"insert into Product (
+                                        PartNumber, Description, IsStock, Material_ID, Title, 
+                                        ParentPartNumber, CategoryName, Thickness, 
+                                        StructuralCode, PlantID, RequiresPDF, 
+                                        Comment, ModifiedDate, State, Keywords, 
+                                        Notes, Revision)" +
+                        @"values(@PartNumber, @Description, @IsStock, @Material_ID, @Title, 
+                                        @ParentPartNumber, @CategoryName, @Thickness, 
+                                        @StructuralCode, @PlantID, @RequiresPDF, 
+                                        @Comment, @ModifiedDate, @State, @Keywords, 
+                                        @Notes, @Revision); ";
+
+                        command.Parameters.AddWithValue("@PartNumber", item.Number);
+                        command.Parameters.AddWithValue("@Description", item.ItemDescription);
+                        command.Parameters.AddWithValue("@IsStock", item.IsStock);
+                        command.Parameters.AddWithValue("@Material_ID", 73);
+                        command.Parameters.AddWithValue("@Title", item.Title);
+                        command.Parameters.AddWithValue("@ParentPartNumber", item.Parent);
+                        command.Parameters.AddWithValue("@Categoryname", item.Category);
+                        double thickness = 0.0;
+                        if (item.MaterialThickness != "") thickness = double.Parse(item.MaterialThickness.Remove(item.MaterialThickness.Length - 2));
+                        command.Parameters.AddWithValue("@Thickness", thickness);
+                        command.Parameters.AddWithValue("@StructuralCode", item.StructCode);
+                        command.Parameters.AddWithValue("@PlantID", item.PlantID);
+                        command.Parameters.AddWithValue("@RequiresPDF", item.RequiresPdf);
+                        command.Parameters.AddWithValue("@Comment", item.Comment);
+                        command.Parameters.AddWithValue("@ModifiedDate", item.DateModified);
+                        command.Parameters.AddWithValue("@State", item.LifeCycleState);
+                        command.Parameters.AddWithValue("@Keywords", item.Keywords);
+                        command.Parameters.AddWithValue("@Notes", item.Notes);
+                        command.Parameters.AddWithValue("@Revision", "");
+
+                        command.ExecuteNonQuery();  // this command should create the new record
+
+                        // find the id of the newly created record
+                        command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + item.Number + "';";
+                        reader.Close();
+                        reader = command.ExecuteReader();
+                        reader.Read();
+                        if (reader.HasRows)
+                        {
+                            productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
+                        }
+
+                        //-------------------------create the record in the file table
+                        if (item.RequiresPdf && item.HasPdf)
+                        {
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+
+                            string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
+                            FileStream fStream = File.OpenRead(fileName);
+
+                            byte[] contents = new byte[fStream.Length];
+
+                            fStream.Read(contents, 0, (int)fStream.Length);
+
+                            fStream.Close();
+
+                            command = new SqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId)" +
+                                                  @"values(@FileName, @ContentType, @Content, @FileType, @ProductId); ";
+
+                            command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
+                            command.Parameters.AddWithValue("@ContentType", "application/pdf");
+                            command.Parameters.AddWithValue("@Content", contents);
+                            command.Parameters.AddWithValue("@FileType", 1);
+                            command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
+
+                            command.ExecuteNonQuery();
+                        }
+
+                        // find the id of the newly created record's parent record
+                        if (item.Parent != "<top>")
+                        {
+                            command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            reader.Read();
+                            if (reader.HasRows)
+                            {
+                                productNewParentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
+                            }
+
+                            //-----------------------create the record in the product_product table
+                            conn.Close();
+                            conn = new SqlConnection(connectionString);
+                            conn.Open();
+                            command = new SqlCommand();
+                            command = conn.CreateCommand();
+                            command.CommandText = @"insert into ProductProduct (
+                                                            ParentProductID, ChildProductID, Qty)" +
+                                                    @"values(@ParentProductID, @ChildProductID, @Qty); ";
+
+                            command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
+                            command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
+                            command.Parameters.AddWithValue("@Qty", item.Qty);
+
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    conn.Close();
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public List<ExportLineItem> sortList(List<ExportLineItem> itemList)
         {
             // sort list so that no items appear before their respective parents.
@@ -2983,7 +3164,7 @@ namespace VaultItemProcessor
         private void btnHorstMFG_Click(object sender, EventArgs e)
         {
             //lineItemList = sortList(lineItemList);  // sort list so that no items appear before their respective parents
-            processHorstMFGList(lineItemList);
+            processProductionMasterList(lineItemList);
         }
     }
 
