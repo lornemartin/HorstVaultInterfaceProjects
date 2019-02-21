@@ -99,37 +99,29 @@
     <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.Explorer.ExtensibilityTools, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.ExtensibilityTools">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.Extensibility.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Extensibility.Framework">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=22.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Autodesk\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms">
+      <HintPath>..\..\..\..\..\..\Lorne's Migration\Autodesk Vault 2018.2 SDK\bin\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.Data.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
     <Reference Include="DevExpress.Printing.v17.2.Core, Version=17.2.7.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
