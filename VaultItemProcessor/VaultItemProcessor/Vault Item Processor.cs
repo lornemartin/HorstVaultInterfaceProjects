@@ -22,6 +22,7 @@ using Npgsql;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Data.SqlClient;
+using File = System.IO.File;
 
 namespace VaultItemProcessor
 {
@@ -236,7 +237,7 @@ namespace VaultItemProcessor
                 
 
                 if (fileName == "") fileName = vaultExportFileWithPath;
-                using (StreamReader reader = File.OpenText(fileName))
+                using (StreamReader reader = System.IO.File.OpenText(fileName))
                 {
                     string line;
                     line = reader.ReadLine();       // first line is header, we don't want it.
@@ -1417,7 +1418,7 @@ namespace VaultItemProcessor
 
         private void loadScheduleData(string scheduleFileName)
         {
-            if (!File.Exists(scheduleFileName))
+            if (!System.IO.File.Exists(scheduleFileName))
             {
                 dailyScheduleData = new DailyScheduleAggregate(scheduleFileName, pdfPath);
             }
@@ -1647,14 +1648,14 @@ namespace VaultItemProcessor
                             
 
 
-                            if (!File.Exists(inputPdfPath)&&item.HasPdf)
+                            if (!System.IO.File.Exists(inputPdfPath)&&item.HasPdf)
                             {
                                 ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
-                            if (File.Exists(inputPdfPath))
+                            if (System.IO.File.Exists(inputPdfPath))
                             {
-                                File.Copy(inputPdfPath, outputPdfPath);
+                                System.IO.File.Copy(inputPdfPath, outputPdfPath);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
@@ -1803,14 +1804,14 @@ namespace VaultItemProcessor
 
 
 
-                            if (!File.Exists(inputPdfPath) && item.HasPdf)
+                            if (!System.IO.File.Exists(inputPdfPath) && item.HasPdf)
                             {
                                 ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
-                            if (File.Exists(inputPdfPath))
+                            if (System.IO.File.Exists(inputPdfPath))
                             {
-                                File.Copy(inputPdfPath, outputPdfPath, true);
+                                System.IO.File.Copy(inputPdfPath, outputPdfPath, true);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
@@ -1977,15 +1978,15 @@ namespace VaultItemProcessor
 
 
 
-                            if (!File.Exists(inputPdfPath) && item.HasPdf)
+                            if (!System.IO.File.Exists(inputPdfPath) && item.HasPdf)
                             {
                                 // this shouldn't be necessary anymore because we are doing cutlists on the cover page now.
                                 //ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
-                            if (File.Exists(inputPdfPath) && item.HasPdf)
+                            if (System.IO.File.Exists(inputPdfPath) && item.HasPdf)
                             {
-                                File.Copy(inputPdfPath, outputPdfPath,true);
+                                System.IO.File.Copy(inputPdfPath, outputPdfPath,true);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
@@ -2153,15 +2154,15 @@ namespace VaultItemProcessor
 
 
 
-                            if (!File.Exists(inputPdfPath) && item.HasPdf)
+                            if (!System.IO.File.Exists(inputPdfPath) && item.HasPdf)
                             {
                                 // this shouldn't be necessary anymore because we are doing cutlists on the cover page now.
                                 //ProcessPDF.CreateEmptyPageWithWatermark(outputPdfPath, watermark);
                             }
 
-                            if (File.Exists(inputPdfPath) && item.HasPdf)
+                            if (System.IO.File.Exists(inputPdfPath) && item.HasPdf)
                             {
-                                File.Copy(inputPdfPath, outputPdfPath, true);
+                                System.IO.File.Copy(inputPdfPath, outputPdfPath, true);
 
                                 // had some exceptions getting thrown here if the file is read-only.  Will set full permissions to the output file to avoid this.
                                 FileInfo fileInfo = new FileInfo(outputPdfPath);
@@ -2410,8 +2411,8 @@ namespace VaultItemProcessor
 
                             foreach (var v in exportFileList)
                             {
-                                File.Delete(exportFileName);
-                                File.Copy(v[4], exportFileName);
+                                System.IO.File.Delete(exportFileName);
+                                System.IO.File.Copy(v[4], exportFileName);
 
                                 List<string> itemsWithoutDrawings = new List<string>();
                                 itemsWithoutDrawings = processVaultItemExport();
@@ -2883,7 +2884,7 @@ namespace VaultItemProcessor
                             conn.Open();
 
                             string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
-                            FileStream fStream = File.OpenRead(fileName);
+                            FileStream fStream = System.IO.File.OpenRead(fileName);
 
                             byte[] contents = new byte[fStream.Length];
 
@@ -2948,176 +2949,236 @@ namespace VaultItemProcessor
         {
             try
             {
-                int productNewChildRecord = 0;
-                int productNewParentRecord = 0;
-                int productProductNewRecord = 0;
+                ProductionMasterEntities dbContext = new ProductionMasterEntities();
+                string orderNumber = txtBoxOrderNumber.Text;
+                string schedName = textBoxScheduleName.Text;
+                string batchName = textBoxBatchName.Text;
+
+                int qty = (int) spinEditOrderQty.Value;
 
                 foreach (ExportLineItem item in itemList)
                 {
-
-                    string connectionString;
-                    SqlConnection conn;
-                    connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;" +
-                                       @"AttachDbFilename=M:\ProductionMaster Database\RadanMaster.mdf;" +
-                                       @"IInitial Catalog=RadanMaster;" +
-                                       @"Integrated Security=True";
-                    conn = new SqlConnection(connectionString);
-                    conn.Open();
-
-
-                    SqlCommand command = new SqlCommand("Select ID from Part where FileName = '" + item.Number + "'", conn);
-                    SqlDataReader reader = command.ExecuteReader();
-
-                    if (reader.HasRows)
+                    // create the part object
+                    Part newPart = dbContext.Parts.Where(p => p.FileName == item.Number).FirstOrDefault();
+                    if (newPart == null)
                     {
-                        // we found a record with this name already, don't create it again.
-                        productNewChildRecord = int.Parse(reader[0].ToString());
-                        reader.Close();
+                        newPart = new Part();
+                        newPart.FileName = item.Number;
+                        newPart.Description = item.ItemDescription;
+                        string thicknessStr = item.MaterialThickness;
+                        newPart.Thickness = double.Parse(thicknessStr);
+                        newPart.Material = item.Material;
+                        newPart.Thumbnail = null;
+                        newPart.HasBends = false;
 
-                        // create a new child parent record 
+                        newPart.IsStock = item.IsStock;
+                        newPart.CategoryName = item.Category;
+                        newPart.StructuralCode = item.StructCode;
+                        newPart.PlantID = item.PlantID;
+                        newPart.RequiresPDF = item.RequiresPdf;
+                        newPart.Comment = item.Comment;
+                        newPart.ModifiedDate = item.DateModified;
+                        newPart.State = item.LifeCycleState;
+                        newPart.Keywords = item.Keywords;
+                        newPart.Notes = item.Notes;
 
-                        //// find the id of the newly created record's parent record
-                        //if (item.Parent != "<top>")
-                        //{
-                        //    command.CommandText = "SELECT ID FROM Part WHERE FileName = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
-                        //    reader.Close();
-                        //    reader = command.ExecuteReader();
-                        //    reader.Read();
-                        //    if (reader.HasRows)
-                        //    {
-                        //        productNewParentRecord = int.Parse(reader[0].ToString());    // this is the parent ID that we want to create a relationship with
-                        //    }
-                        //}
-                        //conn = new SqlConnection(connectionString);
-                        //conn.Open();
-                        //command = new SqlCommand();
-                        //command = conn.CreateCommand();
-                        //command.CommandText = @"insert into ProductProduct (
-                        //                                    ParentProductID, ChildProductID, Qty)" +
-                        //                        @"values(@ParentProductID, @ChildProductID, @Qty); ";
-
-                        //command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
-                        //command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
-                        //command.Parameters.AddWithValue("@Qty", item.Qty);
-
-                        //command.ExecuteNonQuery();
-
+                        dbContext.Parts.Add(newPart);
+                        dbContext.SaveChanges();
                     }
                     else
                     {
-                        // first write each row of the list to the product table
-                        conn.Close();
-                        conn = new SqlConnection(connectionString);
-                        conn.Open();
+                        // update properties if needed
+                        newPart.Description = item.ItemDescription;
+                        string thicknessStr = item.MaterialThickness;
+                        newPart.Thickness = double.Parse(thicknessStr);
+                        newPart.Material = item.Material;
+                        newPart.Thumbnail = null;
+                        newPart.HasBends = false;
 
-                        command = new SqlCommand();
-                        command = conn.CreateCommand();
-                        command.CommandText = @"insert into Part (
-                                        FileName, Description, IsStock, Material_ID, Title, 
-                                        ParentPartNumber, CategoryName, Thickness, 
-                                        StructuralCode, PlantID, RequiresPDF, 
-                                        Comment, ModifiedDate, State, Keywords, 
-                                        Notes, Revision)" +
-                        @"values(@FileName, @Description, @IsStock, @Material_ID, @Title, 
-                                        @ParentPartNumber, @CategoryName, @Thickness, 
-                                        @StructuralCode, @PlantID, @RequiresPDF, 
-                                        @Comment, @ModifiedDate, @State, @Keywords, 
-                                        @Notes, @Revision); ";
-
-                        command.Parameters.AddWithValue("@FileName", item.Number);
-                        command.Parameters.AddWithValue("@Description", item.ItemDescription);
-                        command.Parameters.AddWithValue("@IsStock", item.IsStock);
-                        command.Parameters.AddWithValue("@Material_ID", 73);
-                        command.Parameters.AddWithValue("@Title", item.Title);
-                        command.Parameters.AddWithValue("@ParentPartNumber", item.Parent);
-                        command.Parameters.AddWithValue("@Categoryname", item.Category);
-                        double thickness = 0.0;
-                        if (item.MaterialThickness != "") thickness = double.Parse(item.MaterialThickness.Remove(item.MaterialThickness.Length - 2));
-                        command.Parameters.AddWithValue("@Thickness", thickness);
-                        command.Parameters.AddWithValue("@StructuralCode", item.StructCode);
-                        command.Parameters.AddWithValue("@PlantID", item.PlantID);
-                        command.Parameters.AddWithValue("@RequiresPDF", item.RequiresPdf);
-                        command.Parameters.AddWithValue("@Comment", item.Comment);
-                        command.Parameters.AddWithValue("@ModifiedDate", item.DateModified);
-                        command.Parameters.AddWithValue("@State", item.LifeCycleState);
-                        command.Parameters.AddWithValue("@Keywords", item.Keywords);
-                        command.Parameters.AddWithValue("@Notes", item.Notes);
-                        command.Parameters.AddWithValue("@Revision", "");
-
-                        command.ExecuteNonQuery();  // this command should create the new record
-
-                        // find the id of the newly created record
-                        command.CommandText = "SELECT ID FROM Part WHERE FileName = '" + item.Number + "';";
-                        reader.Close();
-                        reader = command.ExecuteReader();
-                        reader.Read();
-                        if (reader.HasRows)
-                        {
-                            productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
-                        }
-
-                        //-------------------------create the record in the file table
-                        if (item.RequiresPdf && item.HasPdf)
-                        {
-                            conn.Close();
-                            conn = new SqlConnection(connectionString);
-                            conn.Open();
-
-                            string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
-                            FileStream fStream = File.OpenRead(fileName);
-
-                            byte[] contents = new byte[fStream.Length];
-
-                            fStream.Read(contents, 0, (int)fStream.Length);
-
-                            fStream.Close();
-
-                            command = new SqlCommand();
-                            command = conn.CreateCommand();
-                            command.CommandText = @"insert into [File] (FileName, ContentType, Content, FileType, ProductId)" +
-                                                  @"values(@FileName, @ContentType, @Content, @FileType, @ProductId); ";
-
-                            command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
-                            command.Parameters.AddWithValue("@ContentType", "application/pdf");
-                            command.Parameters.AddWithValue("@Content", contents);
-                            command.Parameters.AddWithValue("@FileType", 1);
-                            command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
-
-                            command.ExecuteNonQuery();
-                        }
-
-                        //// find the id of the newly created record's parent record
-                        //if (item.Parent != "<top>")
-                        //{
-                        //    command.CommandText = "SELECT ID FROM Product WHERE PartNumber = '" + Path.GetFileNameWithoutExtension(item.Parent) + "';";
-                        //    reader.Close();
-                        //    reader = command.ExecuteReader();
-                        //    reader.Read();
-                        //    if (reader.HasRows)
-                        //    {
-                        //        productNewParentRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
-                        //    }
-
-                        //    //-----------------------create the record in the product_product table
-                        //    conn.Close();
-                        //    conn = new SqlConnection(connectionString);
-                        //    conn.Open();
-                        //    command = new SqlCommand();
-                        //    command = conn.CreateCommand();
-                        //    command.CommandText = @"insert into ProductProduct (
-                        //                                    ParentProductID, ChildProductID, Qty)" +
-                        //                            @"values(@ParentProductID, @ChildProductID, @Qty); ";
-
-                        //    command.Parameters.AddWithValue("@ParentProductID", productNewParentRecord);
-                        //    command.Parameters.AddWithValue("@ChildProductID", productNewChildRecord);
-                        //    command.Parameters.AddWithValue("@Qty", item.Qty);
-
-                        //    command.ExecuteNonQuery();
-                        //}
+                        newPart.IsStock = item.IsStock;
+                        newPart.CategoryName = item.Category;
+                        newPart.StructuralCode = item.StructCode;
+                        newPart.PlantID = item.PlantID;
+                        newPart.RequiresPDF = item.RequiresPdf;
+                        newPart.Comment = item.Comment;
+                        newPart.ModifiedDate = item.DateModified;
+                        newPart.State = item.LifeCycleState;
+                        newPart.Keywords = item.Keywords;
+                        newPart.Notes = item.Notes;
+                        dbContext.SaveChanges();
                     }
-                    conn.Close();
+
+                    // create the pdf file object
+                    if (item.RequiresPdf && item.HasPdf)
+                    {
+                        string dateTimeStamp = DateTime.Now.ToString();
+                        string fileName = @"M:\PDF Drawing Files\" + item.Number + dateTimeStamp + ".pdf";
+                        FileStream fStream = System.IO.File.OpenRead(fileName);
+                        byte[] contents = new byte[fStream.Length];
+                        fStream.Read(contents, 0, (int)fStream.Length);
+                        fStream.Close();
+
+                        VaultItemProcessor.File newFile = new File();
+                        newFile.FileName = fileName;
+                        newFile.ContentType = "application/pdf";
+                        newFile.Content = contents;
+                        newFile.Part = newPart;
+                    }
+
+                    // create or access the order object
+                    Order newOrder = new Order();
+                    bool isBatch = false;
+                    if (txtBoxOrderNumber.Text != "")
+                    {
+                        newOrder = dbContext.Orders.Where(o => o.OrderNumber == txtBoxOrderNumber.Text).FirstOrDefault();
+                        isBatch = false;
+
+                    }
+                    if (textBoxBatchName.Text != "")
+                    {
+                        newOrder = dbContext.Orders.Where(o => o.BatchName == textBoxBatchName.Text).FirstOrDefault();
+                        isBatch = true;
+                    }
+
+                    if (newOrder == null || newOrder.BatchName == null)
+                    {
+                        newOrder = new Order();
+                        newOrder.IsComplete = false;
+                        newOrder.DueDate = DateTime.Now;
+                        newOrder.EntryDate = DateTime.Now;
+                        newOrder.OrderItems = new List<OrderItem>();
+                        newOrder.OrderNumber = txtBoxOrderNumber.Text.TrimEnd();
+                        newOrder.ScheduleName = textBoxScheduleName.Text.TrimEnd();
+                        newOrder.BatchName = textBoxBatchName.Text.TrimEnd();
+                        if (newOrder.BatchName == null) newOrder.BatchName = "";
+                        newOrder.IsBatch = isBatch;
+
+                        dbContext.Orders.Add(newOrder);
+                        dbContext.SaveChanges();
+
+                    }
+
+
+                    // create the order item object
+
+
                 }
-                return true;
+                    //int productNewChildRecord = 0;
+                    //string orderNumber = txtBoxOrderNumber.Text;
+                    //int qty = (int) spinEditOrderQty.Value;
+
+                    //string connectionString;
+                    //SqlConnection conn;
+                    //connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;" +
+                    //                   @"AttachDbFilename=M:\ProductionMaster Database\RadanMaster.mdf;" +
+                    //                   @"Initial Catalog=RadanMaster;" +
+                    //                   @"Integrated Security=True";
+                    //conn = new SqlConnection(connectionString);
+                    //conn.Open();
+
+                    //foreach (ExportLineItem item in itemList)
+                    //{
+                    //    SqlCommand command = new SqlCommand("Select ID from Parts where FileName = '" + item.Number + "'", conn);
+                    //    SqlDataReader reader = command.ExecuteReader();
+
+                    //    if (reader.HasRows)
+                    //    {
+                    //        // we found a record with this name already, don't create it again.
+                    //        productNewChildRecord = int.Parse(reader[0].ToString());
+                    //        reader.Close();
+                    //    }
+                    //    else
+                    //    {
+                    //        // first write each row of the list to the product table
+                    //        conn.Close();
+                    //        conn = new SqlConnection(connectionString);
+                    //        conn.Open();
+
+                    //        command = new SqlCommand();
+                    //        command = conn.CreateCommand();
+                    //        command.CommandText = @"insert into Parts (
+                    //                        FileName, Description, IsStock, Material, Title, 
+                    //                        ParentPartNumber, CategoryName, Thickness, 
+                    //                        StructuralCode, PlantID, RequiresPDF, 
+                    //                        Comment, ModifiedDate, State, Keywords, 
+                    //                        Notes, Revision, HasBends)" +
+                    //        @"values(@FileName, @Description, @IsStock, @Material, @Title, 
+                    //                        @ParentPartNumber, @CategoryName, @Thickness, 
+                    //                        @StructuralCode, @PlantID, @RequiresPDF, 
+                    //                        @Comment, @ModifiedDate, @State, @Keywords, 
+                    //                        @Notes, @Revision, @HasBends); ";
+
+                    //        command.Parameters.AddWithValue("@FileName", item.Number);
+                    //        command.Parameters.AddWithValue("@Description", item.ItemDescription);
+                    //        command.Parameters.AddWithValue("@IsStock", item.IsStock);
+                    //        command.Parameters.AddWithValue("@Material", item.Material);
+                    //        command.Parameters.AddWithValue("@Title", item.Title);
+                    //        command.Parameters.AddWithValue("@ParentPartNumber", item.Parent);
+                    //        command.Parameters.AddWithValue("@Categoryname", item.Category);
+                    //        double thickness = 0.0;
+                    //        if (item.MaterialThickness != "") thickness = double.Parse(item.MaterialThickness.Remove(item.MaterialThickness.Length - 2));
+                    //        command.Parameters.AddWithValue("@Thickness", thickness);
+                    //        command.Parameters.AddWithValue("@StructuralCode", item.StructCode);
+                    //        command.Parameters.AddWithValue("@PlantID", item.PlantID);
+                    //        command.Parameters.AddWithValue("@RequiresPDF", item.RequiresPdf);
+                    //        command.Parameters.AddWithValue("@Comment", item.Comment);
+                    //        command.Parameters.AddWithValue("@ModifiedDate", item.DateModified);
+                    //        command.Parameters.AddWithValue("@State", item.LifeCycleState);
+                    //        command.Parameters.AddWithValue("@Keywords", item.Keywords);
+                    //        command.Parameters.AddWithValue("@Notes", item.Notes);
+                    //        command.Parameters.AddWithValue("@Revision", "");
+                    //        command.Parameters.AddWithValue("@HasBends", false);
+
+
+                    //        command.ExecuteNonQuery();  // this command should create the new record
+
+                    //        // find the id of the newly created record
+                    //        command.CommandText = "SELECT ID FROM Parts WHERE FileName = '" + item.Number + "';";
+                    //        reader.Close();
+                    //        reader = command.ExecuteReader();
+                    //        reader.Read();
+                    //        if (reader.HasRows)
+                    //        {
+                    //            productNewChildRecord = int.Parse(reader[0].ToString());    // this is now the id of the newly created record
+                    //        }
+
+                    //        //-------------------------create the record in the file table
+                    //        if (item.RequiresPdf && item.HasPdf)
+                    //        {
+                    //            conn.Close();
+                    //            conn = new SqlConnection(connectionString);
+                    //            conn.Open();
+
+                    //            string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
+                    //            FileStream fStream = File.OpenRead(fileName);
+
+                    //            byte[] contents = new byte[fStream.Length];
+
+                    //            fStream.Read(contents, 0, (int)fStream.Length);
+
+                    //            fStream.Close();
+
+                    //            command = new SqlCommand();
+                    //            command = conn.CreateCommand();
+                    //            command.CommandText = @"insert into [Files] (FileName, ContentType, Content, FileType, ProductId)" +
+                    //                                  @"values(@FileName, @ContentType, @Content, @FileType, @ProductId); ";
+
+                    //            command.Parameters.AddWithValue("@FileName", Path.GetFileName(fileName));
+                    //            command.Parameters.AddWithValue("@ContentType", "application/pdf");
+                    //            command.Parameters.AddWithValue("@Content", contents);
+                    //            command.Parameters.AddWithValue("@FileType", 1);
+                    //            command.Parameters.AddWithValue("@ProductId", productNewChildRecord);
+
+                    //            command.ExecuteNonQuery();
+                    //        }
+
+                    //    }
+
+                    //}
+                    //conn.Close();
+
+
+                    return true;
             }
             catch (Exception ex)
             {
@@ -3186,6 +3247,11 @@ namespace VaultItemProcessor
             }
 
             exportTreeList.RefreshDataSource();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            processProductionMasterList(lineItemList);
         }
     }
 

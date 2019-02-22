@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1 = new DevExpress.XtraSplashScreen.SplashScreenManager(this, null, true, true);
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule1 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression1 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
@@ -57,9 +58,9 @@
             this.Material = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.colStructCode = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Operations = new DevExpress.XtraTreeList.Columns.TreeListColumn();
+            this.Number = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.exportTreeList = new DevExpress.XtraTreeList.TreeList();
             this.Parent = new DevExpress.XtraTreeList.Columns.TreeListColumn();
-            this.Number = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Title = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.ItemDescription = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Category = new DevExpress.XtraTreeList.Columns.TreeListColumn();
@@ -92,10 +93,15 @@
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
-            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
+            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.btnHorstMFG = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.textBoxBatchName = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.textBoxScheduleName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -157,6 +163,16 @@
             this.Operations.VisibleIndex = 7;
             this.Operations.Width = 60;
             // 
+            // Number
+            // 
+            this.Number.Caption = "Number";
+            this.Number.FieldName = "Number";
+            this.Number.Name = "Number";
+            this.Number.OptionsColumn.AllowSort = false;
+            this.Number.Visible = true;
+            this.Number.VisibleIndex = 0;
+            this.Number.Width = 150;
+            // 
             // exportTreeList
             // 
             this.exportTreeList.Columns.AddRange(new DevExpress.XtraTreeList.Columns.TreeListColumn[] {
@@ -175,7 +191,6 @@
             this.HasPdf,
             this.requiresPDF,
             this.colNotes});
-            this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
             this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
             treeListFormatRule1.Name = "Format0";
@@ -310,16 +325,6 @@
             this.Parent.Visible = true;
             this.Parent.VisibleIndex = 11;
             // 
-            // Number
-            // 
-            this.Number.Caption = "Number";
-            this.Number.FieldName = "Number";
-            this.Number.Name = "Number";
-            this.Number.OptionsColumn.AllowSort = false;
-            this.Number.Visible = true;
-            this.Number.VisibleIndex = 0;
-            this.Number.Width = 150;
-            // 
             // Title
             // 
             this.Title.Caption = "Title";
@@ -408,7 +413,7 @@
             // btnProcess
             // 
             this.btnProcess.Enabled = false;
-            this.btnProcess.Location = new System.Drawing.Point(458, 27);
+            this.btnProcess.Location = new System.Drawing.Point(456, 24);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(89, 23);
             this.btnProcess.TabIndex = 1;
@@ -434,7 +439,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 676);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 734);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1417, 22);
             this.statusStrip1.TabIndex = 2;
@@ -510,13 +515,17 @@
             this.groupBoxOutput.Controls.Add(this.outputFolderlbl);
             this.groupBoxOutput.Controls.Add(this.textBoxOutputFolder);
             this.groupBoxOutput.Controls.Add(this.label1);
+            this.groupBoxOutput.Controls.Add(this.textBoxScheduleName);
+            this.groupBoxOutput.Controls.Add(this.textBoxBatchName);
+            this.groupBoxOutput.Controls.Add(this.label4);
             this.groupBoxOutput.Controls.Add(this.txtBoxOrderNumber);
+            this.groupBoxOutput.Controls.Add(this.label3);
             this.groupBoxOutput.Controls.Add(this.btnProcess);
             this.groupBoxOutput.Controls.Add(this.label2);
             this.groupBoxOutput.Controls.Add(this.spinEditOrderQty);
             this.groupBoxOutput.Location = new System.Drawing.Point(327, 492);
             this.groupBoxOutput.Name = "groupBoxOutput";
-            this.groupBoxOutput.Size = new System.Drawing.Size(563, 181);
+            this.groupBoxOutput.Size = new System.Drawing.Size(563, 239);
             this.groupBoxOutput.TabIndex = 7;
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
@@ -524,7 +533,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(334, 88);
+            this.button1.Location = new System.Drawing.Point(334, 149);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(104, 51);
             this.button1.TabIndex = 10;
@@ -534,7 +543,7 @@
             // 
             // btnRemoveBatchItem
             // 
-            this.btnRemoveBatchItem.Location = new System.Drawing.Point(20, 146);
+            this.btnRemoveBatchItem.Location = new System.Drawing.Point(20, 207);
             this.btnRemoveBatchItem.Name = "btnRemoveBatchItem";
             this.btnRemoveBatchItem.Size = new System.Drawing.Size(151, 23);
             this.btnRemoveBatchItem.TabIndex = 10;
@@ -544,7 +553,7 @@
             // 
             // btnGroupSawDrawings3
             // 
-            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 88);
+            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 149);
             this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
             this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
             this.btnGroupSawDrawings3.TabIndex = 12;
@@ -554,7 +563,7 @@
             // 
             // btnRemoveOrder
             // 
-            this.btnRemoveOrder.Location = new System.Drawing.Point(20, 117);
+            this.btnRemoveOrder.Location = new System.Drawing.Point(20, 178);
             this.btnRemoveOrder.Name = "btnRemoveOrder";
             this.btnRemoveOrder.Size = new System.Drawing.Size(151, 23);
             this.btnRemoveOrder.TabIndex = 10;
@@ -564,7 +573,7 @@
             // 
             // btnFinalize
             // 
-            this.btnFinalize.Location = new System.Drawing.Point(20, 88);
+            this.btnFinalize.Location = new System.Drawing.Point(20, 149);
             this.btnFinalize.Name = "btnFinalize";
             this.btnFinalize.Size = new System.Drawing.Size(151, 23);
             this.btnFinalize.TabIndex = 9;
@@ -574,7 +583,7 @@
             // 
             // btnSelectOutputFolder
             // 
-            this.btnSelectOutputFolder.Location = new System.Drawing.Point(444, 58);
+            this.btnSelectOutputFolder.Location = new System.Drawing.Point(444, 119);
             this.btnSelectOutputFolder.Name = "btnSelectOutputFolder";
             this.btnSelectOutputFolder.Size = new System.Drawing.Size(23, 23);
             this.btnSelectOutputFolder.TabIndex = 8;
@@ -585,7 +594,7 @@
             // outputFolderlbl
             // 
             this.outputFolderlbl.AutoSize = true;
-            this.outputFolderlbl.Location = new System.Drawing.Point(17, 62);
+            this.outputFolderlbl.Location = new System.Drawing.Point(17, 123);
             this.outputFolderlbl.Name = "outputFolderlbl";
             this.outputFolderlbl.Size = new System.Drawing.Size(71, 13);
             this.outputFolderlbl.TabIndex = 7;
@@ -593,7 +602,7 @@
             // 
             // textBoxOutputFolder
             // 
-            this.textBoxOutputFolder.Location = new System.Drawing.Point(106, 60);
+            this.textBoxOutputFolder.Location = new System.Drawing.Point(106, 121);
             this.textBoxOutputFolder.Name = "textBoxOutputFolder";
             this.textBoxOutputFolder.Size = new System.Drawing.Size(332, 20);
             this.textBoxOutputFolder.TabIndex = 6;
@@ -629,23 +638,6 @@
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
             // 
-            // btnHorstMFG
-            // 
-            this.btnHorstMFG.Location = new System.Drawing.Point(1258, 492);
-            this.btnHorstMFG.Name = "btnHorstMFG";
-            this.btnHorstMFG.Size = new System.Drawing.Size(107, 23);
-            this.btnHorstMFG.TabIndex = 10;
-            this.btnHorstMFG.Text = "ProductionMaster";
-            this.btnHorstMFG.UseVisualStyleBackColor = true;
-            this.btnHorstMFG.Click += new System.EventHandler(this.btnHorstMFG_Click);
-            // 
-            // colNotes
-            // 
-            this.colNotes.Caption = "Notes";
-            this.colNotes.FieldName = "Notes";
-            this.colNotes.Name = "colNotes";
-            this.colNotes.OptionsColumn.AllowEdit = false;
-            // 
             // radioGroup1
             // 
             this.radioGroup1.Location = new System.Drawing.Point(52, 603);
@@ -658,11 +650,67 @@
             this.radioGroup1.TabIndex = 11;
             this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);
             // 
+            // btnHorstMFG
+            // 
+            this.btnHorstMFG.Location = new System.Drawing.Point(1258, 492);
+            this.btnHorstMFG.Name = "btnHorstMFG";
+            this.btnHorstMFG.Size = new System.Drawing.Size(107, 23);
+            this.btnHorstMFG.TabIndex = 10;
+            this.btnHorstMFG.Text = "ProductionMaster";
+            this.btnHorstMFG.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(1253, 501);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(112, 23);
+            this.button2.TabIndex = 12;
+            this.button2.Text = "ProductionMaster";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(182, 56);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(38, 13);
+            this.label3.TabIndex = 4;
+            this.label3.Text = "Batch:";
+            // 
+            // textBoxBatchName
+            // 
+            this.textBoxBatchName.Location = new System.Drawing.Point(235, 52);
+            this.textBoxBatchName.Name = "textBoxBatchName";
+            this.textBoxBatchName.Size = new System.Drawing.Size(203, 20);
+            this.textBoxBatchName.TabIndex = 5;
+            this.textBoxBatchName.Text = "Batch Name";
+            this.textBoxBatchName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(177, 82);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(55, 13);
+            this.label4.TabIndex = 4;
+            this.label4.Text = "Schedule:";
+            // 
+            // textBoxScheduleName
+            // 
+            this.textBoxScheduleName.Location = new System.Drawing.Point(235, 78);
+            this.textBoxScheduleName.Name = "textBoxScheduleName";
+            this.textBoxScheduleName.Size = new System.Drawing.Size(203, 20);
+            this.textBoxScheduleName.TabIndex = 5;
+            this.textBoxScheduleName.Text = "Schedule Name";
+            this.textBoxScheduleName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.ClientSize = new System.Drawing.Size(1417, 756);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
@@ -735,6 +783,11 @@
         private System.Windows.Forms.Button btnHorstMFG;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
         private DevExpress.XtraEditors.RadioGroup radioGroup1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.TextBox textBoxScheduleName;
+        private System.Windows.Forms.TextBox textBoxBatchName;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

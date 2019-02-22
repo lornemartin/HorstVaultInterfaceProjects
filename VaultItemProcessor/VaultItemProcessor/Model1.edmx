@@ -1,0 +1,709 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="RadanMasterModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Files">
+          <Key>
+            <PropertyRef Name="FileId" />
+          </Key>
+          <Property Name="FileId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="FileName" Type="nvarchar" MaxLength="255" />
+          <Property Name="ContentType" Type="nvarchar" MaxLength="100" />
+          <Property Name="Content" Type="varbinary(max)" />
+          <Property Name="FileType" Type="int" Nullable="false" />
+          <Property Name="ProductId" Type="int" Nullable="false" />
+          <Property Name="Part_ID" Type="int" />
+        </EntityType>
+        <EntityType Name="Materials">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar(max)" />
+          <Property Name="Thickness" Type="real" Nullable="false" />
+          <Property Name="StructuralCode" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="NestedParts">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Qty" Type="int" Nullable="false" />
+          <Property Name="Nest_ID" Type="int" />
+          <Property Name="OrderItem_ID" Type="int" />
+        </EntityType>
+        <EntityType Name="NestOrderItems">
+          <Key>
+            <PropertyRef Name="Nest_ID" />
+            <PropertyRef Name="OrderItem_ID" />
+          </Key>
+          <Property Name="Nest_ID" Type="int" Nullable="false" />
+          <Property Name="OrderItem_ID" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Nests">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="nestName" Type="nvarchar(max)" />
+          <Property Name="nestPath" Type="nvarchar(max)" />
+          <Property Name="Thumbnail" Type="varbinary(max)" />
+        </EntityType>
+        <EntityType Name="Operations">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar(max)" />
+          <Property Name="Location" Type="nvarchar(max)" />
+          <Property Name="Part_ID" Type="int" />
+        </EntityType>
+        <EntityType Name="OrderItems">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderID" Type="int" Nullable="false" />
+          <Property Name="IsComplete" Type="bit" Nullable="false" />
+          <Property Name="QtyRequired" Type="int" Nullable="false" />
+          <Property Name="QtyNested" Type="int" Nullable="false" />
+          <Property Name="IsInProject" Type="bit" Nullable="false" />
+          <Property Name="Notes" Type="nvarchar(max)" />
+          <Property Name="PartID" Type="int" Nullable="false" />
+          <Property Name="RadanIDNumber" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Orders">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderNumber" Type="nvarchar(max)" />
+          <Property Name="ScheduleName" Type="nvarchar(max)" />
+          <Property Name="BatchName" Type="nvarchar(max)" />
+          <Property Name="EntryDate" Type="datetime" Nullable="false" />
+          <Property Name="DueDate" Type="datetime" Nullable="false" />
+          <Property Name="IsComplete" Type="bit" Nullable="false" />
+          <Property Name="IsBatch" Type="bit" Nullable="false" />
+          <Property Name="DateCompleted" Type="datetime" />
+        </EntityType>
+        <EntityType Name="Parts">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="FileName" Type="nvarchar(max)" />
+          <Property Name="Description" Type="nvarchar(max)" />
+          <Property Name="Material" Type="nvarchar(max)" />
+          <Property Name="Thickness" Type="float" Nullable="false" />
+          <Property Name="Thumbnail" Type="varbinary(max)" />
+          <Property Name="HasBends" Type="bit" Nullable="false" />
+          <Property Name="Title" Type="nvarchar(max)" />
+          <Property Name="ParentPartNumber" Type="nvarchar(max)" />
+          <Property Name="CategoryName" Type="nvarchar(max)" />
+          <Property Name="StructuralCode" Type="nvarchar(max)" />
+          <Property Name="PlantID" Type="nvarchar(max)" />
+          <Property Name="IsStock" Type="bit" Nullable="false" />
+          <Property Name="RequiresPDF" Type="bit" Nullable="false" />
+          <Property Name="Comment" Type="nvarchar(max)" />
+          <Property Name="ModifiedDate" Type="datetime" Nullable="false" />
+          <Property Name="State" Type="nvarchar(max)" />
+          <Property Name="Keywords" Type="nvarchar(max)" />
+          <Property Name="Notes" Type="nvarchar(max)" />
+          <Property Name="Revision" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="RadanIDs">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" />
+          <Property Name="RadanIDNumber" Type="int" Nullable="false" />
+          <Property Name="OrderItemID" Type="int" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_dbo_Files_dbo_Parts_Part_ID">
+          <End Role="Parts" Type="Self.Parts" Multiplicity="0..1" />
+          <End Role="Files" Type="Self.Files" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Files">
+              <PropertyRef Name="Part_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestedParts_dbo_Nests_Nest_ID">
+          <End Role="Nests" Type="Self.Nests" Multiplicity="0..1" />
+          <End Role="NestedParts" Type="Self.NestedParts" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Nests">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestedParts">
+              <PropertyRef Name="Nest_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID">
+          <End Role="OrderItems" Type="Self.OrderItems" Multiplicity="0..1" />
+          <End Role="NestedParts" Type="Self.NestedParts" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItems">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestedParts">
+              <PropertyRef Name="OrderItem_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestOrderItems_dbo_Nests_Nest_ID">
+          <End Role="Nests" Type="Self.Nests" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="NestOrderItems" Type="Self.NestOrderItems" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Nests">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestOrderItems">
+              <PropertyRef Name="Nest_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestOrderItems_dbo_OrderItems_OrderItem_ID">
+          <End Role="OrderItems" Type="Self.OrderItems" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="NestOrderItems" Type="Self.NestOrderItems" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItems">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestOrderItems">
+              <PropertyRef Name="OrderItem_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_Operations_dbo_Parts_Part_ID">
+          <End Role="Parts" Type="Self.Parts" Multiplicity="0..1" />
+          <End Role="Operations" Type="Self.Operations" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Operations">
+              <PropertyRef Name="Part_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItems_dbo_Orders_OrderID">
+          <End Role="Orders" Type="Self.Orders" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="OrderItems" Type="Self.OrderItems" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Orders">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItems">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItems_dbo_Parts_PartID">
+          <End Role="Parts" Type="Self.Parts" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="OrderItems" Type="Self.OrderItems" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItems">
+              <PropertyRef Name="PartID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_RadanIDs_dbo_OrderItems_ID">
+          <End Role="OrderItems" Type="Self.OrderItems" Multiplicity="1" />
+          <End Role="RadanIDs" Type="Self.RadanIDs" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItems">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="RadanIDs">
+              <PropertyRef Name="ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="RadanMasterModelStoreContainer">
+          <EntitySet Name="Files" EntityType="Self.Files" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Materials" EntityType="Self.Materials" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="NestedParts" EntityType="Self.NestedParts" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="NestOrderItems" EntityType="Self.NestOrderItems" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Nests" EntityType="Self.Nests" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Operations" EntityType="Self.Operations" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="OrderItems" EntityType="Self.OrderItems" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Orders" EntityType="Self.Orders" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Parts" EntityType="Self.Parts" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RadanIDs" EntityType="Self.RadanIDs" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_dbo_Files_dbo_Parts_Part_ID" Association="Self.FK_dbo_Files_dbo_Parts_Part_ID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="Files" EntitySet="Files" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestedParts_dbo_Nests_Nest_ID" Association="Self.FK_dbo_NestedParts_dbo_Nests_Nest_ID">
+            <End Role="Nests" EntitySet="Nests" />
+            <End Role="NestedParts" EntitySet="NestedParts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID" Association="Self.FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID">
+            <End Role="OrderItems" EntitySet="OrderItems" />
+            <End Role="NestedParts" EntitySet="NestedParts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestOrderItems_dbo_Nests_Nest_ID" Association="Self.FK_dbo_NestOrderItems_dbo_Nests_Nest_ID">
+            <End Role="Nests" EntitySet="Nests" />
+            <End Role="NestOrderItems" EntitySet="NestOrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestOrderItems_dbo_OrderItems_OrderItem_ID" Association="Self.FK_dbo_NestOrderItems_dbo_OrderItems_OrderItem_ID">
+            <End Role="OrderItems" EntitySet="OrderItems" />
+            <End Role="NestOrderItems" EntitySet="NestOrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_Operations_dbo_Parts_Part_ID" Association="Self.FK_dbo_Operations_dbo_Parts_Part_ID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="Operations" EntitySet="Operations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItems_dbo_Orders_OrderID" Association="Self.FK_dbo_OrderItems_dbo_Orders_OrderID">
+            <End Role="Orders" EntitySet="Orders" />
+            <End Role="OrderItems" EntitySet="OrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItems_dbo_Parts_PartID" Association="Self.FK_dbo_OrderItems_dbo_Parts_PartID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="OrderItems" EntitySet="OrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_RadanIDs_dbo_OrderItems_ID" Association="Self.FK_dbo_RadanIDs_dbo_OrderItems_ID">
+            <End Role="OrderItems" EntitySet="OrderItems" />
+            <End Role="RadanIDs" EntitySet="RadanIDs" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="RadanMasterModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="File">
+          <Key>
+            <PropertyRef Name="FileId" />
+          </Key>
+          <Property Name="FileId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="FileName" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="ContentType" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Content" Type="Binary" MaxLength="Max" FixedLength="false" />
+          <Property Name="FileType" Type="Int32" Nullable="false" />
+          <Property Name="ProductId" Type="Int32" Nullable="false" />
+          <Property Name="Part_ID" Type="Int32" />
+          <NavigationProperty Name="Part" Relationship="Self.FK_dbo_Files_dbo_Parts_Part_ID" FromRole="Files" ToRole="Parts" />
+        </EntityType>
+        <EntityType Name="Material">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Thickness" Type="Single" Nullable="false" />
+          <Property Name="StructuralCode" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="NestedPart">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Qty" Type="Int32" Nullable="false" />
+          <Property Name="Nest_ID" Type="Int32" />
+          <Property Name="OrderItem_ID" Type="Int32" />
+          <NavigationProperty Name="Nest" Relationship="Self.FK_dbo_NestedParts_dbo_Nests_Nest_ID" FromRole="NestedParts" ToRole="Nests" />
+          <NavigationProperty Name="OrderItem" Relationship="Self.FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID" FromRole="NestedParts" ToRole="OrderItems" />
+        </EntityType>
+        <EntityType Name="Nest">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="nestName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="nestPath" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Thumbnail" Type="Binary" MaxLength="Max" FixedLength="false" />
+          <NavigationProperty Name="NestedParts" Relationship="Self.FK_dbo_NestedParts_dbo_Nests_Nest_ID" FromRole="Nests" ToRole="NestedParts" />
+          <NavigationProperty Name="OrderItems" Relationship="Self.NestOrderItems" FromRole="Nests" ToRole="OrderItems" />
+        </EntityType>
+        <EntityType Name="Operation">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Location" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Part_ID" Type="Int32" />
+          <NavigationProperty Name="Part" Relationship="Self.FK_dbo_Operations_dbo_Parts_Part_ID" FromRole="Operations" ToRole="Parts" />
+        </EntityType>
+        <EntityType Name="OrderItem">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderID" Type="Int32" Nullable="false" />
+          <Property Name="IsComplete" Type="Boolean" Nullable="false" />
+          <Property Name="QtyRequired" Type="Int32" Nullable="false" />
+          <Property Name="QtyNested" Type="Int32" Nullable="false" />
+          <Property Name="IsInProject" Type="Boolean" Nullable="false" />
+          <Property Name="Notes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="PartID" Type="Int32" Nullable="false" />
+          <Property Name="RadanIDNumber" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="NestedParts" Relationship="Self.FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID" FromRole="OrderItems" ToRole="NestedParts" />
+          <NavigationProperty Name="Order" Relationship="Self.FK_dbo_OrderItems_dbo_Orders_OrderID" FromRole="OrderItems" ToRole="Orders" />
+          <NavigationProperty Name="Part" Relationship="Self.FK_dbo_OrderItems_dbo_Parts_PartID" FromRole="OrderItems" ToRole="Parts" />
+          <NavigationProperty Name="RadanID" Relationship="Self.FK_dbo_RadanIDs_dbo_OrderItems_ID" FromRole="OrderItems" ToRole="RadanIDs" />
+          <NavigationProperty Name="Nests" Relationship="Self.NestOrderItems" FromRole="OrderItems" ToRole="Nests" />
+        </EntityType>
+        <EntityType Name="Order">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderNumber" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ScheduleName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="BatchName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="EntryDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="DueDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="IsComplete" Type="Boolean" Nullable="false" />
+          <Property Name="IsBatch" Type="Boolean" Nullable="false" />
+          <Property Name="DateCompleted" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="OrderItems" Relationship="Self.FK_dbo_OrderItems_dbo_Orders_OrderID" FromRole="Orders" ToRole="OrderItems" />
+        </EntityType>
+        <EntityType Name="Part">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="FileName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Material" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Thickness" Type="Double" Nullable="false" />
+          <Property Name="Thumbnail" Type="Binary" MaxLength="Max" FixedLength="false" />
+          <Property Name="HasBends" Type="Boolean" Nullable="false" />
+          <Property Name="Title" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ParentPartNumber" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CategoryName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="StructuralCode" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="PlantID" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="IsStock" Type="Boolean" Nullable="false" />
+          <Property Name="RequiresPDF" Type="Boolean" Nullable="false" />
+          <Property Name="Comment" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ModifiedDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="State" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Keywords" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Notes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Revision" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Files" Relationship="Self.FK_dbo_Files_dbo_Parts_Part_ID" FromRole="Parts" ToRole="Files" />
+          <NavigationProperty Name="Operations" Relationship="Self.FK_dbo_Operations_dbo_Parts_Part_ID" FromRole="Parts" ToRole="Operations" />
+          <NavigationProperty Name="OrderItems" Relationship="Self.FK_dbo_OrderItems_dbo_Parts_PartID" FromRole="Parts" ToRole="OrderItems" />
+        </EntityType>
+        <EntityType Name="RadanID">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" />
+          <Property Name="RadanIDNumber" Type="Int32" Nullable="false" />
+          <Property Name="OrderItemID" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="OrderItem" Relationship="Self.FK_dbo_RadanIDs_dbo_OrderItems_ID" FromRole="RadanIDs" ToRole="OrderItems" />
+        </EntityType>
+        <Association Name="FK_dbo_Files_dbo_Parts_Part_ID">
+          <End Role="Parts" Type="Self.Part" Multiplicity="0..1" />
+          <End Role="Files" Type="Self.File" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Files">
+              <PropertyRef Name="Part_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestedParts_dbo_Nests_Nest_ID">
+          <End Role="Nests" Type="Self.Nest" Multiplicity="0..1" />
+          <End Role="NestedParts" Type="Self.NestedPart" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Nests">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestedParts">
+              <PropertyRef Name="Nest_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID">
+          <End Role="OrderItems" Type="Self.OrderItem" Multiplicity="0..1" />
+          <End Role="NestedParts" Type="Self.NestedPart" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItems">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="NestedParts">
+              <PropertyRef Name="OrderItem_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_Operations_dbo_Parts_Part_ID">
+          <End Role="Parts" Type="Self.Part" Multiplicity="0..1" />
+          <End Role="Operations" Type="Self.Operation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Operations">
+              <PropertyRef Name="Part_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItems_dbo_Orders_OrderID">
+          <End Role="Orders" Type="Self.Order" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="OrderItems" Type="Self.OrderItem" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Orders">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItems">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItems_dbo_Parts_PartID">
+          <End Role="Parts" Type="Self.Part" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="OrderItems" Type="Self.OrderItem" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Parts">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItems">
+              <PropertyRef Name="PartID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_RadanIDs_dbo_OrderItems_ID">
+          <End Role="OrderItems" Type="Self.OrderItem" Multiplicity="1" />
+          <End Role="RadanIDs" Type="Self.RadanID" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItems">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="RadanIDs">
+              <PropertyRef Name="ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="NestOrderItems">
+          <End Role="Nests" Type="Self.Nest" Multiplicity="*" />
+          <End Role="OrderItems" Type="Self.OrderItem" Multiplicity="*" />
+        </Association>
+        <EntityContainer Name="ProductionMasterEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Files" EntityType="Self.File" />
+          <EntitySet Name="Materials" EntityType="Self.Material" />
+          <EntitySet Name="NestedParts" EntityType="Self.NestedPart" />
+          <EntitySet Name="Nests" EntityType="Self.Nest" />
+          <EntitySet Name="Operations" EntityType="Self.Operation" />
+          <EntitySet Name="OrderItems" EntityType="Self.OrderItem" />
+          <EntitySet Name="Orders" EntityType="Self.Order" />
+          <EntitySet Name="Parts" EntityType="Self.Part" />
+          <EntitySet Name="RadanIDs" EntityType="Self.RadanID" />
+          <AssociationSet Name="FK_dbo_Files_dbo_Parts_Part_ID" Association="Self.FK_dbo_Files_dbo_Parts_Part_ID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="Files" EntitySet="Files" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestedParts_dbo_Nests_Nest_ID" Association="Self.FK_dbo_NestedParts_dbo_Nests_Nest_ID">
+            <End Role="Nests" EntitySet="Nests" />
+            <End Role="NestedParts" EntitySet="NestedParts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID" Association="Self.FK_dbo_NestedParts_dbo_OrderItems_OrderItem_ID">
+            <End Role="OrderItems" EntitySet="OrderItems" />
+            <End Role="NestedParts" EntitySet="NestedParts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_Operations_dbo_Parts_Part_ID" Association="Self.FK_dbo_Operations_dbo_Parts_Part_ID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="Operations" EntitySet="Operations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItems_dbo_Orders_OrderID" Association="Self.FK_dbo_OrderItems_dbo_Orders_OrderID">
+            <End Role="Orders" EntitySet="Orders" />
+            <End Role="OrderItems" EntitySet="OrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItems_dbo_Parts_PartID" Association="Self.FK_dbo_OrderItems_dbo_Parts_PartID">
+            <End Role="Parts" EntitySet="Parts" />
+            <End Role="OrderItems" EntitySet="OrderItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_RadanIDs_dbo_OrderItems_ID" Association="Self.FK_dbo_RadanIDs_dbo_OrderItems_ID">
+            <End Role="OrderItems" EntitySet="OrderItems" />
+            <End Role="RadanIDs" EntitySet="RadanIDs" />
+          </AssociationSet>
+          <AssociationSet Name="NestOrderItems" Association="Self.NestOrderItems">
+            <End Role="Nests" EntitySet="Nests" />
+            <End Role="OrderItems" EntitySet="OrderItems" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="RadanMasterModelStoreContainer" CdmEntityContainer="ProductionMasterEntities">
+          <EntitySetMapping Name="Files">
+            <EntityTypeMapping TypeName="RadanMasterModel.File">
+              <MappingFragment StoreEntitySet="Files">
+                <ScalarProperty Name="FileId" ColumnName="FileId" />
+                <ScalarProperty Name="FileName" ColumnName="FileName" />
+                <ScalarProperty Name="ContentType" ColumnName="ContentType" />
+                <ScalarProperty Name="Content" ColumnName="Content" />
+                <ScalarProperty Name="FileType" ColumnName="FileType" />
+                <ScalarProperty Name="ProductId" ColumnName="ProductId" />
+                <ScalarProperty Name="Part_ID" ColumnName="Part_ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Materials">
+            <EntityTypeMapping TypeName="RadanMasterModel.Material">
+              <MappingFragment StoreEntitySet="Materials">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Thickness" ColumnName="Thickness" />
+                <ScalarProperty Name="StructuralCode" ColumnName="StructuralCode" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="NestedParts">
+            <EntityTypeMapping TypeName="RadanMasterModel.NestedPart">
+              <MappingFragment StoreEntitySet="NestedParts">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Qty" ColumnName="Qty" />
+                <ScalarProperty Name="Nest_ID" ColumnName="Nest_ID" />
+                <ScalarProperty Name="OrderItem_ID" ColumnName="OrderItem_ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Nests">
+            <EntityTypeMapping TypeName="RadanMasterModel.Nest">
+              <MappingFragment StoreEntitySet="Nests">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="nestName" ColumnName="nestName" />
+                <ScalarProperty Name="nestPath" ColumnName="nestPath" />
+                <ScalarProperty Name="Thumbnail" ColumnName="Thumbnail" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Operations">
+            <EntityTypeMapping TypeName="RadanMasterModel.Operation">
+              <MappingFragment StoreEntitySet="Operations">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Location" ColumnName="Location" />
+                <ScalarProperty Name="Part_ID" ColumnName="Part_ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="OrderItems">
+            <EntityTypeMapping TypeName="RadanMasterModel.OrderItem">
+              <MappingFragment StoreEntitySet="OrderItems">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="IsComplete" ColumnName="IsComplete" />
+                <ScalarProperty Name="QtyRequired" ColumnName="QtyRequired" />
+                <ScalarProperty Name="QtyNested" ColumnName="QtyNested" />
+                <ScalarProperty Name="IsInProject" ColumnName="IsInProject" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="PartID" ColumnName="PartID" />
+                <ScalarProperty Name="RadanIDNumber" ColumnName="RadanIDNumber" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Orders">
+            <EntityTypeMapping TypeName="RadanMasterModel.Order">
+              <MappingFragment StoreEntitySet="Orders">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="OrderNumber" ColumnName="OrderNumber" />
+                <ScalarProperty Name="ScheduleName" ColumnName="ScheduleName" />
+                <ScalarProperty Name="BatchName" ColumnName="BatchName" />
+                <ScalarProperty Name="EntryDate" ColumnName="EntryDate" />
+                <ScalarProperty Name="DueDate" ColumnName="DueDate" />
+                <ScalarProperty Name="IsComplete" ColumnName="IsComplete" />
+                <ScalarProperty Name="IsBatch" ColumnName="IsBatch" />
+                <ScalarProperty Name="DateCompleted" ColumnName="DateCompleted" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Parts">
+            <EntityTypeMapping TypeName="RadanMasterModel.Part">
+              <MappingFragment StoreEntitySet="Parts">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="FileName" ColumnName="FileName" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="Material" ColumnName="Material" />
+                <ScalarProperty Name="Thickness" ColumnName="Thickness" />
+                <ScalarProperty Name="Thumbnail" ColumnName="Thumbnail" />
+                <ScalarProperty Name="HasBends" ColumnName="HasBends" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="ParentPartNumber" ColumnName="ParentPartNumber" />
+                <ScalarProperty Name="CategoryName" ColumnName="CategoryName" />
+                <ScalarProperty Name="StructuralCode" ColumnName="StructuralCode" />
+                <ScalarProperty Name="PlantID" ColumnName="PlantID" />
+                <ScalarProperty Name="IsStock" ColumnName="IsStock" />
+                <ScalarProperty Name="RequiresPDF" ColumnName="RequiresPDF" />
+                <ScalarProperty Name="Comment" ColumnName="Comment" />
+                <ScalarProperty Name="ModifiedDate" ColumnName="ModifiedDate" />
+                <ScalarProperty Name="State" ColumnName="State" />
+                <ScalarProperty Name="Keywords" ColumnName="Keywords" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="Revision" ColumnName="Revision" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RadanIDs">
+            <EntityTypeMapping TypeName="RadanMasterModel.RadanID">
+              <MappingFragment StoreEntitySet="RadanIDs">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="RadanIDNumber" ColumnName="RadanIDNumber" />
+                <ScalarProperty Name="OrderItemID" ColumnName="OrderItemID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="NestOrderItems" TypeName="RadanMasterModel.NestOrderItems" StoreEntitySet="NestOrderItems">
+            <EndProperty Name="Nests">
+              <ScalarProperty Name="ID" ColumnName="Nest_ID" />
+            </EndProperty>
+            <EndProperty Name="OrderItems">
+              <ScalarProperty Name="ID" ColumnName="OrderItem_ID" />
+            </EndProperty>
+          </AssociationSetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

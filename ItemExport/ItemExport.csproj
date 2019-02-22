@@ -298,7 +298,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\x64\Debug\ItemExport.*" "C:\ProgramData\Autodesk\Vault 2018\Extensions\ItemExport\"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files\Autodesk\Vault Professional 2017\Explorer\Connectivity.VaultPro.exe</StartProgram>
   </PropertyGroup>
