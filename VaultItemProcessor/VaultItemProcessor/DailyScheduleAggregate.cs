@@ -105,7 +105,7 @@ namespace VaultItemProcessor
                 if (isBatch)
                     watermark = "Batch Name: " + batchName + "\n";
 
-                if (item.Category == "Part")  // only process parts at this level
+                if (item.Category == "Part" || (item.Category == "Assembly" && (item.PlantID != "Plant 2" && item.PlantID != "Plant 1" && item.PlantID != "Plant 1&2")))  // only process parts at this level
                 {
                     string itemNumber = "";
                     if (item.Keywords != "")
