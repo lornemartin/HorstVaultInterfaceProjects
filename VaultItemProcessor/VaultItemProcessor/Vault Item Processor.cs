@@ -2825,6 +2825,22 @@ namespace VaultItemProcessor
 
             exportTreeList.RefreshDataSource();
         }
+
+        private void radioGroup2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string mfgLocation = "Plant 1";
+            foreach (ExportLineItem item in lineItemList)
+            {
+                if (radioGroup2.SelectedIndex == 0)
+                    mfgLocation = "Plant 1";
+                else //(radioGroup1.SelectedIndex == 1)
+                    mfgLocation = "Plant 2";
+
+                item.PlantID = mfgLocation;
+            }
+
+            exportTreeList.RefreshDataSource();
+        }
     }
 
 }
