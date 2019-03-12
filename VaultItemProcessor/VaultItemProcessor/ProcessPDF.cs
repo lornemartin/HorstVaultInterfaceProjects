@@ -226,15 +226,22 @@ namespace VaultItemProcessor
             if (item.StructCode != "")
                 item.StructCode = item.StructCode.Replace('/', '-');
 
+            if(item.PlantID != "Plant 2" && item.PlantID != "Plant 1" && item.PlantID != "Plant 1&2")
+            {
+                outputPdfPath += "\\" + item.PlantID + "\\";
+                System.IO.Directory.CreateDirectory(outputPdfPath);
+                return outputPdfPath;       // no further processing if the PlantID field has been overridden.
+            }
+
             // route to the proper plant
-            if(item.Category == "Part")
+            if (item.Category == "Part")
             {
                 if (item.PlantID == "Plant 2")
                     outputPdfPath += "\\Plant 2\\";
                 else if (item.PlantID == "Plant 1&2")
                     outputPdfPath += "\\Plant 1&2\\";
-                else    // default to plant 1
-                    outputPdfPath += "\\Plant 1\\";
+                else
+                    outputPdfPath += "\\Plant 1\\";    // default to plant 1
             }
 
             if (!isBatch)
@@ -283,7 +290,7 @@ namespace VaultItemProcessor
             }
 
             // sort out machine shop parts
-            else if(item.Operations == "Machine Shop")
+            else if (item.Operations == "Machine Shop")
             {
                 outputPdfPath = outputPdfPath + "\\" + item.Operations + "\\";
                 if (item.StructCode == "") item.StructCode = "Unknown Material Type";
@@ -311,6 +318,16 @@ namespace VaultItemProcessor
                 System.IO.Directory.CreateDirectory(outputPdfPath);
                 outputPdfPath += "\\" + item.Number + ".pdf";
             }
+
+            //// sort out parts that need to ordered from different plant
+            //else if (item.Operations == "Order From")
+            //{
+            //    outputPdfPath = outputPdfPath + "\\" + item.Operations + "\\";
+            //    if (item.StructCode == "") item.StructCode = "Unknown Material Type";
+            //    outputPdfPath += item.StructCode;
+            //    System.IO.Directory.CreateDirectory(outputPdfPath);
+            //    outputPdfPath += "\\" + item.Number + ".pdf";
+            //}
 
             // assemblies should drop through above logic down into here...
             else

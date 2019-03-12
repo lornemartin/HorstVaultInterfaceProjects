@@ -93,7 +93,6 @@
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
-            this.btnOdoo = new System.Windows.Forms.Button();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.radioGroup2 = new DevExpress.XtraEditors.RadioGroup();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
@@ -622,16 +621,6 @@
             this.btnProcessBatch.UseVisualStyleBackColor = true;
             this.btnProcessBatch.Click += new System.EventHandler(this.btnProcessBatch_Click);
             // 
-            // btnOdoo
-            // 
-            this.btnOdoo.Location = new System.Drawing.Point(1290, 609);
-            this.btnOdoo.Name = "btnOdoo";
-            this.btnOdoo.Size = new System.Drawing.Size(75, 23);
-            this.btnOdoo.TabIndex = 9;
-            this.btnOdoo.Text = "Odoo";
-            this.btnOdoo.UseVisualStyleBackColor = true;
-            this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
-            // 
             // radioGroup1
             // 
             this.radioGroup1.Location = new System.Drawing.Point(52, 603);
@@ -662,7 +651,6 @@
             this.ClientSize = new System.Drawing.Size(1752, 778);
             this.Controls.Add(this.radioGroup2);
             this.Controls.Add(this.radioGroup1);
-            this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
             this.Controls.Add(this.pdfViewer1);
             this.Controls.Add(this.statusStrip1);
@@ -728,7 +716,6 @@
         private System.Windows.Forms.Button btnRemoveBatchItem;
         private DevExpress.XtraTreeList.Columns.TreeListColumn requiresPDF;
         private System.Windows.Forms.Button btnProcessBatch;
-        private System.Windows.Forms.Button btnOdoo;
         private System.Windows.Forms.Button btnGroupSawDrawings3;
         private System.Windows.Forms.Button button1;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
