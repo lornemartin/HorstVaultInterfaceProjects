@@ -96,6 +96,7 @@
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
+            this.radioGroup2 = new DevExpress.XtraEditors.RadioGroup();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -105,6 +106,7 @@
             this.groupBoxInput.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup2.Properties)).BeginInit();
             this.SuspendLayout();
             // 
             // splashScreenManager1
@@ -120,7 +122,7 @@
             this.colThickness.OptionsColumn.AllowSort = false;
             this.colThickness.Visible = true;
             this.colThickness.VisibleIndex = 5;
-            this.colThickness.Width = 30;
+            this.colThickness.Width = 94;
             // 
             // repositoryItemTextEdit1
             // 
@@ -135,6 +137,7 @@
             this.Material.OptionsColumn.AllowSort = false;
             this.Material.Visible = true;
             this.Material.VisibleIndex = 4;
+            this.Material.Width = 139;
             // 
             // colStructCode
             // 
@@ -145,7 +148,7 @@
             this.colStructCode.OptionsColumn.AllowSort = false;
             this.colStructCode.Visible = true;
             this.colStructCode.VisibleIndex = 6;
-            this.colStructCode.Width = 59;
+            this.colStructCode.Width = 123;
             // 
             // Operations
             // 
@@ -155,7 +158,7 @@
             this.Operations.OptionsColumn.AllowSort = false;
             this.Operations.Visible = true;
             this.Operations.VisibleIndex = 7;
-            this.Operations.Width = 60;
+            this.Operations.Width = 164;
             // 
             // Number
             // 
@@ -165,7 +168,7 @@
             this.Number.OptionsColumn.AllowSort = false;
             this.Number.Visible = true;
             this.Number.VisibleIndex = 0;
-            this.Number.Width = 150;
+            this.Number.Width = 214;
             // 
             // exportTreeList
             // 
@@ -317,8 +320,6 @@
             this.Parent.Caption = "Parent";
             this.Parent.FieldName = "Parent";
             this.Parent.Name = "Parent";
-            this.Parent.Visible = true;
-            this.Parent.VisibleIndex = 11;
             // 
             // Title
             // 
@@ -335,7 +336,7 @@
             this.ItemDescription.OptionsColumn.AllowSort = false;
             this.ItemDescription.Visible = true;
             this.ItemDescription.VisibleIndex = 1;
-            this.ItemDescription.Width = 150;
+            this.ItemDescription.Width = 214;
             // 
             // Category
             // 
@@ -345,7 +346,7 @@
             this.Category.OptionsColumn.AllowSort = false;
             this.Category.Visible = true;
             this.Category.VisibleIndex = 2;
-            this.Category.Width = 35;
+            this.Category.Width = 99;
             // 
             // Qty
             // 
@@ -356,7 +357,7 @@
             this.Qty.OptionsColumn.AllowSort = false;
             this.Qty.Visible = true;
             this.Qty.VisibleIndex = 3;
-            this.Qty.Width = 16;
+            this.Qty.Width = 84;
             // 
             // colIsStock
             // 
@@ -368,7 +369,7 @@
             this.colIsStock.OptionsColumn.AllowSize = false;
             this.colIsStock.Visible = true;
             this.colIsStock.VisibleIndex = 8;
-            this.colIsStock.Width = 16;
+            this.colIsStock.Width = 74;
             // 
             // repositoryItemCheckEdit1
             // 
@@ -382,6 +383,7 @@
             this.colPlantID.Name = "colPlantID";
             this.colPlantID.Visible = true;
             this.colPlantID.VisibleIndex = 9;
+            this.colPlantID.Width = 63;
             // 
             // HasPdf
             // 
@@ -396,7 +398,7 @@
             this.requiresPDF.Name = "requiresPDF";
             this.requiresPDF.Visible = true;
             this.requiresPDF.VisibleIndex = 10;
-            this.requiresPDF.Width = 25;
+            this.requiresPDF.Width = 21;
             // 
             // colNotes
             // 
@@ -404,6 +406,9 @@
             this.colNotes.FieldName = "Notes";
             this.colNotes.Name = "colNotes";
             this.colNotes.OptionsColumn.AllowEdit = false;
+            this.colNotes.Visible = true;
+            this.colNotes.VisibleIndex = 11;
+            this.colNotes.Width = 253;
             // 
             // btnProcess
             // 
@@ -434,7 +439,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 676);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 756);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1752, 22);
             this.statusStrip1.TabIndex = 2;
@@ -641,11 +646,22 @@
             this.radioGroup1.TabIndex = 11;
             this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);
             // 
+            // radioGroup2
+            // 
+            this.radioGroup2.Location = new System.Drawing.Point(52, 680);
+            this.radioGroup2.Name = "radioGroup2";
+            this.radioGroup2.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 1"),
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 2")});
+            this.radioGroup2.Size = new System.Drawing.Size(228, 59);
+            this.radioGroup2.TabIndex = 12;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1752, 698);
+            this.ClientSize = new System.Drawing.Size(1752, 778);
+            this.Controls.Add(this.radioGroup2);
             this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);
@@ -668,6 +684,7 @@
             this.groupBoxInput.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.behaviorManager1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radioGroup2.Properties)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -717,6 +734,7 @@
         private System.Windows.Forms.Button button1;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
         private DevExpress.XtraEditors.RadioGroup radioGroup1;
+        private DevExpress.XtraEditors.RadioGroup radioGroup2;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
