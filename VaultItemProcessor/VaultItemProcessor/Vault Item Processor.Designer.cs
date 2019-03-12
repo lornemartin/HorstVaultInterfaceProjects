@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1 = new DevExpress.XtraSplashScreen.SplashScreenManager(this, null, true, true);
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule1 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression1 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
@@ -93,7 +92,7 @@
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
-            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
+            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
             this.btnOdoo = new System.Windows.Forms.Button();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.radioGroup2 = new DevExpress.XtraEditors.RadioGroup();
@@ -189,7 +188,6 @@
             this.requiresPDF,
             this.colNotes});
             this.exportTreeList.Cursor = System.Windows.Forms.Cursors.SizeWE;
-            this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
             treeListFormatRule1.Name = "Format0";
             formatConditionRuleExpression1.Appearance.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
@@ -383,7 +381,7 @@
             this.colPlantID.Name = "colPlantID";
             this.colPlantID.Visible = true;
             this.colPlantID.VisibleIndex = 9;
-            this.colPlantID.Width = 63;
+            this.colPlantID.Width = 101;
             // 
             // HasPdf
             // 
@@ -398,7 +396,7 @@
             this.requiresPDF.Name = "requiresPDF";
             this.requiresPDF.Visible = true;
             this.requiresPDF.VisibleIndex = 10;
-            this.requiresPDF.Width = 21;
+            this.requiresPDF.Width = 20;
             // 
             // colNotes
             // 
@@ -408,7 +406,7 @@
             this.colNotes.OptionsColumn.AllowEdit = false;
             this.colNotes.Visible = true;
             this.colNotes.VisibleIndex = 11;
-            this.colNotes.Width = 253;
+            this.colNotes.Width = 216;
             // 
             // btnProcess
             // 
@@ -655,6 +653,7 @@
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 2")});
             this.radioGroup2.Size = new System.Drawing.Size(228, 59);
             this.radioGroup2.TabIndex = 12;
+            this.radioGroup2.SelectedIndexChanged += new System.EventHandler(this.radioGroup2_SelectedIndexChanged);
             // 
             // Form1
             // 
