@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1 = new DevExpress.XtraSplashScreen.SplashScreenManager(this, null, true, true);
             DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule treeListFormatRule1 = new DevExpress.XtraTreeList.StyleFormatConditions.TreeListFormatRule();
             DevExpress.XtraEditors.FormatConditionRuleExpression formatConditionRuleExpression1 = new DevExpress.XtraEditors.FormatConditionRuleExpression();
@@ -57,9 +58,9 @@
             this.Material = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.colStructCode = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Operations = new DevExpress.XtraTreeList.Columns.TreeListColumn();
+            this.Number = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.exportTreeList = new DevExpress.XtraTreeList.TreeList();
             this.Parent = new DevExpress.XtraTreeList.Columns.TreeListColumn();
-            this.Number = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Title = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.ItemDescription = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.Category = new DevExpress.XtraTreeList.Columns.TreeListColumn();
@@ -92,7 +93,7 @@
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
-            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager();
+            this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.btnOdoo = new System.Windows.Forms.Button();
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
@@ -155,6 +156,16 @@
             this.Operations.Visible = true;
             this.Operations.VisibleIndex = 7;
             this.Operations.Width = 60;
+            // 
+            // Number
+            // 
+            this.Number.Caption = "Number";
+            this.Number.FieldName = "Number";
+            this.Number.Name = "Number";
+            this.Number.OptionsColumn.AllowSort = false;
+            this.Number.Visible = true;
+            this.Number.VisibleIndex = 0;
+            this.Number.Width = 150;
             // 
             // exportTreeList
             // 
@@ -272,7 +283,7 @@
             formatConditionRuleExpression11.Appearance.Options.UseBorderColor = true;
             formatConditionRuleExpression11.Appearance.Options.UseFont = true;
             formatConditionRuleExpression11.Appearance.Options.UseForeColor = true;
-            formatConditionRuleExpression11.Expression = "[Notes] = \'Check\' Or [Notes] = \'check\' Or [Notes] = \'CHECK\'";
+            formatConditionRuleExpression11.Expression = "[Notes] <> \'\'";
             treeListFormatRule11.Rule = formatConditionRuleExpression11;
             this.exportTreeList.FormatRules.Add(treeListFormatRule1);
             this.exportTreeList.FormatRules.Add(treeListFormatRule2);
@@ -295,7 +306,7 @@
             this.exportTreeList.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
             this.repositoryItemTextEdit1,
             this.repositoryItemCheckEdit1});
-            this.exportTreeList.Size = new System.Drawing.Size(843, 416);
+            this.exportTreeList.Size = new System.Drawing.Size(1207, 416);
             this.exportTreeList.TabIndex = 0;
             this.exportTreeList.CompareNodeValues += new DevExpress.XtraTreeList.CompareNodeValuesEventHandler(this.exportTreeList_CompareNodeValues);
             this.exportTreeList.PopupMenuShowing += new DevExpress.XtraTreeList.PopupMenuShowingEventHandler(this.exportTreeList_PopupMenuShowing);
@@ -308,16 +319,6 @@
             this.Parent.Name = "Parent";
             this.Parent.Visible = true;
             this.Parent.VisibleIndex = 11;
-            // 
-            // Number
-            // 
-            this.Number.Caption = "Number";
-            this.Number.FieldName = "Number";
-            this.Number.Name = "Number";
-            this.Number.OptionsColumn.AllowSort = false;
-            this.Number.Visible = true;
-            this.Number.VisibleIndex = 0;
-            this.Number.Width = 150;
             // 
             // Title
             // 
@@ -435,7 +436,7 @@
             this.toolStripStatusLabel1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 676);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1417, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1752, 22);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -492,7 +493,7 @@
             // pdfViewer1
             // 
             this.pdfViewer1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.pdfViewer1.Location = new System.Drawing.Point(925, 46);
+            this.pdfViewer1.Location = new System.Drawing.Point(1274, 46);
             this.pdfViewer1.Name = "pdfViewer1";
             this.pdfViewer1.Size = new System.Drawing.Size(466, 416);
             this.pdfViewer1.TabIndex = 6;
@@ -644,7 +645,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1417, 698);
+            this.ClientSize = new System.Drawing.Size(1752, 698);
             this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.btnOdoo);
             this.Controls.Add(this.groupBoxInput);

@@ -950,7 +950,8 @@ namespace VaultItemProcessor
                 {
                     operationsOk = false;
                 }
-                if (lineItem.Notes.ToUpper().Contains("CHECK"))
+                //if (lineItem.Notes.ToUpper().Contains("CHECK"))
+                if (lineItem.Notes != "")
                 {
                     numOfPartsToCheck++;
                 }
