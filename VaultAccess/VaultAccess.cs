@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using System.Threading;
+using PrintPDF;
 
 namespace VaultAccess
 {
