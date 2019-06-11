@@ -32,6 +32,9 @@ using System.Data.Sql;
 using System.Data.SqlClient;
 using JobProcessorPrintPDF;
 
+[assembly: ApiVersion("12.0")]
+[assembly: ExtensionId("d270be0e-58ff-4ad7-8dab-6be289c5d21a")]
+
 namespace JobProcessorFileUpdate
 {
     public class FileUpdateHandler : ACJE.IJobHandler
@@ -47,10 +50,16 @@ namespace JobProcessorFileUpdate
 
         public FileUpdateHandler()
         {
-            m_TargetFolder = System.IO.Path.GetTempPath();
-            m_PDFPath = JobProcessorPrintPDF.AppSettings.Get("PDFPath").ToString();
-            //m_SqlConnectionString = "Data Source = HLAMFG; Initial Catalog = Horst Manufacturing DB; Integrated Security = True";
-            m_SymFolderName = JobProcessorPrintPDF.AppSettings.Get("SymFileFolder").ToString();
+            try
+            {
+                m_TargetFolder = System.IO.Path.GetTempPath();
+                m_PDFPath = JobProcessorPrintPDF.AppSettings.Get("PdfPath").ToString();
+                m_SymFolderName = JobProcessorPrintPDF.AppSettings.Get("SymFileFolder").ToString();
+            }
+            catch(Exception)
+            {
+
+            }
         }
 
         #region IJobHandler Members

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using InventorApprentice;
+using Inventor;
 using System.IO;
 using System.Threading;
 using System.Security.AccessControl;
@@ -25,6 +25,7 @@ using log4net.Config;
 using log4net;
 using log4net.Appender;
 using System.Reflection;
+using Environment = System.Environment;
 
 namespace PrintPDF
 {
@@ -67,13 +68,11 @@ namespace PrintPDF
             {
                 try
                 {
-                    
-
-                    InventorApprentice.ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
-                    InventorApprentice.ApprenticeServerDrawingDocument drgDoc;
-                    drgDoc = (InventorApprentice.ApprenticeServerDrawingDocument)oApprentice.Document;
+                    ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
+                    ApprenticeServerDrawingDocument drgDoc;
+                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
                     oApprentice.Open(idw);
-                    drgDoc = (InventorApprentice.ApprenticeServerDrawingDocument)oApprentice.Document;
+                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
                     int pageCount = 1;
                     List<string> assemblyFileNameList = new List<string>();
                     
@@ -124,7 +123,7 @@ namespace PrintPDF
                         }
                     }
 
-                    string debugFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\debug.txt";
+                    string debugFileName = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\debug.txt";
 
                     Process myProcess = new Process();
                     myProcess.StartInfo.UseShellExecute = false;
@@ -213,10 +212,10 @@ namespace PrintPDF
                         }
                     }
 
-                    InventorApprentice.ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
-                    InventorApprentice.ApprenticeServerDrawingDocument drgDoc;
+                    ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
+                    ApprenticeServerDrawingDocument drgDoc;
                     oApprentice.Open(idw);
-                    drgDoc = (InventorApprentice.ApprenticeServerDrawingDocument)oApprentice.Document;
+                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
                     int pageCount = 1;
                     List<string> assemblyFileNameList = new List<string>();
 
@@ -224,7 +223,6 @@ namespace PrintPDF
                     idwFileToPrint.sheetNames = new List<string>();
                     idwFileToPrint.idwName = idw;
                     idwFileToPrint.pageCount = drgDoc.Sheets.Count;
-
 
 
 
@@ -302,9 +300,9 @@ namespace PrintPDF
 
                     try
                     {
-                        InventorApprentice.ApprenticeDrawingPrintManager pMgr;
-                        drgDoc = (InventorApprentice.ApprenticeServerDrawingDocument)oApprentice.Document;
-                        pMgr = (InventorApprentice.ApprenticeDrawingPrintManager)drgDoc.PrintManager;
+                        ApprenticeDrawingPrintManager pMgr;
+                        drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
+                        pMgr = (ApprenticeDrawingPrintManager)drgDoc.PrintManager;
                         pMgr.Printer = printer;
                         int actualSheetIndex = 1;
                         int modifiedSheetIndex = 1;
@@ -346,7 +344,7 @@ namespace PrintPDF
 
                                     pMgr.SetSheetRange(actualSheetIndex, actualSheetIndex);
                                     pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
-                                    pMgr.ScaleMode = InventorApprentice.PrintScaleModeEnum.kPrintBestFitScale;
+                                    pMgr.ScaleMode = PrintScaleModeEnum.kPrintBestFitScale;
 
 
                                     //if (more than one matching pdf name)

@@ -35,7 +35,7 @@ using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("689e45ae-b49b-4fcb-954f-181bc48cdf25")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("11.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("12.0")]
 
 
 namespace VaultView
@@ -364,12 +364,23 @@ namespace VaultView
 
                 if (!System.IO.File.Exists(IvFullPath))
                 {
-                    selectDirectViewerApp();
+                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2019\Bin\InventorView.exe";
+                    string Path2 = @"C:\Program Files\Autodesk\Inventor2019\Bin\InventorView.exe";
+                    if (System.IO.File.Exists(Path1))
+                    {
+                        IvFullPath = Path1;
+                        AppSettings.Set("Iv_FullPath", Path1);
+                    }
+                    else if (System.IO.File.Exists(Path2))
+                    {
+                        IvFullPath = Path2;
+                        AppSettings.Set("Iv_FullPath", Path2);
+                    }
+                    else
+                    {
+                        selectDirectViewerApp();
+                    }
                 }
-            }
-            else
-            {
-                selectDirectViewerApp();
             }
 
             string filePath = Path.Combine(System.IO.Path.GetTempPath() + "\\DirectView\\", file.EntityName);
@@ -381,8 +392,8 @@ namespace VaultView
             else if (file.EntityName.EndsWith(".idw"))
             {
                 va.downloadFile(file, Path.GetDirectoryName(filePath));
-                if (va.CheckForOutOfDateSheets(filePath))
-                    MessageBox.Show("Cannot view this file, there are drawing sheet(s) that are out of date");
+                //if (va.CheckForOutOfDateSheets(filePath))
+                //    MessageBox.Show("Cannot view this file, there are drawing sheet(s) that are out of date");
 
             }
             else 

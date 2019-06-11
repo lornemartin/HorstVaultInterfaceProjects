@@ -1,8 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Setting>
     <Key>VaultExportFilePath</Key>
-    <Value xsi:type="xsd:string">C:\ProgramData\Vault Export\</Value>
+    <Value xsi:type="xsd:string">C:\ProgramData\VaultExtensions\</Value>
+  </Setting>
+  <Setting>
+    <Key>Iv_FullPath</Key>
+    <Value xsi:type="xsd:string">C:\Program Files\Autodesk\Inventor View 2019\Bin\InventorView.exe</Value>
+  </Setting>
+  <Setting>
+    <Key>ExportFile</Key>
+    <Value xsi:type="xsd:string">C:\ProgramData\VaultExtensions\VaultExportData.txt</Value>
   </Setting>
   <Setting>
     <Key>VaultExportFileName</Key>
@@ -10,11 +18,15 @@
   </Setting>
   <Setting>
     <Key>ExportFilePath</Key>
-    <Value xsi:type="xsd:string">M:\Shop Schedule Drawings\2017-09-20 SB4000 and SB5000 Blade Batch 4\</Value>
+    <Value xsi:type="xsd:string">\\hwvsse01\folderredirection$\lorne\Desktop\test2\</Value>
+  </Setting>
+  <Setting>
+    <Key>SymFileFolder</Key>
+    <Value xsi:type="xsd:string">C:\Radan Sym Files\Vault Sym Files\</Value>
   </Setting>
   <Setting>
     <Key>PdfPath</Key>
-    <Value xsi:type="xsd:string">M:\PDF Drawing Files\</Value>
+    <Value xsi:type="xsd:string">C:\PDF Drawing Files\</Value>
   </Setting>
   <Setting>
     <Key>JobName</Key>
@@ -22,19 +34,19 @@
   </Setting>
   <Setting>
     <Key>VaultUserName</Key>
-    <Value xsi:type="xsd:string">craig</Value>
+    <Value xsi:type="xsd:string">Administrator</Value>
   </Setting>
   <Setting>
     <Key>VaultPassword</Key>
-    <Value xsi:type="xsd:string">craig</Value>
+    <Value xsi:type="xsd:string" />
   </Setting>
   <Setting>
     <Key>VaultServer</Key>
-    <Value xsi:type="xsd:string">hwvsvt01</Value>
+    <Value xsi:type="xsd:string">HWVMVT02</Value>
   </Setting>
   <Setting>
     <Key>VaultVault</Key>
-    <Value xsi:type="xsd:string">vault</Value>
+    <Value xsi:type="xsd:string">TEST Vault</Value>
   </Setting>
   <Setting>
     <Key>DailyScheduleData</Key>
@@ -50,7 +62,7 @@
   </Setting>
   <Setting>
     <Key>PrintPDFExecutable</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\VaultItemProcessor\PrintPDFCommandLine\PrintPDFCommandLine.exe</Value>
+    <Value xsi:type="xsd:string">C:\\Program Files\\gs\\gs9.21\\lib\\ps2pdf.bat</Value>
   </Setting>
   <Setting>
     <Key>PrintPDFPrinter</Key>

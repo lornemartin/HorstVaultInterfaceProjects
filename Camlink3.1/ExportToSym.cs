@@ -7,8 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Autodesk.Connectivity.Explorer.Extensibility;
-using Microsoft.WindowsAPICodePack.Shell;
-using Microsoft.WindowsAPICodePack.ShellExtensions;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -25,13 +23,13 @@ using Framework = Autodesk.DataManagement.Client.Framework;
 using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 using Forms = Autodesk.DataManagement.Client.Framework.Vault.Forms;
 using ADSK = Autodesk.Connectivity.WebServices;
+using Inventor;
 
 
 using RadanInterface2;
 using RadProject;
 using BrightIdeasSoftware;
-
-
+using Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties;
 
 namespace Camlink3_1
 {
@@ -55,7 +53,7 @@ namespace Camlink3_1
         {
             PartToImport part = (PartToImport)e.Model;
             if (!System.IO.File.Exists(symFolderPrimary + part.name + ".sym"))
-                e.Item.ForeColor = Color.Gray;
+                e.Item.ForeColor = System.Drawing.Color.Gray;
         }
         #endregion
 
@@ -308,9 +306,14 @@ namespace Camlink3_1
 
                     PartsToImport[index] = modifiedPart;
 
-                    ShellFile shellFile = ShellFile.FromFilePath(symFileNamePrimary);
-                    Bitmap shellThumb = shellFile.Thumbnail.Bitmap;
-                    this.picBoxSym.Image = ResizeImage(shellThumb, 115, 115);
+                    RadanInterface radanInterface = new RadanInterface();
+                    char[] thumbnailCharArray = radanInterface.GetThumbnailDataFromSym(symFileNamePrimary);
+
+                    if (thumbnailCharArray != null)
+                    {
+                        byte[] thumbnailByteArray = Convert.FromBase64CharArray(thumbnailCharArray, 0, thumbnailCharArray.Length);
+                        picBoxSym.Image = ByteToImage(thumbnailByteArray);
+                    }
 
                     if (openProjectName != "")
                     {
@@ -471,16 +474,23 @@ namespace Camlink3_1
 
                 Autodesk.Connectivity.WebServices.File webServicesFile = selectedFiles.FirstOrDefault(sel => sel.Name == selectedItemName);
                 VDF.Vault.Currency.Entities.FileIteration fileIter = new Vault.Currency.Entities.FileIteration(connection, webServicesFile);
-
-                picBoxIpt.Image = ResizeImage(getThumbNail(fileIter), 115, 115);
+                PropertyDefinition thumbnailPropDef = connection.PropertyManager.GetPropertyDefinitionBySystemName("Thumbnail");
+                ThumbnailInfo thumbnailInfo = connection.PropertyManager.GetPropertyValue(fileIter, thumbnailPropDef, null) as ThumbnailInfo;
+                byte[] thumbnailBytes = thumbnailInfo.Image;
+                picBoxIpt.Image = ByteToImage(thumbnailBytes);
 
                 string selectedSymName = symFolderPrimary + System.IO.Path.GetFileNameWithoutExtension(selectedItemName) + ".sym";
 
                 if (System.IO.File.Exists(selectedSymName))
                 {
-                    ShellFile shellFile = ShellFile.FromFilePath(selectedSymName);
-                    Bitmap shellThumb = shellFile.Thumbnail.Bitmap;
-                    this.picBoxSym.Image = ResizeImage(shellThumb, 115, 115);
+                    RadanInterface radanInterface = new RadanInterface();
+                    char[] thumbnailCharArray = radanInterface.GetThumbnailDataFromSym(selectedSymName);
+
+                    if (thumbnailCharArray != null)
+                    {
+                        byte[] thumbnailByteArray = Convert.FromBase64CharArray(thumbnailCharArray, 0, thumbnailCharArray.Length);
+                        picBoxSym.Image = ByteToImage(thumbnailByteArray);
+                    }
                 }
                 else
                 {
@@ -554,94 +564,15 @@ namespace Camlink3_1
         #endregion
 
         #region Thumbnail Routines
-        private System.Drawing.Image getThumbNail(VDF.Vault.Currency.Entities.FileIteration file)
+        public static Bitmap ByteToImage(byte[] blob)
         {
-            try
-            {
-                VDF.Vault.Currency.Properties.PropertyDefinition thumbnailPropDef = connection.PropertyManager.GetPropertyDefinitionBySystemName("Thumbnail");
-                VDF.Vault.Currency.Properties.ThumbnailInfo thumbnailInfo = connection.PropertyManager.GetPropertyValue(file, thumbnailPropDef, null) as VDF.Vault.Currency.Properties.ThumbnailInfo;
-                byte[] thumbnailBytes = thumbnailInfo.Image;
-                return GetImage(thumbnailBytes, 200, 200);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
+            MemoryStream mStream = new MemoryStream();
+            byte[] pData = blob;
+            mStream.Write(pData, 0, Convert.ToInt32(pData.Length));
+            Bitmap bm = new Bitmap(mStream, false);
+            mStream.Dispose();
+            return bm;
         }
-
-        private System.Drawing.Image GetImage(byte[] thumbnailBytes, int width, int height)
-        {
-            byte[] thumbnailRaw = thumbnailBytes;
-            System.Drawing.Image retVal = null;
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(thumbnailRaw))
-            {
-                // we don't know what format the image is in, so we try a couple of formats 
-                try
-                {
-                    // try the meta file format 
-                    ms.Seek(12, System.IO.SeekOrigin.Begin);
-                    System.Drawing.Imaging.Metafile metafile =
-                        new System.Drawing.Imaging.Metafile(ms);
-                    retVal = metafile.GetThumbnailImage(width, height,
-                        new System.Drawing.Image.GetThumbnailImageAbort(GetThumbnailImageAbort),
-                        System.IntPtr.Zero);
-                }
-                catch
-                {
-                    // I guess it's not a metafile 
-                    retVal = null;
-                }
-
-
-                if (retVal == null)
-                {
-                    try
-                    {
-                        // try to stream to System.Drawing.Image 
-                        ms.Seek(0, System.IO.SeekOrigin.Begin);
-                        System.Drawing.Image rawImage = System.Drawing.Image.FromStream(ms, true);
-                        retVal = rawImage.GetThumbnailImage(width, height,
-                            new System.Drawing.Image.GetThumbnailImageAbort(GetThumbnailImageAbort),
-                            System.IntPtr.Zero);
-                    }
-                    catch
-                    {
-                        // not compatible Image object 
-                        retVal = null;
-                    }
-                }
-            }
-            return retVal;
-        }
-
-        private static bool GetThumbnailImageAbort()
-        {
-            return false;
-        }
-
-        private static System.Drawing.Bitmap ResizeImage(System.Drawing.Image image, int width, int height)
-        {
-            //a holder for the result
-            Bitmap result = new Bitmap(width, height);
-
-            //use a graphics object to draw the resized image into the bitmap
-            using (Graphics graphics = Graphics.FromImage(result))
-            {
-                //set the resize quality modes to high quality
-                graphics.CompositingQuality =
-                    System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                graphics.InterpolationMode =
-                    System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode =
-                    System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                //draw the image into the target bitmap
-                graphics.DrawImage(image, 0, 0, result.Width, result.Height);
-            }
-            //return the resulting bitmap
-            return result;
-        }
-
 
 
         #endregion

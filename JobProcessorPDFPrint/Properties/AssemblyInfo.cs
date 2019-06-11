@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("JobProcessorApiSamples")]
+[assembly: AssemblyTitle("JobProcessorPrintPDF")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCopyright("Copyright © Autodesk 2014")]
+[assembly: AssemblyCopyright("Copyright © Horst Welding 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -17,7 +17,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("21ded301-3025-4600-b480-ce39a612f46a")]
+[assembly: Guid("312306fb-a57f-410e-959d-79d9708f9fb7")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -31,3 +31,7 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("18.0.110.0")]
 [assembly: AssemblyFileVersion("18.0.110.0")]
+[assembly: AssemblyDescription("Prints idw files to pdf")]
+[assembly: AssemblyCompany("Horst Welding")]
+[assembly: AssemblyProduct("PrintPDF")]
+

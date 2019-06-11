@@ -43,72 +43,94 @@ namespace VaultItemProcessor
 
         public Form1()
         {
-            InitializeComponent();
-            vaultExportFile = AppSettings.Get("VaultExportFileName").ToString();
-            vaultExportFilePath = AppSettings.Get("VaultExportFilePath").ToString();
-            vaultExportFileWithPath = vaultExportFilePath+ vaultExportFile;
-            exportFilePath = AppSettings.Get("ExportFilePath").ToString();
-            pdfPath = AppSettings.Get("PdfPath").ToString();        // need a double slash at the end, or else printPDF gets confused
-            jobName = AppSettings.Get("JobName").ToString();
-            lineItemList = new List<ExportLineItem>();
-            hlaVault = null;
-            vaultUserName = AppSettings.Get("VaultUserName").ToString();
-            vaultPassword = AppSettings.Get("VaultPassword").ToString();
-            vaultServer = AppSettings.Get("VaultServer").ToString();
-            vaultVault = AppSettings.Get("VaultVault").ToString();
-            dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
+            try
+            {
+                InitializeComponent();
+                if (File.Exists(AppSettings.SettingsFilePath))
+                {
+                    vaultExportFile = AppSettings.Get("VaultExportFileName").ToString();
+                    vaultExportFilePath = AppSettings.Get("VaultExportFilePath").ToString();
+                    vaultExportFileWithPath = vaultExportFilePath + vaultExportFile;
+                    exportFilePath = AppSettings.Get("ExportFilePath").ToString();
+                    pdfPath = AppSettings.Get("PdfPath").ToString();        // need a double slash at the end, or else printPDF gets confused
+                    jobName = AppSettings.Get("JobName").ToString();
+                    lineItemList = new List<ExportLineItem>();
+                    hlaVault = null;
+                    vaultUserName = AppSettings.Get("VaultUserName").ToString();
+                    vaultPassword = AppSettings.Get("VaultPassword").ToString();
+                    vaultServer = AppSettings.Get("VaultServer").ToString();
+                    vaultVault = AppSettings.Get("VaultVault").ToString();
+                    dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
+                }
+                else
+                {
+                    MessageBox.Show("Cannot find app settings file in " + AppSettings.SettingsFilePath);
+                    this.Close();
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // first delete all the temp files from the previous run
-            string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
-            if (Directory.Exists(tempDir))
+            try
             {
-                DirectoryInfo dir = new DirectoryInfo(tempDir);
-                foreach (FileInfo f in dir.GetFiles())
+                // first delete all the temp files from the previous run
+                string tempDir = System.IO.Path.GetTempPath() + @"\VaultItemProcessor\";
+                if (Directory.Exists(tempDir))
                 {
-                    System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
-                    f.Delete();
-                }
-            }
-
-
-
-            if (System.IO.File.Exists(exportFilePath + "AggregateData.xml"))
-            {
-                XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
-                using (var sr = new StreamReader(exportFilePath + "AggregateData.xml"))
-                {
-                    dailyScheduleData = (DailyScheduleAggregate)xs.Deserialize(sr);
+                    DirectoryInfo dir = new DirectoryInfo(tempDir);
+                    foreach (FileInfo f in dir.GetFiles())
+                    {
+                        System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                        f.Delete();
+                    }
                 }
 
-                if (dailyScheduleData.IsFinalized()) btnProcess.Enabled = false;
+
+
+                if (System.IO.File.Exists(exportFilePath + "AggregateData.xml"))
+                {
+                    XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
+                    using (var sr = new StreamReader(exportFilePath + "AggregateData.xml"))
+                    {
+                        dailyScheduleData = (DailyScheduleAggregate)xs.Deserialize(sr);
+                    }
+
+                    if (dailyScheduleData.IsFinalized()) btnProcess.Enabled = false;
+                }
+                textBoxOutputFolder.Text = exportFilePath;
+
+                string watchPath = AppSettings.Get("VaultExportFilePath").ToString();
+                string watchFile = AppSettings.Get("VaultExportFileName").ToString();
+                FileSystemWatcher watcher = new FileSystemWatcher(watchPath, watchFile);
+                watcher.EnableRaisingEvents = true;
+                watcher.Path = watchPath;
+                //watcher.NotifyFilter = NotifyFilters.FileName;
+                watcher.IncludeSubdirectories = false;
+                watcher.Changed += new FileSystemEventHandler(watcher_Changed);
+                watcher.Created += new FileSystemEventHandler(watcher_Created);
+
+
+
+                if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+                {
+                    btnRemoveBatchItem.Enabled = true;
+                    btnRemoveOrder.Enabled = false;
+                }
+                else
+                {
+                    btnRemoveBatchItem.Enabled = false;
+                    btnRemoveOrder.Enabled = true;
+
+                }
             }
-            textBoxOutputFolder.Text = exportFilePath;
-
-            string watchPath = AppSettings.Get("VaultExportFilePath").ToString();
-            string watchFile = AppSettings.Get("VaultExportFileName").ToString();
-            FileSystemWatcher watcher = new FileSystemWatcher(watchPath, watchFile);
-            watcher.EnableRaisingEvents = true;
-            watcher.Path = watchPath;
-            //watcher.NotifyFilter = NotifyFilters.FileName;
-            watcher.IncludeSubdirectories = false;
-            watcher.Changed += new FileSystemEventHandler(watcher_Changed);
-            watcher.Created += new FileSystemEventHandler(watcher_Created);
-
-
-
-            if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+            catch(Exception ex)
             {
-                btnRemoveBatchItem.Enabled = true;
-                btnRemoveOrder.Enabled = false;
-            }
-            else
-            {
-                btnRemoveBatchItem.Enabled = false;
-                btnRemoveOrder.Enabled = true;
-                
+                MessageBox.Show(ex.Message);
             }
         }
 

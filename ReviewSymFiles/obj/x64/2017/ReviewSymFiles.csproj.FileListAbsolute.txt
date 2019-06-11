@@ -27,3 +27,42 @@ C:\Users\lorne\Documents\Visual Studio 2015\Projects\Vault Interface Projects\Re
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.exe.config
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.exe
 C:\Users\lorne\Documents\Visual Studio 2015\Projects\ReviewSymFilesv4.0\bin\x64\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csprojAssemblyReference.cache
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CoreCompileInputs.cache
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CopyComplete
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\ReviewSymFilesv4.0\bin\ReviewSymFiles.exe.config
+C:\Users\lorne\source\repos\ReviewSymFilesv4.0\bin\ReviewSymFiles.exe
+C:\Users\lorne\source\repos\ReviewSymFilesv4.0\bin\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csprojResolveAssemblyReference.cache
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CoreCompileInputs.cache
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CopyComplete
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe.config
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.WCF.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.xml
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
+C:\Users\lorne\source\repos\VaultInterfaceProjects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe.config
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.WCF.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.xml
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml

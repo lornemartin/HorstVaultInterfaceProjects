@@ -422,8 +422,15 @@ namespace ConsoleApplication1
 
                                     if (!simulate)
                                     {
-                                        outdatedList.Add(pdfFile.Name);
-                                        pdfFile.Delete();
+                                        try
+                                        {
+                                            outdatedList.Add(pdfFile.Name);
+                                            pdfFile.Delete();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            debugFile.WriteLine(pdfFile.Name + "cannot be deleted.");
+                                        }
                                     }
                                 }
                                 else
@@ -442,8 +449,15 @@ namespace ConsoleApplication1
 
                             if (!simulate)
                             {
-                                missingList.Add(pdfFile.Name);
-                                pdfFile.Delete();
+                                try
+                                {
+                                    missingList.Add(pdfFile.Name);
+                                    pdfFile.Delete();
+                                }
+                                catch (Exception ex)
+                                {
+                                    debugFile.WriteLine(pdfFile.Name + "cannot be deleted.");
+                                }
                             }
 
                             debugFile.WriteLine("No ipt file found for " + pdfFile.Name);
