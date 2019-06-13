@@ -16,8 +16,8 @@ namespace VaultItemProcessor
     {
         public int ID { get; set; }
         public int Qty { get; set; }
-        public Nullable<int> Nest_ID { get; set; }
         public Nullable<int> OrderItem_ID { get; set; }
+        public Nullable<int> Nest_ID { get; set; }
     
         public virtual Nest Nest { get; set; }
         public virtual OrderItem OrderItem { get; set; }

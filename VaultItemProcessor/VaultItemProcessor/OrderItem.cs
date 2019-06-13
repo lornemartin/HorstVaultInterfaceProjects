@@ -18,6 +18,7 @@ namespace VaultItemProcessor
         public OrderItem()
         {
             this.NestedParts = new HashSet<NestedPart>();
+            this.OrderItemOperations = new HashSet<OrderItemOperation>();
             this.Nests = new HashSet<Nest>();
         }
     
@@ -30,9 +31,12 @@ namespace VaultItemProcessor
         public string Notes { get; set; }
         public int PartID { get; set; }
         public int RadanIDNumber { get; set; }
+        public string ProductName { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<NestedPart> NestedParts { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<OrderItemOperation> OrderItemOperations { get; set; }
         public virtual Order Order { get; set; }
         public virtual Part Part { get; set; }
         public virtual RadanID RadanID { get; set; }

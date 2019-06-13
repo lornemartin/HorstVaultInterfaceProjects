@@ -12,16 +12,13 @@ namespace VaultItemProcessor
     using System;
     using System.Collections.Generic;
     
-    public partial class File
+    public partial class Privilege
     {
-        public int FileId { get; set; }
-        public string FileName { get; set; }
-        public string ContentType { get; set; }
-        public byte[] Content { get; set; }
-        public int FileType { get; set; }
-        public System.DateTime CreationDate { get; set; }
-        public Nullable<int> Part_ID { get; set; }
+        public int ID { get; set; }
+        public string buttonName { get; set; }
+        public bool HasAccess { get; set; }
+        public Nullable<int> User_UserID { get; set; }
     
-        public virtual Part Part { get; set; }
+        public virtual User User { get; set; }
     }
 }

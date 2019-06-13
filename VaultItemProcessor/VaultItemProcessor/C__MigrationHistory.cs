@@ -12,16 +12,11 @@ namespace VaultItemProcessor
     using System;
     using System.Collections.Generic;
     
-    public partial class File
+    public partial class C__MigrationHistory
     {
-        public int FileId { get; set; }
-        public string FileName { get; set; }
-        public string ContentType { get; set; }
-        public byte[] Content { get; set; }
-        public int FileType { get; set; }
-        public System.DateTime CreationDate { get; set; }
-        public Nullable<int> Part_ID { get; set; }
-    
-        public virtual Part Part { get; set; }
+        public string MigrationId { get; set; }
+        public string ContextKey { get; set; }
+        public byte[] Model { get; set; }
+        public string ProductVersion { get; set; }
     }
 }

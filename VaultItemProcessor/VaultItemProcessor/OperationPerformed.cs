@@ -12,16 +12,16 @@ namespace VaultItemProcessor
     using System;
     using System.Collections.Generic;
     
-    public partial class File
+    public partial class OperationPerformed
     {
-        public int FileId { get; set; }
-        public string FileName { get; set; }
-        public string ContentType { get; set; }
-        public byte[] Content { get; set; }
-        public int FileType { get; set; }
-        public System.DateTime CreationDate { get; set; }
-        public Nullable<int> Part_ID { get; set; }
+        public int ID { get; set; }
+        public int qtyDone { get; set; }
+        public System.DateTime timePerformed { get; set; }
+        public string Notes { get; set; }
+        public Nullable<int> usr_UserID { get; set; }
+        public Nullable<int> OrderItemOperation_ID { get; set; }
     
-        public virtual Part Part { get; set; }
+        public virtual OrderItemOperation OrderItemOperation { get; set; }
+        public virtual User User { get; set; }
     }
 }

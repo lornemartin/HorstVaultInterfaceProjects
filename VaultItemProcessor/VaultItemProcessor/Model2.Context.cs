@@ -13,10 +13,10 @@ namespace VaultItemProcessor
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class ProductionMasterEntities : DbContext
+    public partial class RadanMaster5Entities : DbContext
     {
-        public ProductionMasterEntities()
-            : base("name=ProductionMasterEntities")
+        public RadanMaster5Entities()
+            : base("name=RadanMaster5Entities")
         {
         }
     
@@ -25,14 +25,19 @@ namespace VaultItemProcessor
             throw new UnintentionalCodeFirstException();
         }
     
+        public virtual DbSet<C__MigrationHistory> C__MigrationHistory { get; set; }
         public virtual DbSet<File> Files { get; set; }
         public virtual DbSet<Material> Materials { get; set; }
         public virtual DbSet<NestedPart> NestedParts { get; set; }
         public virtual DbSet<Nest> Nests { get; set; }
+        public virtual DbSet<OperationPerformed> OperationPerformeds { get; set; }
         public virtual DbSet<Operation> Operations { get; set; }
+        public virtual DbSet<OrderItemOperation> OrderItemOperations { get; set; }
         public virtual DbSet<OrderItem> OrderItems { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<Part> Parts { get; set; }
+        public virtual DbSet<Privilege> Privileges { get; set; }
         public virtual DbSet<RadanID> RadanIDs { get; set; }
+        public virtual DbSet<User> Users { get; set; }
     }
 }
