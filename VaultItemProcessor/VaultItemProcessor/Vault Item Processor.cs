@@ -3063,6 +3063,15 @@ namespace VaultItemProcessor
 
                     }
                     // create the order item object
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.IsComplete = false;
+                    orderItem.IsInProject = false;
+                    orderItem.Order = newOrder;
+                    orderItem.OrderItemOperations = new List<OrderItemOperation>();
+                    orderItem.Part = newPart;
+
+                    dbContext.OrderItems.Add(orderItem);
+                    dbContext.SaveChanges();
                 }
                     return true;
             }
