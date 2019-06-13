@@ -27,9 +27,6 @@ using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
 
-[assembly: ApiVersion("12.0")]
-[assembly: ExtensionId("312306fb-a57f-410e-959d-79d9708f9fb7")]
-
 namespace JobProcessorPrintPDF
 {
     public class PrintPDFHandler : ACJE.IJobHandler
@@ -46,18 +43,11 @@ namespace JobProcessorPrintPDF
 
         public PrintPDFHandler()
         {
-            try
-            {
-                TargetFolder = System.IO.Path.GetTempPath();
-                PDFPath = AppSettings.Get("PdfPath").ToString();
-                pdfPrinterName = AppSettings.Get("PrintPDFPrinter").ToString();
-                psToPdfProgName = AppSettings.Get("PrintPDFExecutable").ToString();
-                ghostScriptWorkingFolder = AppSettings.Get("GhostScriptWorkingFolder").ToString();
-            }
-            catch(Exception)
-            {
-                
-            }
+            TargetFolder = System.IO.Path.GetTempPath() + @"\\PrintPDF";
+            PDFPath = AppSettings.Get("PDFPath").ToString();
+            pdfPrinterName = AppSettings.Get("PdfPrinterName").ToString();
+            psToPdfProgName = AppSettings.Get("psToPdfProgName").ToString();
+            ghostScriptWorkingFolder = AppSettings.Get("ghostScriptWorkingFolder").ToString();
         }
 
         #region IJobHandler Members
@@ -151,8 +141,29 @@ namespace JobProcessorPrintPDF
         {
             try
             {
+                // remove all downloaded files from previous run before we download more
                 if (fileIter.EntityName.EndsWith(".idw")) // only print idws
                 {
+                    try
+                    {
+                        if (Directory.Exists(TargetFolder))
+                        {
+                            DirectoryInfo dir = new DirectoryInfo(TargetFolder);
+                            foreach (FileInfo f in dir.GetFiles())
+                            {
+                                System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                                f.Delete();
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // cannot delete files, there is likely another Inventor View window open, but we won't worry about it, they'll get deleted next time
+                    }
+
+
+
+
                     // make sure folder exists for downloading idw into.
                     logMessage += "Checking Target Directory...";
                     System.IO.DirectoryInfo targetDir = new System.IO.DirectoryInfo(TargetFolder);
@@ -203,9 +214,38 @@ namespace JobProcessorPrintPDF
                     {
                         logMessage += "Sheet Name: " + sh.Name + "\r\n";
 
+                        // attempt to fix bug where multiple instances of assembly drawing are printed
+                        // the problem shows up when there is an existing pdf of an assembly and we request to print it again.  The newly
+                        // printed pdfs will be added onto the existing file, rather than the exsiting file being overwritten like it should be.
+                        //if (sh.DrawingViews.Count > 0)
+                        //{
+                        //    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                        //    string pdfName = PDFPath + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
+
+                        //    if (System.IO.File.Exists(pdfName))
+                        //    {
+                        //        // make sure file is accessible....
+                        //        FileInfo fileInfo = new FileInfo(pdfName);
+                        //        fileInfo.IsReadOnly = false;
+                        //        System.IO.File.Delete(pdfName);
+                        //    }
+                        //}
+
+                        // ...2 failures here Oct. 23rd...
+                        // ...1 failure here Oct 28th....
+
                         if (sh.DrawingViews.Count > 0)
                         {
                             modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+
+                            // testing printing different levels of detail, didn't figure it out....
+                            //if (sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedLevelOfDetail == LevelOfDetailEnum.kMasterLevelOfDetail)
+                            //    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                            //else
+                            //{
+                            //    // remove the ' (*********************)' from the file name that represents the level of detail
+                            //    // this wouldn't work because not all files with different levels of detail will have two sets of parenthises.
+                            //}
 
                             VDF.Vault.Currency.Entities.FileIteration fIter;
                             try
@@ -337,7 +377,7 @@ namespace JobProcessorPrintPDF
             }
             catch (Exception ex)
             {
-                errMessage += "Unknown Error in function PrintPDF\r\n" + ex.Message;
+                errMessage += "Unknown Error in function PrintPDF\r\n";
                 return false;
             }
         

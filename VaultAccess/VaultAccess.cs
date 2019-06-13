@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using System.Threading;
-using PrintPDF;
 
 namespace VaultAccess
 {
@@ -61,7 +60,7 @@ namespace VaultAccess
         ~VaultAccess()
         {
             // try and clean up any files which were downloaded
-            if (m_downloadedFiles!=null)
+            if (m_downloadedFiles.Count > 0)
             {
                 foreach (string file in m_downloadedFiles)
                 {
@@ -322,30 +321,40 @@ namespace VaultAccess
         {
             try
             {
+                //try
+                //{
+                //    if (Directory.Exists(folderPath))
+                //    {
+                //        DirectoryInfo dir = new DirectoryInfo(folderPath);
+                //        foreach (FileInfo f in dir.GetFiles())
+                //        {
+                //            System.IO.File.SetAttributes(f.FullName, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
+                //            f.Delete();
+                //        }
+                //    }
+                //}
+                //catch (Exception)
+                //{
+                //    // cannot delete files, there is likely another Inventor View window open, but we won't worry about it, they'll get deleted next time
+                //}
+
+                // initialize the settings
+
                 string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-
-                PropDef[] filePropDefs = m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
-                PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
-
                 Autodesk.Connectivity.WebServices.SrchCond searchCondition = new SrchCond();
-                searchCondition.PropDefId = vaultNamePropDef.Id;
+
                 searchCondition.PropTyp = PropertySearchType.SingleProperty;
                 searchCondition.SrchOper = 3;
-                searchCondition.SrchTxt = fileNameWithoutExtension + ".ipt";
+                searchCondition.SrchTxt = fileNameWithoutExtension;
 
 
                 string bookmark = "";
                 SrchStatus st = new SrchStatus();
 
                 Autodesk.Connectivity.WebServices.File[] files = m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(new SrchCond[] { searchCondition }, null, null,true,true, ref bookmark, out st);
-                if(files.Count()!=1)
-                {
-                    return false;
-                }
-
                 Vault.Settings.AcquireFilesSettings settings = new Vault.Settings.AcquireFilesSettings(m_conn);
 
-                Vault.Currency.Entities.FileIteration file = new Vault.Currency.Entities.FileIteration(m_conn,files[0]);
+                Vault.Currency.Entities.IEntity file = (Vault.Currency.Entities.IEntity) files[0];
 
                 settings.AddEntityToAcquire(file);
                 settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeChildren = false;

@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MigraDoc.DocumentObjectModel.Tables;
 
+
 namespace VaultItemProcessor
 {
     public static class ProcessPDF
@@ -47,7 +48,7 @@ namespace VaultItemProcessor
                 {
                     string inputPdfName = inputFolder + fileName;
                     xUnitArrayList.Clear();
-                    if (File.Exists(inputPdfName))
+                    if (System.IO.File.Exists(inputPdfName))
                     {
                         inputDocument = PdfReader.Open(inputPdfName, PdfDocumentOpenMode.Modify);
 
@@ -118,7 +119,7 @@ namespace VaultItemProcessor
                         }
                     }
 
-                    if (!File.Exists(inputPdfName))
+                    if (!System.IO.File.Exists(inputPdfName))
                     {
                         watermarks[fileCount] = "No Drawing Found For:\n" + watermarks[fileCount];
                         System.IO.Directory.CreateDirectory(tempDir);
@@ -355,7 +356,7 @@ namespace VaultItemProcessor
 
                 string inputPdfName = fileName;
                 xUnitArrayList.Clear();
-                if (File.Exists(inputPdfName))
+                if (System.IO.File.Exists(inputPdfName))
                 {
                     inputDocument = PdfReader.Open(inputPdfName, PdfDocumentOpenMode.Modify);
 
