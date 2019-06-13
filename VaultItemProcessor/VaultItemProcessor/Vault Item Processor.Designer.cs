@@ -90,6 +90,10 @@
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
             this.outputFolderlbl = new System.Windows.Forms.Label();
             this.textBoxOutputFolder = new System.Windows.Forms.TextBox();
+            this.textBoxScheduleName = new System.Windows.Forms.TextBox();
+            this.textBoxBatchName = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
             this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
@@ -98,10 +102,6 @@
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.btnHorstMFG = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
-            this.textBoxBatchName = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.textBoxScheduleName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -191,6 +191,7 @@
             this.HasPdf,
             this.requiresPDF,
             this.colNotes});
+            this.exportTreeList.Cursor = System.Windows.Forms.Cursors.Default;
             this.exportTreeList.DataSource = null;
             treeListFormatRule1.ApplyToRow = true;
             treeListFormatRule1.Name = "Format0";
@@ -607,6 +608,42 @@
             this.textBoxOutputFolder.Size = new System.Drawing.Size(332, 20);
             this.textBoxOutputFolder.TabIndex = 6;
             // 
+            // textBoxScheduleName
+            // 
+            this.textBoxScheduleName.Location = new System.Drawing.Point(235, 78);
+            this.textBoxScheduleName.Name = "textBoxScheduleName";
+            this.textBoxScheduleName.Size = new System.Drawing.Size(203, 20);
+            this.textBoxScheduleName.TabIndex = 5;
+            this.textBoxScheduleName.Text = "Schedule Name";
+            this.textBoxScheduleName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
+            // 
+            // textBoxBatchName
+            // 
+            this.textBoxBatchName.Location = new System.Drawing.Point(235, 52);
+            this.textBoxBatchName.Name = "textBoxBatchName";
+            this.textBoxBatchName.Size = new System.Drawing.Size(203, 20);
+            this.textBoxBatchName.TabIndex = 5;
+            this.textBoxBatchName.Text = "Batch Name";
+            this.textBoxBatchName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(177, 82);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(55, 13);
+            this.label4.TabIndex = 4;
+            this.label4.Text = "Schedule:";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(182, 56);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(38, 13);
+            this.label3.TabIndex = 4;
+            this.label3.Text = "Batch:";
+            // 
             // groupBoxInput
             // 
             this.groupBoxInput.Controls.Add(this.btnProcessBatch);
@@ -669,42 +706,6 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(182, 56);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(38, 13);
-            this.label3.TabIndex = 4;
-            this.label3.Text = "Batch:";
-            // 
-            // textBoxBatchName
-            // 
-            this.textBoxBatchName.Location = new System.Drawing.Point(235, 52);
-            this.textBoxBatchName.Name = "textBoxBatchName";
-            this.textBoxBatchName.Size = new System.Drawing.Size(203, 20);
-            this.textBoxBatchName.TabIndex = 5;
-            this.textBoxBatchName.Text = "Batch Name";
-            this.textBoxBatchName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(177, 82);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(55, 13);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "Schedule:";
-            // 
-            // textBoxScheduleName
-            // 
-            this.textBoxScheduleName.Location = new System.Drawing.Point(235, 78);
-            this.textBoxScheduleName.Name = "textBoxScheduleName";
-            this.textBoxScheduleName.Size = new System.Drawing.Size(203, 20);
-            this.textBoxScheduleName.TabIndex = 5;
-            this.textBoxScheduleName.Text = "Schedule Name";
-            this.textBoxScheduleName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -720,7 +721,7 @@
             this.Controls.Add(this.groupBoxOutput);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Vault Item Processor 2018";
+            this.Text = "Vault Item Processor - ProductionMaster";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).EndInit();
