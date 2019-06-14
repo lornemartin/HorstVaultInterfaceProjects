@@ -306,6 +306,7 @@ namespace PrintPDF
                         pMgr.Printer = printer;
                         int actualSheetIndex = 1;
                         int modifiedSheetIndex = 1;
+                        int missingSheetsCount = 0;
 
                         foreach (Sheet sh in drgDoc.Sheets)
                         {
@@ -342,7 +343,7 @@ namespace PrintPDF
                                             break;
                                     }
 
-                                    pMgr.SetSheetRange(actualSheetIndex, actualSheetIndex);
+                                    pMgr.SetSheetRange(actualSheetIndex - missingSheetsCount, actualSheetIndex - missingSheetsCount);
                                     pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
                                     pMgr.ScaleMode = PrintScaleModeEnum.kPrintBestFitScale;
 
@@ -480,6 +481,7 @@ namespace PrintPDF
                                 {
                                     actualSheetIndex++;   // still need to increment sheet index, even if no drawing view was found
                                                           // on current sheet...
+                                                 
                                 }
 
                                 // double check to make sure file got generated and saved properly.
@@ -496,7 +498,7 @@ namespace PrintPDF
                             else
                             {
                                 actualSheetIndex++;   // still need to increment sheet index, if sheet is set not to print
-                                                      
+                                missingSheetsCount++;
                             }
                         }
                     }
