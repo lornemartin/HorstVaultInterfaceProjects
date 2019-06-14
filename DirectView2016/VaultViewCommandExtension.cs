@@ -325,20 +325,17 @@ namespace VaultView
             try
             {
                 DialogResult result;
-                do
-                {
-                    OpenFileDialog openFileDialog1 = new OpenFileDialog();
-                    openFileDialog1.Filter = "exe files|*.exe";
-                    openFileDialog1.Title = "Please select the Inventor Viewer Application";
+                OpenFileDialog openFileDialog1 = new OpenFileDialog();
+                openFileDialog1.Filter = "exe files|*.exe";
+                openFileDialog1.Title = "Please select the Inventor Viewer Application";
 
-                    result = openFileDialog1.ShowDialog(); // Show the dialog.
-                    if (result == DialogResult.OK) // Test result.
-                    {
-                        string f = openFileDialog1.FileName;
-                        IvFullPath = f;
-                    }
-                    // ensure the user selects a valid viewer application
-                } while (!IvFullPath.Contains("Inventor.exe") && (!IvFullPath.Contains("InventorView.exe")));
+                result = openFileDialog1.ShowDialog(); // Show the dialog.
+                if (result == DialogResult.OK) // Test result.
+                {
+                    string f = openFileDialog1.FileName;
+                    IvFullPath = f;
+                }
+                // ensure the user selects a valid viewer application
 
                 if (result == DialogResult.OK)
                 {
