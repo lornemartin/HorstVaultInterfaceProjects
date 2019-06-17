@@ -2574,6 +2574,7 @@ namespace VaultAccess
                 {
                     LocalPath = new VDF.Currency.FolderPathAbsolute(targetDir.FullName),
                 };
+                downloadSettings.OptionsResolution.OverwriteOption = VDF.Vault.Settings.AcquireFilesSettings.AcquireFileResolutionOptions.OverwriteOptions.ForceOverwriteAll;
                 downloadSettings.AddFileToAcquire(fileIter, VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download);
                 m_conn.FileManager.AcquireFiles(downloadSettings);
 
