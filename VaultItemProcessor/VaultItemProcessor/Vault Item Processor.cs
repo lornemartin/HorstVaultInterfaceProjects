@@ -2949,7 +2949,6 @@ namespace VaultItemProcessor
         {
             try
             {
-                //ProductionMasterEntities dbContext = new ProductionMasterEntities();
                 RadanMaster5Entities dbContext = new RadanMaster5Entities();
                 string orderNumber = txtBoxOrderNumber.Text;
                 string schedName = textBoxScheduleName.Text;
@@ -2959,6 +2958,20 @@ namespace VaultItemProcessor
 
                 foreach (ExportLineItem item in itemList)
                 {
+                    // create the operation
+                    Operation newOp = dbContext.Operations.Where(op => op.Name == item.Operations).
+                                                           Where(op => op.Part.FileName == item.Number).FirstOrDefault();
+                    if (newOp == null)
+                    {
+                        newOp = new Operation();
+                        newOp.Name = item.Operations;
+                        newOp.Location = item.PlantID;
+                        newOp.isFinalOp = false;
+
+                        dbContext.Operations.Add(newOp);
+                    }
+
+
                     // create the part object
                     Part newPart = dbContext.Parts.Where(p => p.FileName == item.Number).FirstOrDefault();
                     if (newPart == null)
@@ -2966,9 +2979,9 @@ namespace VaultItemProcessor
                         newPart = new Part();
                         newPart.FileName = item.Number;
                         newPart.Description = item.ItemDescription;
-                        string thicknessStr = item.MaterialThickness;
+                        string thicknessStr = item.MaterialThickness.Replace(" in", "");
                         double thickness;
-                        double.TryParse(item.MaterialThickness, out thickness);
+                        double.TryParse(thicknessStr, out thickness);
                         newPart.Thickness = thickness;
                         newPart.Material = item.Material;
                         newPart.Thumbnail = null;
@@ -2984,6 +2997,8 @@ namespace VaultItemProcessor
                         newPart.State = item.LifeCycleState;
                         newPart.Keywords = item.Keywords;
                         newPart.Notes = item.Notes;
+                        newPart.Operations = new List<Operation>();
+                        newPart.Operations.Add(newOp);
 
                         dbContext.Parts.Add(newPart);
                         dbContext.SaveChanges();
@@ -2992,9 +3007,9 @@ namespace VaultItemProcessor
                     {
                         // update properties if needed
                         newPart.Description = item.ItemDescription;
-                        string thicknessStr = item.MaterialThickness;
+                        string thicknessStr = item.MaterialThickness.Replace(" in", "");
                         double thickness;
-                        double.TryParse(item.MaterialThickness, out thickness);
+                        double.TryParse(thicknessStr, out thickness);
                         newPart.Thickness = thickness;
                         newPart.Material = item.Material;
                         newPart.Thumbnail = null;
@@ -3010,6 +3025,8 @@ namespace VaultItemProcessor
                         newPart.State = item.LifeCycleState;
                         newPart.Keywords = item.Keywords;
                         newPart.Notes = item.Notes;
+                        newPart.Operations.Clear();
+                        newPart.Operations.Add(newOp);
                         dbContext.SaveChanges();
                     }
 
@@ -3062,13 +3079,28 @@ namespace VaultItemProcessor
                         dbContext.SaveChanges();
 
                     }
+
+                    
+
+                    // create the orderItemOperation
+                    OrderItemOperation oiOp = new OrderItemOperation();
+                    oiOp.Operation = newOp;
+                    oiOp.qtyRequired = item.Qty;
+                    oiOp.qtyDone = 0;
+
+                    dbContext.OrderItemOperations.Add(oiOp);
+                    dbContext.SaveChanges();
+
                     // create the order item object
                     OrderItem orderItem = new OrderItem();
                     orderItem.IsComplete = false;
                     orderItem.IsInProject = false;
                     orderItem.Order = newOrder;
                     orderItem.OrderItemOperations = new List<OrderItemOperation>();
+                    orderItem.OrderItemOperations.Add(oiOp);
                     orderItem.Part = newPart;
+                    orderItem.QtyRequired = oiOp.qtyRequired;
+                    orderItem.QtyNested = oiOp.qtyDone;
 
                     dbContext.OrderItems.Add(orderItem);
                     dbContext.SaveChanges();
