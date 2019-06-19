@@ -428,6 +428,7 @@
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 1;
+            this.btnLoad.TabStop = false;
             this.btnLoad.Text = "Load...";
             this.btnLoad.UseVisualStyleBackColor = true;
             this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
@@ -462,7 +463,7 @@
             0});
             this.spinEditOrderQty.Name = "spinEditOrderQty";
             this.spinEditOrderQty.Size = new System.Drawing.Size(65, 20);
-            this.spinEditOrderQty.TabIndex = 3;
+            this.spinEditOrderQty.TabIndex = 1;
             this.spinEditOrderQty.Value = new decimal(new int[] {
             1,
             0,
@@ -492,7 +493,7 @@
             this.txtBoxOrderNumber.Location = new System.Drawing.Point(235, 27);
             this.txtBoxOrderNumber.Name = "txtBoxOrderNumber";
             this.txtBoxOrderNumber.Size = new System.Drawing.Size(203, 20);
-            this.txtBoxOrderNumber.TabIndex = 5;
+            this.txtBoxOrderNumber.TabIndex = 2;
             this.txtBoxOrderNumber.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // pdfViewer1
@@ -537,6 +538,7 @@
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(104, 51);
             this.button1.TabIndex = 10;
+            this.button1.TabStop = false;
             this.button1.Text = "Group Saw Drawings Double Sided";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -547,6 +549,7 @@
             this.btnRemoveBatchItem.Name = "btnRemoveBatchItem";
             this.btnRemoveBatchItem.Size = new System.Drawing.Size(151, 23);
             this.btnRemoveBatchItem.TabIndex = 10;
+            this.btnRemoveBatchItem.TabStop = false;
             this.btnRemoveBatchItem.Text = "Remove Batch Item...";
             this.btnRemoveBatchItem.UseVisualStyleBackColor = true;
             this.btnRemoveBatchItem.Click += new System.EventHandler(this.btnRemoveBatchItem_Click);
@@ -557,6 +560,7 @@
             this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
             this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
             this.btnGroupSawDrawings3.TabIndex = 12;
+            this.btnGroupSawDrawings3.TabStop = false;
             this.btnGroupSawDrawings3.Text = "Group Saw Drawings";
             this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;
             this.btnGroupSawDrawings3.Click += new System.EventHandler(this.btnGroupSawDrawings3_Click);
@@ -567,6 +571,7 @@
             this.btnRemoveOrder.Name = "btnRemoveOrder";
             this.btnRemoveOrder.Size = new System.Drawing.Size(151, 23);
             this.btnRemoveOrder.TabIndex = 10;
+            this.btnRemoveOrder.TabStop = false;
             this.btnRemoveOrder.Text = "Remove Order Item...";
             this.btnRemoveOrder.UseVisualStyleBackColor = true;
             this.btnRemoveOrder.Click += new System.EventHandler(this.btnRemoveOrder_Click);
@@ -577,6 +582,7 @@
             this.btnFinalize.Name = "btnFinalize";
             this.btnFinalize.Size = new System.Drawing.Size(151, 23);
             this.btnFinalize.TabIndex = 9;
+            this.btnFinalize.TabStop = false;
             this.btnFinalize.Text = "Finalize Schedule";
             this.btnFinalize.UseVisualStyleBackColor = true;
             this.btnFinalize.Click += new System.EventHandler(this.btnFinalize_Click);
@@ -587,6 +593,7 @@
             this.btnSelectOutputFolder.Name = "btnSelectOutputFolder";
             this.btnSelectOutputFolder.Size = new System.Drawing.Size(23, 23);
             this.btnSelectOutputFolder.TabIndex = 8;
+            this.btnSelectOutputFolder.TabStop = false;
             this.btnSelectOutputFolder.Text = "...";
             this.btnSelectOutputFolder.UseVisualStyleBackColor = true;
             this.btnSelectOutputFolder.Click += new System.EventHandler(this.btnSelectOutputFolder_Click);
@@ -612,7 +619,7 @@
             this.textBoxScheduleName.Location = new System.Drawing.Point(235, 78);
             this.textBoxScheduleName.Name = "textBoxScheduleName";
             this.textBoxScheduleName.Size = new System.Drawing.Size(203, 20);
-            this.textBoxScheduleName.TabIndex = 5;
+            this.textBoxScheduleName.TabIndex = 4;
             this.textBoxScheduleName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // textBoxBatchName
@@ -620,7 +627,7 @@
             this.textBoxBatchName.Location = new System.Drawing.Point(235, 52);
             this.textBoxBatchName.Name = "textBoxBatchName";
             this.textBoxBatchName.Size = new System.Drawing.Size(203, 20);
-            this.textBoxBatchName.TabIndex = 5;
+            this.textBoxBatchName.TabIndex = 3;
             this.textBoxBatchName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // label4
@@ -658,6 +665,7 @@
             this.btnProcessBatch.Name = "btnProcessBatch";
             this.btnProcessBatch.Size = new System.Drawing.Size(100, 23);
             this.btnProcessBatch.TabIndex = 2;
+            this.btnProcessBatch.TabStop = false;
             this.btnProcessBatch.Text = "Process Batch...";
             this.btnProcessBatch.UseVisualStyleBackColor = true;
             this.btnProcessBatch.Click += new System.EventHandler(this.btnProcessBatch_Click);
@@ -668,6 +676,7 @@
             this.btnOdoo.Name = "btnOdoo";
             this.btnOdoo.Size = new System.Drawing.Size(75, 23);
             this.btnOdoo.TabIndex = 9;
+            this.btnOdoo.TabStop = false;
             this.btnOdoo.Text = "Odoo";
             this.btnOdoo.UseVisualStyleBackColor = true;
             this.btnOdoo.Click += new System.EventHandler(this.btnOdoo_Click);
@@ -698,7 +707,7 @@
             this.button2.Location = new System.Drawing.Point(1253, 501);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(112, 23);
-            this.button2.TabIndex = 12;
+            this.button2.TabIndex = 5;
             this.button2.Text = "ProductionMaster";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
