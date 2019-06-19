@@ -493,7 +493,6 @@
             this.txtBoxOrderNumber.Name = "txtBoxOrderNumber";
             this.txtBoxOrderNumber.Size = new System.Drawing.Size(203, 20);
             this.txtBoxOrderNumber.TabIndex = 5;
-            this.txtBoxOrderNumber.Text = "Order Number";
             this.txtBoxOrderNumber.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // pdfViewer1
@@ -614,7 +613,6 @@
             this.textBoxScheduleName.Name = "textBoxScheduleName";
             this.textBoxScheduleName.Size = new System.Drawing.Size(203, 20);
             this.textBoxScheduleName.TabIndex = 5;
-            this.textBoxScheduleName.Text = "Schedule Name";
             this.textBoxScheduleName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // textBoxBatchName
@@ -623,7 +621,6 @@
             this.textBoxBatchName.Name = "textBoxBatchName";
             this.textBoxBatchName.Size = new System.Drawing.Size(203, 20);
             this.textBoxBatchName.TabIndex = 5;
-            this.textBoxBatchName.Text = "Batch Name";
             this.textBoxBatchName.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // label4

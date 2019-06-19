@@ -10,7 +10,7 @@
         <EntityTypeShape EntityType="RadanMaster5Model.Material" Width="1.5" PointX="9.75" PointY="8.75" IsExpanded="true" />
         <EntityTypeShape EntityType="RadanMaster5Model.NestedPart" Width="1.5" PointX="8.25" PointY="3" IsExpanded="true" />
         <EntityTypeShape EntityType="RadanMaster5Model.Nest" Width="1.5" PointX="3.75" PointY="1.125" IsExpanded="true" />
-        <EntityTypeShape EntityType="RadanMaster5Model.OperationPerformed" Width="1.5" PointX="7.5" PointY="9.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RadanMaster5Model.OperationPerformed" Width="1.5" PointX="7.5" PointY="8.625" IsExpanded="true" />
         <EntityTypeShape EntityType="RadanMaster5Model.Operation" Width="1.5" PointX="3" PointY="7.5" IsExpanded="true" />
         <EntityTypeShape EntityType="RadanMaster5Model.OrderItemOperation" Width="1.5" PointX="5.25" PointY="7.375" IsExpanded="true" />
         <EntityTypeShape EntityType="RadanMaster5Model.OrderItem" Width="1.5" PointX="6" PointY="2" IsExpanded="true" />

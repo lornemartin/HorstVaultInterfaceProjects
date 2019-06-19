@@ -2954,6 +2954,8 @@ namespace VaultItemProcessor
                 string schedName = textBoxScheduleName.Text;
                 string batchName = textBoxBatchName.Text;
 
+                string productName = itemList[0].Number;
+
                 int qty = (int) spinEditOrderQty.Value;
 
                 foreach (ExportLineItem item in itemList)
@@ -3101,6 +3103,7 @@ namespace VaultItemProcessor
                     orderItem.Part = newPart;
                     orderItem.QtyRequired = oiOp.qtyRequired;
                     orderItem.QtyNested = oiOp.qtyDone;
+                    orderItem.ProductName = productName;
 
                     dbContext.OrderItems.Add(orderItem);
                     dbContext.SaveChanges();
