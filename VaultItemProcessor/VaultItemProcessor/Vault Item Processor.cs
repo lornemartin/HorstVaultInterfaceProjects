@@ -2956,7 +2956,7 @@ namespace VaultItemProcessor
 
                 string productName = itemList[0].Number;
 
-                int qty = (int) spinEditOrderQty.Value;
+                int batchQty = (int) spinEditOrderQty.Value;
 
                 foreach (ExportLineItem item in itemList)
                 {
@@ -3087,7 +3087,7 @@ namespace VaultItemProcessor
                     // create the orderItemOperation
                     OrderItemOperation oiOp = new OrderItemOperation();
                     oiOp.Operation = newOp;
-                    oiOp.qtyRequired = item.Qty;
+                    oiOp.qtyRequired = item.Qty * batchQty;
                     oiOp.qtyDone = 0;
 
                     dbContext.OrderItemOperations.Add(oiOp);
