@@ -32,6 +32,7 @@ namespace VaultItemProcessor
         public virtual DbSet<Nest> Nests { get; set; }
         public virtual DbSet<OperationPerformed> OperationPerformeds { get; set; }
         public virtual DbSet<Operation> Operations { get; set; }
+        public virtual DbSet<OrderItemOperationPerformed> OrderItemOperationPerformeds { get; set; }
         public virtual DbSet<OrderItemOperation> OrderItemOperations { get; set; }
         public virtual DbSet<OrderItem> OrderItems { get; set; }
         public virtual DbSet<Order> Orders { get; set; }

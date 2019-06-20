@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="RadanMaster5Model.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="RadanMaster5.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="__MigrationHistory">
           <Key>
             <PropertyRef Name="MigrationId" />
@@ -370,7 +370,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <EntityContainer Name="RadanMaster5ModelStoreContainer">
+        <EntityContainer Name="RadanMaster5StoreContainer">
           <EntitySet Name="__MigrationHistory" EntityType="Self.__MigrationHistory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Files" EntityType="Self.Files" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Materials" EntityType="Self.Materials" Schema="dbo" store:Type="Tables" />
@@ -448,10 +448,11 @@
             <End Role="RadanIDs" EntitySet="RadanIDs" />
           </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
-      <Schema Namespace="RadanMaster5Model" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+      <Schema Namespace="RadanMaster5" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityType Name="C__MigrationHistory">
           <Key>
             <PropertyRef Name="MigrationId" />
@@ -515,10 +516,8 @@
           <Property Name="timePerformed" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="Notes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="usr_UserID" Type="Int32" />
-          <Property Name="OrderItemOperation_ID" Type="Int32" />
-          <NavigationProperty Name="OrderItemOperation" Relationship="Self.FK_dbo_OperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OperationPerformeds" ToRole="OrderItemOperations" />
           <NavigationProperty Name="User" Relationship="Self.FK_dbo_OperationPerformeds_dbo_Users_usr_UserID" FromRole="OperationPerformeds" ToRole="Users" />
-          <NavigationProperty Name="OrderItemOperationPerformeds" Relationship="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" FromRole="OperationPerformed" ToRole="OrderItemOperationPerformed" />
+          <NavigationProperty Name="OrderItemOperationPerformeds" Relationship="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" FromRole="OperationPerformeds" ToRole="OrderItemOperationPerformeds" />
         </EntityType>
         <EntityType Name="Operation">
           <Key>
@@ -532,6 +531,17 @@
           <NavigationProperty Name="Part" Relationship="Self.FK_dbo_Operations_dbo_Parts_PartID" FromRole="Operations" ToRole="Parts" />
           <NavigationProperty Name="OrderItemOperations" Relationship="Self.FK_dbo_OrderItemOperations_dbo_Operations_operationID" FromRole="Operations" ToRole="OrderItemOperations" />
         </EntityType>
+        <EntityType Name="OrderItemOperationPerformed">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="qtyDone" Type="Int32" Nullable="false" />
+          <Property Name="OrderItemOperation_ID" Type="Int32" />
+          <Property Name="OperationPerformed_ID" Type="Int32" />
+          <NavigationProperty Name="OperationPerformed" Relationship="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" FromRole="OrderItemOperationPerformeds" ToRole="OperationPerformeds" />
+          <NavigationProperty Name="OrderItemOperation" Relationship="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OrderItemOperationPerformeds" ToRole="OrderItemOperations" />
+        </EntityType>
         <EntityType Name="OrderItemOperation">
           <Key>
             <PropertyRef Name="ID" />
@@ -541,10 +551,9 @@
           <Property Name="qtyDone" Type="Int32" Nullable="false" />
           <Property Name="operationID" Type="Int32" />
           <Property Name="orderItemID" Type="Int32" />
-          <NavigationProperty Name="OperationPerformeds" Relationship="Self.FK_dbo_OperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OrderItemOperations" ToRole="OperationPerformeds" />
           <NavigationProperty Name="Operation" Relationship="Self.FK_dbo_OrderItemOperations_dbo_Operations_operationID" FromRole="OrderItemOperations" ToRole="Operations" />
+          <NavigationProperty Name="OrderItemOperationPerformeds" Relationship="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OrderItemOperations" ToRole="OrderItemOperationPerformeds" />
           <NavigationProperty Name="OrderItem" Relationship="Self.FK_dbo_OrderItemOperations_dbo_OrderItems_orderItemID" FromRole="OrderItemOperations" ToRole="OrderItems" />
-          <NavigationProperty Name="OrderItemOperationPerformeds" Relationship="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OrderItemOperation" ToRole="OrderItemOperationPerformed" />
         </EntityType>
         <EntityType Name="OrderItem">
           <Key>
@@ -675,18 +684,6 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_dbo_OperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
-          <End Role="OrderItemOperations" Type="Self.OrderItemOperation" Multiplicity="0..1" />
-          <End Role="OperationPerformeds" Type="Self.OperationPerformed" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="OrderItemOperations">
-              <PropertyRef Name="ID" />
-            </Principal>
-            <Dependent Role="OperationPerformeds">
-              <PropertyRef Name="OrderItemOperation_ID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <Association Name="FK_dbo_OperationPerformeds_dbo_Users_usr_UserID">
           <End Role="Users" Type="Self.User" Multiplicity="0..1" />
           <End Role="OperationPerformeds" Type="Self.OperationPerformed" Multiplicity="*" />
@@ -696,6 +693,18 @@
             </Principal>
             <Dependent Role="OperationPerformeds">
               <PropertyRef Name="usr_UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID">
+          <End Role="OperationPerformeds" Type="Self.OperationPerformed" Multiplicity="0..1" />
+          <End Role="OrderItemOperationPerformeds" Type="Self.OrderItemOperationPerformed" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="OperationPerformeds">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItemOperationPerformeds">
+              <PropertyRef Name="OperationPerformed_ID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -722,6 +731,18 @@
             </Principal>
             <Dependent Role="OrderItemOperations">
               <PropertyRef Name="operationID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
+          <End Role="OrderItemOperations" Type="Self.OrderItemOperation" Multiplicity="0..1" />
+          <End Role="OrderItemOperationPerformeds" Type="Self.OrderItemOperationPerformed" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="OrderItemOperations">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="OrderItemOperationPerformeds">
+              <PropertyRef Name="OrderItemOperation_ID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -801,6 +822,7 @@
           <EntitySet Name="Nests" EntityType="Self.Nest" />
           <EntitySet Name="OperationPerformeds" EntityType="Self.OperationPerformed" />
           <EntitySet Name="Operations" EntityType="Self.Operation" />
+          <EntitySet Name="OrderItemOperationPerformeds" EntityType="Self.OrderItemOperationPerformed" />
           <EntitySet Name="OrderItemOperations" EntityType="Self.OrderItemOperation" />
           <EntitySet Name="OrderItems" EntityType="Self.OrderItem" />
           <EntitySet Name="Orders" EntityType="Self.Order" />
@@ -820,13 +842,13 @@
             <End Role="OrderItems" EntitySet="OrderItems" />
             <End Role="NestedParts" EntitySet="NestedParts" />
           </AssociationSet>
-          <AssociationSet Name="FK_dbo_OperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" Association="Self.FK_dbo_OperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
-            <End Role="OrderItemOperations" EntitySet="OrderItemOperations" />
-            <End Role="OperationPerformeds" EntitySet="OperationPerformeds" />
-          </AssociationSet>
           <AssociationSet Name="FK_dbo_OperationPerformeds_dbo_Users_usr_UserID" Association="Self.FK_dbo_OperationPerformeds_dbo_Users_usr_UserID">
             <End Role="Users" EntitySet="Users" />
             <End Role="OperationPerformeds" EntitySet="OperationPerformeds" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" Association="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID">
+            <End Role="OperationPerformeds" EntitySet="OperationPerformeds" />
+            <End Role="OrderItemOperationPerformeds" EntitySet="OrderItemOperationPerformeds" />
           </AssociationSet>
           <AssociationSet Name="FK_dbo_Operations_dbo_Parts_PartID" Association="Self.FK_dbo_Operations_dbo_Parts_PartID">
             <End Role="Parts" EntitySet="Parts" />
@@ -835,6 +857,10 @@
           <AssociationSet Name="FK_dbo_OrderItemOperations_dbo_Operations_operationID" Association="Self.FK_dbo_OrderItemOperations_dbo_Operations_operationID">
             <End Role="Operations" EntitySet="Operations" />
             <End Role="OrderItemOperations" EntitySet="OrderItemOperations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" Association="Self.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
+            <End Role="OrderItemOperations" EntitySet="OrderItemOperations" />
+            <End Role="OrderItemOperationPerformeds" EntitySet="OrderItemOperationPerformeds" />
           </AssociationSet>
           <AssociationSet Name="FK_dbo_OrderItemOperations_dbo_OrderItems_orderItemID" Association="Self.FK_dbo_OrderItemOperations_dbo_OrderItems_orderItemID">
             <End Role="OrderItems" EntitySet="OrderItems" />
@@ -860,59 +886,15 @@
             <End Role="Nests" EntitySet="Nests" />
             <End Role="OrderItems" EntitySet="OrderItems" />
           </AssociationSet>
-          <EntitySet Name="OrderItemOperationPerformeds" EntityType="RadanMaster5Model.OrderItemOperationPerformed" />
-          <AssociationSet Name="FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" Association="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID">
-            <End Role="OperationPerformed" EntitySet="OperationPerformeds" />
-            <End Role="OrderItemOperationPerformed" EntitySet="OrderItemOperationPerformeds" />
-          </AssociationSet>
-          <AssociationSet Name="FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" Association="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
-            <End Role="OrderItemOperation" EntitySet="OrderItemOperations" />
-            <End Role="OrderItemOperationPerformed" EntitySet="OrderItemOperationPerformeds" />
-          </AssociationSet>
         </EntityContainer>
-        <EntityType Name="OrderItemOperationPerformed">
-          <Key>
-            <PropertyRef Name="ID" />
-          </Key>
-          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="qtyDone" Type="Int32" Nullable="false" />
-          <Property Name="OrderItemOperation_ID" Type="Int32" />
-          <Property Name="OperationPerformed_ID" Type="Int32" />
-          <NavigationProperty Name="OperationPerformed" Relationship="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID" FromRole="OrderItemOperationPerformed" ToRole="OperationPerformed" />
-          <NavigationProperty Name="OrderItemOperation" Relationship="RadanMaster5Model.FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID" FromRole="OrderItemOperationPerformed" ToRole="OrderItemOperation" />
-        </EntityType>
-        <Association Name="FK_dbo_OrderItemOperationPerformeds_dbo_OperationPerformeds_OperationPerformed_ID">
-          <End Type="RadanMaster5Model.OperationPerformed" Role="OperationPerformed" Multiplicity="0..1" />
-          <End Type="RadanMaster5Model.OrderItemOperationPerformed" Role="OrderItemOperationPerformed" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="OperationPerformed">
-              <PropertyRef Name="ID" />
-            </Principal>
-            <Dependent Role="OrderItemOperationPerformed">
-              <PropertyRef Name="OperationPerformed_ID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_dbo_OrderItemOperationPerformeds_dbo_OrderItemOperations_OrderItemOperation_ID">
-          <End Type="RadanMaster5Model.OrderItemOperation" Role="OrderItemOperation" Multiplicity="0..1" />
-          <End Type="RadanMaster5Model.OrderItemOperationPerformed" Role="OrderItemOperationPerformed" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="OrderItemOperation">
-              <PropertyRef Name="ID" />
-            </Principal>
-            <Dependent Role="OrderItemOperationPerformed">
-              <PropertyRef Name="OrderItemOperation_ID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="RadanMaster5ModelStoreContainer" CdmEntityContainer="RadanMaster5Entities">
+        <EntityContainerMapping StorageEntityContainer="RadanMaster5StoreContainer" CdmEntityContainer="RadanMaster5Entities">
           <EntitySetMapping Name="C__MigrationHistory">
-            <EntityTypeMapping TypeName="RadanMaster5Model.C__MigrationHistory">
+            <EntityTypeMapping TypeName="RadanMaster5.C__MigrationHistory">
               <MappingFragment StoreEntitySet="__MigrationHistory">
                 <ScalarProperty Name="MigrationId" ColumnName="MigrationId" />
                 <ScalarProperty Name="ContextKey" ColumnName="ContextKey" />
@@ -922,7 +904,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Files">
-            <EntityTypeMapping TypeName="RadanMaster5Model.File">
+            <EntityTypeMapping TypeName="RadanMaster5.File">
               <MappingFragment StoreEntitySet="Files">
                 <ScalarProperty Name="FileId" ColumnName="FileId" />
                 <ScalarProperty Name="FileName" ColumnName="FileName" />
@@ -935,7 +917,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Materials">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Material">
+            <EntityTypeMapping TypeName="RadanMaster5.Material">
               <MappingFragment StoreEntitySet="Materials">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="Name" ColumnName="Name" />
@@ -945,7 +927,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="NestedParts">
-            <EntityTypeMapping TypeName="RadanMaster5Model.NestedPart">
+            <EntityTypeMapping TypeName="RadanMaster5.NestedPart">
               <MappingFragment StoreEntitySet="NestedParts">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="Qty" ColumnName="Qty" />
@@ -955,7 +937,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Nests">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Nest">
+            <EntityTypeMapping TypeName="RadanMaster5.Nest">
               <MappingFragment StoreEntitySet="Nests">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="nestName" ColumnName="nestName" />
@@ -965,7 +947,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="OperationPerformeds">
-            <EntityTypeMapping TypeName="RadanMaster5Model.OperationPerformed">
+            <EntityTypeMapping TypeName="RadanMaster5.OperationPerformed">
               <MappingFragment StoreEntitySet="OperationPerformeds">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="qtyDone" ColumnName="qtyDone" />
@@ -976,7 +958,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Operations">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Operation">
+            <EntityTypeMapping TypeName="RadanMaster5.Operation">
               <MappingFragment StoreEntitySet="Operations">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="Name" ColumnName="Name" />
@@ -986,8 +968,18 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="OrderItemOperationPerformeds">
+            <EntityTypeMapping TypeName="RadanMaster5.OrderItemOperationPerformed">
+              <MappingFragment StoreEntitySet="OrderItemOperationPerformeds">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="qtyDone" ColumnName="qtyDone" />
+                <ScalarProperty Name="OrderItemOperation_ID" ColumnName="OrderItemOperation_ID" />
+                <ScalarProperty Name="OperationPerformed_ID" ColumnName="OperationPerformed_ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="OrderItemOperations">
-            <EntityTypeMapping TypeName="RadanMaster5Model.OrderItemOperation">
+            <EntityTypeMapping TypeName="RadanMaster5.OrderItemOperation">
               <MappingFragment StoreEntitySet="OrderItemOperations">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="qtyRequired" ColumnName="qtyRequired" />
@@ -998,7 +990,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="OrderItems">
-            <EntityTypeMapping TypeName="RadanMaster5Model.OrderItem">
+            <EntityTypeMapping TypeName="RadanMaster5.OrderItem">
               <MappingFragment StoreEntitySet="OrderItems">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
@@ -1014,7 +1006,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Orders">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Order">
+            <EntityTypeMapping TypeName="RadanMaster5.Order">
               <MappingFragment StoreEntitySet="Orders">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="OrderNumber" ColumnName="OrderNumber" />
@@ -1029,7 +1021,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Parts">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Part">
+            <EntityTypeMapping TypeName="RadanMaster5.Part">
               <MappingFragment StoreEntitySet="Parts">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="FileName" ColumnName="FileName" />
@@ -1055,7 +1047,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Privileges">
-            <EntityTypeMapping TypeName="RadanMaster5Model.Privilege">
+            <EntityTypeMapping TypeName="RadanMaster5.Privilege">
               <MappingFragment StoreEntitySet="Privileges">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="buttonName" ColumnName="buttonName" />
@@ -1065,7 +1057,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="RadanIDs">
-            <EntityTypeMapping TypeName="RadanMaster5Model.RadanID">
+            <EntityTypeMapping TypeName="RadanMaster5.RadanID">
               <MappingFragment StoreEntitySet="RadanIDs">
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="RadanIDNumber" ColumnName="RadanIDNumber" />
@@ -1074,7 +1066,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Users">
-            <EntityTypeMapping TypeName="RadanMaster5Model.User">
+            <EntityTypeMapping TypeName="RadanMaster5.User">
               <MappingFragment StoreEntitySet="Users">
                 <ScalarProperty Name="UserID" ColumnName="UserID" />
                 <ScalarProperty Name="UserName" ColumnName="UserName" />
@@ -1082,7 +1074,7 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <AssociationSetMapping Name="NestOrderItems" TypeName="RadanMaster5Model.NestOrderItems" StoreEntitySet="NestOrderItems">
+          <AssociationSetMapping Name="NestOrderItems" TypeName="RadanMaster5.NestOrderItems" StoreEntitySet="NestOrderItems">
             <EndProperty Name="Nests">
               <ScalarProperty Name="ID" ColumnName="Nest_ID" />
             </EndProperty>
@@ -1090,16 +1082,6 @@
               <ScalarProperty Name="ID" ColumnName="OrderItem_ID" />
             </EndProperty>
           </AssociationSetMapping>
-          <EntitySetMapping Name="OrderItemOperationPerformeds">
-            <EntityTypeMapping TypeName="RadanMaster5Model.OrderItemOperationPerformed">
-              <MappingFragment StoreEntitySet="OrderItemOperationPerformeds">
-                <ScalarProperty Name="OperationPerformed_ID" ColumnName="OperationPerformed_ID" />
-                <ScalarProperty Name="OrderItemOperation_ID" ColumnName="OrderItemOperation_ID" />
-                <ScalarProperty Name="qtyDone" ColumnName="qtyDone" />
-                <ScalarProperty Name="ID" ColumnName="ID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

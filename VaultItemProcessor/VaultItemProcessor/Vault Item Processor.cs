@@ -2963,6 +2963,7 @@ namespace VaultItemProcessor
                     // create the operation
                     Operation newOp = dbContext.Operations.Where(op => op.Name == item.Operations).
                                                            Where(op => op.Part.FileName == item.Number).FirstOrDefault();
+
                     if (newOp == null)
                     {
                         newOp = new Operation();

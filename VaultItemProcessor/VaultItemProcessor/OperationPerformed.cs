@@ -14,14 +14,20 @@ namespace VaultItemProcessor
     
     public partial class OperationPerformed
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public OperationPerformed()
+        {
+            this.OrderItemOperationPerformeds = new HashSet<OrderItemOperationPerformed>();
+        }
+    
         public int ID { get; set; }
         public int qtyDone { get; set; }
         public System.DateTime timePerformed { get; set; }
         public string Notes { get; set; }
         public Nullable<int> usr_UserID { get; set; }
-        public Nullable<int> OrderItemOperation_ID { get; set; }
     
-        public virtual OrderItemOperation OrderItemOperation { get; set; }
         public virtual User User { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<OrderItemOperationPerformed> OrderItemOperationPerformeds { get; set; }
     }
 }

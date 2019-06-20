@@ -17,7 +17,7 @@ namespace VaultItemProcessor
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public OrderItemOperation()
         {
-            this.OperationPerformeds = new HashSet<OperationPerformed>();
+            this.OrderItemOperationPerformeds = new HashSet<OrderItemOperationPerformed>();
         }
     
         public int ID { get; set; }
@@ -26,9 +26,9 @@ namespace VaultItemProcessor
         public Nullable<int> operationID { get; set; }
         public Nullable<int> orderItemID { get; set; }
     
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<OperationPerformed> OperationPerformeds { get; set; }
         public virtual Operation Operation { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<OrderItemOperationPerformed> OrderItemOperationPerformeds { get; set; }
         public virtual OrderItem OrderItem { get; set; }
     }
 }
