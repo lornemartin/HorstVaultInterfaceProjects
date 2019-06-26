@@ -2970,10 +2970,8 @@ namespace VaultItemProcessor
                         newOp.Name = item.Operations;
                         newOp.Location = item.PlantID;
                         newOp.isFinalOp = false;
-
                         dbContext.Operations.Add(newOp);
                     }
-
 
                     // create the part object
                     Part newPart = dbContext.Parts.Where(p => p.FileName == item.Number).FirstOrDefault();
@@ -3036,19 +3034,37 @@ namespace VaultItemProcessor
                     // create the pdf file object
                     if (item.RequiresPdf && item.HasPdf)
                     {
-                        string dateTimeStamp = DateTime.Now.ToString();
-                        string fileName = @"M:\PDF Drawing Files\" + item.Number + ".pdf";
-                        FileStream fStream = System.IO.File.OpenRead(fileName);
-                        byte[] contents = new byte[fStream.Length];
-                        fStream.Read(contents, 0, (int)fStream.Length);
-                        fStream.Close();
+                        string pdfPath = @"M:\PDF Drawing Files\";
+                        FileInfo fInfo= new FileInfo(pdfPath + item.Number + ".pdf");
 
-                        VaultItemProcessor.File newFile = new File();
-                        newFile.FileName = fileName;
-                        newFile.ContentType = "application/pdf";
-                        newFile.Content = contents;
-                        newFile.Part = newPart;
+                        if (fInfo.Exists)
+                        {
+
+                            // see if a file exists that was created since the vault file was last modified
+                            File searchFile = dbContext.Files.Where(f => f.FileName == item.Number).
+                                                              Where(f => f.CreationDate > fInfo.LastWriteTime).FirstOrDefault();
+                            if (searchFile == null)
+                            {
+                                string dateTimeStamp = DateTime.Now.ToString();
+                                string fileName = item.Number;
+                                FileStream fStream = System.IO.File.OpenRead(pdfPath + fileName + ".pdf");
+                                byte[] contents = new byte[fStream.Length];
+                                fStream.Read(contents, 0, (int)fStream.Length);
+                                fStream.Close();
+
+                                searchFile = new File();
+                                searchFile.FileName = fileName;
+                                searchFile.ContentType = "application /pdf";
+                                searchFile.Content = contents;
+                                searchFile.Part = newPart;
+                                searchFile.CreationDate = DateTime.Now;
+
+                                dbContext.Files.Add(searchFile);
+                                dbContext.SaveChanges();
+                            }
+                        }
                     }
+
 
                     // create or access the order object
                     Order newOrder = new Order();
@@ -3082,8 +3098,6 @@ namespace VaultItemProcessor
                         dbContext.SaveChanges();
 
                     }
-
-                    
 
                     // create the orderItemOperation
                     OrderItemOperation oiOp = new OrderItemOperation();
