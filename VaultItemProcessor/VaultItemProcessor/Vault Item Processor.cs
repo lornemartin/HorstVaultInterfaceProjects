@@ -3026,8 +3026,6 @@ namespace VaultItemProcessor
                         newPart.State = item.LifeCycleState;
                         newPart.Keywords = item.Keywords;
                         newPart.Notes = item.Notes;
-                        newPart.Operations.Clear();
-                        newPart.Operations.Add(newOp);
                         dbContext.SaveChanges();
                     }
 
