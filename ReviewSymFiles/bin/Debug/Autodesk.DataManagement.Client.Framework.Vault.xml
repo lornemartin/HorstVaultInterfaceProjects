@@ -151,6 +151,9 @@ implement custom property definitions, create dependencies between existing prop
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignFileNameDuplicatedRestriction">
       <summary>Looks up a localized string similar to File name duplicated in the following locations: {0}.</summary>
     </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignFileNoExtension">
+      <summary>Looks up a localized string similar to The uploaded file doesn't have an extension.</summary>
+    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignFileRetrievalRestriction">
       <summary>Looks up a localized string similar to Problem accessing the file '{0}'.</summary>
     </member>
@@ -159,6 +162,9 @@ implement custom property definitions, create dependencies between existing prop
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.copyDesignFolderRestrictionMessage">
       <summary>Looks up a localized string similar to Some folder(s) could not be created in vault.</summary>
+    </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.copyDesignFolderWriteRestrictionMessage">
+      <summary>Looks up a localized string similar to User '{0}' does not have write permission to path '{1}'..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignMissingDestinationLocation">
       <summary>Looks up a localized string similar to Missing destination location.</summary>
@@ -205,15 +211,6 @@ implement custom property definitions, create dependencies between existing prop
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionDoesNotContainEntry">
       <summary>Looks up a localized string similar to does not contain.</summary>
     </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionDoesNotEndWith">
-      <summary>Looks up a localized string similar to does not end with.</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionDoesNotStartWith">
-      <summary>Looks up a localized string similar to does not start with.</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionEndsWith">
-      <summary>Looks up a localized string similar to ends with.</summary>
-    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionFalse">
       <summary>Looks up a localized string similar to is false.</summary>
     </member>
@@ -246,9 +243,6 @@ implement custom property definitions, create dependencies between existing prop
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionNotEqualEntry">
       <summary>Looks up a localized string similar to is not.</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionStartsWith">
-      <summary>Looks up a localized string similar to starts with.</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignRuleConditionThisWeekEntry">
       <summary>Looks up a localized string similar to This Week.</summary>
@@ -469,6 +463,9 @@ shared working folder..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.MyDocuments">
       <summary>Looks up a localized string similar to My Documents.</summary>
+    </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.NewFileNameContainsIllegalCharacters">
+      <summary>Looks up a localized string similar to Filename {0} contains illegal characters..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.notLoggedIn">
       <summary>Looks up a localized string similar to Your account is logged out of the Autodesk data managment server. You must log in to access the vault..</summary>
@@ -3518,7 +3515,7 @@ specific. An implementation of this interface represents a particular Entity cla
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Interfaces.ICommittableResult.Commit">
       <summary>Commits the result</summary>
     </member>
-    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Interfaces.ICopyDesignEntityOperationProvider.GetRelationships(Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection,System.Collections.Generic.IEnumerable{Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.IEntity},Autodesk.DataManagement.Client.Framework.Vault.Currency.CopyDesign.CopyDesignRelationshipGatheringOptions,System.Threading.CancellationToken)">
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Interfaces.ICopyDesignEntityOperationProvider.GetRelationships(Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection,System.Collections.Generic.IEnumerable{Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.IEntity},Autodesk.DataManagement.Client.Framework.Vault.Currency.CopyDesign.CopyDesignRelationshipGatheringOptions,System.Boolean,System.Threading.CancellationToken)">
       <summary>Get the entity relationships that are appropriate for Copy Design based on the gathering options.</summary>
     </member>
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Interfaces.IEntityOperationProvider.CanBrowseChildren(Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection,Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.IEntity)">

@@ -66,3 +66,4 @@ C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Au
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.xml
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
+C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.LicenseWrapper.dll
