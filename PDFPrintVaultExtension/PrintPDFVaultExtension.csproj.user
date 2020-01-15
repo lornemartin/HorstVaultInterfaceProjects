@@ -10,4 +10,7 @@
     <StartProgram>C:\Program Files\Autodesk\Vault Professional 2014\Explorer\Connectivity.VaultPro.exe</StartProgram>
     <StartAction>Program</StartAction>
   </PropertyGroup>
+  <PropertyGroup>
+    <ReferencePath>C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2020 SDK Binaries\</ReferencePath>
+  </PropertyGroup>
 </Project>

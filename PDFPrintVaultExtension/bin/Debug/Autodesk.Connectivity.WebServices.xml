@@ -1172,9 +1172,6 @@ underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.ChangeOrderLite">
       <summary>A change order. Contains less information than the standard ChangeOrder class.</summary>
     </member>
-    <member name="T:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm">
-      <summary>A description of a change order numbering scheme.</summary>
-    </member>
     <member name="T:Autodesk.Connectivity.WebServices.ChangeOrderParticipant">
       <summary>A user for a Change Order.</summary>
     </member>
@@ -1603,8 +1600,17 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.NameValuePair">
       <summary>Represents a Name/Value pair construct</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.NumberingService">
+      <summary>Contains methods for retrieving and manipulating Numbering Schemes and configured Numbering Providers.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.NumberingServiceBase">
+      <summary>Not intended for public use.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.NumProv">
+      <summary>A description of a Numbering Provider for Files, Items, and Change Orders</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.NumSchm">
-      <summary>A description of a Numbering Scheme for an Item.</summary>
+      <summary>A description of a Numbering Scheme for Files, Items, and Change Orders.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.NumSchmField">
       <summary>A field in the Numbering Scheme.</summary>
@@ -1793,10 +1799,13 @@ of the underlying service implemnation</summary>
       <summary>Information about the update lifecycle Change Order operation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.UpdateCustomEntityLifeCycleStateCommandEventArgs">
-      <summary>Information about the update lifecycle customer entity operation<!--DXMETADATA end --></summary>
+      <summary>Information about the update lifecycle custom entity operation<!--DXMETADATA end --></summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.UpdateFileLifeCycleStateCommandEventArgs">
       <summary>Information about the update lifecycle File operation</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.UpdateFolderLifeCycleStateCommandEventArgs">
+      <summary>Information about the update lifecycle Folder operation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.UpdateItemLifeCycleStateCommandEventArgs">
       <summary>Information about the update lifecycle Item operation</summary>
@@ -3052,39 +3061,11 @@ the value will be the latest version at the time the Change Order was inactivate
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderLite.Title">
       <summary>The title of the Change Order.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.Desc">
-      <summary>A description of the scheme.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.FieldLen">
-      <summary>The number of digits for the number. The number will always fill up the FieldLen (ex. for a length of 4, a number might be '0005').</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.Id">
-      <summary>The unique ID for the object.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.IsDflt">
-      <summary>If true, this scheme is the default scheme. If false, this scheme is not the default.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.IsInUse">
-      <summary>If true, the scheme is in use by at least one change order. If false, no change orders are using the scheme.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.Name">
-      <summary>The unique name of the scheme.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.StartNum">
-      <summary>The starting number for the scheme.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderNumSchm.WkgrpLabelIncl">
-      <summary>If true, the label of the currently connected to workgroup is included in the number. If false, the workgroup label is not used.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderParticipant.Id">
       <summary>The User ID. See Admin Service.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderParticipant.Name">
       <summary>The User name.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Activates numbering schemes so that they can be used to generate Change Order numbers.</summary>
-      <returns>A list of updated numbering schemes.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.AddChangeOrder(System.Int64,System.String,System.String,System.String,System.DateTime,System.Int64[],System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.PropInst[],Autodesk.Connectivity.WebServices.AssocPropItem[],Autodesk.Connectivity.WebServices.MsgGroup[],Autodesk.Connectivity.WebServices.Email[])">
       <summary>Create a new change order.</summary>
@@ -3096,10 +3077,6 @@ the value will be the latest version at the time the Change Order was inactivate
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.AddMarkup(System.Int64,System.Int64[],Autodesk.Connectivity.WebServices.MsgGroup[],Autodesk.Connectivity.WebServices.Email[])">
       <summary>Adds a markup to the specified Change Order. This function can also include additional file attachments, deleted file attachments and any comments added as
 part of the markup.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.AddNumberingScheme(System.String,System.String,System.Boolean,System.Int32,System.Int32,System.Boolean)">
-      <summary>Adds a new Numbering Scheme for Change Orders.</summary>
-      <returns>The newly added numbering scheme.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.AddRouting(System.Int64,System.String,System.Boolean,Autodesk.Connectivity.WebServices.RoutingUserRoles[])">
       <summary>Adds a new Routing.</summary>
@@ -3125,10 +3102,6 @@ part of the markup.</summary>
       <summary>Finish a Change Order activity. To be used when closing a Change Order.</summary>
       <returns>Returns the targeted ChangeOrder.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.DeactivateNumberingSchemes(System.Int64[])">
-      <summary>Deactivates numbering schemes.</summary>
-      <returns>The updated numbering scheme.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.DeleteChangeOrder(System.Int64)">
       <summary>Deletes a Change Order</summary>
     </member>
@@ -3137,9 +3110,6 @@ part of the markup.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.DeleteChangeOrdersUnconditional(System.Int64[])">
       <summary>Deletes a set of Change Orders, regardless of its state.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.DeleteNumberingScheme(System.Int64)">
-      <summary>Deletes a Numbering Scheme.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.DeleteRouting(System.Int64)">
       <summary>Deletes a Routing.</summary>
@@ -3240,10 +3210,6 @@ part of the markup.</summary>
       <summary>Gets the target item for rolling back an item's lifecycle state from within the context of a change order.</summary>
       <returns>the rollback target item</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Retrieves all the Numbering Schemes for the given Numbering Scheme Type.</summary>
-      <returns>An array of Numbering Scheme objects.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetRoutingMembersByChangeOrderId(System.Int64)">
       <summary>Retrieves Routing Members object for a given change order ID.</summary>
       <returns>A set of routing members and their roles.</returns>
@@ -3286,9 +3252,6 @@ cannot change item lifecycle states.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.SetChangeOrderMarkupFolderId(System.Int64)">
       <summary>Sets the Change Order markup folder.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.SetDefaultNumberingScheme(System.Int64)">
-      <summary>Sets the default Numbering Scheme.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.SetDefaultRouting(System.Int64)">
       <summary>Sets the default Routing.</summary>
@@ -3340,9 +3303,6 @@ cannot change item lifecycle states.</returns>
       <summary>Sets the life cycle state for a set of Items.</summary>
       <returns>the update item iterations</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.UpdateNumberingScheme(Autodesk.Connectivity.WebServices.ChangeOrderNumSchm)">
-      <summary>Updates the data for a numbering scheme.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.UpdateRouting(System.Int64,System.Boolean,System.Boolean)">
       <summary>Updates a Routing object.</summary>
       <returns>The updated Routing object.</returns>
@@ -3381,9 +3341,6 @@ cannot change item lifecycle states.</returns>
     <member name="E:Autodesk.Connectivity.WebServices.ChangeOrderService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.AddChangeOrder(System.Int64,System.String,System.String,System.String,System.DateTime,System.Int64[],System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.PropInst[],Autodesk.Connectivity.WebServices.AssocPropItem[],Autodesk.Connectivity.WebServices.MsgGroup[],Autodesk.Connectivity.WebServices.Email[])">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
@@ -3391,9 +3348,6 @@ cannot change item lifecycle states.</returns>
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.AddMarkup(System.Int64,System.Int64[],Autodesk.Connectivity.WebServices.MsgGroup[],Autodesk.Connectivity.WebServices.Email[])">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.AddNumberingScheme(System.String,System.String,System.Boolean,System.Int32,System.Int32,System.Boolean)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.AddRouting(System.Int64,System.String,System.Boolean,Autodesk.Connectivity.WebServices.RoutingUserRoles[])">
@@ -3414,9 +3368,6 @@ cannot change item lifecycle states.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.CommitChangeOrderCloseActivity(System.Int64,System.Int64,System.Int64,System.DateTime,Autodesk.Connectivity.WebServices.MsgGroup[],Autodesk.Connectivity.WebServices.Email[])">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.DeactivateNumberingSchemes(System.Int64[])">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.DeleteChangeOrder(System.Int64)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
@@ -3424,9 +3375,6 @@ cannot change item lifecycle states.</returns>
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.DeleteChangeOrdersUnconditional(System.Int64[])">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.DeleteNumberingScheme(System.Int64)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.DeleteRouting(System.Int64)">
@@ -3504,9 +3452,6 @@ cannot change item lifecycle states.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetLifecycleRollbackTargetItem(System.Int64,System.Int64)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetRoutingMembersByChangeOrderId(System.Int64)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
@@ -3538,9 +3483,6 @@ cannot change item lifecycle states.</returns>
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.SetChangeOrderMarkupFolderId(System.Int64)">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.SetDefaultNumberingScheme(System.Int64)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.SetDefaultRouting(System.Int64)">
@@ -3583,9 +3525,6 @@ cannot change item lifecycle states.</returns>
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.UpdateItemLifeCycleStates(System.Int64,System.Int64[],System.Int64[],System.String)">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.UpdateNumberingScheme(Autodesk.Connectivity.WebServices.ChangeOrderNumSchm)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.UpdateRouting(System.Int64,System.Boolean,System.Boolean)">
@@ -4038,10 +3977,6 @@ provider, but the provider is not registered.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.DocRestricArray.Restrictions">
       <summary>An array of Document Restrictions.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Activates a set of File numbering schemes.</summary>
-      <returns>An array of updated number schemes.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.AddDesignRepresentationFileAttachment(System.Int64,Autodesk.Connectivity.WebServices.FileAssocParam)">
       <summary>Adds an attachment to a Design Representation file without increasing the version of the file.</summary>
     </member>
@@ -4064,10 +3999,6 @@ provider, but the provider is not registered.</summary>
       <summary>Adds a new Link.</summary>
       <returns>The newly created Link object.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.AddNumberingScheme(System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean)">
-      <summary>Creates a new Numbering Scheme.</summary>
-      <returns>The Numbering Scheme object.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.AddUploadedFile(System.Int64,System.String,System.String,System.DateTime,Autodesk.Connectivity.WebServices.FileAssocParam[],Autodesk.Connectivity.WebServices.BOM,Autodesk.Connectivity.WebServices.FileClassification,System.Boolean,Autodesk.Connectivity.WebServices.ByteArray)">
       <summary>Creates a File object based on binary data previously uploaded.</summary>
       <returns>A File object representing the Vault's view of that file.</returns>
@@ -4083,10 +4014,6 @@ provider, but the provider is not registered.</summary>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.CheckRolePermissions(System.String[])">
       <summary>Check if the current logged in user has permission to execute specific web service APIs</summary>
       <returns>Array indicating whether or not the current logged in user has permission to execute each specified API</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.DeactivateNumberingSchemes(System.Int64[])">
-      <summary>Deactivates a set of File numbering schemes.</summary>
-      <returns>The updated Numbering Scheme objects.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.DeleteFileFromFolder(System.Int64,System.Int64)">
       <summary>Deletes a file.</summary>
@@ -4136,12 +4063,6 @@ provider, but the provider is not registered.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.DeleteLinks(System.Int64[])">
       <summary>Deletes a set of Links.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.DeleteNumberingScheme(System.Int64)">
-      <summary>Deletes a file numbering scheme</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.DeleteNumberingSchemeUnconditional(System.Int64)">
-      <summary>Deletes a file numbering scheme even if it is in use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.FindFileFoldersBySearchConditions(Autodesk.Connectivity.WebServices.SrchCond[],Autodesk.Connectivity.WebServices.SrchSort[],System.Int64[],System.Boolean,System.Boolean,System.String@,Autodesk.Connectivity.WebServices.SrchStatus@)">
       <summary>Performs a search on the Vault for a list of FileFolders.</summary>
@@ -4530,10 +4451,6 @@ the Vault.</returns>
       <summary>Gets the meta data for a set of links.</summary>
       <returns>The meta data for the links.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Gets a set of numbering schemes based on type.</summary>
-      <returns>An array of all matching objects.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.GetRequiredWorkingFolderLocation">
       <summary>The working folder that the client is expected to have. This setting is only valid if the Enforce Working Folder setting is true.</summary>
       <returns>The path to the working folder.</returns>
@@ -4602,9 +4519,6 @@ the Vault.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.SetDefaultFileNamingScheme(System.Int64)">
       <summary>Sets the default naming scheme.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.SetDefaultNumberingScheme(System.Int64)">
-      <summary>Sets the default file numbering scheme.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.SetDesignVisualizationAttachmentStatusById(System.Int64,Autodesk.Connectivity.WebServices.DesignVisualizationAttachmentStatus)">
       <summary>Sets the status of a design visualization</summary>
@@ -4682,10 +4596,6 @@ the Vault.</returns>
       <summary>Sets or modifies the name and comment of a label.</summary>
       <returns>The Label object with the updated name and comment.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentService.UpdateNumberingScheme(System.Int64,System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean)">
-      <summary>Updates an existing numbering scheme.</summary>
-      <returns>The updated numbering scheme object.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentService.ValidateBOMByFileId(System.Int64)">
       <summary>Checks to make sure a BOM contains no errors.</summary>
       <returns>Returns true if the BOM is valid. Returns false if the BOM contains errors.</returns>
@@ -4732,9 +4642,6 @@ the Vault.</returns>
     <member name="E:Autodesk.Connectivity.WebServices.DocumentService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddDesignVisualizationFileAttachment(System.Int64,Autodesk.Connectivity.WebServices.FileAssocParam)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
@@ -4750,9 +4657,6 @@ the Vault.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddLink(System.Int64,System.String,System.Int64,System.String)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddNumberingScheme(System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean)">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddUploadedFile(System.Int64,System.String,System.String,System.DateTime,Autodesk.Connectivity.WebServices.FileAssocParam[],Autodesk.Connectivity.WebServices.BOM,Autodesk.Connectivity.WebServices.FileClassification,System.Boolean,Autodesk.Connectivity.WebServices.ByteArray)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
@@ -4763,9 +4667,6 @@ the Vault.</returns>
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.CheckRolePermissions(System.String[])">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.DeactivateNumberingSchemes(System.Int64[])">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.DeleteFileFromFolder(System.Int64,System.Int64)">
@@ -4805,12 +4706,6 @@ the Vault.</returns>
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.DeleteLinks(System.Int64[])">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.DeleteNumberingScheme(System.Int64)">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.DeleteNumberingSchemeUnconditional(System.Int64)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.FindFileFoldersBySearchConditions(Autodesk.Connectivity.WebServices.SrchCond[],Autodesk.Connectivity.WebServices.SrchSort[],System.Int64[],System.Boolean,System.Boolean,System.String@,Autodesk.Connectivity.WebServices.SrchStatus@)">
@@ -5086,9 +4981,6 @@ the Vault.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.GetMetaOnLinks(System.Int64[])">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.GetRequiredWorkingFolderLocation">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
@@ -5141,9 +5033,6 @@ the Vault.</returns>
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.SetDefaultFileNamingScheme(System.Int64)">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.SetDefaultNumberingScheme(System.Int64)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.SetDesignVisualizationAttachmentStatusById(System.Int64,Autodesk.Connectivity.WebServices.DesignVisualizationAttachmentStatus)">
@@ -5213,9 +5102,6 @@ the Vault.</returns>
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.UpdateLabel(System.Int64,System.String,System.String)">
-      <summary>Not intended for public use. Consult the DocumentService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.UpdateNumberingScheme(System.Int64,System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.ValidateBOMByFileId(System.Int64)">
@@ -5316,6 +5202,9 @@ the Vault.</returns>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.UpdateFileLifecycleStateEvents">
       <summary>A collection of Web Service Command Events for File lifecycle change operations.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.UpdateFolderLifecycleStateEvents">
+      <summary>A collection of Web Service Command Events for Folder lifecycle change operations.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -6016,7 +5905,7 @@ multiple parts.</returns>
     <member name="E:Autodesk.Connectivity.WebServices.FilestoreService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.CopyFile(System.Byte[],System.Boolean,Autodesk.Connectivity.WebServices.PropWriteReq[],Autodesk.Connectivity.WebServices.PropWriteResults@)">
+    <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.CopyFile(System.Byte[],System.String,System.Boolean,Autodesk.Connectivity.WebServices.PropWriteReq[],Autodesk.Connectivity.WebServices.PropWriteResults@)">
       <summary>Not intended for public use. Consult the FilestoreService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.DownloadFilePart(System.Byte[],System.Int64,System.Int64,System.Boolean)">
@@ -6658,10 +6547,6 @@ in.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.ItemsAndFiles.StatusArray">
       <summary>The status of each item in ItemRevArray.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Activates a set of Item numbering schemes.</summary>
-      <returns>An array of updated number schemes.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.AddComponentsToPromote(System.Int64[],Autodesk.Connectivity.WebServices.ItemAssignAll,System.Boolean)">
       <summary>Assign item for specific BOM components</summary>
     </member>
@@ -6675,10 +6560,6 @@ in.</summary>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.AddItemRevision(System.Int64)">
       <summary>Creates a new Item.</summary>
       <returns>The newly created Item. The Item is still in an editable state. Call a commit function, such as UpdateAndCommitItems to commit the changes.</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.AddNumberingScheme(Autodesk.Connectivity.WebServices.NumSchm)">
-      <summary>Creates a new Numbering Scheme.</summary>
-      <returns>The newly created NumSchm. Should be identical to the passed in object except for the Id.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.AddUnitOfMeasure(System.String,System.String,System.Double,System.Int64)">
       <summary>Creates a Unit of Measure object.</summary>
@@ -6703,10 +6584,6 @@ in.</summary>
       <summary>Compare the BOMs of two Versions of an Item.</summary>
       <returns>The results of the compare.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.DeactivateNumberingSchemes(System.Int64[])">
-      <summary>Deactivates a set of Item numbering schemes.</summary>
-      <returns>The updated Numbering Scheme objects.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.DeleteItems(System.Int64[])">
       <summary>Deletes a set of items. All associated revisions and versions are also deleted.</summary>
     </member>
@@ -6720,9 +6597,6 @@ in.</summary>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.DeleteItemVersionsByMasterItemIds(System.Int64[])">
       <summary>Deletes/Purges the item iteration history of the specified items</summary>
       <returns>The state of the delete</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.DeleteNumberingScheme(System.Int64)">
-      <summary>Deletes an Item numbering scheme.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.DeleteUncommittedItems(System.Boolean)">
       <summary>Deletes all the uncommitted items for this user.</summary>
@@ -6865,10 +6739,6 @@ All other Items in the BOM are based on effectivity.</returns>
       <summary>Gets the target item for rolling back an item's lifecycle state</summary>
       <returns>the target item iteration to rollback to</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Gets the Numbering Schemes for a given type.</summary>
-      <returns>An array of matching objects.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.GetPrimaryComponentsByItemIds(System.Int64[])">
       <summary>
         <para>Gets the BOMComponents that form the primary link between the specified items and the components’ files.</para>
@@ -6926,9 +6796,6 @@ of the properties specified.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.ReassignComponentsToDifferentItems(System.Int64[],System.Int64[])">
       <summary>Assigns a Component to a different Item.</summary>
       <returns>An array of new destination Items. The Items are editable. Call a commit function, such as UpdateAndCommitItems to finalize the changes.</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.SetDefaultNumberingScheme(System.Int64)">
-      <summary>Sets the default Item numbering scheme for the Vault.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.SetEnablementConfiguration(Autodesk.Connectivity.WebServices.EnablementConfig)">
       <summary>Sets the setting that controls if Items and Change Orders are enabled</summary>
@@ -7000,9 +6867,6 @@ of the actual assigned Item</summary>
       <summary>Updates the revision numbers for a set of items.</summary>
       <returns>The updated items.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemService.UpdateNumberingScheme(Autodesk.Connectivity.WebServices.NumSchm)">
-      <summary>Updates an existing Item numbering scheme.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemService.UpdatePromoteComponents(System.Int64[],Autodesk.Connectivity.WebServices.ItemAssignAll,System.Boolean)">
       <summary>Begins an "update items from files" operation on a component-by-component basis.</summary>
     </member>
@@ -7052,9 +6916,6 @@ of the actual assigned Item</summary>
     <member name="E:Autodesk.Connectivity.WebServices.ItemService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.ActivateNumberingSchemes(System.Int64[])">
-      <summary>Not intended for public use.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddComponentsToPromote(System.Int64[],Autodesk.Connectivity.WebServices.ItemAssignAll,System.Boolean)">
       <summary>Not intended for public use.</summary>
     </member>
@@ -7065,9 +6926,6 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddItemRevision(System.Int64)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddNumberingScheme(Autodesk.Connectivity.WebServices.NumSchm)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddUnitOfMeasure(System.String,System.String,System.Double,System.Int64)">
@@ -7088,9 +6946,6 @@ of the actual assigned Item</summary>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.CompareItemBOMs(System.Int64,System.Int64,System.DateTime,System.DateTime,Autodesk.Connectivity.WebServices.BOMTyp,Autodesk.Connectivity.WebServices.BOMTyp,Autodesk.Connectivity.WebServices.BOMViewEditOptions,System.Int64[])">
       <summary>Not intended for public use.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.DeactivateNumberingSchemes(System.Int64[])">
-      <summary>Not intended for public use.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.DeleteItems(System.Int64[])">
       <summary>Not intended for public use.</summary>
     </member>
@@ -7101,9 +6956,6 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.DeleteItemVersionsByMasterItemIds(System.Int64[])">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.DeleteNumberingScheme(System.Int64)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.DeleteUncommittedItems(System.Boolean)">
@@ -7211,9 +7063,6 @@ of the actual assigned Item</summary>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.GetLifecycleRollbackTargetItem(System.Int64)">
       <summary>Not intended for public use.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.GetNumberingSchemesByType(Autodesk.Connectivity.WebServices.NumSchmType)">
-      <summary>Not intended for public use.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.GetPrimaryComponentsByItemIds(System.Int64[])">
       <summary>Not intended for public use.</summary>
     </member>
@@ -7254,9 +7103,6 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.ReassignComponentsToDifferentItems(System.Int64[],System.Int64[])">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.SetDefaultNumberingScheme(System.Int64)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.SetEnablementConfiguration(Autodesk.Connectivity.WebServices.EnablementConfig)">
@@ -7317,9 +7163,6 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.UpdateItemRevisionNumbers(System.Int64[],System.String[],System.String)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.UpdateNumberingScheme(Autodesk.Connectivity.WebServices.NumSchm)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.UpdatePromoteComponents(System.Int64[],Autodesk.Connectivity.WebServices.ItemAssignAll,System.Boolean)">
@@ -8073,6 +7916,79 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.NameValuePair.Val">
       <summary>Value associated with the name</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.AddNumberingScheme(System.String,System.String,System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean,System.Boolean)">
+      <summary>Creates a new Numbering Scheme for Files, Items, or Change Orders.</summary>
+      <returns>The Numbering Scheme object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.CheckRolePermissions(System.String[],System.String)">
+      <summary>Check if the current logged in user has permission to execute specific web service APIs.</summary>
+      <returns>Array indicating whether or not the current logged in user has permission to execute each specified API.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.DeleteNumberingScheme(System.Int64)">
+      <summary>Deletes a given Numbering Scheme for Files, Items, or Change Orders.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.DeleteNumberingSchemeUnconditional(System.Int64)">
+      <summary>Deletes a given Numbering Scheme for Files, Items, or Change Orders, regardless of server restrictions.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.EnableNumberingSchemes(System.Int64[],System.Boolean)">
+      <summary>Activates or deactivates given Numbering Schemes for Files, Items, and Change Orders.</summary>
+      <returns>An array of updated numbering schemes.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.GetNumberingProviders">
+      <summary>Gets a set of Numbering Providers available for use with Numbering Schemes.</summary>
+      <returns>An array of available Numbering Providers.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.GetNumberingSchemeById(System.Int64)">
+      <summary>Gets a Numbering Scheme by its scheme ID.</summary>
+      <returns>A Numbering Scheme of the same scheme ID.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.GetNumberingSchemes(System.String,Autodesk.Connectivity.WebServices.NumSchmType)">
+      <summary>Gets a set of Numbering Schemes based on Entity Class ID and NumSchmType.</summary>
+      <returns>An array of matching Numbering Schemes.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.SetDefaultNumberingScheme(System.String,System.Int64)">
+      <summary>Sets the default Numbering Scheme for Files, Items, or Change Orders.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.NumberingService.UpdateNumberingScheme(System.Int64,System.String,System.String,Autodesk.Connectivity.WebServices.NumSchmField[],System.Boolean,System.Boolean)">
+      <summary>Updates an existing Numbering Scheme.</summary>
+      <returns>The updated Numbering Scheme object.</returns>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.AllowInvokeEvents">
+      <summary>Tells if invoke events should fire. This value is true by default.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.SecurityHeader">
+      <summary>The security header.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.Timeout">
+      <summary>The time to wait, in milliseconds, for an HTTP response.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.Url">
+      <summary>The URL for making web service calls.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.WebServiceManager">
+      <summary>The WebServiceManager object that created the service. Will be null if the service was not created by a WebServiceManager.</summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.NumberingService.PostInvokeEvents">
+      <summary>Subscribe to this event to get a notification after every web service call.</summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.NumberingService.PreInvokeEvents">
+      <summary>Subscribe to this event to get a notification before every web service call.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumProv.DispName">
+      <summary>The display name of the Numbering Provider.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumProv.IsDflt">
+      <summary>If true, the Numbering Provider is the default provider for Numbering Schemes.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumProv.SysName">
+      <summary>The unique system name for the Numbering Provider.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumSchm.EntClassId">
+      <summary>The Entity Class ID the scheme is created for.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumSchm.FieldArray">
       <summary>An array of fields that make up the scheme.</summary>
     </member>
@@ -8080,7 +7996,7 @@ of the actual assigned Item</summary>
       <summary>If true, the scheme is active. If false, the scheme is inactive.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumSchm.IsDflt">
-      <summary>If true, the scheme is the default scheme for the repository.</summary>
+      <summary>If true, the scheme is the default Numbering Scheme for its Entity Class ID.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumSchm.IsInUse">
       <summary>If true, the scheme is in use by at least one Item. If false, there are no Items using the scheme.</summary>
@@ -8090,6 +8006,12 @@ of the actual assigned Item</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumSchm.Name">
       <summary>The unique name of the scheme.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumSchm.Provider">
+      <summary>The Numbering Provider that the scheme generates its numbers from.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumSchm.ReuseNum">
+      <summary>If true, unused item numbers are recycled. If false, unused item numbers are deleted and cannot be retrieved.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumSchm.SchmID">
       <summary>The Vault ID of the object.</summary>
@@ -8558,7 +8480,7 @@ definition is deleted but there are existing property instances.</summary>
       <summary>The property definition object.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.PropEquivFail.DispName">
-      <summary>The contetn source property definition display name.</summary>
+      <summary>The content source property definition display name.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.PropEquivFail.MapDirection">
       <summary>The mapping direction.</summary>
@@ -9455,6 +9377,18 @@ and printed in the format "MM/dd/yyyy HH:mm:ss".</summary>
     <member name="F:Autodesk.Connectivity.WebServices.UpdateFileLifeCycleStateCommandEventArgs.ToStateIds">
       <summary>The new state for the corresponding entry in FileMasterIds.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.UpdateFolderLifeCycleStateCommandEventArgs.ReturnValue">
+      <summary>The updated Folders.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.UpdateFolderLifeCycleStateCommandEventArgs.Comment">
+      <summary>The comment for the new version of the Folders.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.UpdateFolderLifeCycleStateCommandEventArgs.FolderIds">
+      <summary>The Folders changing state.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.UpdateFolderLifeCycleStateCommandEventArgs.ToStateIds">
+      <summary>The new state for the corresponding entry in FolderIds.</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.UpdateItemLifeCycleStateCommandEventArgs.AddRestriction(Autodesk.Connectivity.Extensibility.Framework.ExtensionRestriction)">
       <summary>Adds a restruction to the command. Used to block the command.</summary>
     </member>
@@ -10000,6 +9934,9 @@ current user), then this will return those credentials. Otherwise, this returns 
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.LifeCycleService">
       <summary>Gets the life cycle service object, or creates one if needed.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.NumberingService">
+      <summary>Gets the numbering service object, or creates one if needed.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.PackageService">
       <summary>Gets the package service object, or creates one if needed.</summary>

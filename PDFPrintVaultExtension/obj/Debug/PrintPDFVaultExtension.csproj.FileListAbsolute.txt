@@ -27,3 +27,4 @@ C:\Users\lorne\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\
 C:\Users\lorne\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\PrintPDFVaultExtension.pdb
 C:\Users\lorne\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.dll
 C:\Users\lorne\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.Connectivity.LicenseWrapper.dll
