@@ -135,9 +135,6 @@
       <HintPath>..\Vault 2019 SDK Binaries\x64\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.Services3, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="PrintPDF">
-      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core">
@@ -210,6 +207,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
+      <Name>PrintPDF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\VaultAccess\VaultAccess.csproj">
       <Project>{15635c05-be90-4f08-8b87-21f85b406a00}</Project>
       <Name>VaultAccess</Name>

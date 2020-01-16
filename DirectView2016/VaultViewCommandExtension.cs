@@ -35,7 +35,7 @@ using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("689e45ae-b49b-4fcb-954f-181bc48cdf25")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("12.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("13.0")]
 
 
 namespace VaultView
