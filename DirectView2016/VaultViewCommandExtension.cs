@@ -349,7 +349,7 @@ namespace VaultView
                 return false;
             }
 
-            }
+        }
 
         void Execute(VDF.Vault.Currency.Entities.FileIteration file, VDF.Vault.Currency.Connections.Connection connection)
         {
@@ -361,8 +361,8 @@ namespace VaultView
 
                 if (!System.IO.File.Exists(IvFullPath))
                 {
-                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2019\Bin\InventorView.exe";
-                    string Path2 = @"C:\Program Files\Autodesk\Inventor2019\Bin\InventorView.exe";
+                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2020\Bin\InventorView.exe";
+                    string Path2 = @"C:\Program Files\Autodesk\Inventor2020\Bin\InventorView.exe";
                     if (System.IO.File.Exists(Path1))
                     {
                         IvFullPath = Path1;

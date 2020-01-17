@@ -4,10 +4,10 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "DirectView"
+!define APP_NAME "DirectView 2020"
 !define COMP_NAME "Lorne Martin"
-!define VERSION "01.05.00.00"
-!define COPYRIGHT "Author  © 2019"
+!define VERSION "01.20.00.00"
+!define COPYRIGHT "Author  © 2020"
 !define DESCRIPTION "Vault Viewer"
 !define INSTALLER_NAME "M:\temp\DirectView Deployment\DirectView Setup.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
@@ -32,7 +32,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${UNINSTALL_PATH}" "UninstallString"
-InstallDir "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
+InstallDir "$APPDATA\Autodesk\Vault 2020\Extensions\DirectView"
 
 ######################################################################
 
@@ -103,7 +103,7 @@ Function .onInit
 		; point to ProgramData folder
 		; instead of current user's Roaming folder
 		SetShellVarContext all
-		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2019\Extensions\DirectView"
+		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2020\Extensions\DirectView"
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
 		CreateDirectory $INSTDIR
@@ -134,7 +134,7 @@ File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\De
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll"
+;File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.xml"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.dll"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Forms.dll"
