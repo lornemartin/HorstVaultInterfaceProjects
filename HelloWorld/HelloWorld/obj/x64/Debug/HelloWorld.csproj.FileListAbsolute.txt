@@ -24,14 +24,13 @@ C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll.config
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.pdb
-C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.MyCustomTabControl.resources
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.GenerateResource.cache
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CoreCompileInputs.cache
 C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CopyComplete
-C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.dll
-C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.pdb
 C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.vcet.config
-C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.dll.config
-C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.dll
-C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.pdb
-C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csprojAssemblyReference.cache
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\ECOpen.MyCustomTabControl.resources
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\ECOpen.dll.config
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\ECOpen.dll
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\ECOpen.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\ECOpen.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\ECOpen.pdb

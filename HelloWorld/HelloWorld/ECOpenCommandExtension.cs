@@ -24,7 +24,7 @@ using VDF = Autodesk.DataManagement.Client.Framework;
 
 // These 5 assembly attributes must be specified or your extension will not load. 
 [assembly: AssemblyCompany("Autodesk")]
-[assembly: AssemblyProduct("HelloWorldCommandExtension")]
+[assembly: AssemblyProduct("ECOpenCommandExtension")]
 [assembly: AssemblyDescription("Sample App")]
 
 // The extension ID needs to be unique for each extension.  
@@ -35,14 +35,14 @@ using VDF = Autodesk.DataManagement.Client.Framework;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("13.0")]
 
 
-namespace HelloWorld
+namespace ECOpen
 {
 
     /// <summary>
     /// This class implements the IExtension interface, which means it tells Vault Explorer what 
     /// commands and custom tabs are provided by this extension.
     /// </summary>
-    public class HelloWorldCommandExtension : IExplorerExtension
+    public class ECOpenCommandExtension : IExplorerExtension
     {
 
         #region IExtension Members
@@ -55,7 +55,7 @@ namespace HelloWorld
         public IEnumerable<CommandSite> CommandSites()
         {
             // Create the Hello World command object.
-            CommandItem helloWorldCmdItem = new CommandItem("HelloWorldCommand", "Hello World...") 
+            CommandItem ECOpenCmdItem = new CommandItem("ECOpenCommand", "Open In Edgecam...") 
             { 
                 // this command is active when a File is selected
                 NavigationTypes = new SelectionTypeId[] { SelectionTypeId.File, SelectionTypeId.FileVersion }, 
@@ -64,24 +64,24 @@ namespace HelloWorld
                 MultiSelectEnabled = false 
             };
 
-            // The HelloWorldCommandHandler function is called when the custom command is executed.
-            helloWorldCmdItem.Execute += HelloWorldCommandHandler;
+            // The ECOpenCommandHandler function is called when the custom command is executed.
+            ECOpenCmdItem.Execute += ECOpenCommandHandler;
 
             // Create a command site to hook the command to the Advanced toolbar
-            CommandSite toolbarCmdSite = new CommandSite("HelloWorldCommand.Toolbar", "Hello World Menu") 
+            CommandSite toolbarCmdSite = new CommandSite("ECOpenCommand.Toolbar", "Hello World Menu") 
             { 
                 Location = CommandSiteLocation.AdvancedToolbar, 
                 DeployAsPulldownMenu = false 
             };
-            toolbarCmdSite.AddCommand(helloWorldCmdItem);
+            toolbarCmdSite.AddCommand(ECOpenCmdItem);
 
             // Create another command site to hook the command to the right-click menu for Files.
-            CommandSite fileContextCmdSite = new CommandSite("HelloWorldCommand.FileContextMenu", "Hello World Menu") 
+            CommandSite fileContextCmdSite = new CommandSite("ECOpenCommand.FileContextMenu", "Hello World Menu") 
             { 
                 Location = CommandSiteLocation.FileContextMenu, 
                 DeployAsPulldownMenu = false 
             };
-            fileContextCmdSite.AddCommand(helloWorldCmdItem);
+            fileContextCmdSite.AddCommand(ECOpenCmdItem);
 
             // Now the custom command is available in 2 places.
 
@@ -218,7 +218,7 @@ namespace HelloWorld
         /// </summary>
         /// <param name="s">The sender object.  Usually not used.</param>
         /// <param name="e">The event args.  Provides additional information about the environment.</param>
-        void HelloWorldCommandHandler(object s, CommandItemEventArgs e)
+        void ECOpenCommandHandler(object s, CommandItemEventArgs e)
         {
             try
             {
@@ -253,11 +253,15 @@ namespace HelloWorld
                     {
                         MessageBox.Show("Selection is not a file.");
                     }
+                    else if(!selectedFile.Name.EndsWith(".ppf"))
+                    {
+                        MessageBox.Show("Selection must be an Edgecam file.");
+                    }
                     else
                     {
                         // this is the message we hope to see
-                        MessageBox.Show(String.Format("Hello World! The file size is: {0} bytes",
-                                             selectedFile.FileSize));
+                        //MessageBox.Show(String.Format("Hello World! The file size is: {0} bytes",
+                        //                     selectedFile.FileSize));
                     }
                 }
             }
