@@ -1,0 +1,37 @@
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.vcet.config
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll.config
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.pdb
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.Explorer.Extensibility.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.WebServices.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.DataManagement.Client.Framework.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.LicenseWrapper.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.Explorer.Extensibility.xml
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.Connectivity.WebServices.xml
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.DataManagement.Client.Framework.xml
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\bin\x64\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csprojAssemblyReference.cache
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.MyCustomTabControl.resources
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.GenerateResource.cache
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CoreCompileInputs.cache
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CopyComplete
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.dll
+C:\Program Files\Autodesk\Autodesk Vault 2020 SDK\VS17\CSharp\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.vcet.config
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll.config
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\bin\x64\Debug\HelloWorld.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.MyCustomTabControl.resources
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.GenerateResource.cache
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CoreCompileInputs.cache
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csproj.CopyComplete
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.dll
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.pdb
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.vcet.config
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.dll.config
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.dll
+C:\ProgramData\Autodesk\Vault 2020\Extensions\ECOpen\HelloWorld.pdb
+C:\Users\lorne\source\repos\Vault Interface Projects\HelloWorld\HelloWorld\obj\x64\Debug\HelloWorld.csprojAssemblyReference.cache
