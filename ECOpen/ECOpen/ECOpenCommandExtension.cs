@@ -104,46 +104,8 @@ namespace ECOpen
         /// <returns>A collection of DetailTabs, each object represents a custom tab.</returns>
         public IEnumerable<DetailPaneTab> DetailTabs()
         {
-            // Create a DetailPaneTab list to return from method
-            List<DetailPaneTab> fileTabs = new List<DetailPaneTab>();
-
-            // Create Selection Info tab for Files
-            DetailPaneTab filePropertyTab = new DetailPaneTab("File.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.File,
-                                                        typeof(MyCustomTabControl));
-
-            // The propertyTab_SelectionChanged is called whenever our tab is active and the selection changes in the 
-            // main grid.
-            filePropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(filePropertyTab);
-
-            // Create Selection Info tab for Folders
-            DetailPaneTab folderPropertyTab = new DetailPaneTab("Folder.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.Folder,
-                                                        typeof(MyCustomTabControl));
-            folderPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(folderPropertyTab);
-
-            // Create Selection Info tab for Items
-            DetailPaneTab itemPropertyTab = new DetailPaneTab("Item.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.Item,
-                                                        typeof(MyCustomTabControl));
-            itemPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(itemPropertyTab);
-
-            // Create Selection Info tab for Change Orders
-            DetailPaneTab coPropertyTab = new DetailPaneTab("Co.Tab.PropertyGrid",
-                                                        "Selection Info",
-                                                        SelectionTypeId.ChangeOrder,
-                                                        typeof(MyCustomTabControl));    
-            coPropertyTab.SelectionChanged += propertyTab_SelectionChanged;
-            fileTabs.Add(coPropertyTab);
-
-            // Return tabs
-            return fileTabs;
+            // we need to implement this, but we don't want to show a tab so we return null
+            return null;
         }
 
         
@@ -303,28 +265,6 @@ namespace ECOpen
 
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                // If something goes wrong, we don't want the exception to bubble up to Vault Explorer.
-                MessageBox.Show("Error: " + ex.Message);
-            }
-        }
-       
-        /// <summary>
-        /// This function is called whenever our custom tab is active and the selection has changed in the main grid.
-        /// </summary>
-        /// <param name="sender">The sender object.  Usually not used.</param>
-        /// <param name="e">The event args.  Provides additional information about the environment.</param>
-        void propertyTab_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                // The event args has our custom tab object.  We need to cast it to our type.
-                MyCustomTabControl tabControl = e.Context.UserControl as MyCustomTabControl;
-
-                // Send selection to the tab so that it can display the object.
-                tabControl.SetSelectedObject(e.Context.SelectedObject);
             }
             catch (Exception ex)
             {
