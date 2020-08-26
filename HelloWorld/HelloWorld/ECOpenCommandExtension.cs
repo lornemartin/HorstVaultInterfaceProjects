@@ -12,6 +12,8 @@ PARTICULAR PURPOSE.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
@@ -237,7 +239,7 @@ namespace ECOpen
                     ISelection selection = e.Context.CurrentSelectionSet.First();
 
                     // Look of the File object.  How we do this depends on what is selected.
-                    File selectedFile = null;
+                    Autodesk.Connectivity.WebServices.File selectedFile = null;
                     if (selection.TypeId == SelectionTypeId.File)
                     {
                         // our ISelection.Id is really a File.MasterId
@@ -259,9 +261,46 @@ namespace ECOpen
                     }
                     else
                     {
-                        // this is the message we hope to see
-                        //MessageBox.Show(String.Format("Hello World! The file size is: {0} bytes",
-                        //                     selectedFile.FileSize));
+                        VDF.Vault.Settings.AcquireFilesSettings settings = new VDF.Vault.Settings.AcquireFilesSettings(connection);
+                        VDF.Vault.Currency.Entities.FileIteration file = new VDF.Vault.Currency.Entities.FileIteration(connection, selectedFile);
+
+                        settings.AddEntityToAcquire(file);
+
+                        settings.DefaultAcquisitionOption = VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download;
+                        
+
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeChildren = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeLibraryContents = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeAttachments = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeHiddenEntities = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeParents = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.RecurseChildren = false;
+                        settings.OptionsRelationshipGathering.FileRelationshipSettings.VersionGatheringOption = VDF.Vault.Currency.VersionGatheringOption.Latest;
+
+                        // force files into Vault file structure on local c: drive
+                        settings.OrganizeFilesRelativeToCommonVaultRoot = true;
+
+                        // this does the actual work.
+                        connection.FileManager.AcquireFiles(settings);
+
+                        Folder folder = connection.WebServiceManager.DocumentService.GetFolderById(file.FolderId);
+                        string localFilePath = folder.FullName + "/" + file.EntityName;
+                        localFilePath = localFilePath.Replace("$/",@"C:\Vault Workspace\");
+                        localFilePath = localFilePath.Replace(@"/",@"\");
+
+
+                        Process p = new Process();
+
+                        p.StartInfo.WorkingDirectory = Path.GetDirectoryName(localFilePath);
+
+                        p.StartInfo.FileName = localFilePath;
+
+                        p.StartInfo.Arguments = "\"" + localFilePath + "\"";
+
+                        p.StartInfo.CreateNoWindow = false;
+                        p.Start();
+
+
                     }
                 }
             }
