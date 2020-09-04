@@ -23,6 +23,8 @@ using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Data.SqlClient;
 using File = System.IO.File;
+using Newtonsoft.Json;
+using AirtableApiClient;
 
 namespace VaultItemProcessor
 {
@@ -43,6 +45,8 @@ namespace VaultItemProcessor
         public string vaultVault { get; set; }
         public DailyScheduleAggregate dailyScheduleData { get; set; }
 
+        public readonly string baseId = "appikZ27K3jE3wxCi";
+        public readonly string appKey = "key9MqpIqcD5tVisl";
         public Form1()
         {
             InitializeComponent();
@@ -2945,7 +2949,7 @@ namespace VaultItemProcessor
             }
         }
 
-        public bool processProductionMasterList(List<ExportLineItem> itemList)
+        public bool processProductionMasterListOrig(List<ExportLineItem> itemList)
         {
             try
             {
@@ -3129,6 +3133,239 @@ namespace VaultItemProcessor
             }
         }
 
+        async Task<string> FindRecord(string tableName, string searchField, string searchTerm)
+        {
+            string offset = null;
+            string errorMessage = null;
+            var records = new List<AirtableRecord>();
+
+            using (AirtableBase airtableBase = new AirtableBase(appKey, baseId))
+            {
+                //
+                // Use 'offset' and 'pageSize' to specify the records that you want
+                // to retrieve.
+                // Only use a 'do while' loop if you want to get multiple pages
+                // of records.
+                //
+
+                do
+                {
+                    Task<AirtableListRecordsResponse> task = airtableBase.ListRecords(tableName, null, null, "{" + searchField + "} = '" + searchTerm + "'");
+
+                    AirtableListRecordsResponse response = await task;
+
+                    if (response.Success)
+                    {
+                        records.AddRange(response.Records.ToList());
+                        offset = response.Offset;
+
+                    }
+                    else if (response.AirtableApiError is AirtableApiException)
+                    {
+                        errorMessage = response.AirtableApiError.ErrorMessage;
+                        break;
+                    }
+                    else
+                    {
+                        errorMessage = "Unknown error";
+                        break;
+                    }
+                } while (offset != null);
+            }
+
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                return "";
+                // Error reporting
+            }
+            else
+            {
+                // Do something with the retrieved 'records' and the 'offset'
+                // for the next page of the record list.
+            }
+
+            if (records.Count > 0)
+            {
+                records[0].Fields.TryGetValue("ID", out var st);
+
+                return st.ToString();
+            }
+            else
+            {
+                return "0";
+            }
+        }
+
+        public async Task<bool> processProductionMasterListAsync(List<ExportLineItem> itemList)
+        {
+
+
+            try
+            {
+                string orderNumber = txtBoxOrderNumber.Text;
+                string schedName = textBoxScheduleName.Text;
+                string batchName = textBoxBatchName.Text;
+
+                string productName = itemList[0].Number;
+
+                int batchQty = (int)spinEditOrderQty.Value;
+
+
+
+                int headerID = 0;
+                int partID = 0;
+
+                foreach (ExportLineItem item in itemList)
+                {
+                    
+                    
+
+                    Task<string> outerTask = FindRecord("Parts", "FileName", item.Number);
+                    await outerTask.ContinueWith(async task2 =>
+                     {
+                         string s = task2.Result;
+                         if (s == "" || s == "0")
+                         {
+                             using (AirtableBase airtableBase = new AirtableBase(appKey, baseId))
+                             {
+                                 var fields = new Fields();
+                                 fields.AddField("FileName", item.Number);
+                                 fields.AddField("Description", item.ItemDescription);
+                                 fields.AddField("Material", item.Material);
+                                 //fields.AddField("Thickness", double.Parse(item.MaterialThickness));
+                                 fields.AddField("Category", item.Category);
+                                 fields.AddField("PlantID", item.PlantID);
+                                 fields.AddField("IsStock", item.IsStock);
+                                 fields.AddField("RequiresPDF", item.HasPdf);
+                                 fields.AddField("Comment", item.Comment);
+
+                                 Task<AirtableCreateUpdateReplaceRecordResponse> task = airtableBase.CreateRecord("Parts", fields, true);
+                                 var response = await task;
+
+                                 if (!response.Success)
+                                 {
+                                     string errorMessage = null;
+                                     if (response.AirtableApiError is AirtableApiException)
+                                     {
+                                         errorMessage = response.AirtableApiError.ErrorMessage;
+                                     }
+                                     else
+                                     {
+                                         errorMessage = "Unknown error";
+                                     }
+                                     // Report errorMessage
+                                 }
+                                 else
+                                 {
+                                     // Do something with your created record.
+                                     var record = response.Record;
+                                     record.Fields.TryGetValue("ID", out var id);
+                                     partID = Convert.ToInt32(id);
+
+                                 }
+                             }
+                         }
+                         else
+                         {
+                             partID = Convert.ToInt32(s);
+                         }
+                     });
+
+                    Order newOrder = new Order();
+                    bool isBatch = false;
+
+                    if (txtBoxOrderNumber.Text != "")
+                    {
+                        Task<string> outerTask2 = FindRecord("OrderHeader", "ID", headerID.ToString());
+                        await outerTask2.ContinueWith(async task3 =>
+                        {
+                            string s = task3.Result;
+                            if (s == "" || s == "0")
+                            {
+                                using (AirtableBase airtableBase = new AirtableBase(appKey, baseId))
+                                {
+                                    var fields = new Fields();
+                                    fields.AddField("OrderNumber", txtBoxOrderNumber.Text.TrimEnd());
+                                    fields.AddField("ScheduleName", textBoxScheduleName.Text.TrimEnd());
+                                    fields.AddField("EntryDate", DateTime.Now);
+
+                                    Task<AirtableCreateUpdateReplaceRecordResponse> task = airtableBase.CreateRecord("OrderHeader", fields, true);
+                                    var response = await task;
+
+                                    if (!response.Success)
+                                    {
+                                        string errorMessage = null;
+                                        if (response.AirtableApiError is AirtableApiException)
+                                        {
+                                            errorMessage = response.AirtableApiError.ErrorMessage;
+                                        }
+                                        else
+                                        {
+                                            errorMessage = "Unknown error";
+                                        }
+                                        // Report errorMessage
+                                    }
+                                    else
+                                    {
+                                        var record = response.Record;
+                                        record.Fields.TryGetValue("ID", out var id);
+                                        headerID = Convert.ToInt32(id);
+                                    }
+                                }
+                            }
+                        });
+                        isBatch = false;
+
+                    }
+                    if (textBoxBatchName.Text != "")
+                    {
+                        //newOrder = dbContext.Orders.Where(o => o.BatchName == textBoxBatchName.Text).FirstOrDefault();
+                        isBatch = true;
+                    }
+                    
+
+                    // create the order item object
+                    using (AirtableBase airtableBase = new AirtableBase(appKey, baseId))
+                    {
+                        
+                        var fields = new Fields();
+                        fields.AddField("QtyRequired", item.Qty * batchQty);
+                        int[] idArray = new int[] { partID };
+                        fields.AddField("Part", idArray);
+
+                        int[] idArray2 = new int[] { headerID };
+                        fields.AddField("OrderHeader", idArray2);
+
+                        Task<AirtableCreateUpdateReplaceRecordResponse> task = airtableBase.CreateRecord("OrderDetail", fields, true);
+                        var response = await task;
+
+                        if (!response.Success)
+                        {
+                            string errorMessage = null;
+                            if (response.AirtableApiError is AirtableApiException)
+                            {
+                                errorMessage = response.AirtableApiError.ErrorMessage;
+                            }
+                            else
+                            {
+                                errorMessage = "Unknown error";
+                            }
+                            // Report errorMessage
+                        }
+                        else
+                        {
+                            var record = response.Record;
+                        }
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public List<ExportLineItem> sortList(List<ExportLineItem> itemList)
         {
             // sort list so that no items appear before their respective parents.
@@ -3194,7 +3431,7 @@ namespace VaultItemProcessor
 
         private void button2_Click(object sender, EventArgs e)
         {
-            processProductionMasterList(lineItemList);
+            Task t = processProductionMasterListAsync(lineItemList);
         }
     }
 
