@@ -87,7 +87,7 @@
       <HintPath>..\..\..\..\..\..\Program Files\Microsoft WSE\v3.0\Microsoft.Web.Services3.dll</HintPath>
     </Reference>
     <Reference Include="radraft.interop">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Radan Software\Radan\bin\radraft.interop.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Hexagon\RADAN 2021.0\Radraft\bin\radraft.interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
