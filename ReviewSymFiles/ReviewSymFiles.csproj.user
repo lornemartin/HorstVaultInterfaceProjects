@@ -29,6 +29,6 @@
     <StartArguments>"M:\Radan Sym Files\Vault Sym Files\\" "changes.txt" "Administrator" "" "HWVMVT02" "TEST Vault" "Y" "M:\\PDF Drawing Files"</StartArguments>
   </PropertyGroup>
   <PropertyGroup>
-    <ReferencePath>C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2020 SDK Binaries\</ReferencePath>
+    <ReferencePath>C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2021 SDK Binaries\</ReferencePath>
   </PropertyGroup>
 </Project>
