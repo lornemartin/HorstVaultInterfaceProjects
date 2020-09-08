@@ -4,10 +4,10 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "DirectView 2020"
+!define APP_NAME "DirectView 2021"
 !define COMP_NAME "Lorne Martin"
-!define VERSION "01.20.00.00"
-!define COPYRIGHT "Author  © 2020"
+!define VERSION "01.30.00.00"
+!define COPYRIGHT "Author  © 2021"
 !define DESCRIPTION "Vault Viewer"
 !define INSTALLER_NAME "M:\temp\DirectView Deployment\DirectView Setup.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
@@ -32,7 +32,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${UNINSTALL_PATH}" "UninstallString"
-InstallDir "$APPDATA\Autodesk\Vault 2020\Extensions\DirectView"
+InstallDir "$APPDATA\Autodesk\Vault 2021\Extensions\DirectView"
 
 ######################################################################
 
@@ -103,7 +103,7 @@ Function .onInit
 		; point to ProgramData folder
 		; instead of current user's Roaming folder
 		SetShellVarContext all
-		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2020\Extensions\DirectView"
+		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2021\Extensions\DirectView"
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
 		CreateDirectory $INSTDIR
@@ -127,59 +127,7 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Explorer.Extensibility.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Explorer.Extensibility.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Explorer.ExtensibilityTools.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.dll"
-;File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.Interop.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.Connectivity.WebServices.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Forms.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Forms.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.Forms.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Autodesk.DataManagement.Client.Framework.xml"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Data.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Data.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Office.v16.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Pdf.v16.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Pdf.v16.1.Drawing.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Printing.v15.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Printing.v16.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.RichEdit.v16.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Sparkline.v16.1.Core.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Utils.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.Utils.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraBars.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraBars.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraEditors.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraEditors.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraGrid.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraGrid.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraLayout.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraLayout.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraPrinting.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraPrinting.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraTreeList.v15.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\DevExpress.XtraTreeList.v16.1.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\log4net.config"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\log4net.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\Microsoft.Web.Services3.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\PdfSharp.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\PrintPDF.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\PrintPDF.pdb"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultAccess.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultAccess.dll.config"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultAccess.pdb"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultView.dll"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultView.dll.config"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultView.pdb"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\VaultView.vcet.config"
+File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\*.*"
 File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
 
 SectionEnd
