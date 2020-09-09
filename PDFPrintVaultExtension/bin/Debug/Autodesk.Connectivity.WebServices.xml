@@ -421,7 +421,7 @@
 files.</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.FileClassification.DesignDocument">
-      <summary>A design file containing data derived from a CAD file (ex. IDW or IPN)</summary>
+      <summary>A design file containing data derived from a CAD file (ex. IDW).</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.FileClassification.ConfigurationMember">
       <summary>A file created from a template (ex. iPart members).</summary>
@@ -430,13 +430,16 @@ files.</summary>
       <summary>A template file (ex. iPart factories).</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.FileClassification.ElectricalProject">
-      <summary>A electrical CAD project file (ex. wdp).</summary>
+      <summary>A electrical CAD project file (ex. WDP).</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.FileClassification.DesignSubstitute">
       <summary>A design which is a substitute for a more complex design file.</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.FileClassification.DesignRepresentation">
       <summary>A document file (ex. PDF) containing data derived from a CAD file.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.FileClassification.DesignPresentation">
+      <summary>A presentation file (ex. IPN) containing data derived from a CAD file.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.FileElementDataType">
       <summary>The data type of a file element property</summary>
@@ -820,6 +823,24 @@ State</summary>
     <member name="T:Autodesk.Connectivity.WebServices.PropEquivFailTyp">
       <summary>The equivalency failure type.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum">
+      <summary>Property data types.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum.String">
+      <summary>A String data type.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum.Numeric">
+      <summary>A Numeric data type.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum.Bool">
+      <summary>A boolean data type.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum.DateTime">
+      <summary>A DateTime data type.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropertyDataTypeEnum.Image">
+      <summary>An Image data type.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropertySearchType">
       <summary>Indicates the scope of the search.</summary>
     </member>
@@ -952,6 +973,30 @@ State</summary>
     <member name="F:Autodesk.Connectivity.WebServices.RestrictPurgeOption.None">
       <summary>No versions in this life cycle state are restricted from delete during a purge.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ResultEnum">
+      <summary>An enumeration containing the resulting states of a content source property based operation.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.Success">
+      <summary>The operation succeeded without errors.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.NotSupported">
+      <summary>The file or content is not supported by the property provider.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.AccessError">
+      <summary>An error accessing the file or property provider.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.IFilterNotFound">
+      <summary>The IFilter could not be found.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.CorruptionError">
+      <summary>An unexpected data format or type was returned.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.ProviderNotFound">
+      <summary>The propery provider could not be found for the given file.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ResultEnum.Error">
+      <summary>A general error occurred.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.SchemeTypeEnum">
       <summary>An enumeration of BOM Scheme Types</summary>
     </member>
@@ -980,10 +1025,10 @@ State</summary>
       <summary>Used in the definition of a System (State) ACL</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.SysAclBeh.Override">
-      <summary>System ACL is Combined - effective security is the combination of the user ACL and the system (State) ACL</summary>
+      <summary>System ACL is Override - effective security is the Override ACL</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.SysAclBeh.Combined">
-      <summary>System ACL is Override - effective security is the Override ACL</summary>
+      <summary>System ACL is Combined - effective security is the combination of the user ACL and the system (State) ACL</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.VaultServiceCommunicationException.ReasonEnum">
       <summary>Enumeration of the various reasons for a VaultCommunication Exception</summary>
@@ -1053,7 +1098,14 @@ State</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.AdminServiceBase">
       <summary>Not intended for public use. Base class for the AdminService that helps facilitate encapsulation of the underlying
-service implemnation</summary>
+service implementation.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.AnalyticsService">
+      <summary>Contains methods for Analytics within a vault</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.AnalyticsServiceBase">
+      <summary>Not intended for public use. Base class for the AnalyticsService that helps
+facilitate encapsulation of the underlying service implementation.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.AssocPropDef">
       <summary>A property definition on an association.</summary>
@@ -1085,7 +1137,7 @@ that helps facilitate encapsulation of the underlying service implemnation</summ
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.BehaviorServiceBase">
       <summary>Not intended for public use. Base class for the BehaviorService that helps facilitate encapsulation of the
-underlying service implemnation</summary>
+underlying service implementation.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.Bhv">
       <summary>A behavior.</summary>
@@ -1157,6 +1209,9 @@ underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.ChangeOrder">
       <summary>A Change Order.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate">
+      <summary>A customizable email template for Change Order event email notifications.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.ChangeOrderEntAssoc">
       <summary>An association between a Change Order and a set of Entities.</summary>
     </member>
@@ -1209,8 +1264,14 @@ underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.CtntSrc">
       <summary>The Content Source. In other words, the point of origin for a piece of data. Usually this is divided up into applications.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.CtntSrcProp">
+      <summary>The content source property from a file.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.CtntSrcPropDef">
       <summary>A property definition within a file.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.CtntSrcProps">
+      <summary>Encapsulates a collection of Content Source Properties for a given Content Source Id.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.CustEnt">
       <summary>A custom entity.</summary>
@@ -1266,6 +1327,18 @@ encapsulation of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.DownloadFileCommandEventArgs">
       <summary>Information about the download File operation</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.DuplicateSearchConfiguration">
+      <summary>DuplicateSearch Configuration</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.DuplicateSearchFolderConfiguration">
+      <summary>A DuplicateSearch folder configuration</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot">
+      <summary>A snapshot of DuplicateSearch data</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.DuplicateSearchStatus">
+      <summary>An overview of DuplicateSearch status for a vault</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.EditChangeOrderCommandEventArgs">
       <summary>Information about the edit Change Order operation</summary>
     </member>
@@ -1274,6 +1347,9 @@ encapsulation of the underlying service implemnation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.Email">
       <summary>An email.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.EmailMsg">
+      <summary>An email message.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.Ent">
       <summary>A generic Entity object.</summary>
@@ -1529,6 +1605,9 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.ItemService">
       <summary>Contains methods for manipulating items.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ItemServiceBase">
+      <summary>Not intended for public use.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.Job">
       <summary>A task that needs to be performed.</summary>
     </member>
@@ -1699,6 +1778,9 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteReq">
       <summary>For internal use only</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.PropWriteRequests">
+      <summary>For internal use only</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteResult">
       <summary>For internal use only</summary>
     </member>
@@ -1816,6 +1898,9 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.UserInfo">
       <summary>Contains a user's user and role information.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.VaultDownloadDeniedException">
+      <summary>An exception that occurs when the download permission denied</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.VaultLicenseException">
       <summary>Represents a licensing error. This is always a 319.</summary>
     </member>
@@ -1874,7 +1959,7 @@ of the underlying service implemnation</summary>
       <summary>Transfer status.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AccessPermis.Id">
-      <summary>A numeric value representing they type of operation. There are currently 3 types. 1=AllowRead, 2=AllowWrite, 3=AllowDelete</summary>
+      <summary>A numeric value representing they type of operation. There are currently 4 types. 1=AllowRead, 2=AllowWrite, 3=AllowDelete, 4=AllowDownload</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AccessPermis.Val">
       <summary>True means that the operation is allowed. False means that the operation is not allowed.</summary>
@@ -2342,6 +2427,39 @@ administrator before logging in is possible.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateUserInfo(System.Int64,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.String,System.String,System.Boolean,System.Int64[],System.Int64[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsService.GetDuplicateSearchConfiguration">
+      <summary>Gets DuplicateSearch configuration</summary>
+      <returns>Configuration which contains info viz. IsDuplicateSearch enabled, list of folders in scope for indexing.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsService.GetDuplicateSearchStatus">
+      <summary>Gets an overview snapshot of DuplicateSearch status for a vault</summary>
+      <returns>Overview snapshot of DuplicateSearch</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsService.SetDuplicateSearchConfiguration(Autodesk.Connectivity.WebServices.DuplicateSearchConfiguration)">
+      <summary>Sets DuplicateSearch configuration</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.AllowInvokeEvents">
+      <summary>Tells if invoke events should fire. This value is true by default.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.SecurityHeader">
+      <summary>The security header. (from IWebService)</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.WebServiceManager">
+      <summary>
+        <div>
+          <span id="ContentItemType|Autodesk.Connectivity.WebServices~Autodesk.Connectivity.WebServices.AdminService~WebServiceManager|SUMMARY" class="dxeditwrapper" contenteditable="true" style="WIDTH: 100%">A reference to the WebServiceManager that created this object. Value may be null.</span>
+        </div>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsServiceBase.GetDuplicateSearchConfiguration">
+      <summary>Not intended for public use. Consult AnalyticsService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsServiceBase.GetDuplicateSearchStatus">
+      <summary>Not intended for public use. Consult AnalyticsService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AnalyticsServiceBase.SetDuplicateSearchConfiguration(Autodesk.Connectivity.WebServices.DuplicateSearchConfiguration)">
+      <summary>Not intended for public use. Consult AnalyticsService</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AssocPropDef.AssocPropTyp">
       <summary>The type of association the property applies to.</summary>
@@ -3000,6 +3118,21 @@ of the parent assembly. A value of false indicates that purchased children shoul
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrder.Title">
       <summary>The title of the Change Order.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate.Body">
+      <summary>The email body template.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate.COPropDefIdArray">
+      <summary>The ids of Change Order Property Definitions which will be included in email contents.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate.FilePropDefIdArray">
+      <summary>The ids of controlled Files' Property Definitions which will be included in email contents.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate.ItemPropDefIdArray">
+      <summary>The ids of controlled Items' Property Definitions which will be included in email contents.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEmailTemplate.Subject">
+      <summary>The email subject template.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderEntAssoc.ChangeOrderId">
       <summary>The Change Order.</summary>
     </member>
@@ -3182,6 +3315,10 @@ part of the markup.</summary>
       <summary>Retrieve a list of all change orders with an Activity that the logged in user can perform.</summary>
       <returns>A list of all change orders with an Activity that the logged in user can perform.</returns>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetDefaultEmailTemplate">
+      <summary>Get a system generated default email template for Change order notifications.</summary>
+      <returns>Returns the default email template.</returns>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetDefaultWorkflow">
       <summary>Gets the default Workflow.</summary>
       <returns>The default Workflow.</returns>
@@ -3194,9 +3331,13 @@ part of the markup.</summary>
       <summary>Gets the value for the Change Order Vault Setting "Restrict Change Orders from moving out of Work state based on File and Item Lifecycle states"</summary>
       <returns>Whether or not moving out of work state is restricted for the given entity class</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetEmailBodyByChangeOrderId(System.Int64,System.String,System.String,System.Boolean)">
-      <summary>Gets the email body for a change order.</summary>
-      <returns>The email body text.</returns>
+    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetEmailMessageByChangeOrderId(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Gets Email Message object for a given change order ID.</summary>
+      <returns>An EmailMessage object containing email subject and body information.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetEmailTemplate">
+      <summary>Gets the customized email template for Change order notifications.</summary>
+      <returns>Returns the customized email template.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.GetJobTypesByChangeOrderStateTransitionIds(System.Int64[],System.Int64[])">
       <summary>Gets the custom jobs that get fired for a set of transitions.</summary>
@@ -3246,6 +3387,9 @@ cannot change item lifecycle states.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.RollbackToTargetFiles(System.Int64,System.Int64[],System.Int32[])">
       <summary>Executes a file rollback to the specified target files "MaxCkInVerNum" in rolling back Files Lifecycle states within the context of a Change Order.</summary>
       <returns>new tip files after rollback</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.SaveEmailTemplate(System.String,System.String,System.Int64[],System.Int64[],System.Int64[])">
+      <summary>Save customized email template for Change order notifications.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderService.SetChangeOrderMarkupFolderConfiguration(Autodesk.Connectivity.WebServices.ChangeOrderMarkupFolderConfig)">
       <summary>Sets the configuration of the Change Order markup folder.</summary>
@@ -3438,9 +3582,6 @@ cannot change item lifecycle states.</returns>
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetDisallowedLifeCycleStatesForSubmitActivitiesEnabled(System.String)">
-      <summary>Not intended for public use. Consult the ChangeOrderService</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetEmailBodyByChangeOrderId(System.Int64,System.String,System.String,System.Boolean)">
       <summary>Not intended for public use. Consult the ChangeOrderService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ChangeOrderServiceBase.GetJobTypesByChangeOrderStateTransitionIds(System.Int64[],System.Int64[])">
@@ -3717,6 +3858,15 @@ provider, but the provider is not registered.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.CtntSrc.WriteSrcArray">
       <summary>An array of file types (ex. ".dwg") that can be written to by this provider.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProp.DataTyp">
+      <summary>The property data type.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProp.Moniker">
+      <summary>The unique identifier for the property within the content source.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProp.Val">
+      <summary>The property value, given as a generic object.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.CtntSrcPropDef.CanCreateNew">
       <summary>If true, the property can be created within the source during a writeback operation.</summary>
     </member>
@@ -3740,6 +3890,15 @@ provider, but the provider is not registered.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.CtntSrcPropDef.Typ">
       <summary>The data type.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProps.CtntSrcId">
+      <summary>The content source Id.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProps.Props">
+      <summary>A collection of Content Source Properties.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CtntSrcProps.Status">
+      <summary>The resulting status of extracting properties from file for the given Content Source Id.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.CustEnt.Cat">
       <summary>The category for this object.</summary>
@@ -5284,6 +5443,45 @@ the Vault.</returns>
     <member name="F:Autodesk.Connectivity.WebServices.DownloadFileCommandEventArgs.FileIds">
       <summary>The files being downloaded.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchConfiguration.DuplicateSearchFolderConfigurationArray">
+      <summary>An array of configurations which contain the folders in scope</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchConfiguration.Enabled">
+      <summary>Is DuplicateSearch enabled for current vault</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchFolderConfiguration.FolderId">
+      <summary>FolderId in scope</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.CandidateFileCount">
+      <summary>Total file count in indexing scope</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.DuplicateFileCount">
+      <summary>Total duplicate file count</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.DuplicateFileGroupsCount">
+      <summary>Total duplicate group count</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.Extension">
+      <summary>File extension</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.IndexedFileCount">
+      <summary>Total indexed file count</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchSnapshot.VaultedFileCount">
+      <summary>Total vaulted file count</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.AnyFailedIndexedJobs">
+      <summary>Any indexing jobs failed</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.IsEnabled">
+      <summary>IsDuplicateSearch enabled</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.IsFoldersConfigured">
+      <summary>Are any folders configured for indexing</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.Snapshot">
+      <summary>A snapshot of DuplicateSearch data</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.EditChangeOrderCommandEventArgs.ReturnValue">
       <summary>The updated Change Order.</summary>
     </member>
@@ -5304,6 +5502,12 @@ the Vault.</returns>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.Email.ToArray">
       <summary>A list of people to send the email to.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.EmailMsg.Body">
+      <summary>The body of the email.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.EmailMsg.Subject">
+      <summary>The subject of the email.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.Ent.EntClassId">
       <summary>The entity type.</summary>
@@ -5905,7 +6109,7 @@ multiple parts.</returns>
     <member name="E:Autodesk.Connectivity.WebServices.FilestoreService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.CopyFile(System.Byte[],System.String,System.Boolean,Autodesk.Connectivity.WebServices.PropWriteReq[],Autodesk.Connectivity.WebServices.PropWriteResults@)">
+    <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.CopyFile(System.Byte[],System.String,System.Boolean,Autodesk.Connectivity.WebServices.PropWriteRequests,Autodesk.Connectivity.WebServices.PropWriteResults@)">
       <summary>Not intended for public use. Consult the FilestoreService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.FilestoreServiceBase.DownloadFilePart(System.Byte[],System.Int64,System.Int64,System.Boolean)">
@@ -7267,7 +7471,11 @@ of the actual assigned Item</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.JobService.ReserveNextJob(System.String[],System.String)">
       <summary>Reserve the next job in the queue</summary>
-      <returns>A job that is reserved to the client or null of there are no jobs in the queue of a matching type.</returns>
+      <returns>A job that is reserved to the client or null if there are no jobs in the queue of a matching type.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.JobService.ResubmitJob(System.Int64)">
+      <summary>Resubmit a job of the specified Id to the queue.</summary>
+      <returns>The new job object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.JobService.SetJobQueueEnabled(System.Boolean)">
       <summary>Enables or disables the job queue.</summary>
@@ -7331,6 +7539,9 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.JobServiceBase.ReserveNextJob(System.String[],System.String)">
+      <summary>Not intended for public use.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.JobServiceBase.ResubmitJob(System.Int64)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.JobServiceBase.SetJobQueueEnabled(System.Boolean)">
@@ -7626,6 +7837,9 @@ of the actual assigned Item</summary>
       <returns>
         <para>The new Life Cycle Transition object.</para>
       </returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.LifeCycleService.ApplyPurgeRestrictOptionToHistory(System.Int64)">
+      <summary>Update the historical control bit on existing iterations for a given Lifecycle State Id</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.LifeCycleService.CheckRolePermissions(System.String[],System.String)">
       <summary>Check if the current logged in user has permission to execute specific web service APIs</summary>
@@ -9057,6 +9271,9 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.Role.Name">
       <summary>The name of the role.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Role.SysName">
+      <summary>The system name of the Role. This name cannot be changed.<!--DXMETADATA end --></summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.Routing.Id">
       <summary>The ID for the object.</summary>
     </member>
@@ -9886,6 +10103,9 @@ current user), then this will return those credentials. Otherwise, this returns 
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AllowUI">
       <summary>Specifies whether UI is allowed to be displayed. Defaults to true.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AnalyticsService">
+      <summary>Gets the AnalyticsService service object, or creates one if needed.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AuthService">
       <summary>Gets the auth service object, or creates one if needed.</summary>
