@@ -9,7 +9,7 @@
 !define VERSION "01.30.00.00"
 !define COPYRIGHT "Author  © 2021"
 !define DESCRIPTION "Vault Viewer"
-!define INSTALLER_NAME "M:\temp\DirectView Deployment\DirectView Setup.exe"
+!define INSTALLER_NAME "M:\Custom Code 2021 Deployment Files\DirectView\DirectView Setup.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
 !define UNINSTALL_PATH "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
