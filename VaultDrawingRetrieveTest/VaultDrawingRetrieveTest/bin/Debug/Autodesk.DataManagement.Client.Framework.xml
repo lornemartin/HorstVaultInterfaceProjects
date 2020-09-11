@@ -287,6 +287,9 @@ another user" is an expected exception. "Object reference not found" or "Index o
       <summary>Reports progress to the GUI layer</summary>
       <param>The header of the progress report. This should describe the current state of the operation, at a high levelA list of values to display about the current state. This might include file names, file sizes, or other statisticsThe % of the overall workflow that has been completed. If not specified, then no cumulative progress indicator will be displayed</param>
     </member>
+    <member name="T:Autodesk.DataManagement.Client.Framework.Internal.Automation.StringXmlSerializer">
+      <summary>Utility to serialize object into xml string.</summary>
+    </member>
     <member name="T:Autodesk.DataManagement.Client.Framework.Services.IExceptionParserRegistrationService">
       <summary>Associates a custom exception parser with a particular type of exception.</summary>
     </member>

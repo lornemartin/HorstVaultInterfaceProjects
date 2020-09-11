@@ -488,9 +488,6 @@ initial display.</summary>
       <summary>Gets or sets if this column should display a link overlay icon if the entity is a
 Link</summary>
     </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Currency.ColumnSettings.ShowMultipleLines">
-      <summary>Gets or sets whether this column should show multiple lines</summary>
-    </member>
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Currency.ColumnSortData.#ctor(Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition,System.Boolean)">
       <summary>Constructs a ColumnSortData object</summary>
       <param>The property definition used for sortingTrue if sorting is ascending.</param>
@@ -1214,19 +1211,6 @@ be logged in.</summary>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ActionButtonEnablementRules.None">
       <summary>This rule makes the action button always active</summary>
     </member>
-    <member name="T:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultiSelectFlag">
-      <summary>Describes the different flags to determine if the current filter should allow multiple entity selection</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultiSelectFlag.Default">
-      <summary>If this flag is used, the filter inherits the multiple entity selection behavior of the dialog setting as defined in
-</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultiSelectFlag.Enabled">
-      <summary>This flag enables multiple entity selection for current filter.</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultiSelectFlag.Disabled">
-      <summary>This flag disables multiple entity selection for current filter.</summary>
-    </member>
     <member name="T:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.AcquireFileExtensibilityOptions">
       <summary>This class provides handlers that can be configured to augment the functionality of the Acquire Files workflow</summary>
     </member>
@@ -1394,14 +1378,14 @@ Center");</summary>
       <param>Sets the text to display in the Action button. Typical values are "Open" or "Save".Sets a list of choices to be associated with the Action button. The choices will be presented in a button with a dropdown arrow which displays a menu when
 clicked.Sets the default choice from the list of options that is returned when the action button is clicked without using the dropdown menu.Sets if the dialog should remember which option was chosen by the user, to be used as the default next time the dialog is shown.</param>
     </member>
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ConfigureRevisions(System.Boolean,System.Boolean,System.Boolean)">
+      <summary>Configures options surrounding the revisions control.</summary>
+      <param>Sets whether or not a GUI should be present which allows the user to select a particular revision of the selected entity.Sets whether or not the Select Revision control should have an options for the user to select the "Latest Revision".Sets whether or not the Release Biased option will be available to configure how the selected revision should be interpreted.</param>
+    </member>
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ConfigureFilters(System.String,System.Collections.Generic.IEnumerable{Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter},Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter)">
       <summary>Configures options for the entity filters.</summary>
       <param>Sets the label for the combobox that allows the user to filter the entities displayed by a configured list of
 .Sets a list of filters that can be used to narrow down the list of entities.Specifies which of the entityFilters should be used initally.</param>
-    </member>
-    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ConfigureRevisions(System.Boolean,System.Boolean,System.Boolean)">
-      <summary>Configures options surrounding the revisions control.</summary>
-      <param>Sets whether or not a GUI should be present which allows the user to select a particular revision of the selected entity.Sets whether or not the Select Revision control should have an options for the user to select the "Latest Revision".Sets whether or not the Release Biased option will be available to configure how the selected revision should be interpreted.</param>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ActionableEntityClassIds">
       <summary>Gets or adds the Entity Class IDs which represent the entities that are
@@ -1457,9 +1441,6 @@ workflow. This key will be used to persist GUI settings</summary>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.SelectionTextLabel">
       <summary>Gets or sets the label for the text box that displays a list of the selected entities.</summary>
     </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ShowFolderView">
-      <summary>Gets or sets whether or not to display folder tree view.</summary>
-    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.ShowHiddenChildren">
       <summary>Gets or sets whether or not to display hidden entities in the grid.s</summary>
     </member>
@@ -1491,12 +1472,9 @@ option is chosen</param>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.DisplayName">
       <summary>Gets the text that appears in the combobox which displays the list of Entity Filters</summary>
     </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultipleSelectionFlag">
-      <summary>Gets the flag that determines if multiple selections should be allowed for current filtered list of Entities</summary>
-    </member>
-    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityRegularExpressionFilter.#ctor(System.String,System.String,System.String,Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityFilter.MultiSelectFlag)">
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityRegularExpressionFilter.#ctor(System.String,System.String,System.String)">
       <summary>Constructs an instance of the EntityRegularExpressionFilter class</summary>
-      <param>The text that will appear in a GUI which displays a list of available filtersThe flag that determines whether the grid/list which shows the list of entites for selection supports single/multiple selection for the filterThe regular expression to use to filter the list of entities. The regular expression will be applied to the EntityName attribute of an IEntity objectThe Entity Class ID which represents the type of entities the regular
+      <param>The text that will appear in a GUI which displays a list of available filtersThe regular expression to use to filter the list of entities. The regular expression will be applied to the EntityName attribute of an IEntity objectThe Entity Class ID which represents the type of entities the regular
 expression should be applied to. If null or empty, then the regular expression will apply to all entities</param>
     </member>
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Forms.Settings.SelectEntitySettings.EntityRegularExpressionFilter.CanDisplayEntity(Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.IEntity)">

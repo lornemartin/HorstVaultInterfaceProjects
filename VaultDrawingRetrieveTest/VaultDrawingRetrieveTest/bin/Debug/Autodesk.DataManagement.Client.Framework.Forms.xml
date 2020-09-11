@@ -44,15 +44,6 @@
       <param>The error text to display in the dialog box.The caption of the dialog box.</param>
       <returns>The windows DialogResult which describes the button that was selected. In this case, the result will always be DialogResult.OK</returns>
     </member>
-    <member name="M:Autodesk.DataManagement.Client.Framework.Forms.Library.ShowError(System.String,System.String,System.String,System.String)">
-      <summary>Displays an error dialog box with the specified message and optionally, a link to launch help.</summary>
-      <param>The error text to display in the dialog box.The Caption of the dialog box.Help topic to be displayed as link textIdentifier of the help topic</param>
-      <returns>The windows DialogResult which describes the button that was selected. In this case, the result will always be DialogResult.OK</returns>
-    </member>
-    <member name="M:Autodesk.DataManagement.Client.Framework.Forms.Library.ShowError(System.String,System.String,System.String,System.Action)">
-      <summary>Displays an error dialog box with the specified message and optionally, a link to launch help.</summary>
-      <param>The error text to display in the dialog box.The Caption of the dialog box.Help topic to be displayed as link textA delegate that takes care of launching help</param>
-    </member>
     <member name="M:Autodesk.DataManagement.Client.Framework.Forms.Library.ShowMessage(System.String,System.String,Autodesk.DataManagement.Client.Framework.Forms.Currency.ButtonConfiguration)">
       <summary>Displays a message box with the specified text, caption, and button configuration (ie. Yes/No, Ok/Cancel, etc...)</summary>
       <param>The text to display in the dialog box.The caption of the dialog box.The button selection that will be made available in the dialog box.</param>

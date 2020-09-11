@@ -178,9 +178,6 @@ implement custom property definitions, create dependencies between existing prop
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.copyDesignProgressBarCreatingFolders">
       <summary>Looks up a localized string similar to Creating Folders.</summary>
     </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignPropertyBehaviorAction_CopyValueFrom">
-      <summary>Looks up a localized string similar to Copy Value From.</summary>
-    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignPropertyBehaviorAction_MappedTo">
       <summary>Looks up a localized string similar to Mapped to &lt;{0}&gt;.</summary>
     </member>
@@ -349,10 +346,6 @@ shared working folder..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.FileClassSubstitute_16">
       <summary>Looks up a localized resource of type System.Drawing.Bitmap.</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.FileRestrictNoRefId">
-      <summary>Looks up a localized string similar to The listed children file(s) cannot be repaired because the Vault does not have enough information to identify file
-references. Please run the Update File Reference command on parent file..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.FolderClosed_16">
       <summary>Looks up a localized resource of type System.Drawing.Bitmap.</summary>
@@ -3145,9 +3138,6 @@ PropertyDefinition</param>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.Comment">
       <summary>The "Comment" property</summary>
     </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.Comments">
-      <summary>The "Comments" property</summary>
-    </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.ControlledByCO">
       <summary>The "ControlledByChangeOrder" property</summary>
     </member>
@@ -3183,12 +3173,6 @@ PropertyDefinition</param>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.FolderPath">
       <summary>The "FolderPath" property</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.HasDrawing">
-      <summary>The "HasDrawing" property</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.HasParentRelationship">
-      <summary>The "HasParentRelationship" property</summary>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.Hidden">
       <summary>The "Hidden" property</summary>

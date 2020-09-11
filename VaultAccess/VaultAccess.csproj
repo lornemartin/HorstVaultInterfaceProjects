@@ -56,7 +56,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisLogFile>bin\Debug\VDFGridSample.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
@@ -120,37 +120,33 @@
     </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.Connectivity.WebServices, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.Connectivity.WebServices.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.Interop, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=AMD64">
+    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=25.0.66.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.Connectivity.WebServices.Interop.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=24.1.42.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
-    </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Vault Professional 2019\Explorer\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+      <HintPath>..\Vault 2020 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Inventor.Interop, Version=22.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
