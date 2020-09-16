@@ -374,6 +374,60 @@ namespace VaultAccess
             return true;
         }
 
+        public bool searrchAndDownloadIDW(string fileName, string downloadFolder)
+        {
+            try
+            {
+                PropDef[] filePropDefs = m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
+                PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
+
+                Autodesk.Connectivity.WebServices.SrchCond searchCondition = new SrchCond();
+                searchCondition.PropDefId = vaultNamePropDef.Id;
+                searchCondition.PropTyp = PropertySearchType.SingleProperty;
+                searchCondition.SrchOper = 3;
+                searchCondition.SrchTxt = fileName;
+
+
+                string bookmark = "";
+                SrchStatus st = new SrchStatus();
+
+                Autodesk.Connectivity.WebServices.File[] files = m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(new SrchCond[] { searchCondition }, null, null, true, true, ref bookmark, out st);
+                if (files.Count() != 1)
+                {
+                    return false;
+                }
+
+                Vault.Settings.AcquireFilesSettings settings = new Vault.Settings.AcquireFilesSettings(m_conn);
+
+                Vault.Currency.Entities.FileIteration file = new Vault.Currency.Entities.FileIteration(m_conn, files[0]);
+
+                settings.AddEntityToAcquire(file);
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeLibraryContents = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeAttachments = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeHiddenEntities = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeParents = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.RecurseChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.VersionGatheringOption =
+                    Vault.Currency.VersionGatheringOption.Latest;
+
+                // this forces all the files to go into one folder, it doesn't replicate the vault's folder structure..
+                // this is needed so that Inventor view knows where to find the file
+                settings.OrganizeFilesRelativeToCommonVaultRoot = false;
+
+                // this does the actual work.
+                settings.LocalPath = new Autodesk.DataManagement.Client.Framework.Currency.FolderPathAbsolute(downloadFolder);
+                m_conn.FileManager.AcquireFiles(settings);
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool downloadFileOrig(Vault.Currency.Entities.FileIteration file, string folderPath)
         {
             try
