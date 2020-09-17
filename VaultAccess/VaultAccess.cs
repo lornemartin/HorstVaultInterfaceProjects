@@ -25,9 +25,6 @@ namespace VaultAccess
         private List<string> m_downloadedFiles { get; set; }
         private string m_PDFPath { get; set; }
         private string m_pdfPrinterName { get; set; }
-        private string m_psToPdfProgName { get; set; }
-        private string m_ghostScriptWorkingFolder { get; set; }
-
         #endregion
 
         #region Constructors and Initialization Methods
@@ -39,15 +36,13 @@ namespace VaultAccess
             m_downloadedFiles = new List<string>();
             m_PDFPath = "";
         }
-        public VaultAccess(string pdfPath, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder)
+        public VaultAccess(string pdfPath, string pdfPrinterName)
         {
             m_conn = null;
             m_lastAccessedFolder = null;
             m_downloadedFiles = new List<string>();
             m_PDFPath = pdfPath;
             m_pdfPrinterName = pdfPrinterName;
-            m_psToPdfProgName = psToPdfProgName;
-            m_ghostScriptWorkingFolder = ghostScriptWorkingFolder;
         }
 
         public VaultAccess(Vault.Currency.Connections.Connection conn, string PDFPath)
@@ -2635,7 +2630,7 @@ namespace VaultAccess
                 string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
 
                 //if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
-                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, ref errMsg, ref logMsg))
                 {
                     logMessage += logMsg;
                     return true;
