@@ -318,7 +318,8 @@ namespace JobProcessorPrintPDF
                     string errMsg = "";
                     string logMsg = "";
                     //if (printOb.printToPDFNew(fileName, propDict, PDFPath, ref errMsg, ref logMsg))
-                    if (printOb.printToPDF(fileName,PDFPath,pdfPrinterName, psToPdfProgName,ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                    //if (printOb.printToPDF(fileName,PDFPath,pdfPrinterName, psToPdfProgName,ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                    if (printOb.printToPDF(fileName, PDFPath, pdfPrinterName, ref errMsg, ref logMsg))
                     {
                         logMessage += logMsg;
                         return true;
