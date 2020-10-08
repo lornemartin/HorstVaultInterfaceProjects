@@ -99,7 +99,7 @@ namespace VaultAccess
             else return false;
         }
 
-        public bool Login(string vaultUserName, string vaultPassword, string vaultServer, string vault)
+        public bool ogin(string vaultUserName, string vaultPassword, string vaultServer, string vault)
         {
             try
             {
@@ -123,6 +123,29 @@ namespace VaultAccess
             }
         }
 
+        public string LoginWithResults(string vaultUserName, string vaultPassword, string vaultServer, string vault)
+        {
+            try
+            {
+                // this login does not consume a license.
+                Vault.Forms.Library.Initialize();
+
+                Vault.Results.LogInResult results = Vault.Library.ConnectionManager.LogIn(vaultServer, vault, vaultUserName, vaultPassword, Vault.Currency.Connections.AuthenticationFlags.ReadOnly, null);
+
+                if (results.Success)
+                {
+                    m_conn = results.Connection;
+                    return "";
+                }
+
+                else
+                    return results.Exception.Message;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
         public bool LoginForItems(string vaultUserName, string vaultPassword, string vaultServer, string vault)
         {
             try
