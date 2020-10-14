@@ -133,13 +133,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
-      <Project>{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}</Project>
-      <Name>PrintPDF</Name>
-    </ProjectReference>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
+      <Name>PrintPDF</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
