@@ -99,7 +99,7 @@ namespace VaultAccess
             else return false;
         }
 
-        public bool ogin(string vaultUserName, string vaultPassword, string vaultServer, string vault)
+        public bool Login(string vaultUserName, string vaultPassword, string vaultServer, string vault)
         {
             try
             {

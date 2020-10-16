@@ -465,7 +465,6 @@ namespace VaultItemProcessor
                     // Set page number (which is one-based)
                     form.PageNumber = idx + 1;
 
-                    
                     double originalWidth = form.PixelWidth;
                     double originalHeight = form.PixelHeight;
                     double ratio = form.PixelWidth / form.PixelHeight;
@@ -473,14 +472,21 @@ namespace VaultItemProcessor
                     double newWidth, newHeight = 0;
                     double startX,startY = 0;
 
-                    if(fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate==90)
+                    if(fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate==90) //Bullzip portrait drawings
                     {
                         newWidth = 435; //306
                         newHeight = 500;
                         startX = 25;   //100
                         startY = -100;
                     }
-                    else
+                    else if(fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate == 0 && form.PixelWidth > form.PixelHeight)   // MicrosoftToPDF drawings
+                    {
+                        newWidth = 550;
+                        newHeight = 375;
+                        startX = 25;
+                        startY = 25;
+                    }
+                    else        // Bullzip landscape drawings
                     {
                         newWidth = 300;
                         newHeight = 400;
@@ -575,14 +581,21 @@ namespace VaultItemProcessor
                     double newWidth,newHeight = 0;
                     double startX,startY = 0;
 
-                    if (fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate == 90)
+                    if (fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate == 90)    //Bullzip portrait drawings
                     {
                         newWidth = 435; //306
                         newHeight = 500;
                         startX = 25;   //100
                         startY = -100;
                     }
-                    else
+                    else if (fullsizePage.Orientation == PageOrientation.Portrait && fullsizePage.Rotate == 0 && form.PixelWidth > form.PixelHeight)   // MicrosoftToPDF drawings
+                    {
+                        newWidth = 550;
+                        newHeight = 375;
+                        startX = 25;
+                        startY = 25;
+                    }
+                    else    // Bullzip landscape drawings
                     {
                         newWidth = 300;
                         newHeight = 400;
