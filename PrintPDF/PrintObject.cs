@@ -55,136 +55,7 @@ namespace PrintPDF
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        // this routine was coded to use the ERP names instead of the part names
-        // it needs to have a list of ERP names passed to it, each one matching its corresponding sheet in the IDW.
-        //  the routine actually doesn't care whether it gets passed Vault Names or Epicor Numbers, 
-        //  it'll just name the pdfs accordingly
-
-        // as of November 1 2017, it is no longer being used.
-        public Boolean printToPDFNew(string idw, System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                                                      Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
-                                                      propDict, string outputFolder, ref string errMessage, ref string logMessage)
-        {
-            {
-                try
-                {
-                    ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
-                    ApprenticeServerDrawingDocument drgDoc;
-                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
-                    oApprentice.Open(idw);
-                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
-                    int pageCount = 1;
-                    List<string> assemblyFileNameList = new List<string>();
-                    
-                    idwFile idwObject = new idwFile();
-                    idwObject.sheetNames = new List<string>();
-                    idwObject.idwName = idw;
-                    idwObject.pageCount = drgDoc.Sheets.Count;
-
-                    foreach (Sheet sh in drgDoc.Sheets)
-                    {
-                        if (sh.DrawingViews.Count > 0)
-                        {
-                            string modelName;
-                            string modelExtension;
-                            modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                            modelExtension = System.IO.Path.GetExtension(modelName);
-
-                            bool matchFound = false;
-                            foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
-                                     VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
-                            {
-                                if (pair.Key.EntityMasterId != 0)
-                                {
-                                    if (pair.Key.EntityName.ToString() == modelName)
-                                    {
-
-                                        modelName = System.IO.Path.GetFileNameWithoutExtension(pair.Value.Value.ToString());
-                                        //logMessage+= "\nModel Name: " + modelName + "\n\r";
-                                        matchFound = true;
-                                        idwObject.sheetNames.Add(modelName);
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (!matchFound)
-                            {
-                                logMessage += @" " + "\r\n" + @" " + "No corresponding model found for " + modelName + @" " + "\r\n" + @" ";
-                                idwObject.sheetNames.Add("unmatchedfile");
-                                pageCount++;
-                                //continue;
-                            }
-                            else
-                            {
-                                pageCount++;
-                            }
-
-                        }
-                    }
-
-                    string debugFileName = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\debug.txt";
-
-                    Process myProcess = new Process();
-                    myProcess.StartInfo.UseShellExecute = false;
-                    myProcess.StartInfo.WorkingDirectory = AppSettings.Get("PrintPDFWorkingFolder").ToString();
-                    myProcess.StartInfo.FileName = AppSettings.Get("PrintPDFExecutable").ToString();
-                    myProcess.StartInfo.Arguments = @"""" + AppSettings.Get("PrintPDFPrinter").ToString() + @"""" + " " +
-                                                    @"""" + outputFolder + @"""" + " " +
-                                                    @"""" + AppSettings.Get("PrintPDFPS2PDF").ToString() + @"""" + " " +
-                                                    @"""" + AppSettings.Get("GhostScriptWorkingFolder").ToString() + @"""" + " " +
-                                                    @"""" + idw + @"""" + " " +
-                                                    (pageCount-1) + " ";
-                    foreach(string sheetName in idwObject.sheetNames)
-                    {
-                        myProcess.StartInfo.Arguments += " " + @"""" + sheetName + @"""";
-                    }
-                    myProcess.StartInfo.CreateNoWindow = true;
-                    myProcess.Start();
-                    myProcess.WaitForExit();
-
-                    string argumentsFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\arguments.txt";
-
-                    using (StreamWriter writetext = new StreamWriter(argumentsFileName))
-                    {
-                        writetext.WriteLine(myProcess.StartInfo.Arguments);
-                    }
-
-                    string returnFileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\PrintPDFCommandLine\" + AppSettings.Get("PrintPDFreturnFile").ToString();
-                    int lineCount = System.IO.File.ReadLines(returnFileName).Count();
-
-                    // after a successful run of PrintPDF, the file 'return.txt' should contain a 
-                    // list of files printed, the number of lines matching the number of sheets in the idw
-                    
-                    if (!(lineCount == pageCount))
-                    // if the drawing set has a sheet with no drawing views on it, for example if a sheet has only a BOM
-                    // this test will not be accurate.  The routine will return an error even though the pages all printed ok
-                    // but because the page count does not equal the sheet count it will return a false error.
-
-                    // so I decided for now I will still log the error, but we won't return a fail status.
-                    {
-                        errMessage = System.IO.File.ReadAllText(returnFileName);
-                    }
-                    else
-                    {
-                        logMessage += idw + " printed successfully";
-                    }
-
-                    errMessage = logMessage;
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    errMessage += "Unknown Error in printToPDF\r\n";
-                    errMessage += ex.Message + "\r\n";
-                    return false;
-                }
-            }
-        }
-
-        // this is an attempt to get rid of the extra command line step for printing pdfs.  
-        // it also uses the display names inside the idw for the pdf names rather than getting it from a Vault property.
-        public Boolean printToPDF(string idw, string outputFolder, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder, ref string errMessage, ref string logMessage)
+        public Boolean printToPDF(string idw, string outputFolder, string pdfPrinterName, ref string errMessage, ref string logMessage)
         {
             {
                 try
@@ -292,10 +163,6 @@ namespace PrintPDF
                     log.Info("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
 
                     string printer = pdfPrinterName;
-                    string pdfConverter = psToPdfProgName;
-                    string workingDir = ghostScriptWorkingFolder;
-
-                    string psFileName = "";
                     string pdfFileName = "";
 
                     try
@@ -363,52 +230,35 @@ namespace PrintPDF
                                         }
                                     }
 
-                                    psFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".ps";
                                     pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
                                     // for some reason if a ps filename contains a comma it doesn't want to print.
                                     // we'll replace it with a tilde.
-                                    if (psFileName.Contains(","))
-                                    {
-                                        psFileName = psFileName.Replace(',', '~');
-                                        log.Warn("One or more characters replaced with '~' in " + pdfFileName);
-                                        //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
-                                    }
+                                    //if (psFileName.Contains(","))
+                                    //{
+                                    //    psFileName = psFileName.Replace(',', '~');
+                                    //    log.Warn("One or more characters replaced with '~' in " + pdfFileName);
+                                    //    //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
+                                    //}
 
-                                    if (psFileName.Contains("°"))
-                                    {
-                                        psFileName = psFileName.Replace('°', '~');
-                                        log.Warn("One or more characters replaced with '°' in " + pdfFileName);
-                                        //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
-                                    }
+                                    //if (psFileName.Contains("°"))
+                                    //{
+                                    //    psFileName = psFileName.Replace('°', '~');
+                                    //    log.Warn("One or more characters replaced with '°' in " + pdfFileName);
+                                    //    //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
+                                    //}
 
-                                    pMgr.PrintToFile(psFileName);
+                                    pMgr.PrintToFile(pdfFileName);
 
-                                    if (System.IO.File.Exists(psFileName))
+                                    if (System.IO.File.Exists(pdfFileName))
                                     {
-                                        log.Info("PS file generated for " + psFileName);
+                                        log.Info("PDF file generated for " + pdfFileName);
                                     }
                                     else
                                     {
-                                        log.Warn("PS file for " + psFileName + "could not be generated.");
+                                        log.Warn("PDF file for " + pdfFileName + "could not be generated.");
                                         continue;   // skip trying to create a pdf if we couldn't generate a ps
                                     }
-
-                                    // notice:
-                                    // gs doesn't seem to be able to handle the degree symbol
-                                    // all filenames with a degree symbol will lose it when run through this script
-
-                                    Process oProc = new Process();
-                                    // need the full path to the program if we want to set UseShellExecute to false
-                                    ProcessStartInfo startInfo = new ProcessStartInfo(pdfConverter);
-                                    startInfo.WorkingDirectory = workingDir;
-                                    startInfo.Arguments = @"""" + psFileName + @"""" + " " + @"""" + pdfFileName + @"""";
-                                    startInfo.CreateNoWindow = true;
-                                    oProc.StartInfo = startInfo;
-                                    oProc.StartInfo.UseShellExecute = false;
-                                    oProc.Start();
-                                    oProc.WaitForExit();
-
 
                                     if (assemblyFileNameList != null)
                                     {
@@ -473,7 +323,6 @@ namespace PrintPDF
                                         }
                                     }
 
-                                    System.IO.File.Delete(psFileName);
                                     actualSheetIndex++;
                                     modifiedSheetIndex++;
                                 }
