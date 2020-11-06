@@ -40,6 +40,7 @@ namespace VaultItemProcessor
         public string vaultServer { get; set; }
         public string vaultVault { get; set; }
         public DailyScheduleAggregate dailyScheduleData { get; set; }
+        public string currentItem { get; set; }
 
         public Form1()
         {
@@ -242,6 +243,7 @@ namespace VaultItemProcessor
             DateTime topLevelItemDateReleased = new DateTime();
             string processOnlyIfReleased = AppSettings.Get("ProcessOnlyIfReleased").ToString();
             string orderNumber = "";
+            BatchProduct bProd = new BatchProduct();
 
             radioGroup1.SelectedIndex = -1;
             try
@@ -263,7 +265,20 @@ namespace VaultItemProcessor
                     line = reader.ReadLine();       // first line is header, we don't want it.
                     int lineNum = 1;
 
-                    
+                    // next line defines product that is being exported
+                    string productLine = reader.ReadLine();
+                    productLine = productLine.Replace("\"", "");
+                    string[] productItems = line.Split('\t');
+
+                    bProd.Qty = (int) (spinEditOrderQty.Value);
+                    bProd.Number = productItems[1];
+                    bProd.ItemDescription = productItems[3];
+                    bProd.Category = productItems[4];
+                    bProd.PlantID = productItems[10];
+                    string isStockString = productItems[11];
+                    bProd.IsStock = (isStockString == "True" ? true : false);
+                    bProd.Keywords = productItems[17];
+                    bProd.Notes = productItems[18];
 
                     while ((line = reader.ReadLine()) != null)
                     {
@@ -274,8 +289,6 @@ namespace VaultItemProcessor
                         line = line.Replace("\"", "");
 
                         string[] items = line.Split('\t');
-
-                        
                         
                         string number = items[1];
                         string title = items[2];
@@ -289,7 +302,7 @@ namespace VaultItemProcessor
                         int qty = 0, originalQty = 0;
                         string structCode = items[9];
                         string plantID = items[10];
-                        string isStockString = items[11];
+                        isStockString = items[11];
                         bool isStock = (isStockString == "True" ? true : false);
                         string requiresPdfString = items[12];
                         bool requiresPdfFlag = (requiresPdfString == "False" ? false : true);
@@ -369,7 +382,9 @@ namespace VaultItemProcessor
                                 topItemReleased = true;
 
                             topLevelItemDateReleased = dateTime;
-                                
+                            txtboxCurrentRecord.Text = items[1];
+
+                            
                         }
 
                         // some exported files seem to have extension, others don't.
@@ -511,36 +526,48 @@ namespace VaultItemProcessor
 
                     reader.Close();
 
+                    allExportItemsList.RemoveAt(0);  // remove the first exportLineItem, which is the batch product
+                    foreach(ExportLineItem lItem in allExportItemsList)
+                    {
+                        BatchItem bItem = new BatchItem();
+                        bItem.Number = lItem.Number;
+                        bItem.Title = lItem.Title;
+                        bItem.ItemDescription = lItem.ItemDescription;
+                        bItem.Category = lItem.Category;
+                        bItem.Material = lItem.Material;
+                        bItem.MaterialThickness = lItem.MaterialThickness;
+                        bItem.StructCode = lItem.StructCode;
+                        bItem.Operations = lItem.Operations;
+                        bItem.HasPdf = lItem.HasPdf;
+                        bItem.PlantID = lItem.PlantID;
+                        bItem.IsStock = lItem.IsStock;
+                        bItem.Keywords = lItem.Keywords;
+                        bItem.Notes = lItem.Notes;
+                        bItem.Qty = lItem.Qty;
+
+
+                        bProd.SubItems.Add(bItem);
+                    }
+
                     // clear the pdf view window
                     pdfViewer1.CloseDocument();
                 }
 
-                if (textBoxOutputFolder.Text.Contains("Batch") || textBoxOutputFolder.Text.Contains("batch"))
-                    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
-                else
-                    lineItemList.Sort();    // default sorting
-
-                BindingList<ExportLineItem> bindingLineItemList = new BindingList<ExportLineItem>(lineItemList);
-
-                exportTreeList.DataSource = bindingLineItemList;
-                //exportTreeList.DataSource = lineItemList;
-
-                exportTreeList.RefreshDataSource();
-                exportTreeList.Refresh();
-                exportTreeList.Cursor = Cursors.Default;
-
-                // all sorting is done now by ExportLineItem.CompareTo
-                // this sorts the underlying data source, so we don't need to try to sort the view.
 
 
-                //exportTreeList.BeginSort();
-                // this doesn't seem to work yet to have two columns custom sorting
-                //exportTreeList.Columns["Stock"].SortMode = DevExpress.XtraGrid.ColumnSortMode.Custom;
-                //exportTreeList.Columns["Stock"].SortOrder = SortOrder.Ascending;
-                //exportTreeList.Columns["Category"].SortMode = DevExpress.XtraGrid.ColumnSortMode.Custom;
-                //exportTreeList.Columns["Category"].SortOrder = SortOrder.Ascending;
-                //exportTreeList.EndSort();
+                //if (textBoxOutputFolder.Text.Contains("Batch") || textBoxOutputFolder.Text.Contains("batch"))
+                //    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
+                //else
+                //    lineItemList.Sort();    // default sorting
 
+                //BindingList<ExportLineItem> bindingLineItemList = new BindingList<ExportLineItem>(lineItemList);
+
+                //exportTreeList.DataSource = bindingLineItemList;
+                ////exportTreeList.DataSource = lineItemList;
+
+                //exportTreeList.RefreshDataSource();
+                //exportTreeList.Refresh();
+                //exportTreeList.Cursor = Cursors.Default;
 
 
                 if (processOnlyIfReleased == "true" || processOnlyIfReleased == "True")
@@ -649,6 +676,8 @@ namespace VaultItemProcessor
                         if (lineItemList != null)
                             batchItemName = lineItemList[0].Number;
                     }
+
+                   
 
                     foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
                     {
@@ -763,6 +792,12 @@ namespace VaultItemProcessor
                                         dailyScheduleData.AddLineItem(item, txtBoxOrderNumber.Text, orderQty, batchItemName, currentProduct);
                                         dailyScheduleData.SaveToFile();
                                     }
+
+                                    if (dailyScheduleData.HasNextItem(lineItemList[0].Number)) btnNextRecord.Enabled = true;
+                                    else btnNextRecord.Enabled = false;
+
+                                    if (dailyScheduleData.HasPreviousItem(lineItemList[0].Number)) btnPreviousRecord.Enabled = true;
+                                    else btnPreviousRecord.Enabled = false;
 
                                     // also create pdf of all drawings associated with this order.
                                     //  we'll save it in the root folder.
@@ -2862,6 +2897,18 @@ namespace VaultItemProcessor
             }
 
             exportTreeList.RefreshDataSource();
+        }
+
+
+
+        private void btnPreviousRecord_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnNextRecord_Click(object sender, EventArgs e)
+        {
+
         }
     }
 

@@ -96,6 +96,9 @@
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
             this.radioGroup2 = new DevExpress.XtraEditors.RadioGroup();
+            this.btnPreviousRecord = new System.Windows.Forms.Button();
+            this.btnNextRecord = new System.Windows.Forms.Button();
+            this.txtboxCurrentRecord = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -645,11 +648,42 @@
             this.radioGroup2.TabIndex = 12;
             this.radioGroup2.SelectedIndexChanged += new System.EventHandler(this.radioGroup2_SelectedIndexChanged);
             // 
+            // btnPreviousRecord
+            // 
+            this.btnPreviousRecord.Image = global::VaultItemProcessor.Properties.Resources.Prev_32x32;
+            this.btnPreviousRecord.Location = new System.Drawing.Point(52, 13);
+            this.btnPreviousRecord.Name = "btnPreviousRecord";
+            this.btnPreviousRecord.Size = new System.Drawing.Size(75, 30);
+            this.btnPreviousRecord.TabIndex = 13;
+            this.btnPreviousRecord.UseVisualStyleBackColor = true;
+            this.btnPreviousRecord.Click += new System.EventHandler(this.btnPreviousRecord_Click);
+            // 
+            // btnNextRecord
+            // 
+            this.btnNextRecord.Image = global::VaultItemProcessor.Properties.Resources.Next_32x32;
+            this.btnNextRecord.Location = new System.Drawing.Point(1184, 13);
+            this.btnNextRecord.Name = "btnNextRecord";
+            this.btnNextRecord.Size = new System.Drawing.Size(75, 30);
+            this.btnNextRecord.TabIndex = 14;
+            this.btnNextRecord.UseVisualStyleBackColor = true;
+            this.btnNextRecord.Click += new System.EventHandler(this.btnNextRecord_Click);
+            // 
+            // txtboxCurrentRecord
+            // 
+            this.txtboxCurrentRecord.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtboxCurrentRecord.Location = new System.Drawing.Point(192, 17);
+            this.txtboxCurrentRecord.Name = "txtboxCurrentRecord";
+            this.txtboxCurrentRecord.Size = new System.Drawing.Size(928, 26);
+            this.txtboxCurrentRecord.TabIndex = 15;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1752, 778);
+            this.Controls.Add(this.txtboxCurrentRecord);
+            this.Controls.Add(this.btnNextRecord);
+            this.Controls.Add(this.btnPreviousRecord);
             this.Controls.Add(this.radioGroup2);
             this.Controls.Add(this.radioGroup1);
             this.Controls.Add(this.groupBoxInput);
@@ -722,6 +756,9 @@
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
         private DevExpress.XtraEditors.RadioGroup radioGroup1;
         private DevExpress.XtraEditors.RadioGroup radioGroup2;
+        private System.Windows.Forms.Button btnPreviousRecord;
+        private System.Windows.Forms.Button btnNextRecord;
+        private System.Windows.Forms.TextBox txtboxCurrentRecord;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

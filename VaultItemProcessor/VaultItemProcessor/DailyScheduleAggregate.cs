@@ -222,7 +222,47 @@ namespace VaultItemProcessor
         {
             return Finalized;
         }
+
+        public bool HasPreviousItem(string currentItem)
+        {
+            if(AggregateLineItemList[0].Number.ToLower().Contains("bat"))
+            {
+                // this is a batch
+                int batchIndex = 0;
+                foreach(AggregateLineItem lItem in AggregateLineItemList)
+                {
+                    if(lItem.Number == currentItem)
+                    {
+                        if (batchIndex > 0 ) return true;
+                        else return false;
+                    }
+                    batchIndex++;
+                }
+            }
+            return false;  // default to false if something goes wrong
+        }
+
+        public bool HasNextItem(string currentItem)
+        {
+            if (AggregateLineItemList[0].Number.ToLower().Contains("bat"))
+            {
+                // this is a batch
+                int batchIndex = 0;
+                foreach (AggregateLineItem lItem in AggregateLineItemList)
+                {
+                    if (lItem.Number == currentItem)
+                    {
+                        if (batchIndex < AggregateLineItemList.Count()-1) return true;
+                        else return false;
+                    }
+                    batchIndex++;
+                }
+            }
+            return false;  // default to false if something goes wrong
+        }
     }
+
+
 
     
 

@@ -146,6 +146,9 @@
   <ItemGroup>
     <Compile Include="AggregateLineItem.cs" />
     <Compile Include="AppSettings.cs" />
+    <Compile Include="Batch.cs" />
+    <Compile Include="BatchItem.cs" />
+    <Compile Include="BatchProduct.cs" />
     <Compile Include="DailyScheduleAggregate.cs" />
     <Compile Include="ExportLineItem.cs" />
     <Compile Include="PrintIDW.cs">
@@ -236,6 +239,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ItemProcessor.ico" />
+    <None Include="Resources\Next_32x32.png" />
+    <None Include="Resources\Prev_32x32.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
