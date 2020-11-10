@@ -146,9 +146,9 @@
   <ItemGroup>
     <Compile Include="AggregateLineItem.cs" />
     <Compile Include="AppSettings.cs" />
-    <Compile Include="Batch.cs" />
-    <Compile Include="BatchItem.cs" />
-    <Compile Include="BatchProduct.cs" />
+    <Compile Include="ProductionList.cs" />
+    <Compile Include="ProductionListLineItem.cs" />
+    <Compile Include="ProductionListProduct.cs" />
     <Compile Include="DailyScheduleAggregate.cs" />
     <Compile Include="ExportLineItem.cs" />
     <Compile Include="PrintIDW.cs">

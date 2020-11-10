@@ -21,6 +21,8 @@ using PdfSharp.Drawing.Layout;
 using Npgsql;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
+using DevExpress.Utils.Design;
+using DevExpress.XtraRichEdit.Model;
 
 namespace VaultItemProcessor
 {
@@ -42,6 +44,12 @@ namespace VaultItemProcessor
         public DailyScheduleAggregate dailyScheduleData { get; set; }
         public string currentItem { get; set; }
 
+        public ProductionList productionList { get; set; }
+
+        ProductionListProduct plProd = new ProductionListProduct();
+
+        public DateTime lastFileUpdateTime { get; set; }
+
         public Form1()
         {
             try
@@ -62,6 +70,8 @@ namespace VaultItemProcessor
                     vaultServer = AppSettings.Get("VaultServer").ToString();
                     vaultVault = AppSettings.Get("VaultVault").ToString();
                     dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
+                    productionList = new ProductionList(exportFilePath,pdfPath);
+                    lastFileUpdateTime = new DateTime();
                 }
                 else
                 {
@@ -101,7 +111,7 @@ namespace VaultItemProcessor
                         dailyScheduleData = (DailyScheduleAggregate)xs.Deserialize(sr);
                     }
 
-                    if (dailyScheduleData.IsFinalized()) btnProcess.Enabled = false;
+                    if (dailyScheduleData.IsFinalized()) btnConfirm.Enabled = false;
                 }
                 textBoxOutputFolder.Text = exportFilePath;
 
@@ -115,7 +125,9 @@ namespace VaultItemProcessor
                 watcher.Changed += new FileSystemEventHandler(watcher_Changed);
                 watcher.Created += new FileSystemEventHandler(watcher_Created);
 
-
+                btnConfirm.Enabled = false;
+                btnPreviousRecord.Enabled = false;
+                btnNextRecord.Enabled = false;
 
                 if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
                 {
@@ -146,6 +158,7 @@ namespace VaultItemProcessor
                 delegate ()
                 {
                     processVaultItemExport();
+                    
                 }));
 
             this.Invoke(new Action(
@@ -174,17 +187,40 @@ namespace VaultItemProcessor
                     toolStripStatusLabel1.Text = "Export File Loaded";
                 }));
         }
-
         private void btnLoad_Click(object sender, EventArgs e)
         {
-            // Show the dialog and get result.
-            DialogResult result = openFileDialog1.ShowDialog();
-            if (result == DialogResult.OK) // Test result.
-            {
-                processVaultItemExport(openFileDialog1.FileName);
-            }
+            //// Show the dialog and get result.
+            //DialogResult result = openFileDialog1.ShowDialog();
+            //if (result == DialogResult.OK) // Test result.
+            //{
+            //    processVaultItemExport(openFileDialog1.FileName);
+            //}
 
-            toolStripStatusLabel1.Text = "Export File Loaded";
+            //toolStripStatusLabel1.Text = "Export File Loaded";
+
+            productionList = productionList.Load();
+            productionList.currentIndex = 1;
+
+            ProductionListProduct prod = productionList.productList.FirstOrDefault();
+            txtboxCurrentRecordName.Text = prod.Number;
+            txtBoxOrderHeader.Text = prod.OrderNumber;
+            textBoxCurrentProductDesc.Text = prod.ItemDescription;
+            txtBoxQtyHeader.Text = prod.Qty.ToString();
+
+            BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(prod.SubItems);
+
+            exportTreeList.DataSource = bindingLineItemList;
+            exportTreeList.ClearNodes();
+
+            exportTreeList.RefreshDataSource();
+            exportTreeList.Refresh();
+            exportTreeList.Cursor = Cursors.Default;
+
+            if (productionList.productList.Count > 1)
+                btnNextRecord.Enabled = true;
+            else
+                btnNextRecord.Enabled = false;
+
         }
 
         private int getCalculatedQty(ExportLineItem item, List<ExportLineItem> itemList)
@@ -234,391 +270,412 @@ namespace VaultItemProcessor
 
         }
 
-        public List<string>  processVaultItemExport(string fileName = "")
+        public List<string> processVaultItemExport(string fileName = "")
         {
-            //bool allItemsReleased = true;
-            List<string> itemsWithoutDrawings = new List<string>();
-            bool topItemReleased = true;
-            DateTime earliestDateReleased = DateTime.Now;
-            DateTime topLevelItemDateReleased = new DateTime();
-            string processOnlyIfReleased = AppSettings.Get("ProcessOnlyIfReleased").ToString();
-            string orderNumber = "";
-            BatchProduct bProd = new BatchProduct();
-
-            radioGroup1.SelectedIndex = -1;
-            try
+            // export from vault triggers this 4 times, we only want one of them.
+            //  waiting 10 seconds before products should be lots of time for things to settle down.
+            if (DateTime.Now - lastFileUpdateTime > TimeSpan.FromSeconds(10))
             {
-                lineItemList.Clear();
-                exportTreeList.ClearNodes();
-                spinEditOrderQty.Value = 0;
-                Dictionary<string, string> parentDict = new Dictionary<string, string>();
 
-                // set up a list that will contain all the duplicate items as well
-                List<ExportLineItem> allExportItemsList = new List<ExportLineItem>();
+                //bool allItemsReleased = true;
+                List<string> itemsWithoutDrawings = new List<string>();
+                bool topItemReleased = true;
+                DateTime earliestDateReleased = DateTime.Now;
+                DateTime topLevelItemDateReleased = new DateTime();
+                string processOnlyIfReleased = AppSettings.Get("ProcessOnlyIfReleased").ToString();
+                string orderNumber = "";
 
-                
-
-                if (fileName == "") fileName = vaultExportFileWithPath;
-                using (StreamReader reader = File.OpenText(fileName))
+                radioGroup1.SelectedIndex = -1;
+                try
                 {
-                    string line;
-                    line = reader.ReadLine();       // first line is header, we don't want it.
-                    int lineNum = 1;
+                    lineItemList.Clear();
+                    exportTreeList.ClearNodes();
+                    spinEditOrderQty.Value = 0;
+                    Dictionary<string, string> parentDict = new Dictionary<string, string>();
 
-                    // next line defines product that is being exported
-                    string productLine = reader.ReadLine();
-                    productLine = productLine.Replace("\"", "");
-                    string[] productItems = line.Split('\t');
+                    // set up a list that will contain all the duplicate items as well
+                    List<ExportLineItem> allExportItemsList = new List<ExportLineItem>();
 
-                    bProd.Qty = (int) (spinEditOrderQty.Value);
-                    bProd.Number = productItems[1];
-                    bProd.ItemDescription = productItems[3];
-                    bProd.Category = productItems[4];
-                    bProd.PlantID = productItems[10];
-                    string isStockString = productItems[11];
-                    bProd.IsStock = (isStockString == "True" ? true : false);
-                    bProd.Keywords = productItems[17];
-                    bProd.Notes = productItems[18];
 
-                    while ((line = reader.ReadLine()) != null)
+
+                    if (fileName == "") fileName = vaultExportFileWithPath;
+                    using (StreamReader reader = File.OpenText(fileName))
                     {
-                        string level = "";
-                        string parentLevel = "";
-                        string parent = "";
+                        string line;
+                        line = reader.ReadLine();       // first line is header, we don't want it.
+                        int lineNum = 1;
 
-                        line = line.Replace("\"", "");
-
-                        string[] items = line.Split('\t');
-                        
-                        string number = items[1];
-                        string title = items[2];
-                        string itemDesc = items[3];
-                        string category = items[4];
-                        string thickness = items[5];
-                        string material = items[6];
-                        string ops = items[7];
-
-                        string qtyString = items[8];
-                        int qty = 0, originalQty = 0;
-                        string structCode = items[9];
-                        string plantID = items[10];
-                        isStockString = items[11];
-                        bool isStock = (isStockString == "True" ? true : false);
-                        string requiresPdfString = items[12];
-                        bool requiresPdfFlag = (requiresPdfString == "False" ? false : true);
-                        string comment = items[13];
-
-                        if (lineNum == 1)
+                        while ((line = reader.ReadLine()) != null)
                         {
-                            orderNumber = comment;    // top level item should have order number in comment field
-                            comment = "";
-                        }
+                            string level = "";
+                            string parentLevel = "";
+                            string parent = "";
+
+                            line = line.Replace("\"", "");
+
+                            string[] items = line.Split('\t');
+
+                            string number = items[1];
+                            string title = items[2];
+                            string itemDesc = items[3];
+                            string category = items[4];
+                            string thickness = items[5];
+                            string material = items[6];
+                            string ops = items[7];
+
+                            string qtyString = items[8];
+                            int qty = 0, originalQty = 0;
+                            string structCode = items[9];
+                            string plantID = items[10];
+                            string isStockString = items[11];
+                            bool isStock = (isStockString == "True" ? true : false);
+                            string requiresPdfString = items[12];
+                            bool requiresPdfFlag = (requiresPdfString == "False" ? false : true);
+                            string comment = items[13];
+
+                            if (lineNum == 1)
+                            {
+                                orderNumber = comment;    // top level item should have order number in comment field
+                                comment = "";
+                            }
 
 
-                        string dateString = items[14];
-                        DateTime dateTime = new DateTime();
-                        if (dateString != "")
-                            dateTime = Convert.ToDateTime(dateString);
+                            string dateString = items[14];
+                            DateTime dateTime = new DateTime();
+                            if (dateString != "")
+                                dateTime = Convert.ToDateTime(dateString);
 
 
-                        string lifeCycleState = items[15];
+                            string lifeCycleState = items[15];
 
-                        //if (lifeCycleState != "Released")
-                        //    allItemsReleased = false;
+                            //if (lifeCycleState != "Released")
+                            //    allItemsReleased = false;
 
-                        string stockNumber = items[16];
-                        if (stockNumber != "")
-                            number = stockNumber;
+                            string stockNumber = items[16];
+                            if (stockNumber != "")
+                                number = stockNumber;
 
-                        try
-                        {
-                            if (qtyString != "") qty = int.Parse(qtyString);
-                            originalQty = qty;
-                        }
-                        catch (Exception)
-                        {
-                            qty = 0;
-                        }
+                            try
+                            {
+                                if (qtyString != "") qty = int.Parse(qtyString);
+                                originalQty = qty;
+                            }
+                            catch (Exception)
+                            {
+                                qty = 0;
+                            }
 
-                        level = items[0];
-                        parentLevel = "";
-                        parent = "";
+                            level = items[0];
+                            parentLevel = "";
+                            parent = "";
 
-                        if (level == "1")  parent = "<top>";   ///////this is where I left off it seems to work now....
+                            if (level == "1") parent = "<top>";   ///////this is where I left off it seems to work now....
 
-                        if (level.Contains('.'))
-                        {
-                            parentLevel = level.Remove(level.LastIndexOf('.'));
+                            if (level.Contains('.'))
+                            {
+                                parentLevel = level.Remove(level.LastIndexOf('.'));
 
-                            if (!parentDict.ContainsKey(level))
+                                if (!parentDict.ContainsKey(level))
+                                {
+                                    parentDict.Add(level, number);
+                                }
+
+                                if (parentDict.ContainsKey(parentLevel))
+                                {
+                                    parentDict.TryGetValue(parentLevel, out parent);
+                                }
+                            }
+                            else
                             {
                                 parentDict.Add(level, number);
                             }
 
-                            if (parentDict.ContainsKey(parentLevel))
+                            string keywords = items[17];
+                            string notes = items[18];
+
+                            if (lineNum == 1)        // top level component
                             {
-                                parentDict.TryGetValue(parentLevel, out parent);
+                                //jobName = items[1];
+                                if (keywords != "")
+                                    jobName = keywords;
+                                else
+                                    jobName = number;
+
+                                if (lifeCycleState != "Released")
+                                    topItemReleased = false;
+                                else
+                                    topItemReleased = true;
+
+                                topLevelItemDateReleased = dateTime;
+                                txtboxCurrentRecordName.Text = items[1];
+                                textBoxCurrentProductDesc.Text = items[3];
+
+                                btnConfirm.Enabled = true;
                             }
-                        }
-                        else
-                        {
-                             parentDict.Add(level, number);
-                        }
 
-                        string keywords = items[17];
-                        string notes = items[18];
-
-                        if (lineNum == 1)        // top level component
-                        {
-                            //jobName = items[1];
-                            if (keywords != "")
-                                jobName = keywords; 
-                            else
-                                jobName = number;
-
-                            if (lifeCycleState != "Released")
-                                topItemReleased = false;
-                            else
-                                topItemReleased = true;
-
-                            topLevelItemDateReleased = dateTime;
-                            txtboxCurrentRecord.Text = items[1];
-
-                            
-                        }
-
-                        // some exported files seem to have extension, others don't.
-                        if (number.EndsWith(".ipt") || number.EndsWith(".iam"))
-                        {
-                            number = Path.GetFileNameWithoutExtension(number);
-                        }
-
-                        bool pdfExists = false;
-                        if (System.IO.File.Exists(pdfPath + number + ".pdf"))
-                            pdfExists = true;
-
-                        if (dateTime < earliestDateReleased)
-                            earliestDateReleased = dateTime;
-
-                        // set sheet metal properties
-                        if(ops=="Laser")
-                        {
-                            if(thickness=="")
+                            // some exported files seem to have extension, others don't.
+                            if (number.EndsWith(".ipt") || number.EndsWith(".iam"))
                             {
-                                if(structCode!="")
+                                number = Path.GetFileNameWithoutExtension(number);
+                            }
+
+                            bool pdfExists = false;
+                            if (System.IO.File.Exists(pdfPath + number + ".pdf"))
+                                pdfExists = true;
+
+                            if (dateTime < earliestDateReleased)
+                                earliestDateReleased = dateTime;
+
+                            // set sheet metal properties
+                            if (ops == "Laser")
+                            {
+                                if (thickness == "")
                                 {
-                                    switch(structCode)
+                                    if (structCode != "")
                                     {
-                                        case "SH-062          16GA SHEET METAL":
-                                            thickness = "0.062 in";
-                                            break;
-                                        case "SH-075          14GA SHEET METAL":
-                                            thickness = "0.075 in";
-                                            break;
-                                        case "SH-125          1/8” SHEET METAL":
-                                            thickness = "0.120 in";
-                                            break;
-                                        case "SH-188          3/16” SHEET METAL":
-                                            thickness = "0.188 in";
-                                            break;
-                                        case "SH-250          ¼” SHEET METAL":
-                                            thickness = "0.250 in";
-                                            break;
-                                        case "SH-312           5/16” SHEET METAL":
-                                            thickness = "0.312 in";
-                                            break;
-                                        case "SH-375           3/8” SHEET METAL":
-                                            thickness = "0.375 in";
-                                            break;
-                                        case "SH-500           ½” SHEET METAL":
-                                            thickness = "0.500 in";
-                                            break;
-                                        case "SH-625           5/8” SHEET METAL":
-                                            thickness = "0.625 in";
-                                            break;
-                                        case "SH-750          ¾” SHEET METAL":
-                                            thickness = "0.750 in";
-                                            break;
-                                        case "SH-875            7/8” SHEET METAL":
-                                            thickness = "0.875 in";
-                                            break;
-                                        case "SH-1000          1” SHEET METAL":
-                                            thickness = "1.000 in";
-                                            break;
-                                        case "SH-1250           1 ¼” SHEET METAL":
-                                            thickness = "1.250 in";
-                                            break;
-                                        case "SH-1500           1 ½” SHEET METAL":
-                                            thickness = "1.500 in";
-                                            break;
-                                        default:
-                                            thickness = "";
-                                            break;
+                                        switch (structCode)
+                                        {
+                                            case "SH-062          16GA SHEET METAL":
+                                                thickness = "0.062 in";
+                                                break;
+                                            case "SH-075          14GA SHEET METAL":
+                                                thickness = "0.075 in";
+                                                break;
+                                            case "SH-125          1/8” SHEET METAL":
+                                                thickness = "0.120 in";
+                                                break;
+                                            case "SH-188          3/16” SHEET METAL":
+                                                thickness = "0.188 in";
+                                                break;
+                                            case "SH-250          ¼” SHEET METAL":
+                                                thickness = "0.250 in";
+                                                break;
+                                            case "SH-312           5/16” SHEET METAL":
+                                                thickness = "0.312 in";
+                                                break;
+                                            case "SH-375           3/8” SHEET METAL":
+                                                thickness = "0.375 in";
+                                                break;
+                                            case "SH-500           ½” SHEET METAL":
+                                                thickness = "0.500 in";
+                                                break;
+                                            case "SH-625           5/8” SHEET METAL":
+                                                thickness = "0.625 in";
+                                                break;
+                                            case "SH-750          ¾” SHEET METAL":
+                                                thickness = "0.750 in";
+                                                break;
+                                            case "SH-875            7/8” SHEET METAL":
+                                                thickness = "0.875 in";
+                                                break;
+                                            case "SH-1000          1” SHEET METAL":
+                                                thickness = "1.000 in";
+                                                break;
+                                            case "SH-1250           1 ¼” SHEET METAL":
+                                                thickness = "1.250 in";
+                                                break;
+                                            case "SH-1500           1 ½” SHEET METAL":
+                                                thickness = "1.500 in";
+                                                break;
+                                            default:
+                                                thickness = "";
+                                                break;
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        ExportLineItem newItem = new ExportLineItem(parent, number, title, itemDesc, category, thickness, material, structCode, ops, dateTime, qty, plantID, isStock, pdfExists, requiresPdfFlag, comment, lifeCycleState, keywords, notes);
+                            ExportLineItem newItem = new ExportLineItem(parent, number, title, itemDesc, category, thickness, material, structCode, ops, dateTime, qty, plantID, isStock, pdfExists, requiresPdfFlag, comment, lifeCycleState, keywords, notes);
 
-                        newItem.Qty = getCalculatedQty(newItem, lineItemList);
+                            newItem.Qty = getCalculatedQty(newItem, lineItemList);
 
-                        // known limitation of this quantity calculating code.  There may not be more than one component with the same name on the same level
-                        // for example, if there's multiple parts on the same level identical specs, and the name gets overridden with the 'stock name' field,
-                        //  this can easily happen.  A possible workaround may be to do the calculating with the acutal part name, but then use the 'stock name' only 
-                        //  for  inserting the item....
+                            // known limitation of this quantity calculating code.  There may not be more than one component with the same name on the same level
+                            // for example, if there's multiple parts on the same level identical specs, and the name gets overridden with the 'stock name' field,
+                            //  this can easily happen.  A possible workaround may be to do the calculating with the acutal part name, but then use the 'stock name' only 
+                            //  for  inserting the item....
 
 
-                        // create a list of items without drawings
-                        if(pdfExists==false && requiresPdfFlag==true&& category != "Purchased")
-                        {
-                            if(!itemsWithoutDrawings.Contains(number))
+                            // create a list of items without drawings
+                            if (pdfExists == false && requiresPdfFlag == true && category != "Purchased")
                             {
-                                itemsWithoutDrawings.Add(number);
-                            }
-                        }
-
-
-                        if (newItem.Category != "Purchased")
-                        {
-                            // see if we already have a line item with this part number
-                            // we found a matching part number, does it have the same parent?
-
-                            // do we already have a matching item/parent combination in the list?
-                            int index = allExportItemsList.FindIndex(i => i.Number == number && i.Parent == parent);
-
-                            if (index < 0)  // we don't want to add it again if we already did
-                            {
-                                int index2 = lineItemList.FindIndex(item => item.Number == number);
-                                if (index2 >= 0)    // item already exists, just increment qty
+                                if (!itemsWithoutDrawings.Contains(number))
                                 {
-                                    allExportItemsList.Add(newItem);
-                                    lineItemList[index2].Qty += newItem.Qty;
-                                    lineNum++;
+                                    itemsWithoutDrawings.Add(number);
+                                }
+                            }
+
+
+                            if (newItem.Category != "Purchased")
+                            {
+                                // see if we already have a line item with this part number
+                                // we found a matching part number, does it have the same parent?
+
+                                // do we already have a matching item/parent combination in the list?
+                                int index = allExportItemsList.FindIndex(i => i.Number == number && i.Parent == parent);
+
+                                if (index < 0)  // we don't want to add it again if we already did
+                                {
+                                    int index2 = lineItemList.FindIndex(item => item.Number == number);
+                                    if (index2 >= 0)    // item already exists, just increment qty
+                                    {
+                                        allExportItemsList.Add(newItem);
+                                        lineItemList[index2].Qty += newItem.Qty;
+                                        lineNum++;
+                                    }
+                                    else
+                                    {
+                                        allExportItemsList.Add(newItem);
+                                        lineItemList.Add(newItem);
+                                        lineNum++;
+                                    }
                                 }
                                 else
                                 {
+                                    // we already added an item with this parent/child relationship.  If we add it again, we'll get too many
+                                    //  because we already added it when there was only one of the parent in the list, so we have to do some math.
                                     allExportItemsList.Add(newItem);
-                                    lineItemList.Add(newItem);
-                                    lineNum++;
+                                    // how many instances of this parent/child relationship do we have?
+                                    List<ExportLineItem> searchList = allExportItemsList.Where(item => item.Number == number && item.Parent == parent).ToList();
+                                    int relationCount = searchList.Count;
+
+
+                                    int index2 = lineItemList.FindIndex(item => item.Number == number);
+                                    if (index2 >= 0)    // item already exists, just increment qty
+                                    {
+                                        lineItemList[index2].Qty += (newItem.Qty / relationCount);
+                                        lineNum++;
+                                    }
+
                                 }
-                            }
-                            else
-                            {
-                                // we already added an item with this parent/child relationship.  If we add it again, we'll get too many
-                                //  because we already added it when there was only one of the parent in the list, so we have to do some math.
-                                allExportItemsList.Add(newItem);
-                                // how many instances of this parent/child relationship do we have?
-                                List<ExportLineItem> searchList = allExportItemsList.Where(item => item.Number == number && item.Parent == parent).ToList();
-                                int relationCount = searchList.Count;
-
-
-                                int index2 = lineItemList.FindIndex(item => item.Number == number);
-                                if (index2 >= 0)    // item already exists, just increment qty
-                                {
-                                    lineItemList[index2].Qty += (newItem.Qty / relationCount);
-                                    lineNum++;
-                                }
-
                             }
                         }
+
+                        reader.Close();
+
+
+
+                        // clear the pdf view window
+                        pdfViewer1.CloseDocument();
                     }
 
-                    reader.Close();
+                    plProd = new ProductionListProduct();
+                    plProd.Qty = (int)(spinEditOrderQty.Value);
+                    plProd.Number = lineItemList[0].Number;
+                    plProd.ItemDescription = lineItemList[0].ItemDescription;
+                    plProd.Category = lineItemList[0].Category;
+                    plProd.PlantID = lineItemList[0].PlantID;
+                    plProd.IsStock = lineItemList[0].IsStock;
+                    plProd.Keywords = lineItemList[0].Keywords;
+                    plProd.Notes = lineItemList[0].Notes;
 
-                    allExportItemsList.RemoveAt(0);  // remove the first exportLineItem, which is the batch product
-                    foreach(ExportLineItem lItem in allExportItemsList)
+                    int idx = 0;
+                    foreach (ExportLineItem lItem in lineItemList)
                     {
-                        BatchItem bItem = new BatchItem();
-                        bItem.Number = lItem.Number;
-                        bItem.Title = lItem.Title;
-                        bItem.ItemDescription = lItem.ItemDescription;
-                        bItem.Category = lItem.Category;
-                        bItem.Material = lItem.Material;
-                        bItem.MaterialThickness = lItem.MaterialThickness;
-                        bItem.StructCode = lItem.StructCode;
-                        bItem.Operations = lItem.Operations;
-                        bItem.HasPdf = lItem.HasPdf;
-                        bItem.PlantID = lItem.PlantID;
-                        bItem.IsStock = lItem.IsStock;
-                        bItem.Keywords = lItem.Keywords;
-                        bItem.Notes = lItem.Notes;
-                        bItem.Qty = lItem.Qty;
+                        if (idx != 0)     // don't add parent item to list, this is the product.
+                        {
+                            ProductionListLineItem lineItem = new ProductionListLineItem();
+                            lineItem.Number = lItem.Number;
+                            lineItem.Title = lItem.Title;
+                            lineItem.ItemDescription = lItem.ItemDescription;
+                            lineItem.Category = lItem.Category;
+                            lineItem.Material = lItem.Material;
+                            lineItem.MaterialThickness = lItem.MaterialThickness;
+                            lineItem.StructCode = lItem.StructCode;
+                            lineItem.Operations = lItem.Operations;
+                            lineItem.HasPdf = lItem.HasPdf;
+                            lineItem.PlantID = lItem.PlantID;
+                            lineItem.IsStock = lItem.IsStock;
+                            lineItem.Keywords = lItem.Keywords;
+                            lineItem.Notes = lItem.Notes;
+                            lineItem.Qty = lItem.Qty;
 
 
-                        bProd.SubItems.Add(bItem);
+                            plProd.SubItems.Add(lineItem);
+                        }
+                        idx++;
                     }
 
-                    // clear the pdf view window
-                    pdfViewer1.CloseDocument();
-                }
+                    //if (textBoxOutputFolder.Text.Contains("Batch") || textBoxOutputFolder.Text.Contains("batch"))
+                    //    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
+                    //else
+                    //    lineItemList.Sort();    // default sorting
+
+                    //BindingList<ExportLineItem> bindingLineItemList = new BindingList<ExportLineItem>(lineItemList);
+
+                    //exportTreeList.DataSource = bindingLineItemList;
+                    ////exportTreeList.DataSource = lineItemList;
+
+                    //exportTreeList.RefreshDataSource();
+                    //exportTreeList.Refresh();
+                    //exportTreeList.Cursor = Cursors.Default;
+
+                    BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
+
+                    exportTreeList.DataSource = bindingLineItemList;
+                    exportTreeList.ClearNodes();
+
+                    exportTreeList.RefreshDataSource();
+                    exportTreeList.Refresh();
+                    exportTreeList.Cursor = Cursors.Default;
 
 
-
-                //if (textBoxOutputFolder.Text.Contains("Batch") || textBoxOutputFolder.Text.Contains("batch"))
-                //    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
-                //else
-                //    lineItemList.Sort();    // default sorting
-
-                //BindingList<ExportLineItem> bindingLineItemList = new BindingList<ExportLineItem>(lineItemList);
-
-                //exportTreeList.DataSource = bindingLineItemList;
-                ////exportTreeList.DataSource = lineItemList;
-
-                //exportTreeList.RefreshDataSource();
-                //exportTreeList.Refresh();
-                //exportTreeList.Cursor = Cursors.Default;
-
-
-                if (processOnlyIfReleased == "true" || processOnlyIfReleased == "True")
-                {
-                    TimeSpan tSpan = new TimeSpan(0, 10, 0);
-
-                    // make sure all items are released before we process the order
-                    // and make sure all items were released within the past day before we process the order
-
-                    //if (DateTime.Now - earliestDateReleased < tSpan && allItemsReleased == true)
-                    //{
-                    //    btnProcess.Enabled = true;
-                    //}
-
-
-                    // make sure top level item is released before we process the order
-                    // and make sure all items were released within the past day before we process the order
-                    if (DateTime.Now - topLevelItemDateReleased < tSpan && topItemReleased == true)
+                    if (processOnlyIfReleased == "true" || processOnlyIfReleased == "True")
                     {
-                        btnProcess.Enabled = true;
+                        TimeSpan tSpan = new TimeSpan(0, 10, 0);
+
+                        // make sure all items are released before we process the order
+                        // and make sure all items were released within the past day before we process the order
+
+                        //if (DateTime.Now - earliestDateReleased < tSpan && allItemsReleased == true)
+                        //{
+                        //    btnProcess.Enabled = true;
+                        //}
+
+
+                        // make sure top level item is released before we process the order
+                        // and make sure all items were released within the past day before we process the order
+                        if (DateTime.Now - topLevelItemDateReleased < tSpan && topItemReleased == true)
+                        {
+                            btnConfirm.Enabled = true;
+                        }
+                        else
+                        {
+                            //if (topItemReleased == false)
+                            //    MessageBox.Show("Top level item has not been released.  You will not be able to process this order.");
+                            if (DateTime.Now - earliestDateReleased < tSpan)
+                                MessageBox.Show("Item has not been updated in the last 10 minutes. You will not be able to process this order.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            btnConfirm.Enabled = false;
+                        }
                     }
                     else
+                        btnConfirm.Enabled = true;
+
+                    if (orderNumber != "")
+                        txtBoxOrderNumber.Text = orderNumber;
+                    else
+                        txtBoxOrderNumber.Text = "";
+
+                    // check external file for final ok to process check
+                    string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
+                    string line2;
+                    using (StreamReader reader = new StreamReader(processFileName))
                     {
-                        //if (topItemReleased == false)
-                        //    MessageBox.Show("Top level item has not been released.  You will not be able to process this order.");
-                        if (DateTime.Now - earliestDateReleased < tSpan)
-                            MessageBox.Show("Item has not been updated in the last 10 minutes. You will not be able to process this order.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        btnProcess.Enabled = false;
+                        line2 = reader.ReadLine();
                     }
+                    if (line2 == "false")
+                        btnConfirm.Enabled = false;
+                    lastFileUpdateTime = DateTime.Now;
+
+                    return itemsWithoutDrawings;
                 }
-                else
-                      btnProcess.Enabled = true;
-
-                if (orderNumber != "")
-                    txtBoxOrderNumber.Text = orderNumber;
-                else
-                    txtBoxOrderNumber.Text = "";
-
-                // check external file for final ok to process check
-                string processFileName = AppSettings.Get("VaultExportFilePath").ToString() + "Process.txt";
-                string line2;
-                using (StreamReader reader = new StreamReader(processFileName))
+                catch (Exception ex)
                 {
-                    line2 = reader.ReadLine();
-                }
-                if (line2 == "false")
-                    btnProcess.Enabled = false;
 
-                return itemsWithoutDrawings;
+                    return new List<string>();
+                }
+
             }
-            catch (Exception ex)
+            else
             {
                 return new List<string>();
             }
@@ -960,6 +1017,27 @@ namespace VaultItemProcessor
             {
                 return -1;
             }
+        }
+
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
+            plProd.OrderNumber = txtBoxOrderNumber.Text;
+            txtBoxOrderHeader.Text = plProd.OrderNumber;
+
+            plProd.Qty = (int) (spinEditOrderQty.Value);
+            txtBoxQtyHeader.Text = plProd.Qty.ToString();
+
+            productionList.AddProduct(plProd);
+            btnConfirm.Enabled = false;
+            btnNextRecord.Enabled = false;
+
+            txtBoxOrderNumber.Text = "";
+            spinEditOrderQty.Value = 0;
+
+            if (productionList.productList.Count() > 1)
+                btnPreviousRecord.Enabled = true;
+            else
+                btnPreviousRecord.Enabled = false;
         }
 
         private void btnProcess_Click(object sender, EventArgs e)
@@ -1489,8 +1567,8 @@ namespace VaultItemProcessor
 
             toolStripStatusLabel1.Text = "Ouput Folder Selected.";
 
-            if (dailyScheduleData.IsFinalized()) btnProcess.Enabled = false;
-            else btnProcess.Enabled = true;
+            if (dailyScheduleData.IsFinalized()) btnConfirm.Enabled = false;
+            else btnConfirm.Enabled = true;
 
             if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
             {
@@ -1523,7 +1601,7 @@ namespace VaultItemProcessor
                     CombinePDFs(rootDir);
                     //GroupBandSawDrawings(rootDir);
                     dailyScheduleData.FinalizeData();
-                    btnProcess.Enabled = false;
+                    btnConfirm.Enabled = false;
                     SplashScreenManager.CloseForm(false);
                 }
             }
@@ -2903,13 +2981,49 @@ namespace VaultItemProcessor
 
         private void btnPreviousRecord_Click(object sender, EventArgs e)
         {
+            ProductionListProduct prod = productionList.GetPrev();
+            txtboxCurrentRecordName.Text = prod.Number;
+            textBoxCurrentProductDesc.Text = prod.ItemDescription;
+            BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(prod.SubItems);
 
+            if (prod.ID <= 1) btnPreviousRecord.Enabled = false;
+            else btnPreviousRecord.Enabled = true;
+            if (prod.ID > productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+            else btnNextRecord.Enabled = true;
+
+            txtBoxOrderHeader.Text = prod.OrderNumber;
+            txtBoxQtyHeader.Text = prod.Qty.ToString();
+
+            exportTreeList.DataSource = bindingLineItemList;
+
+            exportTreeList.RefreshDataSource();
+            exportTreeList.Refresh();
+            exportTreeList.Cursor = Cursors.Default;
         }
 
         private void btnNextRecord_Click(object sender, EventArgs e)
         {
+            ProductionListProduct prod = productionList.GetNext();
+            txtboxCurrentRecordName.Text = prod.Number;
+            textBoxCurrentProductDesc.Text = prod.ItemDescription;
+            BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(prod.SubItems);
 
+            if (prod.ID <= 1) btnPreviousRecord.Enabled = false;
+            else btnPreviousRecord.Enabled = true;
+            if (prod.ID > productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+            else btnNextRecord.Enabled = true;
+
+            txtBoxOrderHeader.Text = prod.OrderNumber;
+            txtBoxQtyHeader.Text = prod.Qty.ToString();
+
+            exportTreeList.DataSource = bindingLineItemList;
+
+            exportTreeList.RefreshDataSource();
+            exportTreeList.Refresh();
+            exportTreeList.Cursor = Cursors.Default;
         }
+
+        
     }
 
 }

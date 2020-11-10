@@ -12,31 +12,89 @@ using PdfSharp.Drawing;
 using PdfSharp.Pdf.IO;
 using System.Drawing;
 using PdfSharp.Drawing.Layout;
+using DevExpress.XtraEditors.Controls;
+using DevExpress.Data;
 
 namespace VaultItemProcessor
 {
-    public class Batch
+    [XmlRoot("ProductionList")]
+    public class ProductionList
     {
+        [XmlElement("XmlFileName")]
         public string XmlFileName { get; set; }
+        [XmlElement("PdfInputPath")]
         public string PdfInputPath { get; set; }
-        public List<BatchProduct> BatchProductList { get; set; }
+        [System.Xml.Serialization.XmlArrayItemAttribute("ProductionListProduct", IsNullable = false)]
+        public List<ProductionListProduct> productList { get; set; }
+        [XmlElement("Finalized")]
         public bool Finalized { get; set; }
-        internal Batch()
+        [XmlElement("currentIndex")]
+        public int currentIndex { get; set; }
+
+        ProductionList()
         {
             XmlFileName = "";
+            //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
             PdfInputPath = "";
-            BatchProductList = new List<BatchProduct>();
+            productList = new List<ProductionListProduct>();
             Finalized = false;
+            currentIndex = 0;
+        }
+        public ProductionList(string xmlFilePath, string pdfPath)
+        {
+            XmlFileName = xmlFilePath + "ProductionList.xml";
+            //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
+            PdfInputPath = pdfPath;
+            productList = new List<ProductionListProduct>();
+            Finalized = false;
+            currentIndex = 0;
         }
 
-        //public Batch(string xmlFilePath, string pdfPath)
-        //{
-        //    //XmlFileName = xmlFilePath;
-        //    XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("DailyScheduleData").ToString());
-        //    PdfInputPath = pdfPath;
-        //    AggregateLineItemList = new List<AggregateLineItem>();
-        //    Finalized = false;
-        //}
+
+        public void AddProduct(ProductionListProduct prod)
+        {
+            if (productList.Count > 0)
+            {
+                int maxId = productList.Max(p => p.ID);
+                prod.ID = maxId + 1;
+                currentIndex = prod.ID;
+            }
+            else
+                prod.ID = 1;
+
+            productList.Add(prod);
+
+            SaveToFile();
+        }
+
+        public ProductionListProduct GetPrev()
+        {
+            if (currentIndex > 1)
+            {
+                currentIndex--;
+                return productList.ElementAt(currentIndex-1);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public ProductionListProduct GetNext()
+        {
+            if (currentIndex < productList.Count())
+            {
+                currentIndex++;
+                return productList.ElementAt(currentIndex-1);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        
 
         //public bool AddLineItem(ExportLineItem item, string orderNumber, int orderQty, string batchItemName, string currentProduct)
         //{
@@ -178,37 +236,38 @@ namespace VaultItemProcessor
         //    return productName;
         //}
 
-        //public bool SaveToFile()
-        //{
-        //    try
-        //    {
-        //        XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
-        //        TextWriter tw = new StreamWriter(XmlFileName,false);
-        //        xs.Serialize(tw, this);
-        //        tw.Close();
-        //        return true;
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        return false;
-        //    }
-        //}
+        public bool SaveToFile()
+        {
+            try
+            {
+                XmlSerializer xs = new XmlSerializer(typeof(ProductionList));
+                TextWriter tw = new StreamWriter(XmlFileName, false);
+                xs.Serialize(tw, this);
+                tw.Close();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public ProductionList Load()
+        {
+            try
+            {
+                XmlSerializer xs = new XmlSerializer(typeof(ProductionList));
+                TextReader tr = new StreamReader(XmlFileName, false);
 
-        //public bool Load()
-        //{
-        //    try
-        //    {
-        //        XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
-        //        TextReader tr = new StreamReader(XmlFileName, false);
-        //        xs.Deserialize(tr);
-        //        tr.Close();
-        //        return true;
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        return false;
-        //    }
-        //}
+                ProductionList pList = (ProductionList) xs.Deserialize(tr);
+                //productList = (ProductionListProduct) xs.Deserialize(tr);
+                tr.Close();
+                return pList;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
 
         //public void FinalizeData()
         //{
@@ -220,44 +279,6 @@ namespace VaultItemProcessor
         //public bool IsFinalized()
         //{
         //    return Finalized;
-        //}
-
-        //public bool HasPreviousItem(string currentItem)
-        //{
-        //    if(AggregateLineItemList[0].Number.ToLower().Contains("bat"))
-        //    {
-        //        // this is a batch
-        //        int batchIndex = 0;
-        //        foreach(AggregateLineItem lItem in AggregateLineItemList)
-        //        {
-        //            if(lItem.Number == currentItem)
-        //            {
-        //                if (batchIndex > 0 ) return true;
-        //                else return false;
-        //            }
-        //            batchIndex++;
-        //        }
-        //    }
-        //    return false;  // default to false if something goes wrong
-        //}
-
-        //public bool HasNextItem(string currentItem)
-        //{
-        //    if (AggregateLineItemList[0].Number.ToLower().Contains("bat"))
-        //    {
-        //        // this is a batch
-        //        int batchIndex = 0;
-        //        foreach (AggregateLineItem lItem in AggregateLineItemList)
-        //        {
-        //            if (lItem.Number == currentItem)
-        //            {
-        //                if (batchIndex < AggregateLineItemList.Count()-1) return true;
-        //                else return false;
-        //            }
-        //            batchIndex++;
-        //        }
-        //    }
-        //    return false;  // default to false if something goes wrong
         //}
     }
 

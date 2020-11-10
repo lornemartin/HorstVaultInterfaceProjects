@@ -71,7 +71,7 @@
             this.HasPdf = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.requiresPDF = new DevExpress.XtraTreeList.Columns.TreeListColumn();
             this.colNotes = new DevExpress.XtraTreeList.Columns.TreeListColumn();
-            this.btnProcess = new System.Windows.Forms.Button();
+            this.btnConfirm = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -98,7 +98,10 @@
             this.radioGroup2 = new DevExpress.XtraEditors.RadioGroup();
             this.btnPreviousRecord = new System.Windows.Forms.Button();
             this.btnNextRecord = new System.Windows.Forms.Button();
-            this.txtboxCurrentRecord = new System.Windows.Forms.TextBox();
+            this.txtboxCurrentRecordName = new System.Windows.Forms.TextBox();
+            this.textBoxCurrentProductDesc = new System.Windows.Forms.TextBox();
+            this.txtBoxOrderHeader = new System.Windows.Forms.TextBox();
+            this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -301,7 +304,7 @@
             this.exportTreeList.FormatRules.Add(treeListFormatRule10);
             this.exportTreeList.FormatRules.Add(treeListFormatRule11);
             this.exportTreeList.KeyFieldName = "";
-            this.exportTreeList.Location = new System.Drawing.Point(52, 46);
+            this.exportTreeList.Location = new System.Drawing.Point(52, 119);
             this.exportTreeList.Name = "exportTreeList";
             this.exportTreeList.OptionsBehavior.PopulateServiceColumns = true;
             this.exportTreeList.OptionsSelection.EnableAppearanceFocusedCell = false;
@@ -411,16 +414,16 @@
             this.colNotes.VisibleIndex = 11;
             this.colNotes.Width = 216;
             // 
-            // btnProcess
+            // btnConfirm
             // 
-            this.btnProcess.Enabled = false;
-            this.btnProcess.Location = new System.Drawing.Point(458, 27);
-            this.btnProcess.Name = "btnProcess";
-            this.btnProcess.Size = new System.Drawing.Size(89, 23);
-            this.btnProcess.TabIndex = 1;
-            this.btnProcess.Text = "Process Order";
-            this.btnProcess.UseVisualStyleBackColor = true;
-            this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
+            this.btnConfirm.Enabled = false;
+            this.btnConfirm.Location = new System.Drawing.Point(458, 27);
+            this.btnConfirm.Name = "btnConfirm";
+            this.btnConfirm.Size = new System.Drawing.Size(89, 23);
+            this.btnConfirm.TabIndex = 1;
+            this.btnConfirm.Text = "Confirm";
+            this.btnConfirm.UseVisualStyleBackColor = true;
+            this.btnConfirm.Click += new System.EventHandler(this.btnConfirm_Click);
             // 
             // btnLoad
             // 
@@ -440,7 +443,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 756);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 819);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1752, 22);
             this.statusStrip1.TabIndex = 2;
@@ -499,7 +502,7 @@
             // pdfViewer1
             // 
             this.pdfViewer1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.pdfViewer1.Location = new System.Drawing.Point(1274, 46);
+            this.pdfViewer1.Location = new System.Drawing.Point(1274, 120);
             this.pdfViewer1.Name = "pdfViewer1";
             this.pdfViewer1.Size = new System.Drawing.Size(466, 416);
             this.pdfViewer1.TabIndex = 6;
@@ -517,10 +520,10 @@
             this.groupBoxOutput.Controls.Add(this.textBoxOutputFolder);
             this.groupBoxOutput.Controls.Add(this.label1);
             this.groupBoxOutput.Controls.Add(this.txtBoxOrderNumber);
-            this.groupBoxOutput.Controls.Add(this.btnProcess);
+            this.groupBoxOutput.Controls.Add(this.btnConfirm);
             this.groupBoxOutput.Controls.Add(this.label2);
             this.groupBoxOutput.Controls.Add(this.spinEditOrderQty);
-            this.groupBoxOutput.Location = new System.Drawing.Point(327, 492);
+            this.groupBoxOutput.Location = new System.Drawing.Point(327, 554);
             this.groupBoxOutput.Name = "groupBoxOutput";
             this.groupBoxOutput.Size = new System.Drawing.Size(563, 181);
             this.groupBoxOutput.TabIndex = 7;
@@ -608,7 +611,7 @@
             // 
             this.groupBoxInput.Controls.Add(this.btnProcessBatch);
             this.groupBoxInput.Controls.Add(this.btnLoad);
-            this.groupBoxInput.Location = new System.Drawing.Point(52, 492);
+            this.groupBoxInput.Location = new System.Drawing.Point(52, 554);
             this.groupBoxInput.Name = "groupBoxInput";
             this.groupBoxInput.Size = new System.Drawing.Size(228, 100);
             this.groupBoxInput.TabIndex = 8;
@@ -627,7 +630,7 @@
             // 
             // radioGroup1
             // 
-            this.radioGroup1.Location = new System.Drawing.Point(52, 603);
+            this.radioGroup1.Location = new System.Drawing.Point(52, 665);
             this.radioGroup1.Name = "radioGroup1";
             this.radioGroup1.Properties.Columns = 1;
             this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
@@ -639,7 +642,7 @@
             // 
             // radioGroup2
             // 
-            this.radioGroup2.Location = new System.Drawing.Point(52, 680);
+            this.radioGroup2.Location = new System.Drawing.Point(52, 742);
             this.radioGroup2.Name = "radioGroup2";
             this.radioGroup2.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 1"),
@@ -668,20 +671,47 @@
             this.btnNextRecord.UseVisualStyleBackColor = true;
             this.btnNextRecord.Click += new System.EventHandler(this.btnNextRecord_Click);
             // 
-            // txtboxCurrentRecord
+            // txtboxCurrentRecordName
             // 
-            this.txtboxCurrentRecord.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtboxCurrentRecord.Location = new System.Drawing.Point(192, 17);
-            this.txtboxCurrentRecord.Name = "txtboxCurrentRecord";
-            this.txtboxCurrentRecord.Size = new System.Drawing.Size(928, 26);
-            this.txtboxCurrentRecord.TabIndex = 15;
+            this.txtboxCurrentRecordName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtboxCurrentRecordName.Location = new System.Drawing.Point(220, 17);
+            this.txtboxCurrentRecordName.Name = "txtboxCurrentRecordName";
+            this.txtboxCurrentRecordName.Size = new System.Drawing.Size(376, 26);
+            this.txtboxCurrentRecordName.TabIndex = 15;
+            // 
+            // textBoxCurrentProductDesc
+            // 
+            this.textBoxCurrentProductDesc.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxCurrentProductDesc.Location = new System.Drawing.Point(652, 17);
+            this.textBoxCurrentProductDesc.Name = "textBoxCurrentProductDesc";
+            this.textBoxCurrentProductDesc.Size = new System.Drawing.Size(509, 26);
+            this.textBoxCurrentProductDesc.TabIndex = 16;
+            // 
+            // txtBoxOrderHeader
+            // 
+            this.txtBoxOrderHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtBoxOrderHeader.Location = new System.Drawing.Point(220, 61);
+            this.txtBoxOrderHeader.Name = "txtBoxOrderHeader";
+            this.txtBoxOrderHeader.Size = new System.Drawing.Size(404, 26);
+            this.txtBoxOrderHeader.TabIndex = 17;
+            // 
+            // txtBoxQtyHeader
+            // 
+            this.txtBoxQtyHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtBoxQtyHeader.Location = new System.Drawing.Point(147, 17);
+            this.txtBoxQtyHeader.Name = "txtBoxQtyHeader";
+            this.txtBoxQtyHeader.Size = new System.Drawing.Size(52, 26);
+            this.txtBoxQtyHeader.TabIndex = 18;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1752, 778);
-            this.Controls.Add(this.txtboxCurrentRecord);
+            this.ClientSize = new System.Drawing.Size(1752, 841);
+            this.Controls.Add(this.txtBoxQtyHeader);
+            this.Controls.Add(this.txtBoxOrderHeader);
+            this.Controls.Add(this.textBoxCurrentProductDesc);
+            this.Controls.Add(this.txtboxCurrentRecordName);
             this.Controls.Add(this.btnNextRecord);
             this.Controls.Add(this.btnPreviousRecord);
             this.Controls.Add(this.radioGroup2);
@@ -719,7 +749,7 @@
         private DevExpress.XtraTreeList.Columns.TreeListColumn Category;
         private DevExpress.XtraTreeList.Columns.TreeListColumn Material;
         private DevExpress.XtraTreeList.Columns.TreeListColumn Qty;
-        private System.Windows.Forms.Button btnProcess;
+        private System.Windows.Forms.Button btnConfirm;
         private DevExpress.XtraTreeList.Columns.TreeListColumn Number;
         private DevExpress.XtraTreeList.Columns.TreeListColumn Parent;
         private System.Windows.Forms.Button btnLoad;
@@ -758,7 +788,10 @@
         private DevExpress.XtraEditors.RadioGroup radioGroup2;
         private System.Windows.Forms.Button btnPreviousRecord;
         private System.Windows.Forms.Button btnNextRecord;
-        private System.Windows.Forms.TextBox txtboxCurrentRecord;
+        private System.Windows.Forms.TextBox txtboxCurrentRecordName;
+        private System.Windows.Forms.TextBox textBoxCurrentProductDesc;
+        private System.Windows.Forms.TextBox txtBoxOrderHeader;
+        private System.Windows.Forms.TextBox txtBoxQtyHeader;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
