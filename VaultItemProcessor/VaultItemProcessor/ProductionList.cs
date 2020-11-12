@@ -60,7 +60,7 @@ namespace VaultItemProcessor
                 currentIndex = prod.ID;
             }
             else
-                prod.ID = 1;
+                prod.ID = 0;
 
             productList.Add(prod);
 
@@ -69,10 +69,10 @@ namespace VaultItemProcessor
 
         public ProductionListProduct GetPrev()
         {
-            if (currentIndex > 1)
+            if (currentIndex >= 1)
             {
                 currentIndex--;
-                return productList.ElementAt(currentIndex-1);
+                return productList.ElementAt(currentIndex);
             }
             else
             {
@@ -85,7 +85,7 @@ namespace VaultItemProcessor
             if (currentIndex < productList.Count())
             {
                 currentIndex++;
-                return productList.ElementAt(currentIndex-1);
+                return productList.ElementAt(currentIndex);
             }
             else
             {

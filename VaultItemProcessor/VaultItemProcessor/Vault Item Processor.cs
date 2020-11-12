@@ -188,7 +188,7 @@ namespace VaultItemProcessor
         private void btnLoad_Click(object sender, EventArgs e)
         {
             productionList = productionList.Load();
-            productionList.currentIndex = 1;
+            productionList.currentIndex = 0;
 
             ProductionListProduct prod = productionList.productList.FirstOrDefault();
             txtboxCurrentRecordName.Text = prod.Number;
@@ -611,6 +611,8 @@ namespace VaultItemProcessor
                     txtboxCurrentRecordName.Clear();
                     textBoxCurrentProductDesc.Clear();
                     txtBoxOrderHeader.Clear();
+                    btnPreviousRecord.Enabled = false;
+                    btnNextRecord.Enabled = false;
 
                     if (processOnlyIfReleased == "true" || processOnlyIfReleased == "True")
                     {
@@ -1020,6 +1022,9 @@ namespace VaultItemProcessor
             plProd.Qty = (int) (spinEditOrderQty.Value);
             txtBoxQtyHeader.Text = plProd.Qty.ToString();
 
+            txtboxCurrentRecordName.Text = plProd.Number;
+            textBoxCurrentProductDesc.Text = plProd.ItemDescription;
+
             productionList.AddProduct(plProd);
             btnConfirm.Enabled = false;
             btnNextRecord.Enabled = false;
@@ -1040,9 +1045,9 @@ namespace VaultItemProcessor
             textBoxCurrentProductDesc.Text = plProd.ItemDescription;
             BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
 
-            if (plProd.ID <= 1) btnPreviousRecord.Enabled = false;
+            if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
             else btnPreviousRecord.Enabled = true;
-            if (plProd.ID > productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+            if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
             else btnNextRecord.Enabled = true;
 
             txtBoxOrderHeader.Text = plProd.OrderNumber;
@@ -1062,9 +1067,9 @@ namespace VaultItemProcessor
             textBoxCurrentProductDesc.Text = plProd.ItemDescription;
             BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
 
-            if (plProd.ID <= 1) btnPreviousRecord.Enabled = false;
+            if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
             else btnPreviousRecord.Enabled = true;
-            if (plProd.ID > productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+            if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
             else btnNextRecord.Enabled = true;
 
             txtBoxOrderHeader.Text = plProd.OrderNumber;
@@ -1079,10 +1084,10 @@ namespace VaultItemProcessor
 
         private void btnUpdateRecord_Click(object sender, EventArgs e)
         {
-            productionList.productList[productionList.currentIndex-1].OrderNumber = txtBoxOrderHeader.Text;
-            productionList.productList[productionList.currentIndex-1].Qty = int.Parse(txtBoxQtyHeader.Text);
-            productionList.productList[productionList.currentIndex-1].ItemDescription = textBoxCurrentProductDesc.Text;
-            productionList.productList[productionList.currentIndex-1].Number = txtboxCurrentRecordName.Text;
+            productionList.productList[productionList.currentIndex].OrderNumber = txtBoxOrderHeader.Text;
+            productionList.productList[productionList.currentIndex].Qty = int.Parse(txtBoxQtyHeader.Text);
+            productionList.productList[productionList.currentIndex].ItemDescription = textBoxCurrentProductDesc.Text;
+            productionList.productList[productionList.currentIndex].Number = txtboxCurrentRecordName.Text;
 
             productionList.SaveToFile();
 
@@ -1095,35 +1100,49 @@ namespace VaultItemProcessor
             {
                 int i = productionList.currentIndex;
 
-                productionList.productList.RemoveAt(i-1); // remove the current object
+                productionList.productList.RemoveAt(i); // remove the current object
 
-                for (i = productionList.currentIndex-1; i < productionList.productList.Count; i++)
+                for (i = productionList.currentIndex; i < productionList.productList.Count; i++)
                 {
                     productionList.productList[i].ID--;
-                    
+
                 }
 
-                if (productionList.currentIndex > 1)
+                if (productionList.currentIndex > 0)
                 {
                     plProd = productionList.GetPrev();
+
                     txtboxCurrentRecordName.Text = plProd.Number;
                     textBoxCurrentProductDesc.Text = plProd.ItemDescription;
-                    BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
 
-                    if (plProd.ID <= 1) btnPreviousRecord.Enabled = false;
+                    if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
                     else btnPreviousRecord.Enabled = true;
-                    if (plProd.ID > productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+                    if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
                     else btnNextRecord.Enabled = true;
-
-                    txtBoxOrderHeader.Text = plProd.OrderNumber;
-                    txtBoxQtyHeader.Text = plProd.Qty.ToString();
-
-                    exportTreeList.DataSource = bindingLineItemList;
-
-                    exportTreeList.RefreshDataSource();
-                    exportTreeList.Refresh();
-                    exportTreeList.Cursor = Cursors.Default;
                 }
+                else
+                {
+                    plProd = productionList.productList[0];
+
+                    txtboxCurrentRecordName.Text = plProd.Number;
+                    textBoxCurrentProductDesc.Text = plProd.ItemDescription;
+
+                    if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
+                    else btnPreviousRecord.Enabled = true;
+                    if (plProd.ID > productionList.productList.Count()) btnNextRecord.Enabled = false;
+                    else btnNextRecord.Enabled = false;
+                }
+
+                BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
+                txtBoxOrderHeader.Text = plProd.OrderNumber;
+                txtBoxQtyHeader.Text = plProd.Qty.ToString();
+
+                exportTreeList.DataSource = bindingLineItemList;
+
+                exportTreeList.RefreshDataSource();
+                exportTreeList.Refresh();
+                exportTreeList.Cursor = Cursors.Default;
+
                 productionList.SaveToFile();
             }
         }
