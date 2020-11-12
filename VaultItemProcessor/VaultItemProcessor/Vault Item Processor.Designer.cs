@@ -102,6 +102,8 @@
             this.textBoxCurrentProductDesc = new System.Windows.Forms.TextBox();
             this.txtBoxOrderHeader = new System.Windows.Forms.TextBox();
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
+            this.btnUpdateRecord = new System.Windows.Forms.Button();
+            this.btnRemoveRecord = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -304,7 +306,7 @@
             this.exportTreeList.FormatRules.Add(treeListFormatRule10);
             this.exportTreeList.FormatRules.Add(treeListFormatRule11);
             this.exportTreeList.KeyFieldName = "";
-            this.exportTreeList.Location = new System.Drawing.Point(52, 119);
+            this.exportTreeList.Location = new System.Drawing.Point(52, 106);
             this.exportTreeList.Name = "exportTreeList";
             this.exportTreeList.OptionsBehavior.PopulateServiceColumns = true;
             this.exportTreeList.OptionsSelection.EnableAppearanceFocusedCell = false;
@@ -313,7 +315,7 @@
             this.exportTreeList.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
             this.repositoryItemTextEdit1,
             this.repositoryItemCheckEdit1});
-            this.exportTreeList.Size = new System.Drawing.Size(1207, 416);
+            this.exportTreeList.Size = new System.Drawing.Size(1207, 522);
             this.exportTreeList.TabIndex = 0;
             this.exportTreeList.CompareNodeValues += new DevExpress.XtraTreeList.CompareNodeValuesEventHandler(this.exportTreeList_CompareNodeValues);
             this.exportTreeList.PopupMenuShowing += new DevExpress.XtraTreeList.PopupMenuShowingEventHandler(this.exportTreeList_PopupMenuShowing);
@@ -443,7 +445,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 819);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 917);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1752, 22);
             this.statusStrip1.TabIndex = 2;
@@ -502,7 +504,7 @@
             // pdfViewer1
             // 
             this.pdfViewer1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.pdfViewer1.Location = new System.Drawing.Point(1274, 120);
+            this.pdfViewer1.Location = new System.Drawing.Point(1274, 208);
             this.pdfViewer1.Name = "pdfViewer1";
             this.pdfViewer1.Size = new System.Drawing.Size(466, 416);
             this.pdfViewer1.TabIndex = 6;
@@ -523,9 +525,9 @@
             this.groupBoxOutput.Controls.Add(this.btnConfirm);
             this.groupBoxOutput.Controls.Add(this.label2);
             this.groupBoxOutput.Controls.Add(this.spinEditOrderQty);
-            this.groupBoxOutput.Location = new System.Drawing.Point(327, 554);
+            this.groupBoxOutput.Location = new System.Drawing.Point(327, 648);
             this.groupBoxOutput.Name = "groupBoxOutput";
-            this.groupBoxOutput.Size = new System.Drawing.Size(563, 181);
+            this.groupBoxOutput.Size = new System.Drawing.Size(563, 180);
             this.groupBoxOutput.TabIndex = 7;
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
@@ -611,9 +613,9 @@
             // 
             this.groupBoxInput.Controls.Add(this.btnProcessBatch);
             this.groupBoxInput.Controls.Add(this.btnLoad);
-            this.groupBoxInput.Location = new System.Drawing.Point(52, 554);
+            this.groupBoxInput.Location = new System.Drawing.Point(52, 648);
             this.groupBoxInput.Name = "groupBoxInput";
-            this.groupBoxInput.Size = new System.Drawing.Size(228, 100);
+            this.groupBoxInput.Size = new System.Drawing.Size(228, 99);
             this.groupBoxInput.TabIndex = 8;
             this.groupBoxInput.TabStop = false;
             this.groupBoxInput.Text = "Input Data";
@@ -630,24 +632,24 @@
             // 
             // radioGroup1
             // 
-            this.radioGroup1.Location = new System.Drawing.Point(52, 665);
+            this.radioGroup1.Location = new System.Drawing.Point(52, 759);
             this.radioGroup1.Name = "radioGroup1";
             this.radioGroup1.Properties.Columns = 1;
             this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as stock", true, "Mark all items as stock"),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark All Items as Make To Order")});
-            this.radioGroup1.Size = new System.Drawing.Size(228, 61);
+            this.radioGroup1.Size = new System.Drawing.Size(228, 60);
             this.radioGroup1.TabIndex = 11;
             this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);
             // 
             // radioGroup2
             // 
-            this.radioGroup2.Location = new System.Drawing.Point(52, 742);
+            this.radioGroup2.Location = new System.Drawing.Point(52, 836);
             this.radioGroup2.Name = "radioGroup2";
             this.radioGroup2.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 1"),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(false, "Mark all items as Plant 2")});
-            this.radioGroup2.Size = new System.Drawing.Size(228, 59);
+            this.radioGroup2.Size = new System.Drawing.Size(228, 58);
             this.radioGroup2.TabIndex = 12;
             this.radioGroup2.SelectedIndexChanged += new System.EventHandler(this.radioGroup2_SelectedIndexChanged);
             // 
@@ -703,11 +705,33 @@
             this.txtBoxQtyHeader.Size = new System.Drawing.Size(52, 26);
             this.txtBoxQtyHeader.TabIndex = 18;
             // 
+            // btnUpdateRecord
+            // 
+            this.btnUpdateRecord.Location = new System.Drawing.Point(652, 61);
+            this.btnUpdateRecord.Name = "btnUpdateRecord";
+            this.btnUpdateRecord.Size = new System.Drawing.Size(75, 23);
+            this.btnUpdateRecord.TabIndex = 19;
+            this.btnUpdateRecord.Text = "Update";
+            this.btnUpdateRecord.UseVisualStyleBackColor = true;
+            this.btnUpdateRecord.Click += new System.EventHandler(this.btnUpdateRecord_Click);
+            // 
+            // btnRemoveRecord
+            // 
+            this.btnRemoveRecord.Location = new System.Drawing.Point(771, 61);
+            this.btnRemoveRecord.Name = "btnRemoveRecord";
+            this.btnRemoveRecord.Size = new System.Drawing.Size(75, 23);
+            this.btnRemoveRecord.TabIndex = 19;
+            this.btnRemoveRecord.Text = "Remove";
+            this.btnRemoveRecord.UseVisualStyleBackColor = true;
+            this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1752, 841);
+            this.ClientSize = new System.Drawing.Size(1752, 939);
+            this.Controls.Add(this.btnRemoveRecord);
+            this.Controls.Add(this.btnUpdateRecord);
             this.Controls.Add(this.txtBoxQtyHeader);
             this.Controls.Add(this.txtBoxOrderHeader);
             this.Controls.Add(this.textBoxCurrentProductDesc);
@@ -792,6 +816,8 @@
         private System.Windows.Forms.TextBox textBoxCurrentProductDesc;
         private System.Windows.Forms.TextBox txtBoxOrderHeader;
         private System.Windows.Forms.TextBox txtBoxQtyHeader;
+        private System.Windows.Forms.Button btnUpdateRecord;
+        private System.Windows.Forms.Button btnRemoveRecord;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
