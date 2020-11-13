@@ -82,16 +82,10 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.btnRemoveBatchItem = new System.Windows.Forms.Button();
-            this.btnGroupSawDrawings3 = new System.Windows.Forms.Button();
-            this.btnRemoveOrder = new System.Windows.Forms.Button();
-            this.btnFinalize = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
             this.outputFolderlbl = new System.Windows.Forms.Label();
             this.textBoxOutputFolder = new System.Windows.Forms.TextBox();
             this.groupBoxInput = new System.Windows.Forms.GroupBox();
-            this.btnProcessBatch = new System.Windows.Forms.Button();
             this.folderBrowserDialogOutputFolderSelect = new System.Windows.Forms.FolderBrowserDialog();
             this.behaviorManager1 = new DevExpress.Utils.Behaviors.BehaviorManager(this.components);
             this.radioGroup1 = new DevExpress.XtraEditors.RadioGroup();
@@ -504,7 +498,7 @@
             // pdfViewer1
             // 
             this.pdfViewer1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.pdfViewer1.Location = new System.Drawing.Point(1274, 208);
+            this.pdfViewer1.Location = new System.Drawing.Point(1274, 154);
             this.pdfViewer1.Name = "pdfViewer1";
             this.pdfViewer1.Size = new System.Drawing.Size(466, 416);
             this.pdfViewer1.TabIndex = 6;
@@ -512,11 +506,6 @@
             // 
             // groupBoxOutput
             // 
-            this.groupBoxOutput.Controls.Add(this.button1);
-            this.groupBoxOutput.Controls.Add(this.btnRemoveBatchItem);
-            this.groupBoxOutput.Controls.Add(this.btnGroupSawDrawings3);
-            this.groupBoxOutput.Controls.Add(this.btnRemoveOrder);
-            this.groupBoxOutput.Controls.Add(this.btnFinalize);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
             this.groupBoxOutput.Controls.Add(this.outputFolderlbl);
             this.groupBoxOutput.Controls.Add(this.textBoxOutputFolder);
@@ -533,61 +522,11 @@
             this.groupBoxOutput.Text = "Output Data";
             this.groupBoxOutput.Enter += new System.EventHandler(this.groupBoxOutput_Enter);
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(334, 88);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(104, 51);
-            this.button1.TabIndex = 10;
-            this.button1.Text = "Group Saw Drawings Double Sided";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // btnRemoveBatchItem
-            // 
-            this.btnRemoveBatchItem.Location = new System.Drawing.Point(20, 146);
-            this.btnRemoveBatchItem.Name = "btnRemoveBatchItem";
-            this.btnRemoveBatchItem.Size = new System.Drawing.Size(151, 23);
-            this.btnRemoveBatchItem.TabIndex = 10;
-            this.btnRemoveBatchItem.Text = "Remove Batch Item...";
-            this.btnRemoveBatchItem.UseVisualStyleBackColor = true;
-            this.btnRemoveBatchItem.Click += new System.EventHandler(this.btnRemoveBatchItem_Click);
-            // 
-            // btnGroupSawDrawings3
-            // 
-            this.btnGroupSawDrawings3.Location = new System.Drawing.Point(185, 88);
-            this.btnGroupSawDrawings3.Name = "btnGroupSawDrawings3";
-            this.btnGroupSawDrawings3.Size = new System.Drawing.Size(121, 51);
-            this.btnGroupSawDrawings3.TabIndex = 12;
-            this.btnGroupSawDrawings3.Text = "Group Saw Drawings";
-            this.btnGroupSawDrawings3.UseVisualStyleBackColor = true;
-            this.btnGroupSawDrawings3.Click += new System.EventHandler(this.btnGroupSawDrawings3_Click);
-            // 
-            // btnRemoveOrder
-            // 
-            this.btnRemoveOrder.Location = new System.Drawing.Point(20, 117);
-            this.btnRemoveOrder.Name = "btnRemoveOrder";
-            this.btnRemoveOrder.Size = new System.Drawing.Size(151, 23);
-            this.btnRemoveOrder.TabIndex = 10;
-            this.btnRemoveOrder.Text = "Remove Order Item...";
-            this.btnRemoveOrder.UseVisualStyleBackColor = true;
-            this.btnRemoveOrder.Click += new System.EventHandler(this.btnRemoveOrder_Click);
-            // 
-            // btnFinalize
-            // 
-            this.btnFinalize.Location = new System.Drawing.Point(20, 88);
-            this.btnFinalize.Name = "btnFinalize";
-            this.btnFinalize.Size = new System.Drawing.Size(151, 23);
-            this.btnFinalize.TabIndex = 9;
-            this.btnFinalize.Text = "Finalize Schedule";
-            this.btnFinalize.UseVisualStyleBackColor = true;
-            this.btnFinalize.Click += new System.EventHandler(this.btnFinalize_Click);
-            // 
             // btnSelectOutputFolder
             // 
             this.btnSelectOutputFolder.Location = new System.Drawing.Point(444, 58);
             this.btnSelectOutputFolder.Name = "btnSelectOutputFolder";
-            this.btnSelectOutputFolder.Size = new System.Drawing.Size(23, 23);
+            this.btnSelectOutputFolder.Size = new System.Drawing.Size(103, 23);
             this.btnSelectOutputFolder.TabIndex = 8;
             this.btnSelectOutputFolder.Text = "...";
             this.btnSelectOutputFolder.UseVisualStyleBackColor = true;
@@ -611,7 +550,6 @@
             // 
             // groupBoxInput
             // 
-            this.groupBoxInput.Controls.Add(this.btnProcessBatch);
             this.groupBoxInput.Controls.Add(this.btnLoad);
             this.groupBoxInput.Location = new System.Drawing.Point(52, 648);
             this.groupBoxInput.Name = "groupBoxInput";
@@ -619,16 +557,6 @@
             this.groupBoxInput.TabIndex = 8;
             this.groupBoxInput.TabStop = false;
             this.groupBoxInput.Text = "Input Data";
-            // 
-            // btnProcessBatch
-            // 
-            this.btnProcessBatch.Location = new System.Drawing.Point(19, 52);
-            this.btnProcessBatch.Name = "btnProcessBatch";
-            this.btnProcessBatch.Size = new System.Drawing.Size(100, 23);
-            this.btnProcessBatch.TabIndex = 2;
-            this.btnProcessBatch.Text = "Process Batch...";
-            this.btnProcessBatch.UseVisualStyleBackColor = true;
-            this.btnProcessBatch.Click += new System.EventHandler(this.btnProcessBatch_Click);
             // 
             // radioGroup1
             // 
@@ -795,18 +723,12 @@
         private System.Windows.Forms.TextBox textBoxOutputFolder;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialogOutputFolderSelect;
         private DevExpress.XtraEditors.Repository.RepositoryItemTextEdit repositoryItemTextEdit1;
-        private System.Windows.Forms.Button btnFinalize;
-        private System.Windows.Forms.Button btnRemoveOrder;
         private DevExpress.Utils.Behaviors.BehaviorManager behaviorManager1;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colStructCode;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colIsStock;
         private DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit repositoryItemCheckEdit1;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colPlantID;
-        private System.Windows.Forms.Button btnRemoveBatchItem;
         private DevExpress.XtraTreeList.Columns.TreeListColumn requiresPDF;
-        private System.Windows.Forms.Button btnProcessBatch;
-        private System.Windows.Forms.Button btnGroupSawDrawings3;
-        private System.Windows.Forms.Button button1;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colNotes;
         private DevExpress.XtraEditors.RadioGroup radioGroup1;
         private DevExpress.XtraEditors.RadioGroup radioGroup2;
