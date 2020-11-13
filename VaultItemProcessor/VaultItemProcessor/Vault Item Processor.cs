@@ -127,17 +127,17 @@ namespace VaultItemProcessor
                 btnPreviousRecord.Enabled = false;
                 btnNextRecord.Enabled = false;
 
-                if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
-                {
-                    btnRemoveBatchItem.Enabled = true;
-                    btnRemoveOrder.Enabled = false;
-                }
-                else
-                {
-                    btnRemoveBatchItem.Enabled = false;
-                    btnRemoveOrder.Enabled = true;
+                //if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+                //{
+                //    btnRemoveBatchItem.Enabled = true;
+                //    btnRemoveOrder.Enabled = false;
+                //}
+                //else
+                //{
+                //    btnRemoveBatchItem.Enabled = false;
+                //    btnRemoveOrder.Enabled = true;
 
-                }
+                //}
 
                 LoadData();
             }
@@ -1054,6 +1054,27 @@ namespace VaultItemProcessor
             txtboxCurrentRecordName.Text = plProd.Number;
             textBoxCurrentProductDesc.Text = plProd.ItemDescription;
 
+            foreach (ProductionListLineItem lItem in plProd.SubItems)
+            {
+                if (lItem.HasPdf)
+                {
+                    try
+                    {
+                        string srcPdfName = Path.Combine(pdfPath, lItem.Number + ".pdf");
+                        string destPdfName = Path.Combine(exportFilePath, "Pdfs", lItem.Number + ".pdf");
+
+                        Directory.CreateDirectory(Path.Combine(exportFilePath, "Pdfs"));
+
+                        if(!File.Exists(destPdfName))
+                            System.IO.File.Copy(srcPdfName, destPdfName);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error in saving PDF to local folder");
+                    }
+                }
+            }
+
             productionList.AddProduct(plProd);
             btnConfirm.Enabled = false;
             btnNextRecord.Enabled = false;
@@ -1065,6 +1086,8 @@ namespace VaultItemProcessor
                 btnPreviousRecord.Enabled = true;
             else
                 btnPreviousRecord.Enabled = false;
+
+            
         }
 
         private void btnPreviousRecord_Click(object sender, EventArgs e)
@@ -1717,17 +1740,17 @@ namespace VaultItemProcessor
             if (dailyScheduleData.IsFinalized()) btnConfirm.Enabled = false;
             else btnConfirm.Enabled = true;
 
-            if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
-            {
-                btnRemoveBatchItem.Enabled = true;
-                btnRemoveOrder.Enabled = false;
-            }
-            else
-            {
-                btnRemoveBatchItem.Enabled = false;
-                btnRemoveOrder.Enabled = true;
+            //if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
+            //{
+            //    btnRemoveBatchItem.Enabled = true;
+            //    btnRemoveOrder.Enabled = false;
+            //}
+            //else
+            //{
+            //    btnRemoveBatchItem.Enabled = false;
+            //    btnRemoveOrder.Enabled = true;
 
-            }
+            //}
         }
 
         private void btnFinalize_Click(object sender, EventArgs e)
