@@ -188,27 +188,36 @@ namespace VaultItemProcessor
         private void btnLoad_Click(object sender, EventArgs e)
         {
             productionList = productionList.Load();
-            productionList.currentIndex = 0;
 
-            ProductionListProduct prod = productionList.productList.FirstOrDefault();
-            txtboxCurrentRecordName.Text = prod.Number;
-            txtBoxOrderHeader.Text = prod.OrderNumber;
-            textBoxCurrentProductDesc.Text = prod.ItemDescription;
-            txtBoxQtyHeader.Text = prod.Qty.ToString();
+            if (productionList!=null)
+            {
+                productionList.currentIndex = 0;
 
-            BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(prod.SubItems);
+                ProductionListProduct prod = productionList.productList.FirstOrDefault();
+                txtboxCurrentRecordName.Text = prod.Number;
+                txtBoxOrderHeader.Text = prod.OrderNumber;
+                textBoxCurrentProductDesc.Text = prod.ItemDescription;
+                txtBoxQtyHeader.Text = prod.Qty.ToString();
 
-            exportTreeList.DataSource = bindingLineItemList;
-            exportTreeList.ClearNodes();
+                BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(prod.SubItems);
 
-            exportTreeList.RefreshDataSource();
-            exportTreeList.Refresh();
-            exportTreeList.Cursor = Cursors.Default;
+                exportTreeList.DataSource = bindingLineItemList;
+                exportTreeList.ClearNodes();
 
-            if (productionList.productList.Count > 1)
-                btnNextRecord.Enabled = true;
+                exportTreeList.RefreshDataSource();
+                exportTreeList.Refresh();
+                exportTreeList.Cursor = Cursors.Default;
+
+                if (productionList.productList.Count > 1)
+                    btnNextRecord.Enabled = true;
+                else
+                    btnNextRecord.Enabled = false;
+            }
             else
-                btnNextRecord.Enabled = false;
+            {
+                productionList = new ProductionList(exportFilePath, pdfPath);
+                MessageBox.Show("Production List is Empty");
+            }
 
         }
 
@@ -1098,52 +1107,61 @@ namespace VaultItemProcessor
             DialogResult result = MessageBox.Show("Are you sure you want to remove the current record?","Confirm", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
-                int i = productionList.currentIndex;
-
-                productionList.productList.RemoveAt(i); // remove the current object
-
-                for (i = productionList.currentIndex; i < productionList.productList.Count; i++)
+                if (productionList.productList.Count() > 1)
                 {
-                    productionList.productList[i].ID--;
+                    int i = productionList.currentIndex;
 
-                }
+                    productionList.productList.RemoveAt(i); // remove the current object
 
-                if (productionList.currentIndex > 0)
-                {
-                    plProd = productionList.GetPrev();
+                    for (i = productionList.currentIndex; i < productionList.productList.Count; i++)
+                    {
+                        productionList.productList[i].ID--;
 
-                    txtboxCurrentRecordName.Text = plProd.Number;
-                    textBoxCurrentProductDesc.Text = plProd.ItemDescription;
+                    }
 
-                    if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
-                    else btnPreviousRecord.Enabled = true;
-                    if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
-                    else btnNextRecord.Enabled = true;
+                    if (productionList.currentIndex > 0)    // removing any record except for the first one
+                    {
+                        plProd = productionList.GetPrev();
+
+                        txtboxCurrentRecordName.Text = plProd.Number;
+                        textBoxCurrentProductDesc.Text = plProd.ItemDescription;
+
+                        if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
+                        else btnPreviousRecord.Enabled = true;
+                        if (plProd.ID >= productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
+                        else btnNextRecord.Enabled = true;
+                    }
+                    else  // removing first record
+                    {
+                        plProd = productionList.productList[0];
+
+                        txtboxCurrentRecordName.Text = plProd.Number;
+                        textBoxCurrentProductDesc.Text = plProd.ItemDescription;
+
+                        //if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
+                        //else btnPreviousRecord.Enabled = true;
+                        btnPreviousRecord.Enabled = false;
+
+                        if (productionList.productList.Count() > 1) btnNextRecord.Enabled = true;
+                        else btnNextRecord.Enabled = false;
+                    }
+
+                    BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
+                    txtBoxOrderHeader.Text = plProd.OrderNumber;
+                    txtBoxQtyHeader.Text = plProd.Qty.ToString();
+
+                    exportTreeList.DataSource = bindingLineItemList;
+
+                    exportTreeList.RefreshDataSource();
+                    exportTreeList.Refresh();
+                    exportTreeList.Cursor = Cursors.Default;
+
+                    productionList.SaveToFile();
                 }
                 else
                 {
-                    plProd = productionList.productList[0];
-
-                    txtboxCurrentRecordName.Text = plProd.Number;
-                    textBoxCurrentProductDesc.Text = plProd.ItemDescription;
-
-                    if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
-                    else btnPreviousRecord.Enabled = true;
-                    if (plProd.ID > productionList.productList.Count()) btnNextRecord.Enabled = false;
-                    else btnNextRecord.Enabled = false;
+                    MessageBox.Show("Cannot Remove Last Item From Production List.");
                 }
-
-                BindingList<ProductionListLineItem> bindingLineItemList = new BindingList<ProductionListLineItem>(plProd.SubItems);
-                txtBoxOrderHeader.Text = plProd.OrderNumber;
-                txtBoxQtyHeader.Text = plProd.Qty.ToString();
-
-                exportTreeList.DataSource = bindingLineItemList;
-
-                exportTreeList.RefreshDataSource();
-                exportTreeList.Refresh();
-                exportTreeList.Cursor = Cursors.Default;
-
-                productionList.SaveToFile();
             }
         }
         private void btnProcess_Click(object sender, EventArgs e)
