@@ -138,6 +138,8 @@ namespace VaultItemProcessor
                     btnRemoveOrder.Enabled = true;
 
                 }
+
+                LoadData();
             }
             catch(Exception ex)
             {
@@ -187,9 +189,15 @@ namespace VaultItemProcessor
         }
         private void btnLoad_Click(object sender, EventArgs e)
         {
+
+            LoadData();
+        }
+
+        private void LoadData()
+        {
             productionList = productionList.Load();
 
-            if (productionList!=null)
+            if (productionList != null)
             {
                 productionList.currentIndex = 0;
 
@@ -216,9 +224,21 @@ namespace VaultItemProcessor
             else
             {
                 productionList = new ProductionList(exportFilePath, pdfPath);
+
+                txtboxCurrentRecordName.Clear();
+                txtBoxOrderHeader.Clear();
+                textBoxCurrentProductDesc.Clear();
+                txtBoxQtyHeader.Clear();
+
+                exportTreeList.ClearNodes();
+
+                exportTreeList.Refresh();
+                exportTreeList.Cursor = Cursors.Default;
+
+                btnPreviousRecord.Enabled = false;
+                btnNextRecord.Enabled = false;
                 MessageBox.Show("Production List is Empty");
             }
-
         }
 
         private int getCalculatedQty(ExportLineItem item, List<ExportLineItem> itemList)
@@ -1672,6 +1692,9 @@ namespace VaultItemProcessor
             string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
 
             loadScheduleData(scheduleFileName);
+
+            productionList = new ProductionList(exportFilePath, pdfPath);
+            LoadData();
         }
 
         private void loadScheduleData(string scheduleFileName)
