@@ -13,18 +13,23 @@ using PdfSharp.Pdf.IO;
 using System.Drawing;
 using PdfSharp.Drawing.Layout;
 using DevExpress.XtraEditors.Controls;
-using DevExpress.Data;
+using DevExpress.DataAccess;
+using DevExpress.DataAccess.ObjectBinding;
 
 namespace VaultItemProcessor
 {
+    [System.ComponentModel.DisplayName("ProductionList")]
+    [HighlightedClass]
     public class ProductionList
     {
+        
         public string XmlFileName { get; set; }
         public string PdfInputPath { get; set; }
         public List<ProductionListProduct> productList { get; set; }
         public bool Finalized { get; set; }
         public int currentIndex { get; set; }
 
+        
         ProductionList()
         {
             XmlFileName = "";
