@@ -17,18 +17,12 @@ using DevExpress.Data;
 
 namespace VaultItemProcessor
 {
-    [XmlRoot("ProductionList")]
     public class ProductionList
     {
-        [XmlElement("XmlFileName")]
         public string XmlFileName { get; set; }
-        [XmlElement("PdfInputPath")]
         public string PdfInputPath { get; set; }
-        [System.Xml.Serialization.XmlArrayItemAttribute("ProductionListProduct", IsNullable = false)]
         public List<ProductionListProduct> productList { get; set; }
-        [XmlElement("Finalized")]
         public bool Finalized { get; set; }
-        [XmlElement("currentIndex")]
         public int currentIndex { get; set; }
 
         ProductionList()
