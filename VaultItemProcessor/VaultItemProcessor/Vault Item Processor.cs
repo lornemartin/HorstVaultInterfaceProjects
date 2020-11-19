@@ -23,6 +23,8 @@ using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using DevExpress.Utils.Design;
 using DevExpress.XtraRichEdit.Model;
+using DevExpress.XtraReports.UI;
+using DevExpress.XtraPrinting.Preview;
 
 namespace VaultItemProcessor
 {
@@ -3145,6 +3147,17 @@ namespace VaultItemProcessor
             }
 
             exportTreeList.RefreshDataSource();
+        }
+
+        private void btnReport_Click(object sender, EventArgs e)
+        {
+            ReportPrintTool printTool = new ReportPrintTool(new XtraReport11());
+
+            // Access the Print Preview forms.
+            PrintPreviewFormEx printPreviewForm = printTool.PreviewForm;
+            PrintPreviewRibbonFormEx printPreviewRibbonForm = printTool.PreviewRibbonForm;
+
+            printPreviewRibbonForm.Show();
         }
     }
 
