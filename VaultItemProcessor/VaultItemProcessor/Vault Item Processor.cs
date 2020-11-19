@@ -3151,13 +3151,20 @@ namespace VaultItemProcessor
 
         private void btnReport_Click(object sender, EventArgs e)
         {
+            //ReportPrintTool printTool = new ReportPrintTool(new XtraReport11());
+
+            //// Access the Print Preview forms.
+            //PrintPreviewFormEx printPreviewForm = printTool.PreviewForm;
+            //PrintPreviewRibbonFormEx printPreviewRibbonForm = printTool.PreviewRibbonForm;
+
+            //printPreviewRibbonForm.Show();
+
+            XtraReport11 report = new XtraReport11();
+
             ReportPrintTool printTool = new ReportPrintTool(new XtraReport11());
 
-            // Access the Print Preview forms.
-            PrintPreviewFormEx printPreviewForm = printTool.PreviewForm;
-            PrintPreviewRibbonFormEx printPreviewRibbonForm = printTool.PreviewRibbonForm;
 
-            printPreviewRibbonForm.Show();
+            printTool.ShowRibbonPreview();
         }
     }
 

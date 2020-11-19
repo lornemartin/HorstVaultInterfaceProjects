@@ -32,12 +32,12 @@ namespace VaultItemProcessor
         [HighlightedMember]
         ProductionListDataSource()
         {
-            XmlFileName = "";
-            //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
-            PdfInputPath = "";
-            productList = new List<ProductionListProduct>();
-            Finalized = false;
-            currentIndex = 0;
+        //    XmlFileName = "";
+        //    //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
+        //    PdfInputPath = "";
+        //    productList = new List<ProductionListProduct>();
+        //    Finalized = false;
+        //    currentIndex = 0;
         }
         public ProductionListDataSource(string xmlFilePath, string pdfPath)
         {
@@ -47,7 +47,10 @@ namespace VaultItemProcessor
             productList = new List<ProductionListProduct>();
             Finalized = false;
             currentIndex = 0;
+            Load();
         }
+
+
 
 
         public void AddProduct(ProductionListProduct prod)
@@ -96,7 +99,7 @@ namespace VaultItemProcessor
         [HighlightedMember]
         public IEnumerable<ProductionListProduct> GetProductionList()
         {
-            return productList;
+            return this.productList;
         }
         public bool SaveToFile()
         {
@@ -123,6 +126,7 @@ namespace VaultItemProcessor
                 ProductionListDataSource pList = (ProductionListDataSource) xs.Deserialize(tr);
                 //productList = (ProductionListProduct) xs.Deserialize(tr);
                 tr.Close();
+                productList = pList.productList;
                 return pList;
             }
             catch (Exception ex)
