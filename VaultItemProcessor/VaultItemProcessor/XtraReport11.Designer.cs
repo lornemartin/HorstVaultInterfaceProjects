@@ -32,8 +32,6 @@
             DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo objectConstructorInfo1 = new DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo();
             DevExpress.DataAccess.ObjectBinding.Parameter parameter1 = new DevExpress.DataAccess.ObjectBinding.Parameter();
             DevExpress.DataAccess.ObjectBinding.Parameter parameter2 = new DevExpress.DataAccess.ObjectBinding.Parameter();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(XtraReport11));
-            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.GroupCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
             this.GroupData1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -115,28 +113,13 @@
             this.checkBox3 = new DevExpress.XtraReports.UI.XRCheckBox();
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
+            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
-            // 
-            // objectDataSource1
-            // 
-            parameter1.Name = "xmlFilePath";
-            parameter1.Type = typeof(string);
-            parameter1.ValueInfo = "C:\\testBatches\\testBatch1\\";
-            parameter2.Name = "pdfPath";
-            parameter2.Type = typeof(string);
-            parameter2.ValueInfo = "M:\\PDF Drawing Files\\";
-            objectConstructorInfo1.Parameters.AddRange(new DevExpress.DataAccess.ObjectBinding.Parameter[] {
-            parameter1,
-            parameter2});
-            this.objectDataSource1.Constructor = objectConstructorInfo1;
-            this.objectDataSource1.DataMember = "GetProductionList";
-            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
-            this.objectDataSource1.Name = "objectDataSource1";
             // 
             // Title
             // 
@@ -692,10 +675,9 @@
             // 
             // xrPdfContent1
             // 
-            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 25F);
+            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 139.375F);
             this.xrPdfContent1.Name = "xrPdfContent1";
-            this.xrPdfContent1.SizeF = new System.Drawing.SizeF(650F, 286.3749F);
-            this.xrPdfContent1.SourceSerializable = resources.GetString("xrPdfContent1.SourceSerializable");
+            this.xrPdfContent1.SizeF = new System.Drawing.SizeF(650F, 23F);
             this.xrPdfContent1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent1_BeforePrint);
             // 
             // table4
@@ -869,6 +851,22 @@
             this.tableCell48.StyleName = "DetailData2";
             this.tableCell48.Weight = 0.050478140024038463D;
             // 
+            // objectDataSource1
+            // 
+            parameter1.Name = "xmlFilePath";
+            parameter1.Type = typeof(string);
+            parameter1.ValueInfo = "C:\\testBatches\\testBatch1\\";
+            parameter2.Name = "pdfPath";
+            parameter2.Type = typeof(string);
+            parameter2.ValueInfo = "M:\\PDF Drawing Files\\";
+            objectConstructorInfo1.Parameters.AddRange(new DevExpress.DataAccess.ObjectBinding.Parameter[] {
+            parameter1,
+            parameter2});
+            this.objectDataSource1.Constructor = objectConstructorInfo1;
+            this.objectDataSource1.DataMember = "GetProductionList";
+            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
+            this.objectDataSource1.Name = "objectDataSource1";
+            // 
             // XtraReport11
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -893,11 +891,11 @@
             this.DetailData3_Odd,
             this.PageInfo});
             this.Version = "20.1";
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
         }
