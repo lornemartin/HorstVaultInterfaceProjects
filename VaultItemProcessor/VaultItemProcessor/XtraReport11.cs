@@ -18,9 +18,15 @@ namespace VaultItemProcessor
         private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
+            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.tableCell36.Value + ".pdf";
+
+            
+
+            // this is only grabbing the products, not the sub items
+            //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
             //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + curRow.Number + ".pdf";
 
-            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\HDO-09.pdf";
+            //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\HDO-09.pdf";
 
 
 
