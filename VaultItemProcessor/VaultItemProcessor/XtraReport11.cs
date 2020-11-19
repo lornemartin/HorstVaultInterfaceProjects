@@ -13,5 +13,15 @@ namespace VaultItemProcessor
             InitializeComponent();
         }
 
+        private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            //xrPictureBox1.ImageUrl = @"M:\PDF Drawing Files\HDO-08.pdf";
+            
+        }
+
+        private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\HDO-08.pdf";
+        }
     }
 }
