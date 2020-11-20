@@ -30,7 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo objectConstructorInfo1 = new DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo();
-            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.GroupCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
             this.GroupData1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -112,19 +111,14 @@
             this.checkBox3 = new DevExpress.XtraReports.UI.XRCheckBox();
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
+            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
+            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
-            // 
-            // objectDataSource1
-            // 
-            this.objectDataSource1.Constructor = objectConstructorInfo1;
-            this.objectDataSource1.DataMember = "GetProductionList";
-            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
-            this.objectDataSource1.Name = "objectDataSource1";
             // 
             // Title
             // 
@@ -673,14 +667,15 @@
             // Detail1
             // 
             this.Detail1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPictureBox1,
             this.xrPdfContent1,
             this.table4});
-            this.Detail1.HeightF = 77.9583F;
+            this.Detail1.HeightF = 224.4999F;
             this.Detail1.Name = "Detail1";
             // 
             // xrPdfContent1
             // 
-            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 44.95831F);
+            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 191.4999F);
             this.xrPdfContent1.Name = "xrPdfContent1";
             this.xrPdfContent1.SizeF = new System.Drawing.SizeF(650F, 23F);
             this.xrPdfContent1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent1_BeforePrint);
@@ -856,6 +851,21 @@
             this.tableCell48.StyleName = "DetailData2";
             this.tableCell48.Weight = 0.050478140024038463D;
             // 
+            // objectDataSource1
+            // 
+            this.objectDataSource1.Constructor = objectConstructorInfo1;
+            this.objectDataSource1.DataMember = "GetProductionList";
+            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
+            this.objectDataSource1.Name = "objectDataSource1";
+            // 
+            // xrPictureBox1
+            // 
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(5.999994F, 25F);
+            this.xrPictureBox1.Name = "xrPictureBox1";
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(292.2414F, 134.4583F);
+            this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox1_BeforePrint);
+            // 
             // XtraReport11
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -880,11 +890,11 @@
             this.DetailData3_Odd,
             this.PageInfo});
             this.Version = "20.1";
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
         }
@@ -973,5 +983,6 @@
         private DevExpress.XtraReports.UI.XRTableCell tableCell47;
         private DevExpress.XtraReports.UI.XRTableCell tableCell48;
         private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent1;
+        private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox1;
     }
 }
