@@ -72,7 +72,8 @@ namespace VaultItemProcessor
                     vaultServer = AppSettings.Get("VaultServer").ToString();
                     vaultVault = AppSettings.Get("VaultVault").ToString();
                     dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
-                    productionList = new ProductionListDataSource(exportFilePath,pdfPath);
+                    productionList = new ProductionListDataSource();
+                    productionList.Load();
                     lastFileUpdateTime = new DateTime();
                 }
                 else
@@ -225,7 +226,7 @@ namespace VaultItemProcessor
             }
             else
             {
-                productionList = new ProductionListDataSource(exportFilePath, pdfPath);
+                productionList = new ProductionListDataSource();
 
                 txtboxCurrentRecordName.Clear();
                 txtBoxOrderHeader.Clear();
@@ -1718,7 +1719,7 @@ namespace VaultItemProcessor
 
             loadScheduleData(scheduleFileName);
 
-            productionList = new ProductionListDataSource(exportFilePath, pdfPath);
+            productionList = new ProductionListDataSource();
             LoadData();
         }
 

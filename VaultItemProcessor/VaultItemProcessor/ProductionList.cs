@@ -30,24 +30,15 @@ namespace VaultItemProcessor
 
         // The HighlightedMember attribute highlights a constructor.
         [HighlightedMember]
-        ProductionListDataSource()
+        
+        public ProductionListDataSource()
         {
-        //    XmlFileName = "";
-        //    //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
-        //    PdfInputPath = "";
-        //    productList = new List<ProductionListProduct>();
-        //    Finalized = false;
-        //    currentIndex = 0;
-        }
-        public ProductionListDataSource(string xmlFilePath, string pdfPath)
-        {
-            XmlFileName = xmlFilePath + "ProductionList.xml";
-            //XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + (AppSettings.Get("ProductionList").ToString());
-            PdfInputPath = pdfPath;
+            //XmlFileName = xmlFilePath + "ProductionList.xml";
+            XmlFileName = (AppSettings.Get("ExportFilePath").ToString()) + @"ProductionList.xml";
+            PdfInputPath = (AppSettings.Get("PdfPath").ToString());
             productList = new List<ProductionListProduct>();
             Finalized = false;
             currentIndex = 0;
-            Load();
         }
 
 
@@ -99,6 +90,7 @@ namespace VaultItemProcessor
         [HighlightedMember]
         public IEnumerable<ProductionListProduct> GetProductionList()
         {
+            Load();
             return this.productList;
         }
         public bool SaveToFile()
