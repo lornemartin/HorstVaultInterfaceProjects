@@ -92,6 +92,7 @@
             this.tableCell33 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell34 = new DevExpress.XtraReports.UI.XRTableCell();
             this.Detail1 = new DevExpress.XtraReports.UI.DetailBand();
+            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.xrPdfContent1 = new DevExpress.XtraReports.UI.XRPdfContent();
             this.table4 = new DevExpress.XtraReports.UI.XRTable();
             this.tableRow5 = new DevExpress.XtraReports.UI.XRTableRow();
@@ -112,7 +113,9 @@
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
             this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
-            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel2 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel3 = new DevExpress.XtraReports.UI.XRLabel();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -667,15 +670,26 @@
             // Detail1
             // 
             this.Detail1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrLabel3,
+            this.xrLabel2,
+            this.xrLabel1,
             this.xrPictureBox1,
             this.xrPdfContent1,
             this.table4});
-            this.Detail1.HeightF = 224.4999F;
+            this.Detail1.HeightF = 494.6664F;
             this.Detail1.Name = "Detail1";
+            // 
+            // xrPictureBox1
+            // 
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(23.71165F, 159.4998F);
+            this.xrPictureBox1.Name = "xrPictureBox1";
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(597.1892F, 302.1667F);
+            this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // xrPdfContent1
             // 
-            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 191.4999F);
+            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 461.6664F);
             this.xrPdfContent1.Name = "xrPdfContent1";
             this.xrPdfContent1.SizeF = new System.Drawing.SizeF(650F, 23F);
             this.xrPdfContent1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent1_BeforePrint);
@@ -858,13 +872,39 @@
             this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
             this.objectDataSource1.Name = "objectDataSource1";
             // 
-            // xrPictureBox1
+            // xrLabel1
             // 
-            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(5.999994F, 25F);
-            this.xrPictureBox1.Name = "xrPictureBox1";
-            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(292.2414F, 134.4583F);
-            this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrLabel1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Number]")});
+            this.xrLabel1.LocationFloat = new DevExpress.Utils.PointFloat(78.57361F, 66.45832F);
+            this.xrLabel1.Multiline = true;
+            this.xrLabel1.Name = "xrLabel1";
+            this.xrLabel1.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel1.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel1.Text = "xrLabel1";
+            // 
+            // xrLabel2
+            // 
+            this.xrLabel2.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ItemDescription]")});
+            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(178.5736F, 66.45832F);
+            this.xrLabel2.Multiline = true;
+            this.xrLabel2.Name = "xrLabel2";
+            this.xrLabel2.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel2.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel2.Text = "xrLabel2";
+            // 
+            // xrLabel3
+            // 
+            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Qty]")});
+            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(32.34765F, 66.45832F);
+            this.xrLabel3.Multiline = true;
+            this.xrLabel3.Name = "xrLabel3";
+            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel3.SizeF = new System.Drawing.SizeF(38.14037F, 23F);
+            this.xrLabel3.Text = "xrLabel3";
+            this.xrLabel3.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
             // 
             // XtraReport11
             // 
@@ -984,5 +1024,8 @@
         private DevExpress.XtraReports.UI.XRTableCell tableCell48;
         private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent1;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox1;
+        private DevExpress.XtraReports.UI.XRLabel xrLabel3;
+        private DevExpress.XtraReports.UI.XRLabel xrLabel2;
+        private DevExpress.XtraReports.UI.XRLabel xrLabel1;
     }
 }
