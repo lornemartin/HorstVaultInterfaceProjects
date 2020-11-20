@@ -20,12 +20,12 @@ namespace VaultItemProcessor
         private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
-            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.tableCell36.Value + ".pdf";
+            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
         }
 
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell36.Value + ".pdf";
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.xrLabelNumber.Value + ".pdf";
             if (File.Exists(filename))
             {
                 PdfViewer pdfViewer = new PdfViewer();
