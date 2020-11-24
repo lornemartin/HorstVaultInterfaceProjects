@@ -164,6 +164,8 @@
   <ItemGroup>
     <Compile Include="AggregateLineItem.cs" />
     <Compile Include="AppSettings.cs" />
+    <Compile Include="BandsawReports\BandsawReportAssembly.cs" />
+    <Compile Include="BandsawReports\BandsawReport.cs" />
     <Compile Include="ProductionList.cs" />
     <Compile Include="ProductionListLineItem.cs" />
     <Compile Include="ProductionListProduct.cs" />
@@ -178,6 +180,11 @@
     <Compile Include="ProcessPDF.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="BandsawReports\BandsawReportCutListItem.cs" />
+    <Compile Include="BandsawReports\BandsawReportOrder.cs" />
+    <Compile Include="BandsawReports\BandsawReportPart.cs" />
+    <Compile Include="BandsawReports\BandsawReportProduct.cs" />
+    <Compile Include="ScheduleReportLineItem.cs" />
     <Compile Include="Vault Item Processor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -216,6 +223,12 @@
     <Compile Include="XtraReport11.Designer.cs">
       <DependentUpon>XtraReport11.cs</DependentUpon>
     </Compile>
+    <Compile Include="XtraReport12.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="XtraReport12.Designer.cs">
+      <DependentUpon>XtraReport12.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="PrintIDW.resx">
       <DependentUpon>PrintIDW.cs</DependentUpon>
     </EmbeddedResource>
@@ -247,6 +260,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="XtraReport11.resx">
       <DependentUpon>XtraReport11.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="XtraReport12.resx">
+      <DependentUpon>XtraReport12.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

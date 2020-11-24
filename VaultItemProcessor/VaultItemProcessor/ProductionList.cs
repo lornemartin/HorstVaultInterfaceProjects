@@ -93,6 +93,102 @@ namespace VaultItemProcessor
             Load();
             return this.productList;
         }
+
+        [HighlightedMember]
+        public IEnumerable<ScheduleReportLineItem> GetSchedulelineItems()
+        {
+            Load();
+            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
+
+            foreach(ProductionListProduct prod in productList)
+            {
+                ScheduleReportLineItem parent = new ScheduleReportLineItem(prod);
+                lineItemList.Add(parent);
+
+                foreach(ProductionListLineItem lineItem in prod.SubItems)
+                {
+                    ScheduleReportLineItem subItem = new ScheduleReportLineItem(lineItem,prod);
+                    lineItemList.Add(subItem);
+                }
+            }
+
+            return lineItemList;
+        }
+
+        [HighlightedMember]
+        public IEnumerable<Reports1.BandsawReportProduct> GetBandsawReport()
+        {
+            Load();
+
+            Reports1.BandsawReport report = new Reports1.BandsawReport();
+            report.ReportProducts = new List<Reports1.BandsawReportProduct>();
+
+            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
+
+            foreach (ProductionListProduct prod in productList)
+            {
+                Reports1.BandsawReportProduct reportProd = new Reports1.BandsawReportProduct(prod);
+
+                foreach (ProductionListLineItem lineItem in prod.SubItems)
+                {
+                    //ScheduleReportLineItem subItem = new ScheduleReportLineItem(lineItem, prod);
+                    //lineItemList.Add(subItem);
+                    if(lineItem.Category == "Assembly")
+                    {
+                        Reports1.BandsawReportAssembly assy = new Reports1.BandsawReportAssembly();
+                        assy.AssemblyName = lineItem.Number;
+                        assy.AssemblyDesc = lineItem.ItemDescription;
+                        reportProd.ReportAssemblies.Add(assy);
+                    }
+                    if(lineItem.Category == "Part")
+                    {
+                        if(lineItem.HasPdf)
+                        {
+                            Reports1.BandsawReportPart prt = new Reports1.BandsawReportPart();
+                            prt.PartName = lineItem.Number;
+                            prt.PartDesc = lineItem.ItemDescription;
+                            prt.Material = lineItem.Material;
+                            prt.Thickness = lineItem.MaterialThickness;
+                            reportProd.ReportParts.Add(prt);
+                        }
+                        else
+                        {
+                            Reports1.BandsawReportCutListItem cutItem = new Reports1.BandsawReportCutListItem();
+                            cutItem.ItemNumber = lineItem.Number;
+                            cutItem.ItemDescription = lineItem.ItemDescription;
+                            cutItem.Material = lineItem.Material;
+                            reportProd.ReportCutListItems.Add(cutItem);
+                        }
+                    }
+                }
+
+                report.ReportProducts.Add(reportProd);        // add the product once all the subitems are added to it.
+            }
+
+            return report.ReportProducts.ToList();
+        }
+
+        [HighlightedMember]
+        public IEnumerable<ScheduleReportLineItem> GetLaserReport()
+        {
+            Load();
+
+            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
+
+            foreach (ProductionListProduct prod in productList)
+            {
+                // not displaying the products or assemblies in this report.
+
+                foreach (ProductionListLineItem lineItem in prod.SubItems)
+                {
+                    ScheduleReportLineItem subItem = new ScheduleReportLineItem(lineItem, prod);
+                    if(subItem.Operations == "Laser")
+                        lineItemList.Add(subItem);
+                }
+            }
+
+            return lineItemList;
+        }
         public bool SaveToFile()
         {
             try

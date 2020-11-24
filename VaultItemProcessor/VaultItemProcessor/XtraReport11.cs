@@ -19,29 +19,29 @@ namespace VaultItemProcessor
 
         private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
-            xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
+            //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
+            //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
         }
 
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.xrLabelNumber.Value + ".pdf";
-            if (File.Exists(filename))
-            {
-                PdfViewer pdfViewer = new PdfViewer();
-                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+            //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.xrLabelNumber.Value + ".pdf";
+            //if (File.Exists(filename))
+            //{
+            //    PdfViewer pdfViewer = new PdfViewer();
+            //    byte[] bytes = System.IO.File.ReadAllBytes(filename);
 
-                Stream stream = new MemoryStream(bytes);
+            //    Stream stream = new MemoryStream(bytes);
 
-                pdfViewer.LoadDocument(stream);
-                Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
+            //    pdfViewer.LoadDocument(stream);
+            //    Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
 
-                pdfViewer.CloseDocument();
-                pdfViewer.Dispose();
+            //    pdfViewer.CloseDocument();
+            //    pdfViewer.Dispose();
 
-                xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-                xrPictureBox1.BackColor = Color.AliceBlue;
-            }
+            //    xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+            //    xrPictureBox1.BackColor = Color.AliceBlue;
+            //}
 
 
         }
