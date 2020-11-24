@@ -194,6 +194,11 @@ namespace VaultItemProcessor
 
                 if (searchProd == null)
                 {
+                    Reports2.BandsawReportOrder2 order = new Reports2.BandsawReportOrder2();
+                    order.Qty = prod.Qty;
+                    order.OrderNumber = prod.OrderNumber;
+                    reportProd.ReportOrders.Add(order);
+
                     foreach (ProductionListLineItem lineItem in prod.SubItems)
                     {
                         if (lineItem.Category == "Assembly")
@@ -203,7 +208,6 @@ namespace VaultItemProcessor
                             assy.AssemblyDesc = lineItem.ItemDescription;
                             assy.Qty = lineItem.Qty;
 
-                            Reports2.BandsawReportOrder2 order = new Reports2.BandsawReportOrder2();
                             order.Qty = prod.Qty;
                             order.OrderNumber = prod.OrderNumber;
                             assy.ReportOrders = new List<Reports2.BandsawReportOrder2>();
@@ -222,7 +226,6 @@ namespace VaultItemProcessor
                                 prt.Thickness = lineItem.MaterialThickness;
                                 prt.Qty = lineItem.Qty;
 
-                                Reports2.BandsawReportOrder2 order = new Reports2.BandsawReportOrder2();
                                 order.Qty = prod.Qty;
                                 order.OrderNumber = prod.OrderNumber;
                                 prt.ReportOrders = new List<Reports2.BandsawReportOrder2>();
@@ -237,7 +240,6 @@ namespace VaultItemProcessor
                                 cutItem.Material = lineItem.Material;
                                 cutItem.Qty = lineItem.Qty;
 
-                                Reports2.BandsawReportOrder2 order = new Reports2.BandsawReportOrder2();
                                 order.Qty = prod.Qty;
                                 order.OrderNumber = prod.OrderNumber;
                                 cutItem.ReportOrders = new List<Reports2.BandsawReportOrder2>();

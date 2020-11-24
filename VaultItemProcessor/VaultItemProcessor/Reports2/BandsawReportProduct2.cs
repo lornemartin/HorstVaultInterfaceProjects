@@ -32,37 +32,13 @@ namespace VaultItemProcessor.Reports2
         public void AddReportOrder(BandsawReportOrder2 order)
         {
             this.ReportOrders.Add(order);
+
+            foreach (Reports2.BandsawReportAssembly2 assy in this.ReportAssemblies)
+                assy.ReportOrders.Add(order);
+            foreach (Reports2.BandsawReportCutListItem2 cutListItem in this.ReportCutListItems)
+                cutListItem.ReportOrders.Add(order);
+            foreach (Reports2.BandsawReportPart2 prt in this.ReportParts)
+                prt.ReportOrders.Add(order);
         }
-
-        //public void AddAssembly(ProductionListProduct prod)
-        //{
-        //    BandsawReportAssembly reportAssembly = new BandsawReportAssembly();
-        //    reportAssembly.AssemblyName = prod.Number;
-        //    reportAssembly.AssemblyDesc = prod.ItemDescription;
-        //    reportAssembly.Pages = new List<byte[]>();
-
-        //    BandsawReportOrder order = new BandsawReportOrder();
-        //    order.OrderNumber = prod.OrderNumber;
-        //    order.Qty = prod.Qty;
-        //    reportAssembly.Orders.Add(order);
-
-        //    ReportAssemblies.Add(reportAssembly);
-        //}
-
-        //public void AddProduct(ProductionListProduct prod)
-        //{
-        //    BandsawReportAssembly reportProduct = new BandsawReportAssembly();
-        //    reportProduct.AssemblyName = prod.Number;
-        //    reportProduct.AssemblyDesc = prod.ItemDescription;
-
-        //    BandsawReportOrder order = new BandsawReportOrder();
-        //    order.OrderNumber = prod.OrderNumber;
-        //    order.Qty = prod.Qty;
-        //    reportProduct.Orders.Add(order);
-
-        //    ReportPro
-
-        //}
-
     }
 }
