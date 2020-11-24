@@ -84,6 +84,8 @@
             this.tableCell18 = new DevExpress.XtraReports.UI.XRTableCell();
             this.DetailReport2 = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail3 = new DevExpress.XtraReports.UI.DetailBand();
+            this.xrPageBreak2 = new DevExpress.XtraReports.UI.XRPageBreak();
+            this.xrPictureBox2 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.table6 = new DevExpress.XtraReports.UI.XRTable();
             this.tableRow7 = new DevExpress.XtraReports.UI.XRTableRow();
             this.tableCell19 = new DevExpress.XtraReports.UI.XRTableCell();
@@ -118,8 +120,7 @@
             this.xrTableCell4 = new DevExpress.XtraReports.UI.XRTableCell();
             this.xrTableCell5 = new DevExpress.XtraReports.UI.XRTableCell();
             this.xrTableCell6 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.xrPictureBox2 = new DevExpress.XtraReports.UI.XRPictureBox();
-            this.xrPageBreak2 = new DevExpress.XtraReports.UI.XRPageBreak();
+            this.xrPageBreak3 = new DevExpress.XtraReports.UI.XRPageBreak();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
@@ -507,7 +508,7 @@
             // 
             this.Detail2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.table5});
-            this.Detail2.HeightF = 25F;
+            this.Detail2.HeightF = 28.79168F;
             this.Detail2.Name = "Detail2";
             // 
             // table5
@@ -587,6 +588,7 @@
             // Detail3
             // 
             this.Detail3.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPageBreak3,
             this.xrPageBreak2,
             this.xrPictureBox2,
             this.table6});
@@ -594,9 +596,22 @@
             this.Detail3.KeepTogether = true;
             this.Detail3.Name = "Detail3";
             // 
+            // xrPageBreak2
+            // 
+            this.xrPageBreak2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 550.9167F);
+            this.xrPageBreak2.Name = "xrPageBreak2";
+            // 
+            // xrPictureBox2
+            // 
+            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 72.66668F);
+            this.xrPictureBox2.Name = "xrPictureBox2";
+            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(769F, 478.25F);
+            this.xrPictureBox2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
+            // 
             // table6
             // 
-            this.table6.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.table6.LocationFloat = new DevExpress.Utils.PointFloat(0F, 16.66667F);
             this.table6.Name = "table6";
             this.table6.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow7,
@@ -881,18 +896,10 @@
             this.xrTableCell6.Text = "Operation";
             this.xrTableCell6.Weight = 0.18602028479942909D;
             // 
-            // xrPictureBox2
+            // xrPageBreak3
             // 
-            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 56.00001F);
-            this.xrPictureBox2.Name = "xrPictureBox2";
-            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(769F, 478.25F);
-            this.xrPictureBox2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
-            // 
-            // xrPageBreak2
-            // 
-            this.xrPageBreak2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 550.9167F);
-            this.xrPageBreak2.Name = "xrPageBreak2";
+            this.xrPageBreak3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 10.00001F);
+            this.xrPageBreak3.Name = "xrPageBreak3";
             // 
             // XtraReport12
             // 
@@ -1025,5 +1032,6 @@
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak1;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox2;
+        private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak3;
     }
 }
