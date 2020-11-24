@@ -138,9 +138,13 @@ namespace VaultItemProcessor
                         Reports1.BandsawReportAssembly assy = new Reports1.BandsawReportAssembly();
                         assy.AssemblyName = lineItem.Number;
                         assy.AssemblyDesc = lineItem.ItemDescription;
+                        assy.Qty = lineItem.Qty;
+                        
+                        
+
                         reportProd.ReportAssemblies.Add(assy);
                     }
-                    if(lineItem.Category == "Part")
+                    if(lineItem.Category == "Part" && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
                     {
                         if(lineItem.HasPdf)
                         {
@@ -149,6 +153,8 @@ namespace VaultItemProcessor
                             prt.PartDesc = lineItem.ItemDescription;
                             prt.Material = lineItem.Material;
                             prt.Thickness = lineItem.MaterialThickness;
+                            prt.Qty = lineItem.Qty;
+                           
                             reportProd.ReportParts.Add(prt);
                         }
                         else
@@ -157,6 +163,9 @@ namespace VaultItemProcessor
                             cutItem.ItemNumber = lineItem.Number;
                             cutItem.ItemDescription = lineItem.ItemDescription;
                             cutItem.Material = lineItem.Material;
+                            cutItem.Qty = lineItem.Qty;
+
+                            
                             reportProd.ReportCutListItems.Add(cutItem);
                         }
                     }

@@ -8,6 +8,7 @@ namespace VaultItemProcessor.Reports1
 {
     public class BandsawReportPart
     {
+        public int Qty { get; set; }
         public string PartName { get; set; }
 
         public string PartDesc { get; set; }
@@ -18,7 +19,5 @@ namespace VaultItemProcessor.Reports1
 
         public string Operation { get; set; }
         public List<byte[]> Pages { get; set; }
-
-        public List<BandsawReportOrder> Orders { get; set; }
     }
 }
