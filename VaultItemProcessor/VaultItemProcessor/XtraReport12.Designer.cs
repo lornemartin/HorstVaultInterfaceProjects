@@ -84,6 +84,7 @@
             this.tableCell18 = new DevExpress.XtraReports.UI.XRTableCell();
             this.DetailReport2 = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail3 = new DevExpress.XtraReports.UI.DetailBand();
+            this.xrPageBreak3 = new DevExpress.XtraReports.UI.XRPageBreak();
             this.xrPageBreak2 = new DevExpress.XtraReports.UI.XRPageBreak();
             this.xrPictureBox2 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.table6 = new DevExpress.XtraReports.UI.XRTable();
@@ -120,7 +121,6 @@
             this.xrTableCell4 = new DevExpress.XtraReports.UI.XRTableCell();
             this.xrTableCell5 = new DevExpress.XtraReports.UI.XRTableCell();
             this.xrTableCell6 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.xrPageBreak3 = new DevExpress.XtraReports.UI.XRPageBreak();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
@@ -596,6 +596,11 @@
             this.Detail3.KeepTogether = true;
             this.Detail3.Name = "Detail3";
             // 
+            // xrPageBreak3
+            // 
+            this.xrPageBreak3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 10.00001F);
+            this.xrPageBreak3.Name = "xrPageBreak3";
+            // 
             // xrPageBreak2
             // 
             this.xrPageBreak2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 550.9167F);
@@ -895,11 +900,6 @@
             this.xrTableCell6.StyleName = "DetailCaption2";
             this.xrTableCell6.Text = "Operation";
             this.xrTableCell6.Weight = 0.18602028479942909D;
-            // 
-            // xrPageBreak3
-            // 
-            this.xrPageBreak3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 10.00001F);
-            this.xrPageBreak3.Name = "xrPageBreak3";
             // 
             // XtraReport12
             // 

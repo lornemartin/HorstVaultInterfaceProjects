@@ -3167,6 +3167,15 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
+
+        private void btnBandsawReport2_Click(object sender, EventArgs e)
+        {
+            XtraReport13 report = new XtraReport13();
+
+            ReportPrintTool printTool = new ReportPrintTool(new XtraReport13());
+
+            printTool.ShowRibbonPreview();
+        }
     }
 
 }

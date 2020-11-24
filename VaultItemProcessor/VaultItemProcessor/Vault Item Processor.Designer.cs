@@ -100,6 +100,7 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
+            this.btnBandsawReport2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -508,6 +509,7 @@
             // 
             // groupBoxOutput
             // 
+            this.groupBoxOutput.Controls.Add(this.btnBandsawReport2);
             this.groupBoxOutput.Controls.Add(this.btnReport2);
             this.groupBoxOutput.Controls.Add(this.btnReport);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
@@ -520,7 +522,7 @@
             this.groupBoxOutput.Controls.Add(this.spinEditOrderQty);
             this.groupBoxOutput.Location = new System.Drawing.Point(327, 648);
             this.groupBoxOutput.Name = "groupBoxOutput";
-            this.groupBoxOutput.Size = new System.Drawing.Size(563, 180);
+            this.groupBoxOutput.Size = new System.Drawing.Size(563, 246);
             this.groupBoxOutput.TabIndex = 7;
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
@@ -677,6 +679,16 @@
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
             // 
+            // btnBandsawReport2
+            // 
+            this.btnBandsawReport2.Location = new System.Drawing.Point(20, 158);
+            this.btnBandsawReport2.Name = "btnBandsawReport2";
+            this.btnBandsawReport2.Size = new System.Drawing.Size(75, 23);
+            this.btnBandsawReport2.TabIndex = 11;
+            this.btnBandsawReport2.Text = "Report3";
+            this.btnBandsawReport2.UseVisualStyleBackColor = true;
+            this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -766,6 +778,7 @@
         private System.Windows.Forms.Button btnRemoveRecord;
         private System.Windows.Forms.Button btnReport;
         private System.Windows.Forms.Button btnReport2;
+        private System.Windows.Forms.Button btnBandsawReport2;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }

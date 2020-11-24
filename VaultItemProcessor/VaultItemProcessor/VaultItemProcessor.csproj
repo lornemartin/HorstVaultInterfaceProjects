@@ -164,6 +164,12 @@
   <ItemGroup>
     <Compile Include="AggregateLineItem.cs" />
     <Compile Include="AppSettings.cs" />
+    <Compile Include="Reports2\BandsawReport2.cs" />
+    <Compile Include="Reports2\BandsawReportAssembly2.cs" />
+    <Compile Include="Reports2\BandsawReportCutListItem2.cs" />
+    <Compile Include="Reports2\BandsawReportOrder2.cs" />
+    <Compile Include="Reports2\BandsawReportPart2.cs" />
+    <Compile Include="Reports2\BandsawReportProduct2.cs" />
     <Compile Include="BandsawReports\BandsawReportAssembly.cs" />
     <Compile Include="BandsawReports\BandsawReport.cs" />
     <Compile Include="ProductionList.cs" />
@@ -229,6 +235,12 @@
     <Compile Include="XtraReport12.Designer.cs">
       <DependentUpon>XtraReport12.cs</DependentUpon>
     </Compile>
+    <Compile Include="XtraReport13.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="XtraReport13.Designer.cs">
+      <DependentUpon>XtraReport13.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="PrintIDW.resx">
       <DependentUpon>PrintIDW.cs</DependentUpon>
     </EmbeddedResource>
@@ -263,6 +275,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="XtraReport12.resx">
       <DependentUpon>XtraReport12.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="XtraReport13.resx">
+      <DependentUpon>XtraReport13.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
