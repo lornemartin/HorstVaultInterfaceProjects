@@ -15,31 +15,6 @@ namespace VaultItemProcessor
             InitializeComponent();
         }
 
-        private void tableCell40_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell40.Value + ".pdf";
-            if (File.Exists(filename))
-            {
-                PdfViewer pdfViewer = new PdfViewer();
-                byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                Stream stream = new MemoryStream(bytes);
-
-                pdfViewer.LoadDocument(stream);
-                Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-                pdfViewer.CloseDocument();
-                pdfViewer.Dispose();
-
-                xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-                xrPictureBox1.BackColor = Color.AliceBlue;
-            }
-            else
-            {
-                xrPictureBox1.ImageSource = null;
-            }
-        }
-
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell27.Value + ".pdf";
@@ -58,6 +33,31 @@ namespace VaultItemProcessor
 
                 xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
                 xrPictureBox2.BackColor = Color.AliceBlue;
+            }
+            else
+            {
+                xrPictureBox1.ImageSource = null;
+            }
+        }
+
+        private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell40.Value + ".pdf";
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+                Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
+
+                pdfViewer.CloseDocument();
+                pdfViewer.Dispose();
+
+                xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                xrPictureBox1.BackColor = Color.AliceBlue;
             }
             else
             {

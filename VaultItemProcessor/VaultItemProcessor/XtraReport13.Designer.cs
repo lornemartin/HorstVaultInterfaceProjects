@@ -149,8 +149,6 @@
             this.tableRow16 = new DevExpress.XtraReports.UI.XRTableRow();
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.xrPageBreak3 = new DevExpress.XtraReports.UI.XRPageBreak();
-            this.xrPageBreak4 = new DevExpress.XtraReports.UI.XRPageBreak();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
@@ -316,7 +314,7 @@
             this.label1.Name = "label1";
             this.label1.SizeF = new System.Drawing.SizeF(638F, 24.19433F);
             this.label1.StyleName = "Title";
-            this.label1.Text = "Report Title";
+            this.label1.Text = "Bandsaw Report";
             // 
             // Detail
             // 
@@ -675,8 +673,6 @@
             // Detail3
             // 
             this.Detail3.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPageBreak4,
-            this.xrPageBreak3,
             this.table6});
             this.Detail3.HeightF = 25F;
             this.Detail3.Name = "Detail3";
@@ -944,7 +940,7 @@
             // 
             this.Detail6.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.table10});
-            this.Detail6.HeightF = 461.7083F;
+            this.Detail6.HeightF = 63.45825F;
             this.Detail6.KeepTogether = true;
             this.Detail6.Name = "Detail6";
             // 
@@ -1046,7 +1042,6 @@
             this.tableCell40.Name = "tableCell40";
             this.tableCell40.StyleName = "DetailData2";
             this.tableCell40.Weight = 0.19302513709435096D;
-            this.tableCell40.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.tableCell40_BeforePrint);
             // 
             // tableCell41
             // 
@@ -1145,20 +1140,21 @@
             this.xrPageBreak1,
             this.xrPictureBox1,
             this.table12});
-            this.Detail7.HeightF = 522.5833F;
+            this.Detail7.HeightF = 550.4592F;
             this.Detail7.Name = "Detail7";
             // 
             // xrPageBreak1
             // 
-            this.xrPageBreak1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 510.5833F);
+            this.xrPageBreak1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 538.4592F);
             this.xrPageBreak1.Name = "xrPageBreak1";
             // 
             // xrPictureBox1
             // 
-            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 25F);
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 41.66692F);
             this.xrPictureBox1.Name = "xrPictureBox1";
-            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(650F, 461.7083F);
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(650F, 463.7087F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // table12
             // 
@@ -1194,16 +1190,6 @@
             this.tableCell48.StylePriority.UseTextAlignment = false;
             this.tableCell48.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             this.tableCell48.Weight = 0.2575D;
-            // 
-            // xrPageBreak3
-            // 
-            this.xrPageBreak3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 22.99999F);
-            this.xrPageBreak3.Name = "xrPageBreak3";
-            // 
-            // xrPageBreak4
-            // 
-            this.xrPageBreak4.LocationFloat = new DevExpress.Utils.PointFloat(0F, 22.99999F);
-            this.xrPageBreak4.Name = "xrPageBreak4";
             // 
             // XtraReport13
             // 
@@ -1370,7 +1356,5 @@
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox2;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak1;
-        private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak4;
-        private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak3;
     }
 }
