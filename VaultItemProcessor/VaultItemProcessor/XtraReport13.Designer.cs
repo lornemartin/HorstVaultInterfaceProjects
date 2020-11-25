@@ -150,6 +150,7 @@
             this.tableRow16 = new DevExpress.XtraReports.UI.XRTableRow();
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrPageBreak2 = new DevExpress.XtraReports.UI.XRPageBreak();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
@@ -276,6 +277,7 @@
             // 
             // TopMargin
             // 
+            this.TopMargin.HeightF = 28.125F;
             this.TopMargin.Name = "TopMargin";
             // 
             // BottomMargin
@@ -283,6 +285,7 @@
             this.BottomMargin.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.pageInfo1,
             this.pageInfo2});
+            this.BottomMargin.HeightF = 44.37485F;
             this.BottomMargin.Name = "BottomMargin";
             // 
             // pageInfo1
@@ -320,6 +323,7 @@
             // Detail
             // 
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPageBreak2,
             this.xrPageBreak1,
             this.table1});
             this.Detail.HeightF = 56F;
@@ -737,7 +741,7 @@
             this.xrPageBreak3,
             this.xrPictureBox2,
             this.table7});
-            this.Detail4.HeightF = 461.7083F;
+            this.Detail4.HeightF = 674.75F;
             this.Detail4.KeepTogether = true;
             this.Detail4.Name = "Detail4";
             // 
@@ -750,7 +754,7 @@
             // 
             this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 74.75001F);
             this.xrPictureBox2.Name = "xrPictureBox2";
-            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(650F, 356.9583F);
+            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(769F, 600F);
             this.xrPictureBox2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
             // 
@@ -952,7 +956,7 @@
             this.xrPageBreak4,
             this.table10,
             this.xrPictureBox1});
-            this.Detail6.HeightF = 463.7087F;
+            this.Detail6.HeightF = 666F;
             this.Detail6.KeepTogether = true;
             this.Detail6.Name = "Detail6";
             // 
@@ -1094,9 +1098,9 @@
             // 
             // xrPictureBox1
             // 
-            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 66.00002F);
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 65.99998F);
             this.xrPictureBox1.Name = "xrPictureBox1";
-            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(650F, 385.2087F);
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(769F, 600F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
@@ -1201,6 +1205,11 @@
             this.tableCell48.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             this.tableCell48.Weight = 0.2575D;
             // 
+            // xrPageBreak2
+            // 
+            this.xrPageBreak2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 2.000014F);
+            this.xrPageBreak2.Name = "xrPageBreak2";
+            // 
             // XtraReport13
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -1216,6 +1225,7 @@
             this.objectDataSource1});
             this.DataSource = this.objectDataSource1;
             this.Font = new System.Drawing.Font("Arial", 9.75F);
+            this.Margins = new System.Drawing.Printing.Margins(45, 36, 28, 44);
             this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
             this.Title,
             this.DetailCaption1,
@@ -1367,5 +1377,6 @@
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak3;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak4;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak1;
+        private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
     }
 }
