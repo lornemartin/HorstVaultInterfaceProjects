@@ -5,6 +5,11 @@ using System.ComponentModel;
 using DevExpress.XtraReports.UI;
 using System.IO;
 using DevExpress.XtraPdfViewer;
+using PdfSharp;
+using PdfSharp.Drawing;
+using PdfSharp.Drawing.Layout;
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
 
 namespace VaultItemProcessor
 {
@@ -66,6 +71,76 @@ namespace VaultItemProcessor
             else
             {
                 xrPictureBox1.ImageSource = null;
+            }
+        }
+
+        private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
+            //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+
+
+
+
+            if (File.Exists(filename))
+            {
+                //PdfDocument doc = new PdfDocument();
+                //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                //PdfPage page = doc.Pages[0];
+
+                //var v = page.Orientation;
+                //float h = (float) page.Height;
+                //float w = (float) page.Width;
+
+
+                //xrPdfContent1.HeightF = w;
+                //xrPdfContent1.WidthF = h;
+                xrPdfContent1.SourceUrl = filename;
+               
+
+            }
+            else
+            {
+                xrPdfContent1.SourceUrl = null;
+            }
+        }
+
+        private void xrPdfContent2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+
+
+
+
+
+            if (File.Exists(filename))
+            {
+                //PdfDocument doc = new PdfDocument();
+                //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                //PdfPage page = doc.Pages[0];
+
+                //var v = page.Orientation;
+                //float h = (float) page.Height;
+                //float w = (float) page.Width;
+
+
+                //xrPdfContent1.HeightF = w;
+                //xrPdfContent1.WidthF = h;
+                xrPdfContent2.SourceUrl = filename;
+
+
+            }
+            else
+            {
+                xrPdfContent2.SourceUrl = null;
             }
         }
     }
