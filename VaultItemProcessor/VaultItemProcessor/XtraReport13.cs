@@ -17,7 +17,10 @@ namespace VaultItemProcessor
 
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell27.Value + ".pdf";
+            //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell27.Value + ".pdf";
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
             if (File.Exists(filename))
             {
                 PdfViewer pdfViewer = new PdfViewer();
@@ -36,13 +39,14 @@ namespace VaultItemProcessor
             }
             else
             {
-                xrPictureBox1.ImageSource = null;
+                xrPictureBox2.ImageSource = null;
             }
         }
 
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell40.Value + ".pdf";
+            string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
             if (File.Exists(filename))
             {
                 PdfViewer pdfViewer = new PdfViewer();
