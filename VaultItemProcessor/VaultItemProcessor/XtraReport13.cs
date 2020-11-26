@@ -87,10 +87,14 @@ namespace VaultItemProcessor
                 byte[] bytes = System.IO.File.ReadAllBytes(filename);
 
                 Stream stream = new MemoryStream(bytes);
+                Bitmap bitmap = null;
 
                 pdfViewer.LoadDocument(stream);
-                Bitmap bitmap = pdfViewer.CreateBitmap(2, 950);
-                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                if (pdfViewer.PageCount == 2)
+                {
+                    bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                }
 
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
@@ -115,9 +119,13 @@ namespace VaultItemProcessor
                 byte[] bytes = System.IO.File.ReadAllBytes(filename);
 
                 Stream stream = new MemoryStream(bytes);
-
+                Bitmap bitmap = null;
                 pdfViewer.LoadDocument(stream);
-                Bitmap bitmap = pdfViewer.CreateBitmap(2, 950);
+                if (pdfViewer.PageCount == 2)
+                {
+                    bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
+                }
+                
 
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
