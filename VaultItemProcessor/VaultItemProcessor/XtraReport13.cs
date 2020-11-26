@@ -48,6 +48,33 @@ namespace VaultItemProcessor
             }
         }
 
+        private void xrPictureBox4_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+                Bitmap bitmap = pdfViewer.CreateBitmap(2, 950);
+
+                pdfViewer.CloseDocument();
+                pdfViewer.Dispose();
+
+                xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                xrPictureBox4.BackColor = Color.AliceBlue;
+            }
+            else
+            {
+                xrPictureBox4.ImageSource = null;
+            }
+        }
+
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
@@ -173,6 +200,29 @@ namespace VaultItemProcessor
             else
             {
                 xrPdfContent1.SourceUrl = null;
+            }
+        }
+
+        private void ReportAssemblies2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+
+                if (pdfViewer.PageCount == 1)
+                    e.Cancel = true;
+            }
+            else
+            {
+                e.Cancel = true;
             }
         }
     }
