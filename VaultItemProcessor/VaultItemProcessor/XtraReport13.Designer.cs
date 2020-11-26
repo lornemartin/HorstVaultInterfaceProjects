@@ -125,7 +125,6 @@
             this.fullPagePDF = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail8 = new DevExpress.XtraReports.UI.DetailBand();
             this.ReportHeader1 = new DevExpress.XtraReports.UI.ReportHeaderBand();
-            this.xrPdfContent1 = new DevExpress.XtraReports.UI.XRPdfContent();
             this.ReportParts = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail6 = new DevExpress.XtraReports.UI.DetailBand();
             this.xrPageBreak4 = new DevExpress.XtraReports.UI.XRPageBreak();
@@ -190,6 +189,7 @@
             this.Detail12 = new DevExpress.XtraReports.UI.DetailBand();
             this.ReportHeader = new DevExpress.XtraReports.UI.ReportHeaderBand();
             this.xrPdfContent3 = new DevExpress.XtraReports.UI.XRPdfContent();
+            this.xrPictureBox5 = new DevExpress.XtraReports.UI.XRPictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -796,7 +796,6 @@
             this.fullPagePDF});
             this.ReportAssemblies.DataMember = "ReportAssemblies";
             this.ReportAssemblies.DataSource = this.objectDataSource1;
-            this.ReportAssemblies.Expanded = false;
             this.ReportAssemblies.Level = 2;
             this.ReportAssemblies.Name = "ReportAssemblies";
             this.ReportAssemblies.PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand;
@@ -1027,15 +1026,9 @@
             // ReportHeader1
             // 
             this.ReportHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPdfContent1});
+            this.xrPictureBox5});
+            this.ReportHeader1.HeightF = 984.8715F;
             this.ReportHeader1.Name = "ReportHeader1";
-            // 
-            // xrPdfContent1
-            // 
-            this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.xrPdfContent1.Name = "xrPdfContent1";
-            this.xrPdfContent1.SizeF = new System.Drawing.SizeF(769F, 23F);
-            this.xrPdfContent1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent1_BeforePrint);
             // 
             // ReportParts
             // 
@@ -1571,6 +1564,14 @@
             this.xrPdfContent3.Name = "xrPdfContent3";
             this.xrPdfContent3.SizeF = new System.Drawing.SizeF(769F, 23F);
             // 
+            // xrPictureBox5
+            // 
+            this.xrPictureBox5.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.xrPictureBox5.Name = "xrPictureBox5";
+            this.xrPictureBox5.SizeF = new System.Drawing.SizeF(769F, 984.8715F);
+            this.xrPictureBox5.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox5.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox5_BeforePrint);
+            // 
             // XtraReport13
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -1732,7 +1733,6 @@
         private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent2;
         private DevExpress.XtraReports.UI.DetailReportBand fullPagePDF;
         private DevExpress.XtraReports.UI.DetailBand Detail8;
-        private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent1;
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader1;
         private DevExpress.XtraReports.UI.DetailReportBand FullPagePartPdf;
         private DevExpress.XtraReports.UI.DetailBand Detail9;
@@ -1782,5 +1782,6 @@
         private DevExpress.XtraReports.UI.DetailBand Detail12;
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader;
         private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent3;
+        private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox5;
     }
 }
