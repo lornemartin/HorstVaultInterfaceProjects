@@ -62,7 +62,16 @@ namespace VaultItemProcessor
 
                 pdfViewer.LoadDocument(stream);
                 Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+                PdfDocument doc = new PdfDocument();
+                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                PdfPage page = doc.Pages[0];
+
+                float h = (float)page.Height;
+                float w = (float)page.Width;
+                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
@@ -93,7 +102,17 @@ namespace VaultItemProcessor
                 if (pdfViewer.PageCount == 2)
                 {
                     bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
-                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    PdfDocument doc = new PdfDocument();
+                    doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                    PdfPage page = doc.Pages[0];
+
+                    float h = (float)page.Height;
+                    float w = (float)page.Width;
+                    //if (h < 800 || h < w)       // flip page if height is less than 800
+                    if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h <800)       // flip page if height is less than 800
+                        bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
                 }
 
                 pdfViewer.CloseDocument();
@@ -209,7 +228,21 @@ namespace VaultItemProcessor
 
                 pdfViewer.LoadDocument(stream);
                 Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+
+                PdfDocument doc = new PdfDocument();
+                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                PdfPage page = doc.Pages[0];
+
+                var orient = page.Orientation;
+                var rotate = page.Rotate;
+
+                float h = (float)page.Height;
+                float w = (float)page.Width;
+
+                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)       // flip page if height is less than 800
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
