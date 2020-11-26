@@ -74,41 +74,41 @@ namespace VaultItemProcessor
             }
         }
 
-        private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
-            //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
-            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+        //private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        //{
+        //    //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
+        //    //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
+        //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+        //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
 
             
 
 
 
 
-            if (File.Exists(filename))
-            {
-                //PdfDocument doc = new PdfDocument();
-                //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+        //    if (File.Exists(filename))
+        //    {
+        //        //PdfDocument doc = new PdfDocument();
+        //        //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
 
-                //PdfPage page = doc.Pages[0];
+        //        //PdfPage page = doc.Pages[0];
 
-                //var v = page.Orientation;
-                //float h = (float) page.Height;
-                //float w = (float) page.Width;
+        //        //var v = page.Orientation;
+        //        //float h = (float) page.Height;
+        //        //float w = (float) page.Width;
 
 
-                //xrPdfContent1.HeightF = w;
-                //xrPdfContent1.WidthF = h;
-                xrPdfContent1.SourceUrl = filename;
+        //        //xrPdfContent1.HeightF = w;
+        //        //xrPdfContent1.WidthF = h;
+        //        xrPdfContent1.SourceUrl = filename;
                
 
-            }
-            else
-            {
-                xrPdfContent1.SourceUrl = null;
-            }
-        }
+        //    }
+        //    else
+        //    {
+        //        xrPdfContent1.SourceUrl = null;
+        //    }
+        //}
 
         private void xrPdfContent2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
@@ -141,6 +141,38 @@ namespace VaultItemProcessor
             else
             {
                 xrPdfContent2.SourceUrl = null;
+            }
+        }
+
+       
+        private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
+            //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                //PdfDocument doc = new PdfDocument();
+                //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                //PdfPage page = doc.Pages[0];
+
+                //var v = page.Orientation;
+                //float h = (float) page.Height;
+                //float w = (float) page.Width;
+
+
+                //xrPdfContent1.HeightF = w;
+                //xrPdfContent1.WidthF = h;
+                xrPdfContent1.SourceUrl = filename;
+
+
+            }
+            else
+            {
+                xrPdfContent1.SourceUrl = null;
             }
         }
     }
