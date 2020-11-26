@@ -528,6 +528,10 @@
             this.ReportCutList.DataSource = this.objectDataSource1;
             this.ReportCutList.Level = 1;
             this.ReportCutList.Name = "ReportCutList";
+            this.ReportCutList.ReportPrintOptions.BlankDetailCount = 3;
+            this.ReportCutList.ReportPrintOptions.DetailCount = 10;
+            this.ReportCutList.ReportPrintOptions.DetailCountAtDesignTime = 3;
+            this.ReportCutList.ReportPrintOptions.DetailCountOnEmptyDataSource = 0;
             // 
             // Detail2
             // 
