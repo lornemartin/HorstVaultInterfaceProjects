@@ -122,6 +122,7 @@
             this.tableCell32 = new DevExpress.XtraReports.UI.XRTableCell();
             this.fullPagePDF = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail8 = new DevExpress.XtraReports.UI.DetailBand();
+            this.ReportHeader1 = new DevExpress.XtraReports.UI.ReportHeaderBand();
             this.xrPdfContent1 = new DevExpress.XtraReports.UI.XRPdfContent();
             this.ReportParts = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail6 = new DevExpress.XtraReports.UI.DetailBand();
@@ -155,7 +156,9 @@
             this.tableRow16 = new DevExpress.XtraReports.UI.XRTableRow();
             this.tableCell47 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell48 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.ReportHeader1 = new DevExpress.XtraReports.UI.ReportHeaderBand();
+            this.FullPagePartPdf = new DevExpress.XtraReports.UI.DetailReportBand();
+            this.Detail9 = new DevExpress.XtraReports.UI.DetailBand();
+            this.ReportHeader2 = new DevExpress.XtraReports.UI.ReportHeaderBand();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -968,6 +971,12 @@
             this.Detail8.KeepTogether = true;
             this.Detail8.Name = "Detail8";
             // 
+            // ReportHeader1
+            // 
+            this.ReportHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPdfContent1});
+            this.ReportHeader1.Name = "ReportHeader1";
+            // 
             // xrPdfContent1
             // 
             this.xrPdfContent1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
@@ -979,7 +988,8 @@
             // 
             this.ReportParts.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
             this.Detail6,
-            this.DetailReport6});
+            this.DetailReport6,
+            this.FullPagePartPdf});
             this.ReportParts.DataMember = "ReportParts";
             this.ReportParts.DataSource = this.objectDataSource1;
             this.ReportParts.Level = 3;
@@ -989,7 +999,6 @@
             // Detail6
             // 
             this.Detail6.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPdfContent2,
             this.xrPageBreak4,
             this.table10,
             this.xrPictureBox1});
@@ -999,7 +1008,7 @@
             // 
             // xrPdfContent2
             // 
-            this.xrPdfContent2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 673.9587F);
+            this.xrPdfContent2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.xrPdfContent2.Name = "xrPdfContent2";
             this.xrPdfContent2.SizeF = new System.Drawing.SizeF(769F, 23F);
             this.xrPdfContent2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent2_BeforePrint);
@@ -1249,11 +1258,27 @@
             this.tableCell48.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             this.tableCell48.Weight = 0.2575D;
             // 
-            // ReportHeader1
+            // FullPagePartPdf
             // 
-            this.ReportHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPdfContent1});
-            this.ReportHeader1.Name = "ReportHeader1";
+            this.FullPagePartPdf.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
+            this.Detail9,
+            this.ReportHeader2});
+            this.FullPagePartPdf.DataMember = "ReportParts.ReportOrders";
+            this.FullPagePartPdf.DataSource = this.objectDataSource1;
+            this.FullPagePartPdf.Level = 1;
+            this.FullPagePartPdf.Name = "FullPagePartPdf";
+            // 
+            // Detail9
+            // 
+            this.Detail9.HeightF = 13.74995F;
+            this.Detail9.Name = "Detail9";
+            // 
+            // ReportHeader2
+            // 
+            this.ReportHeader2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPdfContent2});
+            this.ReportHeader2.HeightF = 36.66661F;
+            this.ReportHeader2.Name = "ReportHeader2";
             // 
             // XtraReport13
             // 
@@ -1428,5 +1453,8 @@
         private DevExpress.XtraReports.UI.DetailBand Detail8;
         private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent1;
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader1;
+        private DevExpress.XtraReports.UI.DetailReportBand FullPagePartPdf;
+        private DevExpress.XtraReports.UI.DetailBand Detail9;
+        private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader2;
     }
 }
