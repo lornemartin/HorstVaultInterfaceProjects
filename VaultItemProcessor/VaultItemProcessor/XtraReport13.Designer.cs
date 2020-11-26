@@ -160,7 +160,7 @@
             this.FullPagePartPdf = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail9 = new DevExpress.XtraReports.UI.DetailBand();
             this.ReportHeader2 = new DevExpress.XtraReports.UI.ReportHeaderBand();
-            this.xrPdfContent2 = new DevExpress.XtraReports.UI.XRPdfContent();
+            this.xrPictureBox7 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.ReportAssemblies2 = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail10 = new DevExpress.XtraReports.UI.DetailBand();
             this.xrPictureBox4 = new DevExpress.XtraReports.UI.XRPictureBox();
@@ -528,7 +528,6 @@
             this.ReportCutList.DataSource = this.objectDataSource1;
             this.ReportCutList.Level = 1;
             this.ReportCutList.Name = "ReportCutList";
-            this.ReportCutList.ReportPrintOptions.PrintOnEmptyDataSource = false;
             // 
             // Detail2
             // 
@@ -1323,16 +1322,17 @@
             // ReportHeader2
             // 
             this.ReportHeader2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPdfContent2});
-            this.ReportHeader2.HeightF = 36.66661F;
+            this.xrPictureBox7});
+            this.ReportHeader2.HeightF = 938.5417F;
             this.ReportHeader2.Name = "ReportHeader2";
             // 
-            // xrPdfContent2
+            // xrPictureBox7
             // 
-            this.xrPdfContent2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.xrPdfContent2.Name = "xrPdfContent2";
-            this.xrPdfContent2.SizeF = new System.Drawing.SizeF(769F, 23F);
-            this.xrPdfContent2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPdfContent2_BeforePrint);
+            this.xrPictureBox7.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.xrPictureBox7.Name = "xrPictureBox7";
+            this.xrPictureBox7.SizeF = new System.Drawing.SizeF(769.0001F, 938.5417F);
+            this.xrPictureBox7.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox7.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox7_BeforePrint);
             // 
             // ReportAssemblies2
             // 
@@ -1732,7 +1732,6 @@
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak3;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak4;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak1;
-        private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent2;
         private DevExpress.XtraReports.UI.DetailReportBand fullPagePDF;
         private DevExpress.XtraReports.UI.DetailBand Detail8;
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader1;
@@ -1785,5 +1784,6 @@
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox5;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox6;
+        private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox7;
     }
 }
