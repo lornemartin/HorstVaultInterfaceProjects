@@ -72,7 +72,35 @@ namespace VaultItemProcessor
             }
             else
             {
-                xrPictureBox2.ImageSource = null;
+                xrPictureBox5.ImageSource = null;
+            }
+        }
+
+        private void xrPictureBox6_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+                Bitmap bitmap = pdfViewer.CreateBitmap(2, 950);
+                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+                pdfViewer.CloseDocument();
+                pdfViewer.Dispose();
+
+                xrPictureBox6.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                xrPictureBox6.BackColor = Color.AliceBlue;
+            }
+            else
+            {
+                xrPictureBox6.ImageSource = null;
             }
         }
 
@@ -213,5 +241,7 @@ namespace VaultItemProcessor
                 e.Cancel = true;
             }
         }
+
+        
     }
 }

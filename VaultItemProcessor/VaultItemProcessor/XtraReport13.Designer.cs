@@ -125,6 +125,7 @@
             this.fullPagePDF = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail8 = new DevExpress.XtraReports.UI.DetailBand();
             this.ReportHeader1 = new DevExpress.XtraReports.UI.ReportHeaderBand();
+            this.xrPictureBox5 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.ReportParts = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail6 = new DevExpress.XtraReports.UI.DetailBand();
             this.xrPageBreak4 = new DevExpress.XtraReports.UI.XRPageBreak();
@@ -188,8 +189,7 @@
             this.DetailReport3 = new DevExpress.XtraReports.UI.DetailReportBand();
             this.Detail12 = new DevExpress.XtraReports.UI.DetailBand();
             this.ReportHeader = new DevExpress.XtraReports.UI.ReportHeaderBand();
-            this.xrPdfContent3 = new DevExpress.XtraReports.UI.XRPdfContent();
-            this.xrPictureBox5 = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.xrPictureBox6 = new DevExpress.XtraReports.UI.XRPictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -1030,6 +1030,14 @@
             this.ReportHeader1.HeightF = 984.8715F;
             this.ReportHeader1.Name = "ReportHeader1";
             // 
+            // xrPictureBox5
+            // 
+            this.xrPictureBox5.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.xrPictureBox5.Name = "xrPictureBox5";
+            this.xrPictureBox5.SizeF = new System.Drawing.SizeF(769F, 984.8715F);
+            this.xrPictureBox5.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox5.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox5_BeforePrint);
+            // 
             // ReportParts
             // 
             this.ReportParts.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -1555,22 +1563,16 @@
             // ReportHeader
             // 
             this.ReportHeader.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrPdfContent3});
+            this.xrPictureBox6});
+            this.ReportHeader.HeightF = 878.0574F;
             this.ReportHeader.Name = "ReportHeader";
             // 
-            // xrPdfContent3
+            // xrPictureBox6
             // 
-            this.xrPdfContent3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.xrPdfContent3.Name = "xrPdfContent3";
-            this.xrPdfContent3.SizeF = new System.Drawing.SizeF(769F, 23F);
-            // 
-            // xrPictureBox5
-            // 
-            this.xrPictureBox5.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.xrPictureBox5.Name = "xrPictureBox5";
-            this.xrPictureBox5.SizeF = new System.Drawing.SizeF(769F, 984.8715F);
-            this.xrPictureBox5.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox5.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox5_BeforePrint);
+            this.xrPictureBox6.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.xrPictureBox6.Name = "xrPictureBox6";
+            this.xrPictureBox6.SizeF = new System.Drawing.SizeF(769F, 868.0574F);
+            this.xrPictureBox6.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox6_BeforePrint);
             // 
             // XtraReport13
             // 
@@ -1781,7 +1783,7 @@
         private DevExpress.XtraReports.UI.DetailReportBand DetailReport3;
         private DevExpress.XtraReports.UI.DetailBand Detail12;
         private DevExpress.XtraReports.UI.ReportHeaderBand ReportHeader;
-        private DevExpress.XtraReports.UI.XRPdfContent xrPdfContent3;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox5;
+        private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox6;
     }
 }
