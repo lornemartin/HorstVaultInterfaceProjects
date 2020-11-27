@@ -44,9 +44,9 @@ namespace VaultItemProcessor
 
                 float h = (float)page.Height;
                 float w = (float)page.Width;
-                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))
+                //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))
                     //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
-                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    //bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
@@ -83,7 +83,10 @@ namespace VaultItemProcessor
 
                 float h = (float)page.Height;
                 float w = (float)page.Width;
-                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))
+                var angle = page.Rotate;
+                var orient = page.Orientation;
+                if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) || 
+                     (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
                     //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
                     bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
@@ -173,8 +176,10 @@ namespace VaultItemProcessor
 
                     float h = (float)page.Height;
                     float w = (float)page.Width;
+                    var angle = page.Rotate;
                     //if (h < 800 || h < w)       // flip page if height is less than 800
-                    if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))       // flip page if height is less than 800
+                    if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
+                      (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
                         bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 }
@@ -242,12 +247,13 @@ namespace VaultItemProcessor
                 PdfPage page = doc.Pages[0];
 
                 var orient = page.Orientation;
-                var rotate = page.Rotate;
+                var angle = page.Rotate;
 
                 float h = (float)page.Height;
                 float w = (float)page.Width;
 
-                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))       // flip page if height is less than 800
+                if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
+                     (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))       // flip page if height is less than 800
                     //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)       // flip page if height is less than 800
                     bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
