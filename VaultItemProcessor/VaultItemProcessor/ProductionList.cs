@@ -116,60 +116,90 @@ namespace VaultItemProcessor
         }
 
         [HighlightedMember]
-        public IEnumerable<Reports1.BandsawReportProduct> GetBandsawReport()
+        public IEnumerable<Reports2.BandsawReportProduct2> GetBatchReport()
         {
             Load();
 
-            Reports1.BandsawReport report = new Reports1.BandsawReport();
-            report.ReportProducts = new List<Reports1.BandsawReportProduct>();
+            Reports2.BandsawReport2 report = new Reports2.BandsawReport2();
+            report.ReportProducts = new List<Reports2.BandsawReportProduct2>();
 
             List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
 
             foreach (ProductionListProduct prod in productList)
             {
-                Reports1.BandsawReportProduct reportProd = new Reports1.BandsawReportProduct(prod);
+                Reports2.BandsawReportProduct2 reportProd = new Reports2.BandsawReportProduct2(prod);
+                Reports2.BandsawReportProduct2 searchProd = new Reports2.BandsawReportProduct2(prod);
 
-                foreach (ProductionListLineItem lineItem in prod.SubItems)
+                searchProd = report.ReportProducts.Where(r => r.ProductName == prod.Number).FirstOrDefault();
+
+                if (searchProd == null)
                 {
-                    if(lineItem.Category == "Assembly")
-                    {
-                        Reports1.BandsawReportAssembly assy = new Reports1.BandsawReportAssembly();
-                        assy.AssemblyName = lineItem.Number;
-                        assy.AssemblyDesc = lineItem.ItemDescription;
-                        assy.Qty = lineItem.Qty;
-                        
-                        
+                    Reports2.BandsawReportOrder2 order = new Reports2.BandsawReportOrder2();
+                    order.Qty = prod.Qty;
+                    order.OrderNumber = prod.OrderNumber;
+                    reportProd.ReportOrders.Add(order);
 
-                        reportProd.ReportAssemblies.Add(assy);
-                    }
-                    if(lineItem.Category == "Part" && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
+                    foreach (ProductionListLineItem lineItem in prod.SubItems)
                     {
-                        if(lineItem.HasPdf)
+                        if (lineItem.Category == "Assembly")
                         {
-                            Reports1.BandsawReportPart prt = new Reports1.BandsawReportPart();
-                            prt.PartName = lineItem.Number;
-                            prt.PartDesc = lineItem.ItemDescription;
-                            prt.Material = lineItem.Material;
-                            prt.Thickness = lineItem.MaterialThickness;
-                            prt.Qty = lineItem.Qty;
-                           
-                            reportProd.ReportParts.Add(prt);
-                        }
-                        else
-                        {
-                            Reports1.BandsawReportCutListItem cutItem = new Reports1.BandsawReportCutListItem();
-                            cutItem.ItemNumber = lineItem.Number;
-                            cutItem.ItemDescription = lineItem.ItemDescription;
-                            cutItem.Material = lineItem.Material;
-                            cutItem.Qty = lineItem.Qty;
+                            Reports2.BandsawReportAssembly2 assy = new Reports2.BandsawReportAssembly2();
+                            assy.AssemblyName = lineItem.Number;
+                            assy.AssemblyDesc = lineItem.ItemDescription;
+                            assy.Qty = lineItem.Qty;
 
-                            
-                            reportProd.ReportCutListItems.Add(cutItem);
+                            order.Qty = prod.Qty;
+                            order.OrderNumber = prod.OrderNumber;
+                            assy.ReportOrders = new List<Reports2.BandsawReportOrder2>();
+                            assy.ReportOrders.Add(order);
+
+                            reportProd.ReportAssemblies.Add(assy);
+                        }
+                        if (lineItem.Category == "Part" && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
+                        {
+                            if (lineItem.HasPdf)
+                            {
+                                Reports2.BandsawReportPart2 prt = new Reports2.BandsawReportPart2();
+                                prt.PartName = lineItem.Number;
+                                prt.PartDesc = lineItem.ItemDescription;
+                                prt.Material = lineItem.Material;
+                                prt.Thickness = lineItem.MaterialThickness;
+                                prt.Qty = lineItem.Qty;
+
+                                order.Qty = prod.Qty;
+                                order.OrderNumber = prod.OrderNumber;
+                                prt.ReportOrders = new List<Reports2.BandsawReportOrder2>();
+                                prt.ReportOrders.Add(order);
+                                reportProd.ReportParts.Add(prt);
+                            }
+                            else
+                            {
+                                Reports2.BandsawReportCutListItem2 cutItem = new Reports2.BandsawReportCutListItem2();
+                                cutItem.ItemNumber = lineItem.Number;
+                                cutItem.ItemDescription = lineItem.ItemDescription;
+                                cutItem.Material = lineItem.Material;
+                                cutItem.Qty = lineItem.Qty;
+
+                                order.Qty = prod.Qty;
+                                order.OrderNumber = prod.OrderNumber;
+                                cutItem.ReportOrders = new List<Reports2.BandsawReportOrder2>();
+                                cutItem.ReportOrders.Add(order);
+
+                                reportProd.ReportCutListItems.Add(cutItem);
+                            }
                         }
                     }
+                    report.ReportProducts.Add(reportProd);        // add the product once all the subitems are added to it.
                 }
+                else
+                {
+                    // only add the order number to the existing product, instead of adding a new record
+                    Reports2.BandsawReportOrder2 newOrder = new Reports2.BandsawReportOrder2();
+                    newOrder.Qty = prod.Qty;
+                    newOrder.OrderNumber = prod.OrderNumber;
 
-                report.ReportProducts.Add(reportProd);        // add the product once all the subitems are added to it.
+                    searchProd.AddReportOrder(newOrder);
+                }
             }
 
             return report.ReportProducts.ToList();

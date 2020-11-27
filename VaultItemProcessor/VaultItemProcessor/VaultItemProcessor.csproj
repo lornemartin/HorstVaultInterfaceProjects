@@ -170,8 +170,6 @@
     <Compile Include="Reports2\BandsawReportOrder2.cs" />
     <Compile Include="Reports2\BandsawReportPart2.cs" />
     <Compile Include="Reports2\BandsawReportProduct2.cs" />
-    <Compile Include="BandsawReports\BandsawReportAssembly.cs" />
-    <Compile Include="BandsawReports\BandsawReport.cs" />
     <Compile Include="ProductionList.cs" />
     <Compile Include="ProductionListLineItem.cs" />
     <Compile Include="ProductionListProduct.cs" />
@@ -186,10 +184,6 @@
     <Compile Include="ProcessPDF.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="BandsawReports\BandsawReportCutListItem.cs" />
-    <Compile Include="BandsawReports\BandsawReportOrder.cs" />
-    <Compile Include="BandsawReports\BandsawReportPart.cs" />
-    <Compile Include="BandsawReports\BandsawReportProduct.cs" />
     <Compile Include="ScheduleReportLineItem.cs" />
     <Compile Include="Vault Item Processor.cs">
       <SubType>Form</SubType>
