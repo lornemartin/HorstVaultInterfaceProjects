@@ -20,6 +20,7 @@ namespace VaultItemProcessor
             InitializeComponent();
         }
 
+        //assembly 1 half page
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell27.Value + ".pdf";
@@ -36,6 +37,17 @@ namespace VaultItemProcessor
                 pdfViewer.LoadDocument(stream);
                 Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
 
+                PdfDocument doc = new PdfDocument();
+                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                PdfPage page = doc.Pages[0];
+
+                float h = (float)page.Height;
+                float w = (float)page.Width;
+                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))
+                    //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
                 pdfViewer.CloseDocument();
                 pdfViewer.Dispose();
 
@@ -48,6 +60,7 @@ namespace VaultItemProcessor
             }
         }
 
+        // assembly 1 full page
         private void xrPictureBox5_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
@@ -70,7 +83,8 @@ namespace VaultItemProcessor
 
                 float h = (float)page.Height;
                 float w = (float)page.Width;
-                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))
+                    //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
                     bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 pdfViewer.CloseDocument();
@@ -85,6 +99,56 @@ namespace VaultItemProcessor
             }
         }
 
+        // assembly two half page
+        private void xrPictureBox4_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+                Bitmap bitmap = null;
+                pdfViewer.LoadDocument(stream);
+                if (pdfViewer.PageCount == 2)
+                {
+                    bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
+                }
+
+                PdfDocument doc = new PdfDocument();
+                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                PdfPage page = doc.Pages[0];
+
+                var orient = page.Orientation;
+                var rotate = page.Rotate;
+
+                float h = (float)page.Height;
+                float w = (float)page.Width;
+
+                if (pdfViewer.PageCount == 2)
+                {
+                    if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))       // flip page if height is less than 800
+                        bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                }
+
+
+                pdfViewer.CloseDocument();
+                pdfViewer.Dispose();
+
+                xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                xrPictureBox4.BackColor = Color.AliceBlue;
+            }
+            else
+            {
+                xrPictureBox4.ImageSource = null;
+            }
+        }
+
+        // assembly 2 full page
         private void xrPictureBox6_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
@@ -110,7 +174,7 @@ namespace VaultItemProcessor
                     float h = (float)page.Height;
                     float w = (float)page.Width;
                     //if (h < 800 || h < w)       // flip page if height is less than 800
-                    if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h <800)       // flip page if height is less than 800
+                    if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))       // flip page if height is less than 800
                         bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 }
@@ -127,37 +191,9 @@ namespace VaultItemProcessor
             }
         }
 
-        private void xrPictureBox4_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+        
 
-            if (File.Exists(filename))
-            {
-                PdfViewer pdfViewer = new PdfViewer();
-                byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                Stream stream = new MemoryStream(bytes);
-                Bitmap bitmap = null;
-                pdfViewer.LoadDocument(stream);
-                if (pdfViewer.PageCount == 2)
-                {
-                    bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
-                }
-                
-
-                pdfViewer.CloseDocument();
-                pdfViewer.Dispose();
-
-                xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-                xrPictureBox4.BackColor = Color.AliceBlue;
-            }
-            else
-            {
-                xrPictureBox4.ImageSource = null;
-            }
-        }
-
+        // parts half page
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
@@ -184,37 +220,7 @@ namespace VaultItemProcessor
             }
         }
 
-        
-
-        //private void xrPdfContent2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        //{
-        //    string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
-        //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-
-        //    if (File.Exists(filename))
-        //    {
-        //        //PdfDocument doc = new PdfDocument();
-        //        //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-        //        //PdfPage page = doc.Pages[0];
-
-        //        //var v = page.Orientation;
-        //        //float h = (float) page.Height;
-        //        //float w = (float) page.Width;
-
-
-        //        //xrPdfContent1.HeightF = w;
-        //        //xrPdfContent1.WidthF = h;
-        //        xrPdfContent2.SourceUrl = filename;
-        //    }
-        //    else
-        //    {
-        //        xrPdfContent2.SourceUrl = null;
-        //    }
-        //}
-
-
+        // parts full page
         private void xrPictureBox7_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
@@ -241,7 +247,8 @@ namespace VaultItemProcessor
                 float h = (float)page.Height;
                 float w = (float)page.Width;
 
-                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)       // flip page if height is less than 800
+                if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait))       // flip page if height is less than 800
+                    //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)       // flip page if height is less than 800
                     bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
 
                 pdfViewer.CloseDocument();
@@ -255,37 +262,6 @@ namespace VaultItemProcessor
                 xrPictureBox7.ImageSource = null;
             }
         }
-
-        //private void xrPdfContent1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        //{
-        //    //ProductionListProduct curRow = (ProductionListProduct)this.GetCurrentRow();
-        //    //xrPdfContent1.SourceUrl = @"M:\PDF Drawing Files\" + this.xrLabelNumber.Value + ".pdf";
-        //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-        //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-        //    if (File.Exists(filename))
-        //    {
-        //        //PdfDocument doc = new PdfDocument();
-        //        //doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-        //        //PdfPage page = doc.Pages[0];
-
-        //        //var v = page.Orientation;
-        //        //float h = (float) page.Height;
-        //        //float w = (float) page.Width;
-
-
-        //        //xrPdfContent1.HeightF = w;
-        //        //xrPdfContent1.WidthF = h;
-        //        xrPdfContent1.SourceUrl = filename;
-
-
-        //    }
-        //    else
-        //    {
-        //        xrPdfContent1.SourceUrl = null;
-        //    }
-        //}
 
         private void ReportAssemblies2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {

@@ -1576,6 +1576,7 @@
             this.xrPictureBox6.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.xrPictureBox6.Name = "xrPictureBox6";
             this.xrPictureBox6.SizeF = new System.Drawing.SizeF(769F, 868.0574F);
+            this.xrPictureBox6.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox6.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox6_BeforePrint);
             // 
             // XtraReport13
