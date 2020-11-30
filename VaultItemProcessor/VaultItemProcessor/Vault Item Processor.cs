@@ -616,6 +616,8 @@ namespace VaultItemProcessor
                         idx++;
                     }
 
+                    plProd.SubItems.Sort();
+
                     //if (textBoxOutputFolder.Text.Contains("Batch") || textBoxOutputFolder.Text.Contains("batch"))
                     //    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
                     //else

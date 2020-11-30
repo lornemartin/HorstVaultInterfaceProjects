@@ -82,6 +82,7 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
+            this.btnBandsawReport2 = new System.Windows.Forms.Button();
             this.btnReport2 = new System.Windows.Forms.Button();
             this.btnReport = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
@@ -100,7 +101,6 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
-            this.btnBandsawReport2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -347,6 +347,7 @@
             this.Category.FieldName = "Category";
             this.Category.Name = "Category";
             this.Category.OptionsColumn.AllowSort = false;
+            this.Category.SortOrder = System.Windows.Forms.SortOrder.Ascending;
             this.Category.Visible = true;
             this.Category.VisibleIndex = 2;
             this.Category.Width = 99;
@@ -528,6 +529,16 @@
             this.groupBoxOutput.Text = "Output Data";
             this.groupBoxOutput.Enter += new System.EventHandler(this.groupBoxOutput_Enter);
             // 
+            // btnBandsawReport2
+            // 
+            this.btnBandsawReport2.Location = new System.Drawing.Point(20, 158);
+            this.btnBandsawReport2.Name = "btnBandsawReport2";
+            this.btnBandsawReport2.Size = new System.Drawing.Size(75, 23);
+            this.btnBandsawReport2.TabIndex = 11;
+            this.btnBandsawReport2.Text = "Report3";
+            this.btnBandsawReport2.UseVisualStyleBackColor = true;
+            this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
+            // 
             // btnReport2
             // 
             this.btnReport2.Location = new System.Drawing.Point(20, 129);
@@ -678,16 +689,6 @@
             this.btnRemoveRecord.Text = "Remove";
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
-            // 
-            // btnBandsawReport2
-            // 
-            this.btnBandsawReport2.Location = new System.Drawing.Point(20, 158);
-            this.btnBandsawReport2.Name = "btnBandsawReport2";
-            this.btnBandsawReport2.Size = new System.Drawing.Size(75, 23);
-            this.btnBandsawReport2.TabIndex = 11;
-            this.btnBandsawReport2.Text = "Report3";
-            this.btnBandsawReport2.UseVisualStyleBackColor = true;
-            this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
             // 
             // Form1
             // 

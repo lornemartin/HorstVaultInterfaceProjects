@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 namespace VaultItemProcessor
 {
     [XmlRoot("ProductionListLineItem")]
-    public class ProductionListLineItem
+    public class ProductionListLineItem : IComparable<ProductionListLineItem>
     {
         [XmlElement("Qty")]
         public int Qty { get; set; }
@@ -55,6 +55,55 @@ namespace VaultItemProcessor
             HasPdf = false;
             Keywords = "";
             Notes = "";
+        }
+
+        public int CompareTo(ProductionListLineItem other)
+        {
+            //this sorts the underlying data that the treelist is displaying.
+            //it controls the sort order of the pdfs in the root level pdf folder.
+            try
+            {
+                if (this.IsStock == other.IsStock)
+                {
+                    if (this.Category == other.Category)
+                    {
+                        if (this.Operations == other.Operations)
+                        {
+                            if (this.MaterialThickness == other.MaterialThickness)
+                            {
+                                if (this.StructCode == other.StructCode)
+                                {
+                                    return this.StructCode.CompareTo(other.StructCode);
+                                }
+                                else
+                                    return 0;
+                            }
+                            else
+                            {
+                                return this.MaterialThickness.CompareTo(other.MaterialThickness);
+                            }
+                        }
+                        else
+                        {
+                            return this.Operations.CompareTo(other.Operations);
+                        }
+                    }
+
+                    else if ((this.Category == "Assembly") && (other.Category == "Part"))
+                        return -1;
+                    else if ((this.Category == "Part") && (other.Category == "Assembly"))
+                        return 1;
+
+                    else
+                        return 0;
+                }
+                else
+                {
+                    return this.IsStock.CompareTo(other.IsStock);
+                }
+            }
+
+            catch { return 0; }
         }
     }
 
