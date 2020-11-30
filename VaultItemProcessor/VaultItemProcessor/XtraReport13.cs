@@ -105,7 +105,7 @@ namespace VaultItemProcessor
                 Stream stream = new MemoryStream(bytes);
                 Bitmap bitmap = null;
                 pdfViewer.LoadDocument(stream);
-                if (pdfViewer.PageCount == 2)
+                if (pdfViewer.PageCount > 1)
                 {
                     bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
                 }
@@ -140,7 +140,7 @@ namespace VaultItemProcessor
                 Bitmap bitmap = null;
 
                 pdfViewer.LoadDocument(stream);
-                if (pdfViewer.PageCount == 2)
+                if (pdfViewer.PageCount > 1)
                 {
                     bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
                     PdfDocument doc = new PdfDocument();
@@ -245,6 +245,29 @@ namespace VaultItemProcessor
 
         private void ReportAssemblies2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
+        //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+        //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+        //    if (File.Exists(filename))
+        //    {
+        //        PdfViewer pdfViewer = new PdfViewer();
+        //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+        //        Stream stream = new MemoryStream(bytes);
+
+        //        pdfViewer.LoadDocument(stream);
+
+        //        if (pdfViewer.PageCount == 1)
+        //            e.Cancel = true;
+        //    }
+        //    else
+        //    {
+        //        e.Cancel = true;
+        //    }
+        }
+
+        private void Assy2Detail1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
             string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
             string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
 
@@ -266,6 +289,50 @@ namespace VaultItemProcessor
             }
         }
 
-        
+        private void Assy2Detail2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+
+                if (pdfViewer.PageCount == 1)
+                    e.Cancel = true;
+            }
+            else
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void Assy2FullPagePDF_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            if (File.Exists(filename))
+            {
+                PdfViewer pdfViewer = new PdfViewer();
+                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                Stream stream = new MemoryStream(bytes);
+
+                pdfViewer.LoadDocument(stream);
+
+                if (pdfViewer.PageCount == 1)
+                    e.Cancel = true;
+            }
+            else
+            {
+                e.Cancel = true;
+            }
+        }
     }
 }

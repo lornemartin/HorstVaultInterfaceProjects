@@ -30,12 +30,12 @@
         {
             this.components = new System.ComponentModel.Container();
             DevExpress.XtraReports.UI.XRSummary xrSummary1 = new DevExpress.XtraReports.UI.XRSummary();
+            DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo objectConstructorInfo1 = new DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo();
             DevExpress.XtraReports.UI.XRSummary xrSummary2 = new DevExpress.XtraReports.UI.XRSummary();
             DevExpress.XtraReports.UI.XRGroupSortingSummary xrGroupSortingSummary1 = new DevExpress.XtraReports.UI.XRGroupSortingSummary();
             DevExpress.XtraReports.UI.XRSummary xrSummary3 = new DevExpress.XtraReports.UI.XRSummary();
             DevExpress.XtraReports.UI.XRSummary xrSummary4 = new DevExpress.XtraReports.UI.XRSummary();
             DevExpress.XtraReports.UI.XRSummary xrSummary5 = new DevExpress.XtraReports.UI.XRSummary();
-            DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo objectConstructorInfo1 = new DevExpress.DataAccess.ObjectBinding.ObjectConstructorInfo();
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.DetailCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
             this.DetailData1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -73,6 +73,7 @@
             this.ReportFooter1 = new DevExpress.XtraReports.UI.ReportFooterBand();
             this.xrLabel10 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel9 = new DevExpress.XtraReports.UI.XRLabel();
+            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             this.ReportCutList = new DevExpress.XtraReports.UI.DetailReportBand();
             this.CutListDetail = new DevExpress.XtraReports.UI.DetailBand();
             this.xrTable1 = new DevExpress.XtraReports.UI.XRTable();
@@ -207,10 +208,10 @@
             this.Assy2FullPagePDFDetail = new DevExpress.XtraReports.UI.DetailBand();
             this.Assy2FullPagePDFHeader = new DevExpress.XtraReports.UI.ReportHeaderBand();
             this.xrPictureBox6 = new DevExpress.XtraReports.UI.XRPictureBox();
-            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table5)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table6)).BeginInit();
@@ -224,7 +225,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.xrTable2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable4)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable3)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
             // 
             // Title
@@ -560,6 +560,13 @@
             this.xrLabel9.Summary = xrSummary1;
             this.xrLabel9.Text = "xrLabel9";
             this.xrLabel9.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
+            // 
+            // objectDataSource1
+            // 
+            this.objectDataSource1.Constructor = objectConstructorInfo1;
+            this.objectDataSource1.DataMember = "GetBandsawReport2";
+            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
+            this.objectDataSource1.Name = "objectDataSource1";
             // 
             // ReportCutList
             // 
@@ -1472,6 +1479,7 @@
             this.xrPageBreak2});
             this.Assy2Detail1.HeightF = 495.3726F;
             this.Assy2Detail1.Name = "Assy2Detail1";
+            this.Assy2Detail1.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.Assy2Detail1_BeforePrint);
             // 
             // xrPictureBox4
             // 
@@ -1576,6 +1584,7 @@
             this.Assy2Detail2.DataSource = this.objectDataSource1;
             this.Assy2Detail2.Level = 0;
             this.Assy2Detail2.Name = "Assy2Detail2";
+            this.Assy2Detail2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.Assy2Detail2_BeforePrint);
             // 
             // Assy2Detail21
             // 
@@ -1708,6 +1717,7 @@
             this.Assy2FullPagePDF.DataSource = this.objectDataSource1;
             this.Assy2FullPagePDF.Level = 1;
             this.Assy2FullPagePDF.Name = "Assy2FullPagePDF";
+            this.Assy2FullPagePDF.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.Assy2FullPagePDF_BeforePrint);
             // 
             // Assy2FullPagePDFDetail
             // 
@@ -1727,13 +1737,6 @@
             this.xrPictureBox6.SizeF = new System.Drawing.SizeF(769F, 985F);
             this.xrPictureBox6.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox6.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox6_BeforePrint);
-            // 
-            // objectDataSource1
-            // 
-            this.objectDataSource1.Constructor = objectConstructorInfo1;
-            this.objectDataSource1.DataMember = "GetBandsawReport2";
-            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
-            this.objectDataSource1.Name = "objectDataSource1";
             // 
             // XtraReport13
             // 
@@ -1766,6 +1769,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table5)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table6)).EndInit();
@@ -1779,7 +1783,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.xrTable2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable4)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable3)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
         }
