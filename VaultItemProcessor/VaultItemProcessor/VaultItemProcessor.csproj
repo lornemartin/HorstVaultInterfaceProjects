@@ -162,7 +162,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AggregateLineItem.cs" />
     <Compile Include="AppSettings.cs" />
     <Compile Include="Reports2\BandsawReport2.cs" />
     <Compile Include="Reports2\BandsawReportAssembly2.cs" />
@@ -173,16 +172,12 @@
     <Compile Include="ProductionList.cs" />
     <Compile Include="ProductionListLineItem.cs" />
     <Compile Include="ProductionListProduct.cs" />
-    <Compile Include="DailyScheduleAggregate.cs" />
     <Compile Include="ExportLineItem.cs" />
     <Compile Include="PrintIDW.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="PrintIDW.Designer.cs">
       <DependentUpon>PrintIDW.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ProcessPDF.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Vault Item Processor.cs">
       <SubType>Form</SubType>

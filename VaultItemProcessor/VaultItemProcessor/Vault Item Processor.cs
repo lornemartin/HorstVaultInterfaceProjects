@@ -43,15 +43,11 @@ namespace VaultItemProcessor
         public string vaultPassword { get; set; }
         public string vaultServer { get; set; }
         public string vaultVault { get; set; }
-        public DailyScheduleAggregate dailyScheduleData { get; set; }
         public string currentItem { get; set; }
-
         public ProductionListDataSource productionList { get; set; }
 
         ProductionListProduct plProd = new ProductionListProduct();
-
         public DateTime lastFileUpdateTime { get; set; }
-
         public Form1()
         {
             try
@@ -71,7 +67,6 @@ namespace VaultItemProcessor
                     vaultPassword = AppSettings.Get("VaultPassword").ToString();
                     vaultServer = AppSettings.Get("VaultServer").ToString();
                     vaultVault = AppSettings.Get("VaultVault").ToString();
-                    dailyScheduleData = new DailyScheduleAggregate(exportFilePath + AppSettings.Get("DailyScheduleData").ToString(), pdfPath);
                     productionList = new ProductionListDataSource();
                     productionList.Load();
                     lastFileUpdateTime = new DateTime();
@@ -87,7 +82,6 @@ namespace VaultItemProcessor
                 MessageBox.Show(ex.Message);
             }
         }
-
         private void Form1_Load(object sender, EventArgs e)
         {
             try
@@ -104,16 +98,6 @@ namespace VaultItemProcessor
                     }
                 }
 
-                if (System.IO.File.Exists(exportFilePath + "AggregateData.xml"))
-                {
-                    XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
-                    using (var sr = new StreamReader(exportFilePath + "AggregateData.xml"))
-                    {
-                        dailyScheduleData = (DailyScheduleAggregate)xs.Deserialize(sr);
-                    }
-
-                    if (dailyScheduleData.IsFinalized()) btnConfirm.Enabled = false;
-                }
                 textBoxOutputFolder.Text = exportFilePath;
 
                 string watchPath = AppSettings.Get("VaultExportFilePath").ToString();
@@ -149,7 +133,6 @@ namespace VaultItemProcessor
                 MessageBox.Show(ex.Message);
             }
         }
-
         private void watcher_Changed(object sender, System.IO.FileSystemEventArgs e)
         {
             FileInfo f = new FileInfo(vaultExportFileWithPath);
@@ -170,7 +153,6 @@ namespace VaultItemProcessor
                     toolStripStatusLabel1.Text = "Export File Loaded";
                 }));
         }
-
         private void watcher_Created(object sender, System.IO.FileSystemEventArgs e)
         {
             FileInfo f = new FileInfo(vaultExportFileWithPath);
@@ -195,7 +177,6 @@ namespace VaultItemProcessor
 
             LoadData();
         }
-
         private void LoadData()
         {
             productionList = productionList.Load();
@@ -243,7 +224,6 @@ namespace VaultItemProcessor
                 MessageBox.Show("Production List is Empty");
             }
         }
-
         private int getCalculatedQty(ExportLineItem item, List<ExportLineItem> itemList)
         {
             try
@@ -290,7 +270,6 @@ namespace VaultItemProcessor
             }
 
         }
-
         public List<string> processVaultItemExport(string fileName = "")
         {
             // export from vault triggers this 4 times, we only want one of them.
@@ -709,71 +688,6 @@ namespace VaultItemProcessor
                 return new List<string>();
             }
         }
-        private int updatePDFs(bool isBatch)
-        {
-            try
-            {
-                int drawingsModified = 0;
-                //string currentProduct = "";
-
-                foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
-                {
-                    //if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
-                    //    currentProduct = item.Number;
-
-                    string watermark = "";
-                    if (isBatch)
-                        watermark = "Batch Name: " + txtBoxOrderNumber.Text + "\n";
-
-                    if (!isBatch)       // if we are processing a batch item, no need to sort out stock and make to order
-                    {
-                        if (item.IsStock == true)
-                            watermark += "\nStock Item\n";
-                        else
-                            watermark += "\nMake To Order Item\n";
-                    }
-
-                    if (item.AssociatedOrders.Count >= 1 && item.Category == "Part")
-                    {
-                        string outputPdfPath = ProcessPDF.CalculateSubFolder(pdfPath, exportFilePath, item, isBatch);
-
-                        //string watermark = "Item Number: " + item.Number + "\n" +
-                        //string watermark = "Product Number: " + currentProduct + "\n" +
-                        watermark += "Item Number: " + item.Number + "      Desc: " + item.ItemDescription + "\n";
-                        int totalQty = 0;
-
-                        if (item.Category == "Part")
-                        {
-                            watermark += "Material: " + item.StructCode + "\n";
-                            watermark += "Operation: " + item.Operations + "\n";
-                        }
-
-                        foreach (OrderData o in item.AssociatedOrders)
-                        {
-                           
-                            int lineTotalQty = o.UnitQty * o.OrderQty;
-                            watermark += "Order Number: " + o.OrderNumber + "----- Order Qty: " + o.OrderQty + " x per unit Qty: " + o.UnitQty + "---Line Total Qty: " + lineTotalQty + "\n";
-                            totalQty += lineTotalQty;
-                        }
-                        watermark += "Total Quantity: " + totalQty + "\n";
-
-                        if (item.Notes != "")
-                        {
-                            watermark += "Notes: " + item.Notes + "\n";
-                        }
-
-                        string outputPath = Path.GetDirectoryName(outputPdfPath) + "\\";
-                        ProcessPDF.CopyPDF(pdfPath, new List<string> { item.Number + ".pdf" }, new List<string> { watermark }, outputPath);
-                    }
-                    drawingsModified++;
-                }
-                return drawingsModified;
-            }
-            catch (Exception)
-            {
-                return -1;
-            }
-        }
         private void btnConfirm_Click(object sender, EventArgs e)
         {
             plProd.OrderNumber = txtBoxOrderNumber.Text;
@@ -952,190 +866,6 @@ namespace VaultItemProcessor
             catch (System.Exception)
             {
                 return null;
-            }
-        }
-        private void removeItem(bool isBatch)
-        {
-            DialogResult result = MessageBox.Show("Are you sure you want to remove all drawings associated with " + txtBoxOrderNumber.Text + "?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
-            if (result == DialogResult.Yes)
-            {
-                SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
-
-                try
-                {
-                    int drawingsDeleted = 0;
-                    int drawingsModified = 0;
-                    bool warningShown = false;
-
-                    if (!dailyScheduleData.IsFinalized())
-                    {
-                        bool matchingOrderFound = false;
-
-                        foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
-                        {
-                            
-                            foreach (var o in item.AssociatedOrders)
-                            {
-                                if (o.OrderNumber == txtBoxOrderNumber.Text)
-                                {
-                                    matchingOrderFound = true;
-                                    string otherMatchingOrders = "";
-                                    if (!warningShown) {
-                                        if (!item.IsStock && (item.Operations == "Bandsaw" || item.Operations == "Iron Worker"))
-                                        {
-                                            foreach (var o2 in item.AssociatedOrders)
-                                            {
-                                                if (o2.OrderNumber != txtBoxOrderNumber.Text)
-                                                {
-                                                    otherMatchingOrders += o2.OrderNumber.ToString() + "\n";
-                                                }
-                                            }
-
-                                            if (otherMatchingOrders != "")
-                                            {
-                                                MessageBox.Show("The following orders will also need to be removed because they contain parts linked to this order\n" + otherMatchingOrders);
-                                                warningShown = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                            }
-                        }
-
-                        if (matchingOrderFound != false)
-                        {
-                            if (txtBoxOrderNumber.Text != "" && txtBoxOrderNumber.Text != "Order Number")
-                            {
-                                string rootFolderPath = textBoxOutputFolder.Text;
-                                // first delete the order pdf in the root folder
-                                try
-                                {
-                                    string[] files;
-                                    if(!isBatch)
-                                        files = System.IO.Directory.GetFiles(rootFolderPath, "*" + txtBoxOrderNumber.Text + "-*", System.IO.SearchOption.TopDirectoryOnly);
-                                    else
-                                        files = System.IO.Directory.GetFiles(rootFolderPath, "*" + txtBoxOrderNumber.Text + "*", System.IO.SearchOption.TopDirectoryOnly);
-
-                                    if (files.Length == 1)
-                                    {
-                                        System.IO.File.Delete(files[0]);
-                                        drawingsDeleted++;
-                                    }
-                                    else if (files.Length > 1)
-                                    {
-                                        DialogResult multipleCheckResult = MessageBox.Show("Warning: " + files.Length + " matches found. Ok to delete?", "Multiple matches found", MessageBoxButtons.YesNo);
-                                        if (multipleCheckResult == DialogResult.Yes)
-                                        {
-                                            foreach (string f in files)
-                                            {
-                                                System.IO.File.Delete(f);
-                                            }
-                                        }
-                                        else
-                                            return;
-                                    }
-                                    else if (files.Length < 1)
-                                    {
-                                        MessageBox.Show("Cannot delete main order file, file not found,\nAborting Operation\n");
-                                        SplashScreenManager.CloseForm();
-                                        return;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Cannot delete main order file\n" + ex.Message);
-                                    SplashScreenManager.CloseForm();
-                                    return;
-                                }
-
-                                foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
-                                {
-                                    List<OrderData> searchOrders = item.AssociatedOrders.Where(o => o.OrderNumber == txtBoxOrderNumber.Text).ToList();
-                                    int orderCount = item.AssociatedOrders.Count();
-                                    if (searchOrders.Count != 0)
-                                    {
-                                        foreach (OrderData searchOrder in searchOrders)
-                                        {
-                                            item.AssociatedOrders.Remove(searchOrder);
-                                            //if (orderCount <= 1)
-                                            //{
-                                            // then search for part specific files
-                                            string filesToDelete = item.Number + ".pdf";
-                                            List<string> fileList = new List<string>();
-                                            fileList = getFilesRecursive(rootFolderPath, filesToDelete, fileList);
-                                            if (fileList.Count() > 0)
-                                            {
-                                                foreach (string file in fileList)
-                                                {
-                                                    bool successfulDelete = false;
-                                                    do
-                                                    {
-                                                        try
-                                                        {
-                                                            // delete the file
-                                                            System.IO.File.Delete(file);
-                                                            successfulDelete = true;
-                                                            drawingsDeleted++;
-                                                        }
-                                                        catch (Exception)
-                                                        {
-                                                            result = MessageBox.Show("Problem in deleting " + file + "\n" +
-                                                                             "You may not have permission to delete the file or the file may be open in Windows Explorer.  Please close it and click Retry to try again.", "Continue?", MessageBoxButtons.RetryCancel, MessageBoxIcon.Question);
-                                                            if (result == DialogResult.Cancel)
-                                                                successfulDelete = true;
-                                                        }
-                                                    } while (!successfulDelete);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (isBatch == false)
-                                    // remove items with no associated orders
-                                    foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList.ToList())
-                                    {
-                                        if (item.AssociatedOrders.Count == 0)
-                                        {
-                                            dailyScheduleData.AggregateLineItemList.Remove(item);
-                                        }
-                                    }
-                                else
-                                {
-                                    foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList.ToList())
-                                    {
-                                        if (item.AssociatedOrders.Count == 0)
-                                        {
-                                            dailyScheduleData.AggregateLineItemList.Remove(item);
-                                        }
-                                    }
-                                }
-
-                                // refresh all the pdfs
-                                dailyScheduleData.SaveToFile();
-                                drawingsModified = updatePDFs(isBatch);
-
-                                SplashScreenManager.CloseForm();
-                                MessageBox.Show("Number of PDFs Removed: " + drawingsDeleted + "\nNumber of PDFs modified: " + drawingsModified);
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("No matching order found for " + txtBoxOrderNumber.Text);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Cannot remove orders after project has been finalized.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error in Removing Order\n" + ex.Message);
-                }
-
-                SplashScreenManager.CloseForm(false);
             }
         }
         private void exportTreeList_PopupMenuShowing(object sender, DevExpress.XtraTreeList.PopupMenuShowingEventArgs e)
@@ -1322,7 +1052,6 @@ namespace VaultItemProcessor
 
             exportTreeList.RefreshDataSource();
         }
-
         private void radioGroup2_SelectedIndexChanged(object sender, EventArgs e)
         {
             string mfgLocation = "Plant 1";
@@ -1338,7 +1067,6 @@ namespace VaultItemProcessor
 
             exportTreeList.RefreshDataSource();
         }
-
         private void btnReport_Click(object sender, EventArgs e)
         {
             XtraReport11 report = new XtraReport11();
@@ -1347,7 +1075,6 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
-
         private void btnReport2_Click(object sender, EventArgs e)
         {
             XtraReport12 report = new XtraReport12();
@@ -1356,7 +1083,6 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
-
         private void btnBandsawReport2_Click(object sender, EventArgs e)
         {
             XtraReport13 report = new XtraReport13();

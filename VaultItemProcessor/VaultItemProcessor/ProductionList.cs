@@ -40,10 +40,6 @@ namespace VaultItemProcessor
             Finalized = false;
             currentIndex = 0;
         }
-
-
-
-
         public void AddProduct(ProductionListProduct prod)
         {
             if (productList.Count > 0)
