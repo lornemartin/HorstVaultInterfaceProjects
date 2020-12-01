@@ -527,7 +527,6 @@
             this.groupBoxOutput.TabIndex = 7;
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
-            this.groupBoxOutput.Enter += new System.EventHandler(this.groupBoxOutput_Enter);
             // 
             // btnBandsawReport2
             // 
