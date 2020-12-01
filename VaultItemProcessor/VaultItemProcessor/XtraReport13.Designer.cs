@@ -850,6 +850,7 @@
             this.Assy1fullPagePDF});
             this.ReportAssemblies.DataMember = "ReportAssemblies";
             this.ReportAssemblies.DataSource = this.objectDataSource1;
+            this.ReportAssemblies.Expanded = false;
             this.ReportAssemblies.Level = 2;
             this.ReportAssemblies.Name = "ReportAssemblies";
             this.ReportAssemblies.PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand;
@@ -862,7 +863,6 @@
             this.xrPictureBox2,
             this.table7});
             this.Assy1Detail.HeightF = 479.1146F;
-            this.Assy1Detail.KeepTogether = true;
             this.Assy1Detail.Name = "Assy1Detail";
             // 
             // xrPageBreak3
@@ -1137,6 +1137,7 @@
             this.FullPagePartPdf});
             this.ReportParts.DataMember = "ReportParts";
             this.ReportParts.DataSource = this.objectDataSource1;
+            this.ReportParts.Expanded = false;
             this.ReportParts.Level = 4;
             this.ReportParts.Name = "ReportParts";
             this.ReportParts.ReportPrintOptions.PrintOnEmptyDataSource = false;
@@ -1467,6 +1468,7 @@
             this.Assy2FullPagePDF});
             this.ReportAssemblies2.DataMember = "ReportAssemblies";
             this.ReportAssemblies2.DataSource = this.objectDataSource1;
+            this.ReportAssemblies2.Expanded = false;
             this.ReportAssemblies2.Level = 3;
             this.ReportAssemblies2.Name = "ReportAssemblies2";
             this.ReportAssemblies2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.ReportAssemblies2_BeforePrint);
