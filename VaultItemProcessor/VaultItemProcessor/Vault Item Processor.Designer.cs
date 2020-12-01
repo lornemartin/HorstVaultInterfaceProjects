@@ -535,7 +535,7 @@
             this.btnBandsawReport2.Name = "btnBandsawReport2";
             this.btnBandsawReport2.Size = new System.Drawing.Size(75, 23);
             this.btnBandsawReport2.TabIndex = 11;
-            this.btnBandsawReport2.Text = "Report3";
+            this.btnBandsawReport2.Text = "Bandsaw";
             this.btnBandsawReport2.UseVisualStyleBackColor = true;
             this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
             // 
