@@ -179,6 +179,28 @@ namespace VaultItemProcessor
         }
 
         [HighlightedMember]
+        public IEnumerable<ProductionListLineItem> GetLaserScheduleReport()
+        {
+            Load();
+            List<ProductionListLineItem> subList = new List<ProductionListLineItem>();
+            List<ProductionListLineItem> completeList = new List<ProductionListLineItem>();
+
+            foreach (ProductionListProduct prod in productList)
+            {
+                subList = prod.SubItems.Where(i => i.Operations == "Laser").ToList();
+                foreach(ProductionListLineItem lItem in subList)
+                {
+                    completeList.Add(lItem);
+                }
+            }
+
+            
+            completeList = completeList.OrderBy(i => i.MaterialThickness).ToList();
+
+            return completeList;
+        }
+
+        [HighlightedMember]
         public IEnumerable<Reports2.BandsawReportProduct2> GetBandsawReport2()
         {
             Load();

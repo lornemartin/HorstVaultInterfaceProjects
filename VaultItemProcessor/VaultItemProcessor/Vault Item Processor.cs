@@ -1091,6 +1091,12 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
+
+        private void btnLaserSched_Click(object sender, EventArgs e)
+        {
+            List<ProductionListLineItem> laserList = new List<ProductionListLineItem>();
+            laserList = (List<ProductionListLineItem>) productionList.GetLaserScheduleReport();
+        }
     }
 
 }

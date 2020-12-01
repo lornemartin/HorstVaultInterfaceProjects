@@ -105,6 +105,7 @@ namespace VaultItemProcessor
 
             catch { return 0; }
         }
+
     }
 
     

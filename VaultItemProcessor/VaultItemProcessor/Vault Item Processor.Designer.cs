@@ -101,6 +101,7 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
+            this.btnLaserSched = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -508,6 +509,7 @@
             // 
             // groupBoxOutput
             // 
+            this.groupBoxOutput.Controls.Add(this.btnLaserSched);
             this.groupBoxOutput.Controls.Add(this.btnBandsawReport2);
             this.groupBoxOutput.Controls.Add(this.btnReport2);
             this.groupBoxOutput.Controls.Add(this.btnReport);
@@ -687,6 +689,16 @@
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
             // 
+            // btnLaserSched
+            // 
+            this.btnLaserSched.Location = new System.Drawing.Point(20, 188);
+            this.btnLaserSched.Name = "btnLaserSched";
+            this.btnLaserSched.Size = new System.Drawing.Size(75, 23);
+            this.btnLaserSched.TabIndex = 12;
+            this.btnLaserSched.Text = "Laser";
+            this.btnLaserSched.UseVisualStyleBackColor = true;
+            this.btnLaserSched.Click += new System.EventHandler(this.btnLaserSched_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -777,6 +789,7 @@
         private System.Windows.Forms.Button btnReport;
         private System.Windows.Forms.Button btnReport2;
         private System.Windows.Forms.Button btnBandsawReport2;
+        private System.Windows.Forms.Button btnLaserSched;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
