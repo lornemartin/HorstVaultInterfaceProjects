@@ -314,7 +314,6 @@
             this.repositoryItemCheckEdit1});
             this.exportTreeList.Size = new System.Drawing.Size(1207, 522);
             this.exportTreeList.TabIndex = 0;
-            this.exportTreeList.CompareNodeValues += new DevExpress.XtraTreeList.CompareNodeValuesEventHandler(this.exportTreeList_CompareNodeValues);
             this.exportTreeList.PopupMenuShowing += new DevExpress.XtraTreeList.PopupMenuShowingEventHandler(this.exportTreeList_PopupMenuShowing);
             this.exportTreeList.MouseDown += new System.Windows.Forms.MouseEventHandler(this.exportTreeList_MouseDown);
             // 
@@ -497,7 +496,6 @@
             this.txtBoxOrderNumber.Size = new System.Drawing.Size(203, 20);
             this.txtBoxOrderNumber.TabIndex = 5;
             this.txtBoxOrderNumber.Text = "Order Number";
-            this.txtBoxOrderNumber.DoubleClick += new System.EventHandler(this.btnProcess_Click);
             // 
             // pdfViewer1
             // 

@@ -709,279 +709,6 @@ namespace VaultItemProcessor
                 return new List<string>();
             }
         }
-
-        private void exportTreeList_CompareNodeValues(object sender, DevExpress.XtraTreeList.CompareNodeValuesEventArgs e)
-        {
-            // all sorting is done now by ExportLineItem.CompareTo
-            // this sorts the underlying data source, so we don't need to try to sort the view.
-
-            //this sorts the list in the treeList View
-            //if(e.Column.Caption == "Stock")
-            //{
-            //    if ((e.NodeValue1.ToString() == "False") && (e.NodeValue2.ToString() == "True"))
-            //        e.Result = -1;
-            //    else if ((e.NodeValue1.ToString() == "True") && (e.NodeValue2.ToString() == "False"))
-            //        e.Result = 1;
-            //}
-
-            //if (e.Column.Caption != "Category") return;
-            //try
-            //{
-            //    if (e.NodeValue1 == e.NodeValue2)
-            //        e.Result = 0;
-            //    else if ((e.NodeValue1.ToString() == "Product") && (e.NodeValue2.ToString() == "Part"))
-            //        e.Result = -1;
-            //    else if ((e.NodeValue1.ToString() == "Product") && (e.NodeValue2.ToString() == "Assembly"))
-            //        e.Result = -1;
-            //    else if ((e.NodeValue1.ToString() == "Assembly") && (e.NodeValue2.ToString() == "Part"))
-            //        e.Result = -1;
-            //    else if ((e.NodeValue1.ToString() == "Assembly") && (e.NodeValue2.ToString() == "Product"))
-            //        e.Result = 1;
-            //    else if ((e.NodeValue1.ToString() == "Part") && (e.NodeValue2.ToString() == "Assembly"))
-            //        e.Result = 1;
-            //    else if ((e.NodeValue1.ToString() == "Part") && (e.NodeValue2.ToString() == "Product"))
-            //        e.Result = 1;
-            //}
-            //catch { e.Result = 0; }
-        }
-
-        private bool processOrder()
-        {
-            try
-            {
-                if (!dailyScheduleData.IsFinalized())
-                {
-                    bool matchingOrderFound = false;
-
-                    // are we processing an order or a batch?
-                    bool isBatch = false;
-                    string batchItemName = "";
-                    if (txtBoxOrderNumber.Text.IndexOf("batch", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        isBatch = true;
-                        if (lineItemList != null)
-                            batchItemName = lineItemList[0].Number;
-                    }
-
-                   
-
-                    foreach (AggregateLineItem item in dailyScheduleData.AggregateLineItemList)
-                    {
-                        foreach (var o in item.AssociatedOrders)
-                        {
-                            if (o.OrderNumber == txtBoxOrderNumber.Text) matchingOrderFound = true;
-                        }
-                    }
-
-                    if (matchingOrderFound == false || isBatch == true) // batches can have matching order numbers
-                    {
-
-                        // search for parts that get manufactured at different location than their parent assembly.
-                        if (isBatch == false)
-                        {
-                            int itemsFound = 0;
-                            foreach (ExportLineItem item in lineItemList)
-                            {
-
-                                ExportLineItem parentItem = lineItemList.Find(x => x.Number == item.Parent);
-                                if (parentItem!=null)
-                                {
-                                    if (item.PlantID != "" && parentItem.PlantID != "" && item.Category == "Part")
-                                    {
-                                        string localPlant = AppSettings.Get("LocalPlantName").ToString();
-                                        string remotePlant = AppSettings.Get("RemotePlantName").ToString();
-
-                                        if (parentItem.PlantID == localPlant && item.PlantID == remotePlant)
-                                        {
-                                            itemsFound++;
-                                        }
-                                    }
-                                }
-                            }
-                            if (itemsFound > 0)
-                            {
-                                DialogResult continueResult = MessageBox.Show("Warning! Found " + itemsFound + " item(s) that gets manufactured at a different location than its parent.  Continue, yes or no?", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                                if (continueResult == DialogResult.No)
-                                {
-                                    return false;
-                                }
-                            }
-                            itemsFound = 0;
-                        }
-
-
-
-                        if (spinEditOrderQty.Value != 0)
-                        {
-                            if (txtBoxOrderNumber.Text != "" && txtBoxOrderNumber.Text != "Order Number")
-                            {
-                                toolStripStatusLabel1.Text = "Saving PDFs to output folder...";
-
-                                int orderQty = (int)spinEditOrderQty.Value;
-
-                                // check for missing material values on laser cut parts
-                                bool missingValFound = false;
-                                bool OkToContinue = true;
-                                int missingOperationFound = 0;
-
-                                if (!isBatch)
-                                    lineItemList.Sort();
-                                else
-                                    lineItemList.Sort(ExportLineItem.CompareToBatchItems);
-
-                                foreach (ExportLineItem item in lineItemList)
-                                {
-                                    if (item.Operations == "Laser" && (item.MaterialThickness == "" || item.Material == ""))
-                                    {
-                                        missingValFound = true;
-                                    }
-
-                                    if (item.Category == "Part" && item.Operations == "")
-                                    {
-                                        missingOperationFound++;
-                                    }
-                                }
-
-                                if (missingValFound == true)
-                                {
-                                    DialogResult result = MessageBox.Show("There are one or more files that are specified as laser cut files, but have missing material specs.  Do you want to continue?", "Continue?", MessageBoxButtons.YesNo);
-                                    if (result == DialogResult.Yes) OkToContinue = true;
-                                    else OkToContinue = false;
-                                }
-
-                                if (missingOperationFound >= 1)
-                                {
-                                    DialogResult result = MessageBox.Show("There are " + missingOperationFound + " part file(s) that have no operation assigned. Do you want to continue?", "Continue?", MessageBoxButtons.YesNo);
-                                    if (result == DialogResult.Yes) OkToContinue = true;
-                                    else OkToContinue = false;
-                                }
-
-                                string currentProduct = "";
-
-                                if (OkToContinue)
-                                {
-
-
-                                    SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
-
-                                    if (!isBatch)
-                                        lineItemList.Sort(); // first sort by category using custom sorting
-                                    else
-                                        lineItemList.Sort(ExportLineItem.CompareToBatchItems);
-
-                                    // print each line item to it's corresponding folder.
-                                    foreach (ExportLineItem item in lineItemList)
-                                    {
-                                        if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
-                                            currentProduct = item.Number;
-
-                                        dailyScheduleData.AddLineItem(item, txtBoxOrderNumber.Text, orderQty, batchItemName, currentProduct);
-                                        dailyScheduleData.SaveToFile();
-                                    }
-
-                                    if (dailyScheduleData.HasNextItem(lineItemList[0].Number)) btnNextRecord.Enabled = true;
-                                    else btnNextRecord.Enabled = false;
-
-                                    if (dailyScheduleData.HasPreviousItem(lineItemList[0].Number)) btnPreviousRecord.Enabled = true;
-                                    else btnPreviousRecord.Enabled = false;
-
-                                    // also create pdf of all drawings associated with this order.
-                                    //  we'll save it in the root folder.
-
-                                    string outputPdfPath = "";
-                                    outputPdfPath = exportFilePath + "\\" + txtBoxOrderNumber.Text + "-" + jobName + ".pdf";
-                                    List<string> fileNamesToCopy = new List<string>();
-                                    List<string> watermarksToCopy = new List<string>();
-
-                                    currentProduct = "";
-
-
-
-                                    foreach (ExportLineItem item in lineItemList)
-                                    {
-                                        if ((item.Category == "Product" || item.Category == "Assembly") && item.Parent == "<top>")
-                                            currentProduct = item.Number;
-
-                                        string watermark = "";
-                                        if (isBatch)
-                                            watermark = "Batch Name: " + txtBoxOrderNumber.Text + "\n";
-
-                                        if (!isBatch)       // if we are processing a batch item, no need to sort out stock and make to order
-                                        {
-                                            if (item.IsStock == true)
-                                                watermark += "\nStock Item\n";
-                                            else
-                                                watermark += "\nMake To Order Item\n";
-                                        }
-
-                                        string itemNumber = "";
-                                        //if (item.Keywords != "")
-                                        //    itemNumber = item.Keywords;
-                                        //else
-                                        itemNumber = item.Number;
-
-                                        watermark += "Product Number: " + currentProduct + "\n" +
-                                        watermark + "Item Number: " + itemNumber + "     Desc: " + item.ItemDescription + "\n";
-                                        watermark += "Manufacture Location: " + item.PlantID + "\n";
-
-                                        if (item.Category == "Part")
-                                        {
-                                            watermark += "Material: " + item.StructCode + "\n";
-                                            watermark += "Operation: " + item.Operations + "\n";
-                                        }
-
-                                        if (item.Notes != "")
-                                        {
-                                            watermark += "Notes: " + item.Notes + "\n";
-                                        }
-
-                                        orderQty = (int)spinEditOrderQty.Value;
-                                        int unitQty = item.Qty;
-                                        int totalQty = orderQty * unitQty;
-                                        watermark += "Quantity: " + totalQty + "\n";
-
-
-
-                                        fileNamesToCopy.Add(item.Number + ".pdf");
-                                        watermarksToCopy.Add(watermark);
-                                    }
-                                    string outputPath = Path.GetDirectoryName(outputPdfPath) + "\\";
-                                    ProcessPDF.CopyPDF(pdfPath, fileNamesToCopy, watermarksToCopy, outputPath, txtBoxOrderNumber.Text, jobName);
-
-                                    toolStripStatusLabel1.Text = "Saving PDFs to output folder...Done";
-                                    SplashScreenManager.CloseForm(false);
-                                    return true;
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Please Enter a Valid Order Number");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Please enter a quantity");
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("This Order Number Already Exists. Please Enter a Different One.");
-                        return false;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Cannot add new schedule data.\n Schedule has already been finalized.");
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error in Processing PDF Files\n" + ex.Message);
-                return false;
-            }
-        }
-
         private int updatePDFs(bool isBatch)
         {
             try
@@ -1047,7 +774,6 @@ namespace VaultItemProcessor
                 return -1;
             }
         }
-
         private void btnConfirm_Click(object sender, EventArgs e)
         {
             plProd.OrderNumber = txtBoxOrderNumber.Text;
@@ -1094,7 +820,6 @@ namespace VaultItemProcessor
 
             
         }
-
         private void btnPreviousRecord_Click(object sender, EventArgs e)
         {
             plProd = productionList.GetPrev();
@@ -1116,7 +841,6 @@ namespace VaultItemProcessor
             exportTreeList.Refresh();
             exportTreeList.Cursor = Cursors.Default;
         }
-
         private void btnNextRecord_Click(object sender, EventArgs e)
         {
             plProd = productionList.GetNext();
@@ -1138,7 +862,6 @@ namespace VaultItemProcessor
             exportTreeList.Refresh();
             exportTreeList.Cursor = Cursors.Default;
         }
-
         private void btnUpdateRecord_Click(object sender, EventArgs e)
         {
             productionList.productList[productionList.currentIndex].OrderNumber = txtBoxOrderHeader.Text;
@@ -1149,7 +872,6 @@ namespace VaultItemProcessor
             productionList.SaveToFile();
 
         }
-
         private void btnRemoveRecord_Click(object sender, EventArgs e)
         {
             DialogResult result = MessageBox.Show("Are you sure you want to remove the current record?","Confirm", MessageBoxButtons.YesNo);
@@ -1212,127 +934,6 @@ namespace VaultItemProcessor
                 }
             }
         }
-        private void btnProcess_Click(object sender, EventArgs e)
-        {
-            bool thicknessOk = true;
-            bool materialOk = true;
-            bool structOk = true;
-            bool operationsOk = true;
-            int numOfPartsToCheck = 0;
-            DialogResult result = new DialogResult();
-
-            //exportFilePath = folderBrowserDialogOutputFolderSelect.SelectedPath + "\\";
-            //textBoxOutputFolder.Text = exportFilePath;
-
-            exportFilePath = textBoxOutputFolder.Text;
-
-            AppSettings.Set("ExportFilePath", exportFilePath);
-            string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
-
-            loadScheduleData(scheduleFileName);
-
-            foreach (ExportLineItem lineItem in lineItemList)
-            {
-                if (lineItem.Operations == "Laser" && lineItem.MaterialThickness == "")
-                {
-                    thicknessOk = false;
-                }
-                if (lineItem.Operations == "Laser" && lineItem.Material == "")
-                {
-                    materialOk = false;
-                }
-                if ((lineItem.Operations == "Machine Shop" || lineItem.Operations == "Bandsaw" || lineItem.Operations == "Ironworker") && (lineItem.StructCode == ""))
-                {
-                    structOk = false;
-                }
-                if (lineItem.Operations == "")
-                {
-                    operationsOk = false;
-                }
-                //if (lineItem.Notes.ToUpper().Contains("CHECK"))
-                if (lineItem.Notes != "")
-                {
-                    numOfPartsToCheck++;
-                }
-            }
-
-            bool cancelled = false;
-
-            if (thicknessOk == false && cancelled == false)
-            {
-                result = MessageBox.Show("One or more material thicknesses for laser cut items have not been defined. Did you want to continue?", "Missing Thickness", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
-                {
-                    thicknessOk = true;
-                }
-                else
-                {
-                    cancelled = true;
-                }
-            }
-
-            if (materialOk == false && cancelled == false)
-            {
-                result = MessageBox.Show("One or more material types for laser cut items have not been defined. Did you want to continue?", "Missing Material", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
-                {
-                    materialOk = true;
-                }
-                else
-                {
-                    cancelled = true;
-                }
-            }
-
-            if (structOk == false && cancelled == false)
-            {
-                result = MessageBox.Show("One or more structural material types have not been defined. Did you want to continue?", "Missing Structural Information", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
-                {
-                    structOk = true;
-                }
-                else
-                {
-                    cancelled = true;
-                }
-            }
-
-            if (operationsOk == false && cancelled == false)
-            {
-                result = MessageBox.Show("One or more operations have not been defined. Did you want to continue?", "Missing Operations", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
-                {
-                    thicknessOk = true;
-                }
-                else
-                {
-                    cancelled = true;
-                }
-            }
-
-            if(numOfPartsToCheck>0)
-            {
-                result = MessageBox.Show("There are " + numOfPartsToCheck + "item(s) that raise a flag.  Did you want to continue?", "Items To Check", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.No)
-                {
-                    cancelled = true;
-                }
-            }
-
-            if (thicknessOk && materialOk && structOk && operationsOk && cancelled == false)
-            {
-                if (processOrder())
-                {
-                    string fileName = textBoxOutputFolder.Text + "batch.csv";
-                    string line = spinEditOrderQty.Value.ToString() + "," + lineItemList[0].Number + ",," + txtBoxOrderNumber.Text;
-                    using (StreamWriter writer = new StreamWriter(fileName, true))
-                    {
-                        writer.WriteLine(line);
-                    }
-                }
-            }
-        }
-
         List<string> getFilesRecursive(string rootFolderPath, string searchFileName, List<string> filesFound)
         {
             try
@@ -1353,17 +954,6 @@ namespace VaultItemProcessor
                 return null;
             }
         }
-
-        private void btnRemoveOrder_Click(object sender, EventArgs e)
-        {
-            removeItem(false);
-        }
-
-        private void btnRemoveBatchItem_Click(object sender, EventArgs e)
-        {
-            removeItem(true);
-        }
-
         private void removeItem(bool isBatch)
         {
             DialogResult result = MessageBox.Show("Are you sure you want to remove all drawings associated with " + txtBoxOrderNumber.Text + "?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
@@ -1548,7 +1138,6 @@ namespace VaultItemProcessor
                 SplashScreenManager.CloseForm(false);
             }
         }
-
         private void exportTreeList_PopupMenuShowing(object sender, DevExpress.XtraTreeList.PopupMenuShowingEventArgs e)
         {
             if (e.Menu is TreeListNodeMenu)
@@ -1560,7 +1149,6 @@ namespace VaultItemProcessor
                 //exportTreeList.FocusedNode.Tag = (ExportLineItem)v;
             }
         }
-
         private void menuGetPdf_ItemClick(object sender, EventArgs e)
         {
 
@@ -1656,7 +1244,6 @@ namespace VaultItemProcessor
 
            
         }
-
         protected virtual bool IsFileLocked(FileInfo file)
         {
             FileStream stream = null;
@@ -1682,7 +1269,6 @@ namespace VaultItemProcessor
             //file is not locked
             return false;
         }
-
         private void exportTreeList_MouseDown(object sender, MouseEventArgs e)
         {
             string selectedItem = "";
@@ -1703,7 +1289,6 @@ namespace VaultItemProcessor
             else
                 pdfViewer1.CloseDocument();
         }
-
         private void btnSelectOutputFolder_Click(object sender, EventArgs e)
         {
             // Show the dialog and get result.
@@ -1719,165 +1304,9 @@ namespace VaultItemProcessor
            
             string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
 
-            loadScheduleData(scheduleFileName);
-
             productionList = new ProductionListDataSource();
             LoadData();
         }
-
-        private void loadScheduleData(string scheduleFileName)
-        {
-            if (!File.Exists(scheduleFileName))
-            {
-                dailyScheduleData = new DailyScheduleAggregate(scheduleFileName, pdfPath);
-            }
-            else
-            {
-                XmlSerializer xs = new XmlSerializer(typeof(DailyScheduleAggregate));
-                using (var sr = new StreamReader(exportFilePath + "AggregateData.xml"))
-                {
-                    dailyScheduleData = (DailyScheduleAggregate)xs.Deserialize(sr);
-                }
-            }
-
-            toolStripStatusLabel1.Text = "Ouput Folder Selected.";
-
-            if (dailyScheduleData.IsFinalized()) btnConfirm.Enabled = false;
-            else btnConfirm.Enabled = true;
-
-            //if (textBoxOutputFolder.Text.Contains("Batch") || (textBoxOutputFolder.Text.Contains("batch")))
-            //{
-            //    btnRemoveBatchItem.Enabled = true;
-            //    btnRemoveOrder.Enabled = false;
-            //}
-            //else
-            //{
-            //    btnRemoveBatchItem.Enabled = false;
-            //    btnRemoveOrder.Enabled = true;
-
-            //}
-        }
-
-        private void btnFinalize_Click(object sender, EventArgs e)
-        {
-            System.IO.DirectoryInfo rootDir = new DirectoryInfo(textBoxOutputFolder.Text);
-
-            if (dailyScheduleData.IsFinalized())
-            {
-                MessageBox.Show("Schedule is already finalized.");
-            }
-            else
-            {
-                DialogResult r = MessageBox.Show("This command will combine all drawings in each folder together into one combined drawing set." +
-                                                 "  You will not be able to add any more orders to this project.  Are you sure you want to continue?  ", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
-                if (r == DialogResult.Yes)
-                {
-                    SplashScreenManager.ShowForm(this, typeof(WaitForm2), true, true, false);
-                    CombinePDFs(rootDir);
-                    //GroupBandSawDrawings(rootDir);
-                    dailyScheduleData.FinalizeData();
-                    btnConfirm.Enabled = false;
-                    SplashScreenManager.CloseForm(false);
-                }
-            }
-        }
-
-        void CombinePDFs(System.IO.DirectoryInfo root)
-        {
-            PdfDocument inputDocument = new PdfDocument();
-            PdfDocument outputDocument = new PdfDocument();
-
-            XUnit height = new XUnit();
-            XUnit width = new XUnit();
-            List<XUnit[]> xUnitArrayList = new List<XUnit[]>();
-
-            System.IO.FileInfo[] files = null;
-            System.IO.DirectoryInfo[] subDirs = null;
-
-            // First, process all the files directly under this folder
-            try
-            {
-                if (root.Name.Contains("Bandsaw Drawings"))
-                {
-                    // sort bandsaw drawings by file name, they all start with a number
-                    files = root.GetFiles("*.pdf");
-                    var orderedFiles = files.OrderBy(n => Regex.Replace(n.Name, @"\d+", f => f.Value.PadLeft(5, '0')));
-                    files = orderedFiles.ToArray();
-
-                }
-                else
-                {
-                    // otherwise sort by creation time
-                    files = root.GetFiles("*.pdf");
-                    var orderedFiles = files.OrderBy(f => f.CreationTime);
-                    files = orderedFiles.ToArray();
-                }
-
-            }
-            // This is thrown if even one of the files requires permissions greater
-            // than the application provides.
-            catch (UnauthorizedAccessException e)
-            {
-                // This code just writes out the message and continues to recurse.
-                // You may decide to do something different here. For example, you
-                // can try to elevate your privileges and access the file again.
-                MessageBox.Show(e.Message);
-            }
-
-            catch (System.IO.DirectoryNotFoundException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            if (files != null && !textBoxOutputFolder.Text.Contains(root.Name))
-            {
-                //string fNames = "";
-                foreach (System.IO.FileInfo fi in files)
-                {
-                    if (fi.Name != "_Combined Drawing Set.pdf")       // if we already ran finalizer before, we don't want to duplicate all the files...
-                        inputDocument = PdfReader.Open(fi.FullName, PdfDocumentOpenMode.Import);
-
-                    int count = inputDocument.PageCount;
-                    for (int idx = 0; idx < count; idx++)
-                    {
-                        PdfPage page = inputDocument.Pages[idx];
-                        // store page width and height in array list so we can reference again when we are producing output
-                        height = page.Height;
-                        width = page.Width;
-                        XUnit[] pageDims = new XUnit[] { page.Height, page.Width };
-                        xUnitArrayList.Add(pageDims);
-
-                        outputDocument.AddPage(page);
-                    }
-                }
-
-                string outputFile = root.FullName + @"\_Combined Drawing Set.pdf";
-                outputDocument.Info.Title = "Combined PDF Created by Vault Item Processor";
-                if (outputDocument.PageCount > 0)
-                {
-                    try
-                    {
-                        outputDocument.Save(outputFile);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-                }
-
-            }
-
-            // Now find all the subdirectories under this directory.
-            subDirs = root.GetDirectories();
-
-            foreach (System.IO.DirectoryInfo dirInfo in subDirs)
-            {
-                // Resursive call for each subdirectory.
-                CombinePDFs(dirInfo);
-            }
-
-        }
-
         private void radioGroup1_SelectedIndexChanged(object sender, EventArgs e)
         {
             bool allStock = false;
