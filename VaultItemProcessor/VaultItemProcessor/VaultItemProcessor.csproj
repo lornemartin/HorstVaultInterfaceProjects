@@ -184,7 +184,6 @@
     <Compile Include="ProcessPDF.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="ScheduleReportLineItem.cs" />
     <Compile Include="Vault Item Processor.cs">
       <SubType>Form</SubType>
     </Compile>

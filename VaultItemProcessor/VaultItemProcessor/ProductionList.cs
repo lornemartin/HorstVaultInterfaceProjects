@@ -95,35 +95,12 @@ namespace VaultItemProcessor
         }
 
         [HighlightedMember]
-        public IEnumerable<ScheduleReportLineItem> GetSchedulelineItems()
-        {
-            Load();
-            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
-
-            foreach(ProductionListProduct prod in productList)
-            {
-                ScheduleReportLineItem parent = new ScheduleReportLineItem(prod);
-                lineItemList.Add(parent);
-
-                foreach(ProductionListLineItem lineItem in prod.SubItems)
-                {
-                    ScheduleReportLineItem subItem = new ScheduleReportLineItem(lineItem,prod);
-                    lineItemList.Add(subItem);
-                }
-            }
-
-            return lineItemList;
-        }
-
-        [HighlightedMember]
         public IEnumerable<Reports2.BandsawReportProduct2> GetBatchReport()
         {
             Load();
 
             Reports2.BandsawReport2 report = new Reports2.BandsawReport2();
             report.ReportProducts = new List<Reports2.BandsawReportProduct2>();
-
-            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
 
             foreach (ProductionListProduct prod in productList)
             {
@@ -213,8 +190,6 @@ namespace VaultItemProcessor
             Reports2.BandsawReport2 report = new Reports2.BandsawReport2();
             report.ReportProducts = new List<Reports2.BandsawReportProduct2>();
 
-            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
-
             foreach (ProductionListProduct prod in productList)
             {
                 Reports2.BandsawReportProduct2 reportProd = new Reports2.BandsawReportProduct2(prod);
@@ -295,27 +270,6 @@ namespace VaultItemProcessor
             return report.ReportProducts.ToList();
         }
 
-        [HighlightedMember]
-        public IEnumerable<ScheduleReportLineItem> GetLaserReport()
-        {
-            Load();
-
-            List<ScheduleReportLineItem> lineItemList = new List<ScheduleReportLineItem>();
-
-            foreach (ProductionListProduct prod in productList)
-            {
-                // not displaying the products or assemblies in this report.
-
-                foreach (ProductionListLineItem lineItem in prod.SubItems)
-                {
-                    ScheduleReportLineItem subItem = new ScheduleReportLineItem(lineItem, prod);
-                    if(subItem.Operations == "Laser")
-                        lineItemList.Add(subItem);
-                }
-            }
-
-            return lineItemList;
-        }
         public bool SaveToFile()
         {
             try
