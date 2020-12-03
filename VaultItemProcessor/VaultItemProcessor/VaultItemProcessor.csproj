@@ -229,6 +229,12 @@
     <Compile Include="XtraReport13.Designer.cs">
       <DependentUpon>XtraReport13.cs</DependentUpon>
     </Compile>
+    <Compile Include="XtraReport14.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="XtraReport14.Designer.cs">
+      <DependentUpon>XtraReport14.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="PrintIDW.resx">
       <DependentUpon>PrintIDW.cs</DependentUpon>
     </EmbeddedResource>
@@ -266,6 +272,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="XtraReport13.resx">
       <DependentUpon>XtraReport13.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="XtraReport14.resx">
+      <DependentUpon>XtraReport14.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

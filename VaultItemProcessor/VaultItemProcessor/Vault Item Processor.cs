@@ -1096,6 +1096,12 @@ namespace VaultItemProcessor
         {
             List<ProductionListLineItem> laserList = new List<ProductionListLineItem>();
             laserList = (List<ProductionListLineItem>) productionList.GetLaserScheduleReport();
+
+            XtraReport14 report = new XtraReport14();
+
+            ReportPrintTool printTool = new ReportPrintTool(new XtraReport14());
+
+            printTool.ShowRibbonPreview();
         }
     }
 
