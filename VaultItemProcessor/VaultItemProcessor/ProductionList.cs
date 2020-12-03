@@ -15,6 +15,7 @@ using PdfSharp.Drawing.Layout;
 using DevExpress.XtraEditors.Controls;
 using DevExpress.DataAccess;
 using DevExpress.DataAccess.ObjectBinding;
+using DevExpress.XtraPdfViewer;
 
 namespace VaultItemProcessor
 {
@@ -235,8 +236,49 @@ namespace VaultItemProcessor
                             order.OrderNumber = prod.OrderNumber;
                             assy.ReportOrders = new List<Reports2.BandsawReportOrder2>();
                             assy.ReportOrders.Add(order);
+                            assy.Pages = new List<Bitmap>();
 
-                            reportProd.ReportAssemblies.Add(assy);
+                            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + lineItem.Number + ".pdf";
+                            if (File.Exists(filename))
+                            {
+                                PdfViewer pdfViewer = new PdfViewer();
+                                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                                Stream stream = new MemoryStream(bytes);
+
+                                pdfViewer.LoadDocument(stream);
+
+                                int numPages = pdfViewer.PageCount;
+
+                                PdfDocument doc = new PdfDocument();
+                                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+                                for (int p = 1; p <= numPages; p++)
+                                {
+                                    PdfPage page = doc.Pages[p-1];
+                                    Bitmap bitmap = pdfViewer.CreateBitmap(p, 950);
+
+                                    float h = (float)page.Height;
+                                    float w = (float)page.Width;
+                                    var angle = page.Rotate;
+                                    var orient = page.Orientation;
+                                    if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
+                                         (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
+                                        //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+                                        bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+
+
+                                    
+                                    assy.Pages.Add(bitmap);
+                                }
+
+
+                                pdfViewer.CloseDocument();
+                                pdfViewer.Dispose();
+                            }
+
+                                reportProd.ReportAssemblies.Add(assy);
                         }
                         if (lineItem.Category == "Part" && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
                         {
@@ -248,11 +290,37 @@ namespace VaultItemProcessor
                                 prt.Material = lineItem.Material;
                                 prt.Thickness = lineItem.MaterialThickness;
                                 prt.Qty = lineItem.Qty;
+                                prt.Pages = new List<Bitmap>();
 
                                 order.Qty = prod.Qty;
                                 order.OrderNumber = prod.OrderNumber;
                                 prt.ReportOrders = new List<Reports2.BandsawReportOrder2>();
                                 prt.ReportOrders.Add(order);
+
+                                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + lineItem.Number + ".pdf";
+                                if (File.Exists(filename))
+                                {
+                                    PdfViewer pdfViewer = new PdfViewer();
+                                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+                                    Stream stream = new MemoryStream(bytes);
+
+                                    pdfViewer.LoadDocument(stream);
+
+                                    int numPages = pdfViewer.PageCount;
+
+                                    for (int p = 1; p <= numPages; p++)
+                                    {
+                                        Bitmap bitmap = pdfViewer.CreateBitmap(p, 950);
+                                        prt.Pages.Add(bitmap);
+                                    }
+
+
+                                    pdfViewer.CloseDocument();
+                                    pdfViewer.Dispose();
+                                }
+
+
                                 reportProd.ReportParts.Add(prt);
                             }
                             else

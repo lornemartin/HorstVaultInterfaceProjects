@@ -10,6 +10,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Drawing.Layout;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
+using System.Collections.Generic;
 
 namespace VaultItemProcessor
 {
@@ -23,27 +24,13 @@ namespace VaultItemProcessor
         //assembly 1 half page
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + this.tableCell27.Value + ".pdf";
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>) ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
+                if (bmpList.Count > 0)
                 {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-
-                    pdfViewer.LoadDocument(stream);
-                    Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-                    pdfViewer.CloseDocument();
-                    pdfViewer.Dispose();
-
-                    xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                    xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bmpList[0]);
                     xrPictureBox2.BackColor = Color.AliceBlue;
                 }
                 else
@@ -58,38 +45,13 @@ namespace VaultItemProcessor
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
+                if (bmpList.Count > 0)
                 {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-
-                    pdfViewer.LoadDocument(stream);
-                    Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-                    PdfDocument doc = new PdfDocument();
-                    doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-                    PdfPage page = doc.Pages[0];
-
-                    float h = (float)page.Height;
-                    float w = (float)page.Width;
-                    var angle = page.Rotate;
-                    var orient = page.Orientation;
-                    if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-                         (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
-                        //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
-                        bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-                    pdfViewer.CloseDocument();
-                    pdfViewer.Dispose();
-
-                    xrPictureBox5.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                    Bitmap rotated = (bmpList[0]);
+                    rotated.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                    xrPictureBox5.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bmpList[0]);
                     xrPictureBox5.BackColor = Color.AliceBlue;
                 }
                 else
@@ -97,6 +59,50 @@ namespace VaultItemProcessor
                     xrPictureBox5.ImageSource = null;
                 }
             }
+
+
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+
+            //        pdfViewer.LoadDocument(stream);
+            //        Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
+
+            //        PdfDocument doc = new PdfDocument();
+            //        doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+            //        PdfPage page = doc.Pages[0];
+
+            //        float h = (float)page.Height;
+            //        float w = (float)page.Width;
+            //        var angle = page.Rotate;
+            //        var orient = page.Orientation;
+            //        if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
+            //             (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
+            //            //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+            //            bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+            //        pdfViewer.CloseDocument();
+            //        pdfViewer.Dispose();
+
+            //        xrPictureBox5.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+            //        xrPictureBox5.BackColor = Color.AliceBlue;
+            //    }
+            //    else
+            //    {
+            //        xrPictureBox5.ImageSource = null;
+            //    }
+            //}
         }
 
         // assembly two half page

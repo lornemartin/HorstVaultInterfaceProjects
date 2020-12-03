@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace VaultItemProcessor.Reports2
         public string Thickness { get; set; }
 
         public string Operation { get; set; }
-        public List<byte[]> Pages { get; set; }
+        public List<Bitmap> Pages { get; set; }
 
         public List<BandsawReportOrder2> ReportOrders { get; set; }
     }
