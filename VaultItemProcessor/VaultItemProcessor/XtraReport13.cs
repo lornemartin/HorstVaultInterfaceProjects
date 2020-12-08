@@ -30,7 +30,8 @@ namespace VaultItemProcessor
 
                 if (bmpList.Count > 0)
                 {
-                    xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bmpList[0]);
+                    Bitmap orig = (bmpList[0]);
+                    xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(RotateBitmap(orig, RotateFlipType.Rotate90FlipNone));
                     xrPictureBox2.BackColor = Color.AliceBlue;
                 }
                 else
@@ -49,8 +50,6 @@ namespace VaultItemProcessor
 
                 if (bmpList.Count > 0)
                 {
-                    Bitmap rotated = (bmpList[0]);
-                    rotated.RotateFlip(RotateFlipType.Rotate180FlipNone);
                     xrPictureBox5.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bmpList[0]);
                     xrPictureBox5.BackColor = Color.AliceBlue;
                 }
@@ -110,30 +109,12 @@ namespace VaultItemProcessor
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
+                if (bmpList.Count > 0)
                 {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-                    Bitmap bitmap = null;
-                    pdfViewer.LoadDocument(stream);
-                    if (pdfViewer.PageCount > 1)
-                    {
-                        bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
-                    }
-
-                    PdfDocument doc = new PdfDocument();
-                    doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-                    pdfViewer.CloseDocument();
-                    pdfViewer.Dispose();
-
-                    xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                    Bitmap orig = (bmpList[1]);
+                    xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(RotateBitmap(orig, RotateFlipType.Rotate90FlipNone));
                     xrPictureBox4.BackColor = Color.AliceBlue;
                 }
                 else
@@ -141,6 +122,40 @@ namespace VaultItemProcessor
                     xrPictureBox4.ImageSource = null;
                 }
             }
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+            //        Bitmap bitmap = null;
+            //        pdfViewer.LoadDocument(stream);
+            //        if (pdfViewer.PageCount > 1)
+            //        {
+            //            bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
+            //        }
+
+            //        PdfDocument doc = new PdfDocument();
+            //        doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+            //        pdfViewer.CloseDocument();
+            //        pdfViewer.Dispose();
+
+            //        xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+            //        xrPictureBox4.BackColor = Color.AliceBlue;
+            //    }
+            //    else
+            //    {
+            //        xrPictureBox4.ImageSource = null;
+            //    }
+            //}
         }
 
         // assembly 2 full page
@@ -148,40 +163,11 @@ namespace VaultItemProcessor
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
+                if (bmpList.Count > 0)
                 {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-                    Bitmap bitmap = null;
-
-                    pdfViewer.LoadDocument(stream);
-                    if (pdfViewer.PageCount > 1)
-                    {
-                        bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
-                        PdfDocument doc = new PdfDocument();
-                        doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-                        PdfPage page = doc.Pages[0];
-
-                        float h = (float)page.Height;
-                        float w = (float)page.Width;
-                        var angle = page.Rotate;
-                        if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-                          (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
-                            bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-                    }
-
-                    pdfViewer.CloseDocument();
-                    pdfViewer.Dispose();
-
-                    xrPictureBox6.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+                    xrPictureBox6.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bmpList[1]);
                     xrPictureBox6.BackColor = Color.AliceBlue;
                 }
                 else
@@ -189,6 +175,50 @@ namespace VaultItemProcessor
                     xrPictureBox6.ImageSource = null;
                 }
             }
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+            //        Bitmap bitmap = null;
+
+            //        pdfViewer.LoadDocument(stream);
+            //        if (pdfViewer.PageCount > 1)
+            //        {
+            //            bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
+            //            PdfDocument doc = new PdfDocument();
+            //            doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
+            //            PdfPage page = doc.Pages[0];
+
+            //            float h = (float)page.Height;
+            //            float w = (float)page.Width;
+            //            var angle = page.Rotate;
+            //            if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
+            //              (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
+            //                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+            //        }
+
+            //        pdfViewer.CloseDocument();
+            //        pdfViewer.Dispose();
+
+            //        xrPictureBox6.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+            //        xrPictureBox6.BackColor = Color.AliceBlue;
+            //    }
+            //    else
+            //    {
+            //        xrPictureBox6.ImageSource = null;
+            //    }
+            //}
         }
 
         
@@ -295,80 +325,137 @@ namespace VaultItemProcessor
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-                if (File.Exists(filename))
-                {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-
-                    pdfViewer.LoadDocument(stream);
-
-                    if (pdfViewer.PageCount == 1)
-                        e.Cancel = true;
-                }
-                else
+                if (bmpList.Count < 2)
                 {
                     e.Cancel = true;
                 }
+                
             }
+            else
+            {
+                e.Cancel = true;
+            }
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+
+            //        pdfViewer.LoadDocument(stream);
+
+            //        if (pdfViewer.PageCount == 1)
+            //            e.Cancel = true;
+            //    }
+            //    else
+            //    {
+            //        e.Cancel = true;
+            //    }
+            //}
         }
 
         private void Assy2Detail2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
-                {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-
-                    pdfViewer.LoadDocument(stream);
-
-                    if (pdfViewer.PageCount == 1)
-                        e.Cancel = true;
-                }
-                else
+                if (bmpList.Count < 2)
                 {
                     e.Cancel = true;
                 }
+
             }
+            else
+            {
+                e.Cancel = true;
+            }
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+
+            //        pdfViewer.LoadDocument(stream);
+
+            //        if (pdfViewer.PageCount == 1)
+            //            e.Cancel = true;
+            //    }
+            //    else
+            //    {
+            //        e.Cancel = true;
+            //    }
+            //}
         }
 
         private void Assy2FullPagePDF_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
             {
-                string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-                string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+                List<Bitmap> bmpList = (List<Bitmap>)ReportAssemblies.GetCurrentColumnValue("Pages");
 
-            
-                if (File.Exists(filename))
-                {
-                    PdfViewer pdfViewer = new PdfViewer();
-                    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-                    Stream stream = new MemoryStream(bytes);
-
-                    pdfViewer.LoadDocument(stream);
-
-                    if (pdfViewer.PageCount == 1)
-                        e.Cancel = true;
-                }
-                else
+                if (bmpList.Count < 2)
                 {
                     e.Cancel = true;
                 }
+
             }
+            else
+            {
+                e.Cancel = true;
+            }
+
+            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
+            //{
+            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
+            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+
+            
+            //    if (File.Exists(filename))
+            //    {
+            //        PdfViewer pdfViewer = new PdfViewer();
+            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
+
+            //        Stream stream = new MemoryStream(bytes);
+
+            //        pdfViewer.LoadDocument(stream);
+
+            //        if (pdfViewer.PageCount == 1)
+            //            e.Cancel = true;
+            //    }
+            //    else
+            //    {
+            //        e.Cancel = true;
+            //    }
+            //}
+        }
+
+        private Bitmap RotateBitmap(Image original_image, RotateFlipType rotate_flip_type)
+        {
+            // Copy the Bitmap.
+            Bitmap new_bitmap = new Bitmap(original_image);
+
+            // Rotate and flip.
+            new_bitmap.RotateFlip(rotate_flip_type);
+
+            // Return the result.
+            return new_bitmap;
         }
     }
 }

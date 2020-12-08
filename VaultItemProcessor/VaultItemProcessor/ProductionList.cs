@@ -262,13 +262,10 @@ namespace VaultItemProcessor
                                     float w = (float)page.Width;
                                     var angle = page.Rotate;
                                     var orient = page.Orientation;
-                                    if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-                                         (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
-                                        //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
-                                        bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-
-
+                                    if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) || (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
+                                        bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                                    //else if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
+                                    //    bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
                                     
                                     assy.Pages.Add(bitmap);
                                 }
