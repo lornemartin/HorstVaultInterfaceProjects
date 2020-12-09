@@ -104,30 +104,6 @@ namespace VaultItemProcessor
         // parts half page
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            //string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
-            //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            //if (File.Exists(filename))
-            //{
-            //    PdfViewer pdfViewer = new PdfViewer();
-            //    byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //    Stream stream = new MemoryStream(bytes);
-
-            //    pdfViewer.LoadDocument(stream);
-
-            //    Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-            //    pdfViewer.CloseDocument();
-            //    pdfViewer.Dispose();
-
-            //    xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-            //    xrPictureBox1.BackColor = Color.AliceBlue;
-            //}
-            //else
-            //{
-            //    xrPictureBox1.ImageSource = null;
-            //}
             if (ReportParts.GetCurrentColumnValue("PartName") != null)
             {
                 List<Bitmap> bmpList = (List<Bitmap>)ReportParts.GetCurrentColumnValue("Pages");
@@ -148,44 +124,20 @@ namespace VaultItemProcessor
         // parts full page
         private void xrPictureBox7_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-            if (File.Exists(filename))
+            if (ReportParts.GetCurrentColumnValue("PartName") != null)
             {
-                PdfViewer pdfViewer = new PdfViewer();
-                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+                List<Bitmap> bmpList = (List<Bitmap>)ReportParts.GetCurrentColumnValue("Pages");
 
-                Stream stream = new MemoryStream(bytes);
-
-                pdfViewer.LoadDocument(stream);
-                Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-
-                PdfDocument doc = new PdfDocument();
-                doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-                PdfPage page = doc.Pages[0];
-
-                var orient = page.Orientation;
-                var angle = page.Rotate;
-
-                float h = (float)page.Height;
-                float w = (float)page.Width;
-
-                if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-                     (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))       // flip page if height is less than 800
-                    //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)       // flip page if height is less than 800
-                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-                pdfViewer.CloseDocument();
-                pdfViewer.Dispose();
-
-                xrPictureBox7.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-                xrPictureBox7.BackColor = Color.AliceBlue;
-            }
-            else
-            {
-                xrPictureBox7.ImageSource = null;
+                if (bmpList.Count > 0)
+                {
+                    Bitmap orig = (bmpList[0]);
+                    xrPictureBox7.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(orig);
+                    xrPictureBox7.BackColor = Color.AliceBlue;
+                }
+                else
+                {
+                    xrPictureBox7.ImageSource = null;
+                }
             }
         }
 
@@ -228,29 +180,6 @@ namespace VaultItemProcessor
             {
                 e.Cancel = true;
             }
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-
-            //        pdfViewer.LoadDocument(stream);
-
-            //        if (pdfViewer.PageCount == 1)
-            //            e.Cancel = true;
-            //    }
-            //    else
-            //    {
-            //        e.Cancel = true;
-            //    }
-            //}
         }
 
         private void Assy2Detail2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
@@ -269,30 +198,6 @@ namespace VaultItemProcessor
             {
                 e.Cancel = true;
             }
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-
-            //        pdfViewer.LoadDocument(stream);
-
-            //        if (pdfViewer.PageCount == 1)
-            //            e.Cancel = true;
-            //    }
-            //    else
-            //    {
-            //        e.Cancel = true;
-            //    }
-            //}
         }
 
         private void Assy2FullPagePDF_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
@@ -311,30 +216,6 @@ namespace VaultItemProcessor
             {
                 e.Cancel = true;
             }
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-
-            //        pdfViewer.LoadDocument(stream);
-
-            //        if (pdfViewer.PageCount == 1)
-            //            e.Cancel = true;
-            //    }
-            //    else
-            //    {
-            //        e.Cancel = true;
-            //    }
-            //}
         }
 
         private Bitmap RotateBitmap(Image original_image, RotateFlipType rotate_flip_type)
