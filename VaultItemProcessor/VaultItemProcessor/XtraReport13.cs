@@ -58,50 +58,6 @@ namespace VaultItemProcessor
                     xrPictureBox5.ImageSource = null;
                 }
             }
-
-
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-
-            //        pdfViewer.LoadDocument(stream);
-            //        Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-            //        PdfDocument doc = new PdfDocument();
-            //        doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-            //        PdfPage page = doc.Pages[0];
-
-            //        float h = (float)page.Height;
-            //        float w = (float)page.Width;
-            //        var angle = page.Rotate;
-            //        var orient = page.Orientation;
-            //        if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-            //             (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
-            //            //if ((page.Rotate == 90 && page.Orientation == PdfSharp.PageOrientation.Portrait) || h < 800)      // flip page if height is less than 800
-            //            bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-            //        pdfViewer.CloseDocument();
-            //        pdfViewer.Dispose();
-
-            //        xrPictureBox5.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-            //        xrPictureBox5.BackColor = Color.AliceBlue;
-            //    }
-            //    else
-            //    {
-            //        xrPictureBox5.ImageSource = null;
-            //    }
-            //}
         }
 
         // assembly two half page
@@ -122,40 +78,6 @@ namespace VaultItemProcessor
                     xrPictureBox4.ImageSource = null;
                 }
             }
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-            //        Bitmap bitmap = null;
-            //        pdfViewer.LoadDocument(stream);
-            //        if (pdfViewer.PageCount > 1)
-            //        {
-            //            bitmap = pdfViewer.CreateBitmap(2, 950);  // changed from 2 to 1 for testing
-            //        }
-
-            //        PdfDocument doc = new PdfDocument();
-            //        doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-            //        pdfViewer.CloseDocument();
-            //        pdfViewer.Dispose();
-
-            //        xrPictureBox4.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-            //        xrPictureBox4.BackColor = Color.AliceBlue;
-            //    }
-            //    else
-            //    {
-            //        xrPictureBox4.ImageSource = null;
-            //    }
-            //}
         }
 
         // assembly 2 full page
@@ -175,50 +97,6 @@ namespace VaultItemProcessor
                     xrPictureBox6.ImageSource = null;
                 }
             }
-
-            //if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)
-            //{
-            //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-            //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-            
-            //    if (File.Exists(filename))
-            //    {
-            //        PdfViewer pdfViewer = new PdfViewer();
-            //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-            //        Stream stream = new MemoryStream(bytes);
-            //        Bitmap bitmap = null;
-
-            //        pdfViewer.LoadDocument(stream);
-            //        if (pdfViewer.PageCount > 1)
-            //        {
-            //            bitmap = pdfViewer.CreateBitmap(2, 950);     // changed from 2 to 1 for testing
-            //            PdfDocument doc = new PdfDocument();
-            //            doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
-
-            //            PdfPage page = doc.Pages[0];
-
-            //            float h = (float)page.Height;
-            //            float w = (float)page.Width;
-            //            var angle = page.Rotate;
-            //            if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) ||
-            //              (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
-            //                bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
-
-            //        }
-
-            //        pdfViewer.CloseDocument();
-            //        pdfViewer.Dispose();
-
-            //        xrPictureBox6.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-            //        xrPictureBox6.BackColor = Color.AliceBlue;
-            //    }
-            //    else
-            //    {
-            //        xrPictureBox6.ImageSource = null;
-            //    }
-            //}
         }
 
         
@@ -226,31 +104,44 @@ namespace VaultItemProcessor
         // parts half page
         private void xrPictureBox1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
+            //string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
+            //string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
 
-            
-            string s = ReportParts.GetCurrentColumnValue("PartName").ToString();
-            string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
+            //if (File.Exists(filename))
+            //{
+            //    PdfViewer pdfViewer = new PdfViewer();
+            //    byte[] bytes = System.IO.File.ReadAllBytes(filename);
 
-            if (File.Exists(filename))
+            //    Stream stream = new MemoryStream(bytes);
+
+            //    pdfViewer.LoadDocument(stream);
+
+            //    Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
+
+            //    pdfViewer.CloseDocument();
+            //    pdfViewer.Dispose();
+
+            //    xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
+            //    xrPictureBox1.BackColor = Color.AliceBlue;
+            //}
+            //else
+            //{
+            //    xrPictureBox1.ImageSource = null;
+            //}
+            if (ReportParts.GetCurrentColumnValue("PartName") != null)
             {
-                PdfViewer pdfViewer = new PdfViewer();
-                byte[] bytes = System.IO.File.ReadAllBytes(filename);
+                List<Bitmap> bmpList = (List<Bitmap>)ReportParts.GetCurrentColumnValue("Pages");
 
-                Stream stream = new MemoryStream(bytes);
-
-                pdfViewer.LoadDocument(stream);
-
-                Bitmap bitmap = pdfViewer.CreateBitmap(1, 950);
-
-                pdfViewer.CloseDocument();
-                pdfViewer.Dispose();
-
-                xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
-                xrPictureBox1.BackColor = Color.AliceBlue;
-            }
-            else
-            {
-                xrPictureBox1.ImageSource = null;
+                if (bmpList.Count > 0)
+                {
+                    Bitmap orig = (bmpList[0]);
+                    xrPictureBox1.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(RotateBitmap(orig, RotateFlipType.Rotate90FlipNone));
+                    xrPictureBox1.BackColor = Color.AliceBlue;
+                }
+                else
+                {
+                    xrPictureBox1.ImageSource = null;
+                }
             }
         }
 

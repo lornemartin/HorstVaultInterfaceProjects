@@ -306,12 +306,23 @@ namespace VaultItemProcessor
 
                                     int numPages = pdfViewer.PageCount;
 
+                                    PdfDocument doc = new PdfDocument();
+                                    doc = PdfReader.Open(filename, PdfDocumentOpenMode.InformationOnly);
+
                                     for (int p = 1; p <= numPages; p++)
                                     {
+                                        PdfPage page = doc.Pages[p - 1];
                                         Bitmap bitmap = pdfViewer.CreateBitmap(p, 950);
+
+                                        float h = (float)page.Height;
+                                        float w = (float)page.Width;
+                                        var angle = page.Rotate;
+                                        var orient = page.Orientation;
+                                        if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) || (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
+                                            bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+
                                         prt.Pages.Add(bitmap);
                                     }
-
 
                                     pdfViewer.CloseDocument();
                                     pdfViewer.Dispose();
