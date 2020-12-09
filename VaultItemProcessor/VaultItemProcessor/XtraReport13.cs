@@ -141,29 +141,6 @@ namespace VaultItemProcessor
             }
         }
 
-        private void ReportAssemblies2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-        //    string s = ReportAssemblies.GetCurrentColumnValue("AssemblyName").ToString();
-        //    string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + s + ".pdf";
-
-        //    if (File.Exists(filename))
-        //    {
-        //        PdfViewer pdfViewer = new PdfViewer();
-        //        byte[] bytes = System.IO.File.ReadAllBytes(filename);
-
-        //        Stream stream = new MemoryStream(bytes);
-
-        //        pdfViewer.LoadDocument(stream);
-
-        //        if (pdfViewer.PageCount == 1)
-        //            e.Cancel = true;
-        //    }
-        //    else
-        //    {
-        //        e.Cancel = true;
-        //    }
-        }
-
         private void Assy2Detail1_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
             if (ReportAssemblies.GetCurrentColumnValue("AssemblyName") != null)

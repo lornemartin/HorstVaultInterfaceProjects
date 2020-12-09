@@ -1471,7 +1471,6 @@
             this.ReportAssemblies2.Expanded = false;
             this.ReportAssemblies2.Level = 3;
             this.ReportAssemblies2.Name = "ReportAssemblies2";
-            this.ReportAssemblies2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.ReportAssemblies2_BeforePrint);
             // 
             // Assy2Detail1
             // 
