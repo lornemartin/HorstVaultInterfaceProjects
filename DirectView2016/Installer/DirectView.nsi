@@ -84,7 +84,7 @@ Function .onInit
 
 		config_file_not_found:
 			DetailPrint "Writing config file"
-			File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
+			File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
 		end_of_test:
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
@@ -127,8 +127,8 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\*.*"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\*.*"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
 
 SectionEnd
 
