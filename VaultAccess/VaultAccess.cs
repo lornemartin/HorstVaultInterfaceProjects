@@ -25,9 +25,6 @@ namespace VaultAccess
         private List<string> m_downloadedFiles { get; set; }
         private string m_PDFPath { get; set; }
         private string m_pdfPrinterName { get; set; }
-        private string m_psToPdfProgName { get; set; }
-        private string m_ghostScriptWorkingFolder { get; set; }
-
         #endregion
 
         #region Constructors and Initialization Methods
@@ -39,15 +36,13 @@ namespace VaultAccess
             m_downloadedFiles = new List<string>();
             m_PDFPath = "";
         }
-        public VaultAccess(string pdfPath, string pdfPrinterName, string psToPdfProgName, string ghostScriptWorkingFolder)
+        public VaultAccess(string pdfPath, string pdfPrinterName)
         {
             m_conn = null;
             m_lastAccessedFolder = null;
             m_downloadedFiles = new List<string>();
             m_PDFPath = pdfPath;
             m_pdfPrinterName = pdfPrinterName;
-            m_psToPdfProgName = psToPdfProgName;
-            m_ghostScriptWorkingFolder = ghostScriptWorkingFolder;
         }
 
         public VaultAccess(Vault.Currency.Connections.Connection conn, string PDFPath)
@@ -374,6 +369,60 @@ namespace VaultAccess
             return true;
         }
 
+        public bool searrchAndDownloadIDW(string fileName, string downloadFolder)
+        {
+            try
+            {
+                PropDef[] filePropDefs = m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
+                PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
+
+                Autodesk.Connectivity.WebServices.SrchCond searchCondition = new SrchCond();
+                searchCondition.PropDefId = vaultNamePropDef.Id;
+                searchCondition.PropTyp = PropertySearchType.SingleProperty;
+                searchCondition.SrchOper = 3;
+                searchCondition.SrchTxt = fileName;
+
+
+                string bookmark = "";
+                SrchStatus st = new SrchStatus();
+
+                Autodesk.Connectivity.WebServices.File[] files = m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(new SrchCond[] { searchCondition }, null, null, true, true, ref bookmark, out st);
+                if (files.Count() != 1)
+                {
+                    return false;
+                }
+
+                Vault.Settings.AcquireFilesSettings settings = new Vault.Settings.AcquireFilesSettings(m_conn);
+
+                Vault.Currency.Entities.FileIteration file = new Vault.Currency.Entities.FileIteration(m_conn, files[0]);
+
+                settings.AddEntityToAcquire(file);
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeLibraryContents = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeAttachments = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeHiddenEntities = true;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.IncludeParents = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.RecurseChildren = false;
+                settings.OptionsRelationshipGathering.FileRelationshipSettings.VersionGatheringOption =
+                    Vault.Currency.VersionGatheringOption.Latest;
+
+                // this forces all the files to go into one folder, it doesn't replicate the vault's folder structure..
+                // this is needed so that Inventor view knows where to find the file
+                settings.OrganizeFilesRelativeToCommonVaultRoot = false;
+
+                // this does the actual work.
+                settings.LocalPath = new Autodesk.DataManagement.Client.Framework.Currency.FolderPathAbsolute(downloadFolder);
+                m_conn.FileManager.AcquireFiles(settings);
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool downloadFileOrig(Vault.Currency.Entities.FileIteration file, string folderPath)
         {
             try
@@ -420,89 +469,6 @@ namespace VaultAccess
 
             return true;
         }
-
-        //public List<Dictionary<string, string>> BrowseVaultAndGetAssemblyProperties(ToolStripStatusLabel statLabel, bool matchPartNumber = true)
-        //{
-        //    List<string> propNames = new List<string>();
-        //    propNames.Add("PartNumber");
-        //    propNames.Add("Title");
-        //    propNames.Add("Description");
-
-        //    Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> propDictList = new List<Dictionary<string, string>>();
-
-        //    Vault.Currency.Entities.FileIteration selectedFile = null;
-
-
-        //    if (m_conn != null)
-        //    {
-        //        VaultBrowser vbForm = new VaultBrowser(m_conn, m_lastAccessedFolder, "Assembly Files (*.iam)", ".+iam");
-        //        DialogResult dResult = vbForm.ShowDialog();
-        //        if (dResult == DialogResult.OK)
-        //        {
-        //            Application.UseWaitCursor = true;
-        //            Application.DoEvents();
-
-        //            selectedFile = vbForm.m_selectedItem;
-        //            m_lastAccessedFolder = vbForm.m_currentFolder;
-
-        //            propDictList = GetAssemblyProps(statLabel, selectedFile, matchPartNumber);
-        //        }
-        //        else
-        //        {
-        //            // not logged in, so return an empty list
-        //        }
-        //    }
-
-
-
-        //    Application.UseWaitCursor = false;
-        //    return propDictList;
-        //}
-
-        //public List<Dictionary<string, string>> BrowseVaultAndGetAssemblyProperties(bool matchPartNumber = true)
-        //{
-        //    List<string> propNames = new List<string>();
-        //    propNames.Add("PartNumber");
-        //    propNames.Add("Title");
-        //    propNames.Add("Description");
-
-        //    Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> propDictList = new List<Dictionary<string, string>>();
-
-        //    Vault.Currency.Entities.FileIteration selectedFile = null;
-
-
-        //    if (m_conn != null)
-        //    {
-        //        VaultBrowser vbForm = new VaultBrowser(m_conn, m_lastAccessedFolder, "Assembly Files (*.iam)", ".+iam");
-        //        DialogResult dResult = vbForm.ShowDialog();
-        //        if (dResult == DialogResult.OK)
-        //        {
-        //            //Application.UseWaitCursor = true;
-        //            //Application.DoEvents();
-
-        //            selectedFile = vbForm.m_selectedItem;
-        //            m_lastAccessedFolder = vbForm.m_currentFolder;
-
-        //            propDictList = GetAssemblyProps(selectedFile, matchPartNumber);
-        //        }
-        //        else
-        //        {
-        //            // not logged in, so return an empty list
-        //        }
-        //    }
-
-
-
-        //    //Application.UseWaitCursor = false;
-        //    return propDictList;
-        //}
-
         public Vault.Currency.Entities.FileIteration BrowseVaultAndReturnFile()
         {
             Vault.Currency.Entities.FileIteration selectedFile = null;
@@ -564,31 +530,6 @@ namespace VaultAccess
             Application.UseWaitCursor = false;
             return propDictList;
         }
-
-        //public List<Dictionary<string, string>> RefreshAssemblyPropertiesFromVault(long vaultID, bool matchPartNumber = true)
-        //{
-        //    Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> propDictList = new List<Dictionary<string, string>>();
-
-        //    Autodesk.Connectivity.WebServices.File vaultFile = m_conn.WebServiceManager.DocumentService.GetFileById(vaultID);
-        //    Vault.Currency.Entities.FileIteration selectedFile = new Vault.Currency.Entities.FileIteration(m_conn, vaultFile);
-
-        //    if (m_conn != null)
-        //    {
-        //        //selectedFile = vbForm.m_selectedItem;
-
-        //        propDictList = GetAssemblyProps(selectedFile, matchPartNumber);
-        //    }
-        //    else
-        //    {
-        //        // not logged in, so return an empty list
-        //    }
-
-        //return propDictList;
-        //}
-
         public Task<List<Dictionary<string, string>>> RefreshAssemblyPropertiesFromVault(IProgress<string> prog, long vaultID)
         {
             return Task.Run(async () =>
@@ -611,192 +552,6 @@ namespace VaultAccess
                 });
 
         }
-
-        //public List<Dictionary<string, string>> GetAssemblyProps(System.Windows.Forms.ToolStripStatusLabel statLabel, Vault.Currency.Entities.FileIteration assemblyFile, bool matchPartNumbers = true)
-        //{
-        //    List<string> propNames = new List<string>();
-        //    propNames.Add("PartNumber");
-        //    propNames.Add("Title");
-        //    propNames.Add("Description");
-
-        //    Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-        //    // a list of dictionaries of the vault properties of the associated files
-        //    List<Dictionary<string, string>> vaultPropDictList = new List<Dictionary<string, string>>();
-
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> inventorPropDictList = new List<Dictionary<string, string>>();
-
-        //    Vault.Currency.Entities.FileIteration selectedFile = assemblyFile;
-
-        //    if (m_conn != null)
-        //    {
-
-        //        Application.UseWaitCursor = true;
-        //        Application.DoEvents();
-
-
-        //        // get the vault properties
-        //        statLabel.Text = "Reading Vault Properties...";
-        //        vaultPropDictList = GetVaultAssemblyProperties(selectedFile, propNames);
-        //        statLabel.Text = "Done.";
-
-        //        // get the inventor properties
-        //        statLabel.Text = "Reading Inventor Properties...";
-        //        inventorPropDictList = GetInventorAssemblyProperties(selectedFile);
-        //        statLabel.Text = "Done.";
-
-        //        // initially the part quantites are set per root assembly
-        //        //   this needs to be changed to per parent.
-        //        statLabel.Text = "Setting Quantities...";
-        //        CorrectQuantities(inventorPropDictList);
-        //        statLabel.Text = "Done.";
-
-
-
-        //        // now merge the two dictionaries
-        //        // iterate through the inventorPropDictList, and query the vaultPropDictList for matching part numbers
-        //        // if a match is found, the vaultPropDictList properties are copied to the matched inventorPropDictList dictionary
-        //        // if no match is found, the vaultPropDictList specific properties are not copied over.
-        //        statLabel.Text = "Merging Dictionaries...";
-        //        foreach (Dictionary<string, string> inventorPropDictItem in inventorPropDictList)
-        //        {
-        //            string searchPartNum = null;
-        //            string matchPartNum = null;
-        //            string entityIterationId = null;
-        //            string entityName = null;
-        //            string title = null;
-
-        //            inventorPropDictItem.TryGetValue("PartNumber", out searchPartNum);
-
-        //            foreach (Dictionary<string, string> vaultPropDict in vaultPropDictList)
-        //            {
-        //                vaultPropDict.TryGetValue("EntityName", out matchPartNum);
-        //                matchPartNum = Path.GetFileNameWithoutExtension(matchPartNum);
-        //                // if there is discrepancy between the vault part number and the inventor part number
-        //                //   then we have the option of including those or not
-        //                if (searchPartNum == matchPartNum || matchPartNumbers == false)
-        //                {
-        //                    vaultPropDict.TryGetValue("EntityIterationId", out entityIterationId);
-        //                    vaultPropDict.TryGetValue("EntityName", out entityName);
-        //                    vaultPropDict.TryGetValue("Title", out title);
-        //                    try
-        //                    {
-        //                        if(!inventorPropDictItem.ContainsKey("EntityIterationId"))
-        //                            inventorPropDictItem.Add("EntityIterationId", entityIterationId);
-        //                        if(!inventorPropDictItem.ContainsKey("EntityName"))
-        //                            inventorPropDictItem.Add("EntityName", entityName);
-        //                        if(!inventorPropDictItem.ContainsKey("Title"))
-        //                            inventorPropDictItem.Add("Title", title);
-        //                    }
-        //                    catch (Exception)
-        //                    {
-        //                        break;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        statLabel.Text = "Done.";
-
-
-        //    }
-        //    Application.UseWaitCursor = false;
-        //    return inventorPropDictList;
-
-        //}
-
-        //public List<Dictionary<string, string>> GetAssemblyProps(Vault.Currency.Entities.FileIteration assemblyFile, bool matchPartNumbers = true)
-        //{
-        //    List<string> propNames = new List<string>();
-        //    propNames.Add("PartNumber");
-        //    propNames.Add("Title");
-        //    propNames.Add("Description");
-
-        //    Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-        //    // a list of dictionaries of the vault properties of the associated files
-        //    List<Dictionary<string, string>> vaultPropDictList = new List<Dictionary<string, string>>();
-
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> inventorPropDictList = new List<Dictionary<string, string>>();
-
-        //    Vault.Currency.Entities.FileIteration selectedFile = assemblyFile;
-
-        //    if (m_conn != null)
-        //    {
-
-        //        Application.UseWaitCursor = true;
-        //        Application.DoEvents();
-
-
-        //        // get the vault properties
-        //        //statLabel.Text = "Reading Vault Properties...";
-        //        vaultPropDictList = GetVaultAssemblyProperties(selectedFile, propNames);
-        //        //statLabel.Text = "Done.";
-
-        //        // get the inventor properties
-        //        //statLabel.Text = "Reading Inventor Properties...";
-        //        inventorPropDictList = GetInventorAssemblyProperties(selectedFile);
-        //        //statLabel.Text = "Done.";
-
-        //        // initially the part quantites are set per root assembly
-        //        //   this needs to be changed to per parent.
-        //        //statLabel.Text = "Setting Quantities...";
-        //        CorrectQuantities(inventorPropDictList);
-        //        //statLabel.Text = "Done.";
-
-
-
-        //        // now merge the two dictionaries
-        //        // iterate through the inventorPropDictList, and query the vaultPropDictList for matching part numbers
-        //        // if a match is found, the vaultPropDictList properties are copied to the matched inventorPropDictList dictionary
-        //        // if no match is found, the vaultPropDictList specific properties are not copied over.
-        //        //statLabel.Text = "Merging Dictionaries...";
-        //        foreach (Dictionary<string, string> inventorPropDictItem in inventorPropDictList)
-        //        {
-        //            string searchPartNum = null;
-        //            string matchPartNum = null;
-        //            string entityIterationId = null;
-        //            string entityName = null;
-        //            string title = null;
-
-        //            inventorPropDictItem.TryGetValue("PartNumber", out searchPartNum);
-
-        //            foreach (Dictionary<string, string> vaultPropDict in vaultPropDictList)
-        //            {
-        //                vaultPropDict.TryGetValue("EntityName", out matchPartNum);
-        //                matchPartNum = Path.GetFileNameWithoutExtension(matchPartNum);
-        //                // if there is discrepancy between the vault part number and the inventor part number
-        //                //   then we have the option of including those or not
-        //                if (searchPartNum == matchPartNum || matchPartNumbers == false)
-        //                {
-        //                    vaultPropDict.TryGetValue("EntityIterationId", out entityIterationId);
-        //                    vaultPropDict.TryGetValue("EntityName", out entityName);
-        //                    vaultPropDict.TryGetValue("Title", out title);
-        //                    try
-        //                    {
-        //                        if (!inventorPropDictItem.ContainsKey("EntityIterationId"))
-        //                            inventorPropDictItem.Add("EntityIterationId", entityIterationId);
-        //                        if (!inventorPropDictItem.ContainsKey("EntityName"))
-        //                            inventorPropDictItem.Add("EntityName", entityName);
-        //                        if (!inventorPropDictItem.ContainsKey("Title"))
-        //                            inventorPropDictItem.Add("Title", title);
-        //                    }
-        //                    catch (Exception)
-        //                    {
-        //                        break;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        //statLabel.Text = "Done.";
-
-
-        //    }
-        //    Application.UseWaitCursor = false;
-        //    return inventorPropDictList;
-
-        //}
 
         public Task<List<Dictionary<string, string>>> GetAssemblyProps(IProgress<string> prog, Vault.Currency.Entities.FileIteration assemblyFile, bool matchPartNumbers = true)
         {
@@ -968,122 +723,6 @@ namespace VaultAccess
             Application.UseWaitCursor = false;
             return inventorPropDictList;
         }
-
-        //private List<Dictionary<string,string>> GetVaultAssemblyProperties(Vault.Currency.Entities.FileIteration selectedFile, List<string> propNames)
-        //{
-        //    // a list of dictionaries of the vault properties of the associated files
-        //    List<Dictionary<string, string>> vaultPropDictList = new List<Dictionary<string, string>>();
-
-        //    // first get all parent and child information for the selectedFile
-        //    // and store in a dictionary of FileIterations indexed by their Vault IDs
-
-        //    ACW.FileAssocArray[] associationArrays = m_conn.WebServiceManager.DocumentService.GetFileAssociationsByIds(
-        //        new long[] { selectedFile.EntityIterationId },
-        //        ACW.FileAssociationTypeEnum.None, false,        // parent associations
-        //        ACW.FileAssociationTypeEnum.Dependency, true,   // child associations
-        //        false, true);
-
-        //    if (associationArrays != null && associationArrays.Length > 0 &&
-        //        associationArrays[0].FileAssocs != null && associationArrays[0].FileAssocs.Length > 0)
-        //    {
-        //        ACW.FileAssoc[] associations = associationArrays[0].FileAssocs;
-
-        //        // organize the return values by the parent file
-        //        Dictionary<long, List<Vault.Currency.Entities.FileIteration>> associationsByFile = new Dictionary<long, List<Vault.Currency.Entities.FileIteration>>();
-        //        foreach (ACW.FileAssoc association in associations)
-        //        {
-        //            ACW.File parent = association.ParFile;
-        //            if (associationsByFile.ContainsKey(parent.Id))
-        //            {
-        //                // parent is already in the hashtable, add an new child entry
-        //                List<Vault.Currency.Entities.FileIteration> list = associationsByFile[parent.Id];
-        //                list.Add(new Vault.Currency.Entities.FileIteration(m_conn, association.CldFile));
-        //            }
-        //            else
-        //            {
-        //                // add the parent to the hashtable.
-        //                List<Vault.Currency.Entities.FileIteration> list = new List<Vault.Currency.Entities.FileIteration>();
-        //                list.Add(new Vault.Currency.Entities.FileIteration(m_conn, parent));
-        //                list.Add(new Vault.Currency.Entities.FileIteration(m_conn, association.CldFile));
-        //                associationsByFile.Add(parent.Id, list);
-        //            }
-        //        }
-
-        //        // now convert this Dictionary of fileIterations into a List of Dictionaries containing all accessible properties.
-
-        //        // set up a temporary list to hold all associated files.
-        //        List<Vault.Currency.Entities.FileIteration> tempList = new List<Vault.Currency.Entities.FileIteration>();
-
-
-        //        for (int index = 0; index < associationsByFile.Count; index++)
-        //        {
-        //            var item = associationsByFile.ElementAt(index);
-        //            var itemKey = item.Key;
-        //            var itemValue = item.Value;
-        //            foreach (var subItem in itemValue)
-        //            {
-        //                tempList.Add((Vault.Currency.Entities.FileIteration)subItem);
-        //            }
-        //        }
-
-        //        // define a dictionary to hold all the properties pertaining to a vault entity
-        //        Vault.Currency.Properties.PropertyDefinitionDictionary allPropDefDict = new Vault.Currency.Properties.PropertyDefinitionDictionary();
-        //        allPropDefDict = m_conn.PropertyManager.GetPropertyDefinitions(Vault.Currency.Entities.EntityClassIds.Files, null, Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll);
-
-
-        //        // define a list of only the properties that we are concerned about.
-        //        List<Vault.Currency.Properties.PropertyDefinition> filteredPropDefList =
-        //                new List<Vault.Currency.Properties.PropertyDefinition>();
-
-        //        // copy only definitions in propNames list from allPropDefDict to filteredPropDefList
-        //        foreach (string s in propNames)
-        //        {
-        //            Vault.Currency.Properties.PropertyDefinition propDefs =
-        //                new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition();
-        //            propDefs = allPropDefDict[s];
-
-        //            filteredPropDefList.Add(propDefs);
-        //        }
-
-        //        // the following line should return a list of properties
-        //        Vault.Currency.Properties.PropertyValues propValues = new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues();
-        //        propValues = m_conn.PropertyManager.GetPropertyValues(tempList, filteredPropDefList, null);
-
-        //        // convert the propValues into a list of dictionaries
-
-        //        foreach (Vault.Currency.Entities.FileIteration f in tempList)
-        //        {
-        //            Dictionary<Vault.Currency.Properties.PropertyDefinition, Vault.Currency.Properties.PropertyValue> d = propValues.GetValues(f);
-        //            Dictionary<string, string> dictToAdd = new Dictionary<string, string>();
-        //            dictToAdd.Add("EntityIterationId", f.EntityIterationId.ToString());
-        //            dictToAdd.Add("EntityName", f.EntityName);
-        //            foreach (string s in propNames)
-        //            {
-        //                Vault.Currency.Properties.PropertyDefinition def = new Vault.Currency.Properties.PropertyDefinition(s);
-        //                Vault.Currency.Properties.PropertyValue val;
-        //                d.TryGetValue(def, out val);
-
-        //                string key = null;
-        //                if (def != null)
-        //                {
-        //                    key = (def.SystemName == null) ? null : def.SystemName;
-
-        //                    string value = null;
-        //                    if (val != null)
-        //                    {
-        //                        value = (val.Value == null) ? "" : val.Value.ToString();
-        //                    }
-        //                    else
-        //                        value = "";
-        //                    if (key != null)
-        //                        dictToAdd.Add(key, value);
-        //                }
-        //            }
-        //            vaultPropDictList.Add(dictToAdd);
-        //        }
-        //    }
-        //    return vaultPropDictList;
-        //}
 
         private Task<List<Dictionary<string, string>>> GetVaultAssemblyProperties(IProgress<string> prog, Vault.Currency.Entities.FileIteration selectedFile, List<string> propNames)
         {
@@ -1274,118 +913,6 @@ namespace VaultAccess
             }
             return vaultPropDictList;
         }
-
-        //private List<Dictionary<string,string>> GetInventorAssemblyProperties(Vault.Currency.Entities.FileIteration selectedFile)
-        //{
-        //    // a list of dictionaries of the downloaded inventor file properties
-        //    List<Dictionary<string, string>> inventorPropDictList = new List<Dictionary<string, string>>();
-
-        //    // first download all the associated files
-        //    string filePath = Path.Combine(System.IO.Path.GetTempPath(), selectedFile.EntityName);
-
-        //    if (System.IO.File.Exists(filePath))
-        //        System.IO.File.SetAttributes(filePath, FileAttributes.Normal);
-
-        //    //determine if the file already exists
-        //    if (System.IO.File.Exists(filePath))
-        //    {
-        //        //we'll try to delete the file so we can get the latest copy
-        //        try
-        //        {
-        //            System.IO.File.Delete(filePath);
-
-        //            //remove the file from the collection of downloaded files that need to be removed when the application exits
-        //            if (m_downloadedFiles.Contains(filePath))
-        //                m_downloadedFiles.Remove(filePath);
-        //        }
-        //        catch (System.IO.IOException)
-        //        {
-        //            throw new Exception("The file you are attempting to open already exists and can not be overwritten. This file may currently be open, try closing any application you are using to view this file and try opening the file again.");
-        //        }
-        //    }
-        //    if (downloadFileAndAssociations(selectedFile, Path.GetDirectoryName(filePath)))
-        //    {
-        //        string downloadedFileName = Path.GetDirectoryName(filePath) + "\\" + selectedFile.EntityName;
-        //        m_downloadedFiles.Add(filePath);
-
-        //        Inventor.ApprenticeServerComponent apprentice = new Inventor.ApprenticeServerComponent();
-        //        Inventor.ApprenticeServerDocument apprenticeDoc = apprentice.Open(downloadedFileName);
-        //        Inventor.ComponentOccurrences oComponentOccurences = apprenticeDoc.ComponentDefinition.Occurrences;
-
-
-        //        // get properties of root component
-        //        Inventor.DocumentTypeEnum documentType = Inventor.DocumentTypeEnum.kUnknownDocumentObject;
-        //        string thickness = "";
-        //        string material = "";
-        //        string desc = "";
-        //        Dictionary<string, string> inventorPropDict = new Dictionary<string, string>();
-        //        apprenticeDoc = apprentice.Open(downloadedFileName);
-
-        //        string fileName = "";
-        //        try
-        //        {
-        //           fileName = Path.GetFileNameWithoutExtension(apprenticeDoc.FullDocumentName);
-        //        }
-        //        catch(Exception)
-        //        {
-        //            fileName = "undefined";
-        //        }
-
-        //        try
-        //        {
-        //            Inventor.PropertySet userDefinedPropertiesSet;
-        //            userDefinedPropertiesSet = apprenticeDoc.PropertySets["User Defined Properties"];
-        //            Inventor.Property thickProp = userDefinedPropertiesSet["Thickness"];
-        //            thickness = thickProp.Value;
-        //        }
-        //        catch (Exception)
-        //        {
-        //            thickness = "undefined";
-        //        }
-
-        //        try
-        //        {
-        //            Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
-        //            Inventor.Property materialProp = designTrackingProperties["Material"];
-        //            material = materialProp.Value;
-        //        }
-        //        catch (Exception)
-        //        {
-        //            material = "undefined";
-        //        }
-
-        //        try
-        //        {
-        //            Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
-        //            Inventor.Property materialProp = designTrackingProperties["Description"];
-        //            desc = materialProp.Value;
-        //        }
-        //        catch (Exception)
-        //        {
-        //            desc = "undefined";
-        //        }
-
-        //        inventorPropDict.Add("ParentPartNumber", "none");
-
-
-        //        documentType = Inventor.DocumentTypeEnum.kAssemblyDocumentObject;
-
-        //        inventorPropDict.Add("PartNumber", fileName);
-        //        inventorPropDict.Add("Material Thickness", thickness);
-        //        inventorPropDict.Add("Material Type", material);
-        //        inventorPropDict.Add("Description", desc);
-        //        inventorPropDict.Add("Quantity", "1");
-        //        inventorPropDict.Add("DocumentType", documentType.ToString());
-
-        //        // add the properties of the top level component to the list.
-        //        inventorPropDictList.Add(inventorPropDict);
-
-        //        // get the rest of the sub components
-        //        GetComponents(fileName, oComponentOccurences, ref inventorPropDictList);
-        //        // these are all stored in a list of dictionaries.  Each dictionary holds all the attributes of each part (inventorPropDictList)
-        //    }
-        //    return inventorPropDictList;
-        //}
 
         private Task<List<Dictionary<string, string>>> GetInventorAssemblyProperties(IProgress<string> prog, Vault.Currency.Entities.FileIteration selectedFile)
         {
@@ -1613,204 +1140,6 @@ namespace VaultAccess
             }
             return inventorPropDictList;
         }
-
-        //private void GetComponents(string parentPartNum, Inventor.ComponentOccurrences inCollection, ref List<Dictionary<string, string>> dictList)
-        //{
-        //    // this is a recursive function that gets the properties of all the components and sub components in 'inCollection'
-
-        //    List<Dictionary<string, string>> inventorPropDictList = dictList;
-
-        //    Inventor.ApprenticeServerComponent apprentice = new Inventor.ApprenticeServerComponent();
-
-        //    var assemblyQuery =
-        //        from Inventor.ComponentOccurrence assembly in inCollection
-        //        where assembly.DefinitionDocumentType == Inventor.DocumentTypeEnum.kAssemblyDocumentObject ||
-        //              assembly.DefinitionDocumentType == Inventor.DocumentTypeEnum.kPartDocumentObject
-        //        orderby assembly.DefinitionDocumentType descending
-        //        select assembly;
-
-        //    //iterate through the components in the current collection
-        //    IEnumerator objoccsEnumerator = assemblyQuery.GetEnumerator();
-
-        //    Inventor.ComponentOccurrence objcompOccurrence;
-
-        //    while (objoccsEnumerator.MoveNext() == true)
-        //    {
-        //        Inventor.DocumentTypeEnum documentType = new Inventor.DocumentTypeEnum();
-        //        string thickness = "";
-        //        string material = "";
-        //        string desc = "";
-        //        string displayName = "";
-        //        string fileName = "";
-        //        string parentFileName = "";
-
-        //        Dictionary<string, string> inventorPropDict = new Dictionary<string, string>();
-        //        Inventor.ApprenticeServerDocument apprenticeDoc;
-        //        try
-        //        {
-        //            objcompOccurrence = (Inventor.ComponentOccurrence)objoccsEnumerator.Current;
-        //            try
-        //            {
-        //                Inventor.ComponentDefinition cDef = objcompOccurrence.Definition;
-        //                apprenticeDoc = objcompOccurrence.Definition.Document;
-        //                apprentice.Open(apprenticeDoc.FullFileName);
-
-        //                try
-        //                {
-
-        //                    fileName = Path.GetFileNameWithoutExtension(apprenticeDoc.FullDocumentName);
-        //                }
-        //                catch(Exception)
-        //                {
-        //                    fileName = "undefined";
-        //                }
-
-        //                try
-        //                {
-        //                    Inventor.PropertySet userDefinedPropertiesSet;
-        //                    userDefinedPropertiesSet = apprenticeDoc.PropertySets["User Defined Properties"];
-        //                    Inventor.Property thickProp = userDefinedPropertiesSet["Thickness"];
-        //                    thickness = thickProp.Value;
-        //                }
-        //                catch (Exception)
-        //                {
-        //                    thickness = "undefined";
-        //                }
-
-        //                try
-        //                {
-        //                    Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
-        //                    Inventor.Property materialProp = designTrackingProperties["Material"];
-        //                    material = materialProp.Value;
-        //                }
-        //                catch (Exception)
-        //                {
-        //                    material = "undefined";
-        //                }
-
-        //                try
-        //                {
-        //                    Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
-        //                    Inventor.Property materialProp = designTrackingProperties["Description"];
-        //                    desc = materialProp.Value;
-        //                }
-        //                catch (Exception)
-        //                {
-        //                    desc = "undefined";
-        //                }
-
-        //                if (objcompOccurrence.Parent != null)
-        //                {
-        //                    objcompOccurrence = (Inventor.ComponentOccurrence)objoccsEnumerator.Current;
-        //                    Inventor.ApprenticeServerDocument apprenticeParentDoc = objcompOccurrence.Parent.Document;
-        //                    apprentice.Open(apprenticeParentDoc.FullFileName);
-
-        //                    parentFileName = Path.GetFileNameWithoutExtension(apprenticeParentDoc.FullDocumentName);
-
-        //                    inventorPropDict.Add("ParentPartNumber", parentFileName);
-
-        //                    if (parentFileName == fileName)    // seems there are some components referencing themselves as parents.  We don't want them...
-        //                    {
-        //                        continue;
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    inventorPropDict.Add("ParentPartNumber", "");
-        //                }
-
-        //                documentType = objcompOccurrence.DefinitionDocumentType;
-
-        //                inventorPropDict.Add("PartNumber", fileName);
-        //                inventorPropDict.Add("Material Thickness", thickness);
-        //                inventorPropDict.Add("Material Type", material);
-        //                inventorPropDict.Add("Description", desc);
-        //                inventorPropDict.Add("Quantity", "1");
-        //                inventorPropDict.Add("DocumentType", documentType.ToString());
-
-        //                string checkPartNum = null;
-        //                string checkExistingParentPartNum = null;
-        //                string checkQty = null;
-        //                bool matchfound = false;
-        //                Dictionary<string, string> dictToRemove = new Dictionary<string, string>();
-
-        //                foreach (Dictionary<string, string> t in inventorPropDictList)
-        //                {
-
-        //                    if (t.TryGetValue("PartNumber", out checkPartNum))  // do we already have this part in the list?
-        //                    {
-        //                        if (checkPartNum == fileName)
-        //                        {
-
-        //                            t.TryGetValue("ParentPartNumber", out checkExistingParentPartNum);  // get its parent part number
-        //                            if (checkExistingParentPartNum == parentFileName)        // if parentPartNumber of check item matches parentPartNumber of current item, we only need to increase quantity
-        //                            {
-        //                                t.TryGetValue("Quantity", out checkQty);     // and its current quantity
-        //                                dictToRemove = t;
-        //                                matchfound = true;  // we found a match
-        //                                break;
-        //                            }
-        //                        }
-        //                    }
-        //                }
-
-        //                if (matchfound)
-        //                {
-        //                    if (parentFileName == checkExistingParentPartNum)
-        //                    {
-        //                        int newQty = int.Parse(checkQty);
-        //                        newQty++;
-        //                        inventorPropDict["Quantity"] = newQty.ToString();
-        //                        inventorPropDictList.Remove(dictToRemove);
-        //                    }
-        //                }
-
-
-        //                inventorPropDictList.Add(inventorPropDict);
-
-        //                Inventor.ComponentOccurrences oSubComponentOccurences = apprenticeDoc.ComponentDefinition.Occurrences;
-        //                GetComponents(fileName, oSubComponentOccurences, ref inventorPropDictList);
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                // create undefined component
-        //                inventorPropDict.Clear();
-        //                inventorPropDict.Add("EntityName", null);
-        //                string partNum = Path.GetFileNameWithoutExtension(objcompOccurrence.ReferencedDocumentDescriptor.FullDocumentName);
-        //                partNum = partNum + " - (Inaccessible Component)";
-        //                inventorPropDict.Add("PartNumber", partNum);
-        //                inventorPropDict.Add("Material Thickness", "undefined");
-        //                inventorPropDict.Add("Material Type", "undefined");
-        //                inventorPropDict.Add("Quantity", "1");
-        //                inventorPropDict.Add("DocumentType", objcompOccurrence.ReferencedDocumentDescriptor.ReferencedDocumentType.ToString());
-        //                inventorPropDict.Add("ParentPartNumber", parentPartNum);
-        //                inventorPropDict.Add("Description", "Inaccessible Component");
-        //                inventorPropDict.Add("Title",null);
-        //                inventorPropDictList.Add(inventorPropDict);
-
-        //                continue;
-        //            }
-        //        }
-
-        //        catch (Exception ex)
-        //        {
-        //            // create undefined component
-        //            // not fully tested yet....
-        //            inventorPropDict.Clear();
-        //            inventorPropDict.Add("EntityName", "Inaccessible Component");
-        //            inventorPropDict.Add("PartNumber", displayName);
-        //            inventorPropDict.Add("Material Thickness", "undefined");
-        //            inventorPropDict.Add("Material Type", "undefined");
-        //            inventorPropDict.Add("Quantity", "1");
-        //            inventorPropDict.Add("DocumentType", documentType.ToString());
-        //            inventorPropDict.Add("ParentPartNumber", parentPartNum);
-        //            inventorPropDictList.Add(inventorPropDict);
-        //            continue;
-        //        }
-
-        //    }
-
-        //}
 
         private Task GetComponents(IProgress<string> prog, string parentPartNum, Inventor.ComponentOccurrences inCollection, ref List<Dictionary<string, string>> dictList)
         {
@@ -2137,10 +1466,6 @@ namespace VaultAccess
                     string errMessage = "";
                     if (!PrintIDWToPDF(fIter, ref errMessage, ref logMessage))
                         return false;
-
-                    //string debugFileName = AppSettings.Get("VaultExportFilePath") + "debug.txt";
-                    //System.IO.File.WriteAllText(debugFileName, logMessage);
-
                 }
             }
 
@@ -2189,15 +1514,7 @@ namespace VaultAccess
             }
 
             // sort the idw files by date
-            //idwList.OrderByDescending(x => x.CkInDate).ToList();
             idwDict.OrderByDescending(x => x.Value).ToList();
-
-            // return a list of vault IDs sorted by date from newest to oldest.
-            //foreach(ACW.File f in idwList)
-            //{
-            //    sortedIDList.Add(f.Id);
-            //}
-
 
             return idwDict;
         }
@@ -2386,171 +1703,6 @@ namespace VaultAccess
 
             try
             {
-                //string TargetFolder = System.IO.Path.GetTempPath();
-                //string VaultSearchEntity = "Name";
-
-                //// make sure folder exists for downloading idw into.
-                //logMessage += "Checking Target Directory...";
-                //System.IO.DirectoryInfo targetDir = new System.IO.DirectoryInfo(TargetFolder);
-                //if (!targetDir.Exists)
-                //{
-                //    targetDir.Create();
-                //}
-                //logMessage += "OK" + "\r\n";
-
-                //// download the idw from the vault
-                //logMessage += "Downloading idw from the vault...";
-                //VDF.Vault.Settings.AcquireFilesSettings downloadSettings = new VDF.Vault.Settings.AcquireFilesSettings(m_conn)
-                //{
-                //    LocalPath = new VDF.Currency.FolderPathAbsolute(targetDir.FullName),
-                //};
-                //downloadSettings.AddFileToAcquire(fileIter, VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download);
-                //m_conn.FileManager.AcquireFiles(downloadSettings);
-
-                //string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
-                //string modelName = "";
-
-                //logMessage += "OK" + "\r\n";
-
-                //// set up lists for storing the actual model names the sheets are referencing
-                //logMessage += "Setting up data structures to hold file names...";
-
-                //// two failures here Oct. 26th...
-
-                //List<string> modelNames = new List<string>();
-                //List<VDF.Vault.Currency.Entities.FileIteration> fIterations = new List<VDF.Vault.Currency.Entities.FileIteration>();
-
-                //VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs =
-                //               new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                //Inventor.ApprenticeServerComponent oApprentice = new Inventor.ApprenticeServerComponent();
-                //Inventor.ApprenticeServerDrawingDocument drgDoc;
-                //drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                //oApprentice.Open(fileName);
-                //drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                //PropDef[] filePropDefs =
-                //                m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
-                //PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
-
-                //logMessage += "OK" + "\r\n";
-                //logMessage += "Number of Sheets in drgDoc" + drgDoc.Sheets.Count + "\r\n";
-
-                //// for each sheet in the idw, search the vault for the sheet's corresponding ipt or iam 
-                //foreach (Inventor.Sheet sh in drgDoc.Sheets)
-                //{
-                //    logMessage += "Sheet Name: " + sh.Name + "\r\n";
-
-                //    // ...2 failures here Oct. 23rd...
-                //    // ...1 failure here Oct 28th....
-
-                //    if (sh.DrawingViews.Count > 0)
-                //    {
-                //        modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                //        VDF.Vault.Currency.Entities.FileIteration fIter;
-                //        try
-                //        {
-                //            logMessage += "Setting up to search condition...";
-
-                //            SrchCond vaultName = new SrchCond()
-                //            {
-                //                PropDefId = vaultNamePropDef.Id,
-                //                PropTyp = PropertySearchType.SingleProperty,
-                //                SrchOper = 3, // equals
-                //                SrchRule = SearchRuleType.Must,
-                //                SrchTxt = modelName
-                //            };
-
-
-                //            string bookmark = string.Empty;
-                //            SrchStatus status = null;
-                //            Autodesk.Connectivity.WebServices.File[] searchResults =
-                //                m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(
-                //                new SrchCond[] { vaultName },
-                //                null, null, false, true, ref bookmark, out status);
-
-
-
-                //            propDefs = new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                //            propDefs =
-                //              m_conn.PropertyManager.GetPropertyDefinitions(
-                //                VDF.Vault.Currency.Entities.EntityClassIds.Files,
-                //                null,
-                //                VDF.Vault.Currency.Properties.PropertyDefinitionFilter.IncludeAll
-                //              );
-
-                //            logMessage += "OK, search successful" + "\r\n";
-
-                //            if (searchResults == null)
-                //            {
-                //                logMessage += "No corresponding model file found for " + modelName + "\r\n";
-                //                ACW.File emptyFile = new ACW.File();
-                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
-                //                fIterations.Add(fIter);
-                //            }
-                //            else if (searchResults.Count() > 1)
-                //            {
-                //                logMessage += "Multiple corresponding models found for " + modelName + "\r\n";
-                //                ACW.File emptyFile = new ACW.File();
-                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, emptyFile);
-                //                fIterations.Add(fIter);
-                //            }
-                //            else
-                //            {
-                //                fIter = new VDF.Vault.Currency.Entities.FileIteration(m_conn, searchResults[0]);
-                //                fIterations.Add(fIter);
-                //                logMessage += "Match found\r\n";
-                //            }
-                //        }
-                //        catch (Exception)
-                //        {
-                //            errMessage += "Unknown Error in function PrintPDF\r\n";
-                //            return false;
-                //        }
-                //    }
-                //}
-
-                //// now we have a list of model file names stored in 'fIterations', one for every sheet in the idw.
-                //// If we couldn't match the sheet up with a model, the list will have a blank entry.
-                //// next we have to match each name up with whatever vault field we are using to name the pdf files...
-                //// e.g. if we're using names, this is totally unnecessary, but if we want to use ERP Numbers, we have to 
-                //// search them out.
-                //// we'll then end up with a dictionary matching names up with the chosen vault field.
-
-                //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValues propList =
-                //    new VDF.Vault.Currency.Properties.PropertyValues();
-
-                //System.Collections.Generic.Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                //                                      Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyValue>
-                //                                      propDict = new Dictionary<VDF.Vault.Currency.Entities.IEntity,
-                //                                                          VDF.Vault.Currency.Properties.PropertyValue>();
-
-                //Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition propDef =
-                //    new VDF.Vault.Currency.Properties.PropertyDefinition(propDefs[VaultSearchEntity]);
-
-                //propList = m_conn.PropertyManager.GetPropertyValues(
-                //            fIterations, new Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinition[] { propDef }, null);
-                //logMessage += "propList count: " + propList.Entities.Count() + "\r\n";
-
-                //propDict = propList.GetValues(propDef);
-                //logMessage += "propDict count: " + propDict.Values.Count() + "\r\n";
-
-                //foreach (KeyValuePair<VDF.Vault.Currency.Entities.IEntity,
-                //                     VDF.Vault.Currency.Properties.PropertyValue> pair in propDict)
-                //{
-                //    if (pair.Key.EntityMasterId != 0)
-                //    {
-                //        logMessage += "key: " + pair.Key + " value: " + pair.Value.Value + "\r\n";
-                //        modelNames.Add(pair.Value.Value.ToString());
-                //    }
-                //    else
-                //    {
-                //        logMessage += "Blank entry\r\n";
-                //        modelNames.Add("");
-                //    }
-                //}
-
-                //logMessage += "Defining Print Object...";
-
-                //...failed here one time Oct 28th...
                 PrintPDF.PrintObject printOb = new PrintPDF.PrintObject();
                 string errMsg = "";
                 string logMsg = "";
@@ -2580,8 +1732,7 @@ namespace VaultAccess
 
                 string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
 
-                //if (printOb.printToPDFNew(fileName, propDict, m_PDFPath, ref errMsg, ref logMsg))
-                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, m_psToPdfProgName, m_ghostScriptWorkingFolder, ref errMsg, ref logMsg))
+                if (printOb.printToPDF(fileName, m_PDFPath, m_pdfPrinterName, ref errMsg, ref logMsg))
                 {
                     logMessage += logMsg;
                     return true;
