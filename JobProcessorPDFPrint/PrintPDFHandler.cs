@@ -129,7 +129,7 @@ namespace JobProcessorPrintPDF
             }
             catch (Exception ex)
             {
-                context.Log("Unknown Error in PDF Handler\n\r", ACJE.MessageType.eError);
+                context.Log("Error in PDF Handler " + ex.Message + "\n\r", ACJE.MessageType.eError);
                 return ACJE.JobOutcome.Failure;
             }
         }
