@@ -67,3 +67,23 @@ C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Au
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
 C:\Users\lorne\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.LicenseWrapper.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe.config
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.exe
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\ReviewSymFiles.pdb
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Explorer.Extensibility.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.WCF.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.LicenseWrapper.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Explorer.Extensibility.xml
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.WebServices.xml
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.Extensibility.Framework.xml
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csprojAssemblyReference.cache
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CoreCompileInputs.cache
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.CopyComplete
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.exe
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.pdb
