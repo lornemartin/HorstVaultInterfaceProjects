@@ -77,16 +77,17 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=24.0.0.0, Culture=neutral, PublicKeyToken=aa20f34aedd220e1, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.Connectivity.WebServices, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Vault 2020 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+      <HintPath>..\..\Vault 2021 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=24.1.42.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=25.0.66.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Vault 2020 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+      <HintPath>..\..\Vault 2021 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
-      <HintPath>..\..\Vault 2020 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=25.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Vault 2021 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.Data.v20.1, Version=20.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
     <Reference Include="DevExpress.Pdf.v20.1.Core, Version=20.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
