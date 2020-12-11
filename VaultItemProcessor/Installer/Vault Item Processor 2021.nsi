@@ -86,7 +86,7 @@ Function .onInit
 
 		config_file_not_found:
 			DetailPrint "Writing config file"
-			File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
+			File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
 		end_of_test:
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
@@ -110,15 +110,15 @@ SetOverwrite ifnewer
 StrCpy $INSTDIR "$PROGRAMFILES\Vault Item Processor 2021"
 SetOutPath "$INSTDIR"
 
-File "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\*.*"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2021 SDK Binaries\AdskLicensingSDK_3.dll"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\*.*"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\Vault 2021 SDK Binaries\AdskLicensingSDK_3.dll"
 
 SetOutPath "$APPDATA\Autodesk\Vault 2021\Extensions\ItemExport"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\ItemExport\bin\Debug\*.*"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ItemExport\bin\Debug\*.*"
 
 SetShellVarContext all
 SetOutPath "$APPDATA\Autodesk\Vault 2021\Extensions\DirectView"
-File "C:\Users\lorne\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
+File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
 
 SectionEnd
 

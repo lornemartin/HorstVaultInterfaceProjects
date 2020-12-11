@@ -262,7 +262,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2020 SDK Binaries\AdskLicensingSDK_2.dll" "C:\Users\lorne\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug\"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\Vault 2021 SDK Binaries\AdskLicensingSDK_3.dll" "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\bin\debug\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
