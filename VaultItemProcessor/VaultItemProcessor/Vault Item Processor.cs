@@ -589,7 +589,6 @@ namespace VaultItemProcessor
                             lineItem.Notes = lItem.Notes;
                             lineItem.Qty = lItem.Qty;
 
-
                             plProd.SubItems.Add(lineItem);
                         }
                         idx++;
@@ -705,6 +704,8 @@ namespace VaultItemProcessor
                 {
                     try
                     {
+                        lItem.OrderNumber = txtBoxOrderNumber.Text;
+
                         string srcPdfName = Path.Combine(pdfPath, lItem.Number + ".pdf");
                         string destPdfName = Path.Combine(exportFilePath, "Pdfs", lItem.Number + ".pdf");
 

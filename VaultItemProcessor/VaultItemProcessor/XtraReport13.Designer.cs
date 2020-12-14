@@ -364,6 +364,7 @@
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.xrPageBreak1,
             this.table1});
+            this.Detail.Expanded = false;
             this.Detail.HeightF = 56F;
             this.Detail.KeepTogether = true;
             this.Detail.Name = "Detail";
@@ -440,6 +441,7 @@
             this.ReportFooter1});
             this.DetailReport.DataMember = "ReportOrders";
             this.DetailReport.DataSource = this.objectDataSource1;
+            this.DetailReport.Expanded = false;
             this.DetailReport.Level = 0;
             this.DetailReport.Name = "DetailReport";
             // 
@@ -577,6 +579,7 @@
             this.GroupFooter1});
             this.ReportCutList.DataMember = "ReportCutListItems";
             this.ReportCutList.DataSource = this.objectDataSource1;
+            this.ReportCutList.Expanded = false;
             this.ReportCutList.Level = 1;
             this.ReportCutList.Name = "ReportCutList";
             this.ReportCutList.ReportPrintOptions.BlankDetailCount = 3;
@@ -862,6 +865,7 @@
             this.xrPageBreak3,
             this.xrPictureBox2,
             this.table7});
+            this.Assy1Detail.Expanded = false;
             this.Assy1Detail.HeightF = 479.1146F;
             this.Assy1Detail.Name = "Assy1Detail";
             // 
@@ -966,6 +970,7 @@
             this.groupFooterBand1});
             this.Assy1Detail2.DataMember = "ReportAssemblies.ReportOrders";
             this.Assy1Detail2.DataSource = this.objectDataSource1;
+            this.Assy1Detail2.Expanded = false;
             this.Assy1Detail2.Level = 0;
             this.Assy1Detail2.Name = "Assy1Detail2";
             // 
@@ -973,6 +978,7 @@
             // 
             this.Assy1GroupHeader.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.panel2});
+            this.Assy1GroupHeader.Expanded = false;
             this.Assy1GroupHeader.GroupUnion = DevExpress.XtraReports.UI.GroupUnion.WithFirstDetail;
             this.Assy1GroupHeader.HeightF = 48F;
             this.Assy1GroupHeader.Level = 1;
@@ -1026,6 +1032,7 @@
             // 
             this.Assy1Detail21.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.table9});
+            this.Assy1Detail21.Expanded = false;
             this.Assy1Detail21.HeightF = 25F;
             this.Assy1Detail21.Name = "Assy1Detail21";
             // 
@@ -1069,6 +1076,7 @@
             this.groupFooterBand1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.xrLabel2,
             this.xrLabel1});
+            this.groupFooterBand1.Expanded = false;
             this.groupFooterBand1.HeightF = 25.4556F;
             this.groupFooterBand1.Name = "groupFooterBand1";
             // 
@@ -1103,6 +1111,7 @@
             this.Assy1FullPagePDFHeader2});
             this.Assy1fullPagePDF.DataMember = "ReportAssemblies";
             this.Assy1fullPagePDF.DataSource = this.objectDataSource1;
+            this.Assy1fullPagePDF.Expanded = false;
             this.Assy1fullPagePDF.Level = 1;
             this.Assy1fullPagePDF.Name = "Assy1fullPagePDF";
             this.Assy1fullPagePDF.PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand;
@@ -1110,6 +1119,7 @@
             // 
             // Assy1FullPagePdfDetail
             // 
+            this.Assy1FullPagePdfDetail.Expanded = false;
             this.Assy1FullPagePdfDetail.HeightF = 38.78886F;
             this.Assy1FullPagePdfDetail.KeepTogether = true;
             this.Assy1FullPagePdfDetail.Name = "Assy1FullPagePdfDetail";
@@ -1118,6 +1128,7 @@
             // 
             this.Assy1FullPagePDFHeader2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.xrPictureBox5});
+            this.Assy1FullPagePDFHeader2.Expanded = false;
             this.Assy1FullPagePDFHeader2.HeightF = 985F;
             this.Assy1FullPagePDFHeader2.Name = "Assy1FullPagePDFHeader2";
             // 

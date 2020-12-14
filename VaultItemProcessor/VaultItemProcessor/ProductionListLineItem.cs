@@ -38,6 +38,8 @@ namespace VaultItemProcessor
         public string Keywords { get; set; }
         [XmlElement("Notes")]
         public string Notes { get; set; }
+        [XmlElement("OrderNumber")]
+        public string OrderNumber { get; set; }
 
         public ProductionListLineItem()
         {
@@ -55,6 +57,7 @@ namespace VaultItemProcessor
             HasPdf = false;
             Keywords = "";
             Notes = "";
+            OrderNumber = "";
         }
 
         public int CompareTo(ProductionListLineItem other)
