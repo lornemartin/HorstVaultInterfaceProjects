@@ -1071,19 +1071,19 @@ namespace VaultItemProcessor
         }
         private void btnReport_Click(object sender, EventArgs e)
         {
-            XtraReport11 report = new XtraReport11();
+            //XtraReport11 report = new XtraReport11();
 
-            ReportPrintTool printTool = new ReportPrintTool(new XtraReport11());
+            //ReportPrintTool printTool = new ReportPrintTool(new XtraReport11());
 
-            printTool.ShowRibbonPreview();
+            //printTool.ShowRibbonPreview();
         }
         private void btnReport2_Click(object sender, EventArgs e)
         {
-            XtraReport12 report = new XtraReport12();
+            //XtraReport12 report = new XtraReport12();
 
-            ReportPrintTool printTool = new ReportPrintTool(new XtraReport12());
+            //ReportPrintTool printTool = new ReportPrintTool(new XtraReport12());
 
-            printTool.ShowRibbonPreview();
+            //printTool.ShowRibbonPreview();
         }
         private void btnBandsawReport2_Click(object sender, EventArgs e)
         {

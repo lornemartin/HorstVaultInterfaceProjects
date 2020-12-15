@@ -82,9 +82,8 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
+            this.btnLaserSched = new System.Windows.Forms.Button();
             this.btnBandsawReport2 = new System.Windows.Forms.Button();
-            this.btnReport2 = new System.Windows.Forms.Button();
-            this.btnReport = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
             this.outputFolderlbl = new System.Windows.Forms.Label();
             this.textBoxOutputFolder = new System.Windows.Forms.TextBox();
@@ -101,7 +100,6 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
-            this.btnLaserSched = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -511,8 +509,6 @@
             // 
             this.groupBoxOutput.Controls.Add(this.btnLaserSched);
             this.groupBoxOutput.Controls.Add(this.btnBandsawReport2);
-            this.groupBoxOutput.Controls.Add(this.btnReport2);
-            this.groupBoxOutput.Controls.Add(this.btnReport);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
             this.groupBoxOutput.Controls.Add(this.outputFolderlbl);
             this.groupBoxOutput.Controls.Add(this.textBoxOutputFolder);
@@ -528,6 +524,16 @@
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
             // 
+            // btnLaserSched
+            // 
+            this.btnLaserSched.Location = new System.Drawing.Point(20, 188);
+            this.btnLaserSched.Name = "btnLaserSched";
+            this.btnLaserSched.Size = new System.Drawing.Size(75, 23);
+            this.btnLaserSched.TabIndex = 12;
+            this.btnLaserSched.Text = "Laser";
+            this.btnLaserSched.UseVisualStyleBackColor = true;
+            this.btnLaserSched.Click += new System.EventHandler(this.btnLaserSched_Click);
+            // 
             // btnBandsawReport2
             // 
             this.btnBandsawReport2.Location = new System.Drawing.Point(20, 158);
@@ -537,26 +543,6 @@
             this.btnBandsawReport2.Text = "Bandsaw";
             this.btnBandsawReport2.UseVisualStyleBackColor = true;
             this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
-            // 
-            // btnReport2
-            // 
-            this.btnReport2.Location = new System.Drawing.Point(20, 129);
-            this.btnReport2.Name = "btnReport2";
-            this.btnReport2.Size = new System.Drawing.Size(75, 23);
-            this.btnReport2.TabIndex = 10;
-            this.btnReport2.Text = "Report2";
-            this.btnReport2.UseVisualStyleBackColor = true;
-            this.btnReport2.Click += new System.EventHandler(this.btnReport2_Click);
-            // 
-            // btnReport
-            // 
-            this.btnReport.Location = new System.Drawing.Point(20, 99);
-            this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new System.Drawing.Size(75, 23);
-            this.btnReport.TabIndex = 9;
-            this.btnReport.Text = "Report";
-            this.btnReport.UseVisualStyleBackColor = true;
-            this.btnReport.Click += new System.EventHandler(this.btnReport_Click);
             // 
             // btnSelectOutputFolder
             // 
@@ -689,16 +675,6 @@
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
             // 
-            // btnLaserSched
-            // 
-            this.btnLaserSched.Location = new System.Drawing.Point(20, 188);
-            this.btnLaserSched.Name = "btnLaserSched";
-            this.btnLaserSched.Size = new System.Drawing.Size(75, 23);
-            this.btnLaserSched.TabIndex = 12;
-            this.btnLaserSched.Text = "Laser";
-            this.btnLaserSched.UseVisualStyleBackColor = true;
-            this.btnLaserSched.Click += new System.EventHandler(this.btnLaserSched_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -786,8 +762,6 @@
         private System.Windows.Forms.TextBox txtBoxQtyHeader;
         private System.Windows.Forms.Button btnUpdateRecord;
         private System.Windows.Forms.Button btnRemoveRecord;
-        private System.Windows.Forms.Button btnReport;
-        private System.Windows.Forms.Button btnReport2;
         private System.Windows.Forms.Button btnBandsawReport2;
         private System.Windows.Forms.Button btnLaserSched;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;

@@ -54,7 +54,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
@@ -212,18 +212,6 @@
     <Compile Include="WaitFormVaultLogin.Designer.cs">
       <DependentUpon>WaitFormVaultLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="XtraReport11.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="XtraReport11.Designer.cs">
-      <DependentUpon>XtraReport11.cs</DependentUpon>
-    </Compile>
-    <Compile Include="XtraReport12.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="XtraReport12.Designer.cs">
-      <DependentUpon>XtraReport12.cs</DependentUpon>
-    </Compile>
     <Compile Include="XtraReport13.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -264,12 +252,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="WaitFormVaultLogin.resx">
       <DependentUpon>WaitFormVaultLogin.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="XtraReport11.resx">
-      <DependentUpon>XtraReport11.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="XtraReport12.resx">
-      <DependentUpon>XtraReport12.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="XtraReport13.resx">
       <DependentUpon>XtraReport13.cs</DependentUpon>
