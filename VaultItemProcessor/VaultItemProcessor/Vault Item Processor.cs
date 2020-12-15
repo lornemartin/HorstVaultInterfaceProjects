@@ -25,6 +25,7 @@ using DevExpress.Utils.Design;
 using DevExpress.XtraRichEdit.Model;
 using DevExpress.XtraReports.UI;
 using DevExpress.XtraPrinting.Preview;
+using DevExpress.XtraReports.Parameters;
 
 namespace VaultItemProcessor
 {
@@ -1100,9 +1101,22 @@ namespace VaultItemProcessor
 
             XtraReport14 report = new XtraReport14();
 
+            //Parameter parameter = new Parameter()
+            //{
+            //    Name = "sheetThickness",
+            //    Type = typeof(System.String),
+            //    Value = "0.250"
+            //};
+
+            //report.Parameters.Add(parameter);
+
             ReportPrintTool printTool = new ReportPrintTool(new XtraReport14());
 
             printTool.ShowRibbonPreview();
+
+            //report.ExportToPdf(textBoxOutputFolder.Text + "report.pdf");
+
+            
         }
     }
 
