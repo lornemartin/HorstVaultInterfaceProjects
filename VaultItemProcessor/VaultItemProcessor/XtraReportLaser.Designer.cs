@@ -79,6 +79,7 @@
             this.GroupFooter1 = new DevExpress.XtraReports.UI.GroupFooterBand();
             this.label2 = new DevExpress.XtraReports.UI.XRLabel();
             this.GroupFooter2 = new DevExpress.XtraReports.UI.GroupFooterBand();
+            this.xrPictureBox2 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.panel1 = new DevExpress.XtraReports.UI.XRPanel();
             this.label3 = new DevExpress.XtraReports.UI.XRLabel();
             this.label4 = new DevExpress.XtraReports.UI.XRLabel();
@@ -87,8 +88,6 @@
             this.panel2 = new DevExpress.XtraReports.UI.XRPanel();
             this.label6 = new DevExpress.XtraReports.UI.XRLabel();
             this.label7 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
-            this.xrPictureBox2 = new DevExpress.XtraReports.UI.XRPictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
@@ -503,11 +502,17 @@
             // 
             this.GroupFooter2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.xrPictureBox2,
-            this.xrPictureBox1,
             this.panel1});
             this.GroupFooter2.HeightF = 564.1688F;
             this.GroupFooter2.Level = 1;
             this.GroupFooter2.Name = "GroupFooter2";
+            // 
+            // xrPictureBox2
+            // 
+            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(221.875F, 213.375F);
+            this.xrPictureBox2.Name = "xrPictureBox2";
+            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(100F, 100F);
+            this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
             // 
             // panel1
             // 
@@ -592,19 +597,6 @@
             this.label7.Summary = xrSummary2;
             this.label7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             this.label7.WordWrap = false;
-            // 
-            // xrPictureBox1
-            // 
-            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(162.2938F, 142.5416F);
-            this.xrPictureBox1.Name = "xrPictureBox1";
-            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(100F, 100F);
-            // 
-            // xrPictureBox2
-            // 
-            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(221.875F, 213.375F);
-            this.xrPictureBox2.Name = "xrPictureBox2";
-            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(100F, 100F);
-            this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
             // 
             // XtraReportLaser
             // 
@@ -704,6 +696,5 @@
         private DevExpress.XtraReports.UI.XRLabel label6;
         private DevExpress.XtraReports.UI.XRLabel label7;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox2;
-        private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox1;
     }
 }

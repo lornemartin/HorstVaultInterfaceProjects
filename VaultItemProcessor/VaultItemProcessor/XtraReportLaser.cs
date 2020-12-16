@@ -15,7 +15,7 @@ namespace VaultItemProcessor
 
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-
+            var v = Report.GetCurrentColumnValue("Number");
         }
     }
 }
