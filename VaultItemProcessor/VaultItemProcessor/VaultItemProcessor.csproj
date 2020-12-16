@@ -54,7 +54,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
@@ -224,6 +224,12 @@
     <Compile Include="XtraReport14.Designer.cs">
       <DependentUpon>XtraReport14.cs</DependentUpon>
     </Compile>
+    <Compile Include="XtraReportLaser.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="XtraReportLaser.Designer.cs">
+      <DependentUpon>XtraReportLaser.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="PrintIDW.resx">
       <DependentUpon>PrintIDW.cs</DependentUpon>
     </EmbeddedResource>
@@ -258,6 +264,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="XtraReport14.resx">
       <DependentUpon>XtraReport14.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="XtraReportLaser.resx">
+      <DependentUpon>XtraReportLaser.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
