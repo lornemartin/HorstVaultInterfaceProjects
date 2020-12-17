@@ -243,6 +243,7 @@
             // 
             // TopMargin
             // 
+            this.TopMargin.HeightF = 37.5F;
             this.TopMargin.Name = "TopMargin";
             // 
             // BottomMargin
@@ -294,6 +295,7 @@
             this.GroupHeader1.HeightF = 27F;
             this.GroupHeader1.Level = 1;
             this.GroupHeader1.Name = "GroupHeader1";
+            this.GroupHeader1.PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand;
             // 
             // table1
             // 
@@ -509,9 +511,9 @@
             // 
             // xrPictureBox2
             // 
-            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(5.999994F, 68.5833F);
+            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 50.33557F);
             this.xrPictureBox2.Name = "xrPictureBox2";
-            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(634F, 485.5855F);
+            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(756F, 503.8333F);
             this.xrPictureBox2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
             // 
@@ -615,6 +617,7 @@
             this.objectDataSource1});
             this.DataSource = this.objectDataSource1;
             this.Font = new System.Drawing.Font("Arial", 9.75F);
+            this.Margins = new System.Drawing.Printing.Margins(43, 51, 38, 100);
             this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
             this.Title,
             this.GroupCaption1,

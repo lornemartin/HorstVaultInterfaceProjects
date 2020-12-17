@@ -1120,6 +1120,28 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
+
+        private void btnLaserSave_Click(object sender, EventArgs e)
+        {
+            XtraReportLaser report250 = new XtraReportLaser();
+
+            Parameter parameter1 = new Parameter()
+            {
+                Name = "sheetThickness",
+                Type = typeof(System.String),
+                Value = "0.250 in"
+            };
+
+            report250.Parameters.Add(parameter1);
+            report250.FilterString = "[MaterialThickness] = ?sheetThickness";
+            report250.RequestParameters = false;
+
+            ReportPrintTool printTool = new ReportPrintTool(report250);
+
+            printTool.ShowRibbonPreview();
+            
+            //report250.ExportToPdf(textBoxOutputFolder.Text + "Laser 250.pdf");
+        }
     }
 
 }

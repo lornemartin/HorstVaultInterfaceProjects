@@ -100,6 +100,7 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
+            this.btnLaserSave = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -507,6 +508,7 @@
             // 
             // groupBoxOutput
             // 
+            this.groupBoxOutput.Controls.Add(this.btnLaserSave);
             this.groupBoxOutput.Controls.Add(this.btnLaserSched);
             this.groupBoxOutput.Controls.Add(this.btnBandsawReport2);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
@@ -526,19 +528,19 @@
             // 
             // btnLaserSched
             // 
-            this.btnLaserSched.Location = new System.Drawing.Point(20, 188);
+            this.btnLaserSched.Location = new System.Drawing.Point(20, 131);
             this.btnLaserSched.Name = "btnLaserSched";
-            this.btnLaserSched.Size = new System.Drawing.Size(75, 23);
+            this.btnLaserSched.Size = new System.Drawing.Size(96, 23);
             this.btnLaserSched.TabIndex = 12;
-            this.btnLaserSched.Text = "Laser";
+            this.btnLaserSched.Text = "Laser Preview";
             this.btnLaserSched.UseVisualStyleBackColor = true;
             this.btnLaserSched.Click += new System.EventHandler(this.btnLaserSched_Click);
             // 
             // btnBandsawReport2
             // 
-            this.btnBandsawReport2.Location = new System.Drawing.Point(20, 158);
+            this.btnBandsawReport2.Location = new System.Drawing.Point(20, 102);
             this.btnBandsawReport2.Name = "btnBandsawReport2";
-            this.btnBandsawReport2.Size = new System.Drawing.Size(75, 23);
+            this.btnBandsawReport2.Size = new System.Drawing.Size(96, 23);
             this.btnBandsawReport2.TabIndex = 11;
             this.btnBandsawReport2.Text = "Bandsaw";
             this.btnBandsawReport2.UseVisualStyleBackColor = true;
@@ -675,6 +677,16 @@
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
             // 
+            // btnLaserSave
+            // 
+            this.btnLaserSave.Location = new System.Drawing.Point(20, 160);
+            this.btnLaserSave.Name = "btnLaserSave";
+            this.btnLaserSave.Size = new System.Drawing.Size(96, 23);
+            this.btnLaserSave.TabIndex = 13;
+            this.btnLaserSave.Text = "Laser Save";
+            this.btnLaserSave.UseVisualStyleBackColor = true;
+            this.btnLaserSave.Click += new System.EventHandler(this.btnLaserSave_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -764,6 +776,7 @@
         private System.Windows.Forms.Button btnRemoveRecord;
         private System.Windows.Forms.Button btnBandsawReport2;
         private System.Windows.Forms.Button btnLaserSched;
+        private System.Windows.Forms.Button btnLaserSave;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
