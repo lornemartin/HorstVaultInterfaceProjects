@@ -509,9 +509,10 @@
             // 
             // xrPictureBox2
             // 
-            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(221.875F, 213.375F);
+            this.xrPictureBox2.LocationFloat = new DevExpress.Utils.PointFloat(5.999994F, 68.5833F);
             this.xrPictureBox2.Name = "xrPictureBox2";
-            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(100F, 100F);
+            this.xrPictureBox2.SizeF = new System.Drawing.SizeF(634F, 485.5855F);
+            this.xrPictureBox2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrPictureBox2.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrPictureBox2_BeforePrint);
             // 
             // panel1
