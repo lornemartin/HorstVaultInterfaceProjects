@@ -1111,6 +1111,8 @@ namespace VaultItemProcessor
             ProductionListDataSource ds = new ProductionListDataSource();
             List<string> thicknessList = new List<string>();
 
+            //  ****this is the block of code I feel is redundant**********
+            // this is a duplicate retrieval of data that the report should already have, just not sure how to access it.
             foreach(ProductionListLineItem lineItem in ds.GetLaserScheduleReport())
             {
                 if (lineItem.MaterialThickness != "")
@@ -1128,7 +1130,7 @@ namespace VaultItemProcessor
             {
                 Name = "stock",
                 Type = typeof(System.Boolean),
-                Value = true
+                Value = false
             };
 
             laserReport.Parameters.Add(sheetParam);
@@ -1137,65 +1139,18 @@ namespace VaultItemProcessor
             // manually create document so we can get number of pages.
             laserReport.CreateDocument();
 
+            foreach (string thickness in thicknessList)
+            {
+                laserReport = new XtraReportLaser();
+                sheetParam.Value = thickness;
+                laserReport.Parameters.Clear();
+                laserReport.Parameters.Add(sheetParam);
+                laserReport.Parameters.Add(stockParam);
+                laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
+                laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser " + thickness + ".pdf");
 
-            //int numofPages = report075.PrintingSystem.Document.Pages.Count;
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 062.pdf");
 
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.075 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 075.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.120 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 120.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.188 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 188.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.250 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 250.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.312 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 312.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.375 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 375.pdf");
-
-            laserReport = new XtraReportLaser();
-            sheetParam.Value = "0.500 in";
-            laserReport.Parameters.Clear();
-            laserReport.Parameters.Add(sheetParam);
-            laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 500.pdf");
+            }
         }
     }
 
