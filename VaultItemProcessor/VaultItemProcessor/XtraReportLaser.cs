@@ -21,6 +21,7 @@ namespace VaultItemProcessor
 
         private void xrPictureBox2_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
+            
             var number = Report.GetCurrentColumnValue("Number");
 
             string filename = (AppSettings.Get("ExportFilePath").ToString() + "Pdfs\\") + (string)number + ".pdf";

@@ -26,6 +26,9 @@ using DevExpress.XtraRichEdit.Model;
 using DevExpress.XtraReports.UI;
 using DevExpress.XtraPrinting.Preview;
 using DevExpress.XtraReports.Parameters;
+using DevExpress.DataAccess.Sql;
+using DevExpress.DataAccess.ObjectBinding;
+using Parameter = DevExpress.XtraReports.Parameters.Parameter;
 
 namespace VaultItemProcessor
 {
@@ -1104,6 +1107,17 @@ namespace VaultItemProcessor
         private void btnLaserSave_Click(object sender, EventArgs e)
         {
             XtraReportLaser laserReport = new XtraReportLaser();
+
+            ProductionListDataSource ds = new ProductionListDataSource();
+            List<string> thicknessList = new List<string>();
+
+            foreach(ProductionListLineItem lineItem in ds.GetLaserScheduleReport())
+            {
+                if (lineItem.MaterialThickness != "")
+                    if(!thicknessList.Contains(lineItem.MaterialThickness))
+                        thicknessList.Add(lineItem.MaterialThickness);
+            }
+
             Parameter sheetParam = new Parameter()
             {
                 Name = "sheetThickness",
@@ -1122,6 +1136,8 @@ namespace VaultItemProcessor
             laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
             // manually create document so we can get number of pages.
             laserReport.CreateDocument();
+
+
             //int numofPages = report075.PrintingSystem.Document.Pages.Count;
             laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser 062.pdf");
 
