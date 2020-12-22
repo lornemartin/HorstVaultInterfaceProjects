@@ -1239,7 +1239,6 @@ namespace VaultItemProcessor
                 foreach (string structCode in structCodeList)
                 {
                     laserReport = new XtraReportLaser();
-                    //sheetParam.Value = thickness;
                     structParam.Value = structCode;
                     plantParam.Value = location;
                     opParam.Value = "Bandsaw";
@@ -1269,7 +1268,6 @@ namespace VaultItemProcessor
                 foreach (string structCode in structCodeList)
                 {
                     laserReport = new XtraReportLaser();
-                    //sheetParam.Value = thickness;
                     structParam.Value = structCode;
                     plantParam.Value = location;
                     opParam.Value = "Bandsaw";
@@ -1280,6 +1278,192 @@ namespace VaultItemProcessor
                     laserReport.Parameters.Add(structParam);
                     laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
                     string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\Bandsaw\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+            }
+
+            // Ironworker parts
+            foreach (string location in plantList)
+            {
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Iron Worker")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = false;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Iron Worker";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Iron Worker\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == true && lineItem.Operations == "Iron Worker")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = true;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Iron Worker";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\IronWorker\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+            }
+
+            // Machine Shop parts
+            foreach (string location in plantList)
+            {
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Machine Shop")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = false;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Machine Shop";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Machine Shop\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == true && lineItem.Operations == "Machine Shop")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = true;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Machine Shop";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\Machine Shop\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+            }
+
+            // Purchased parts
+            foreach (string location in plantList)
+            {
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Purchased")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = false;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Purchased";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Purchased\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == true && lineItem.Operations == "Purchased")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = true;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Purchased";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\Purchased\\";
                     if (!Directory.Exists(outputFolder))
                         Directory.CreateDirectory(outputFolder);
                     string modifiedStructCode = structCode.Replace("/", "-");
