@@ -303,7 +303,7 @@
             this.table1.Name = "table1";
             this.table1.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow1});
-            this.table1.SizeF = new System.Drawing.SizeF(650F, 25F);
+            this.table1.SizeF = new System.Drawing.SizeF(756.0001F, 25F);
             // 
             // tableRow1
             // 
@@ -326,7 +326,7 @@
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Number]")});
             this.tableCell2.Name = "tableCell2";
             this.tableCell2.StyleName = "GroupData1";
-            this.tableCell2.Weight = 0.91032789963942307D;
+            this.tableCell2.Weight = 1.0734049137454045D;
             // 
             // GroupHeader2
             // 
@@ -343,7 +343,7 @@
             this.table2.Name = "table2";
             this.table2.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow2});
-            this.table2.SizeF = new System.Drawing.SizeF(650F, 28F);
+            this.table2.SizeF = new System.Drawing.SizeF(756F, 28F);
             // 
             // tableRow2
             // 
@@ -401,7 +401,7 @@
             this.tableCell8.Name = "tableCell8";
             this.tableCell8.StyleName = "DetailCaption1";
             this.tableCell8.Text = "Order Number";
-            this.tableCell8.Weight = 0.19044770460862379D;
+            this.tableCell8.Weight = 0.35352462385730632D;
             // 
             // Detail
             // 
@@ -417,7 +417,7 @@
             this.table3.OddStyleName = "DetailData3_Odd";
             this.table3.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow3});
-            this.table3.SizeF = new System.Drawing.SizeF(650F, 25F);
+            this.table3.SizeF = new System.Drawing.SizeF(756F, 25F);
             // 
             // tableRow3
             // 
@@ -481,7 +481,7 @@
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[OrderNumber]")});
             this.tableCell14.Name = "tableCell14";
             this.tableCell14.StyleName = "DetailData1";
-            this.tableCell14.Weight = 0.19044771634615385D;
+            this.tableCell14.Weight = 0.35352463750895669D;
             // 
             // GroupFooter1
             // 
@@ -525,7 +525,7 @@
             this.label5});
             this.panel1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.panel1.Name = "panel1";
-            this.panel1.SizeF = new System.Drawing.SizeF(650F, 50.33557F);
+            this.panel1.SizeF = new System.Drawing.SizeF(756F, 50.33557F);
             this.panel1.StyleName = "TotalBackground1";
             // 
             // label3
@@ -553,9 +553,9 @@
             // 
             // label5
             // 
-            this.label5.LocationFloat = new DevExpress.Utils.PointFloat(6F, 29.78444F);
+            this.label5.LocationFloat = new DevExpress.Utils.PointFloat(6.000002F, 29.78443F);
             this.label5.Name = "label5";
-            this.label5.SizeF = new System.Drawing.SizeF(638F, 14.88444F);
+            this.label5.SizeF = new System.Drawing.SizeF(750.0001F, 14.88444F);
             this.label5.StyleName = "TotalCaption1";
             this.label5.StylePriority.UseTextAlignment = false;
             this.label5.Text = "Number [Number]";
@@ -575,7 +575,7 @@
             this.label7});
             this.panel2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.panel2.Name = "panel2";
-            this.panel2.SizeF = new System.Drawing.SizeF(650F, 49.38444F);
+            this.panel2.SizeF = new System.Drawing.SizeF(756F, 49.38444F);
             this.panel2.StyleName = "GrandTotalBackground1";
             // 
             // label6
@@ -601,7 +601,7 @@
             this.label7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             this.label7.WordWrap = false;
             // 
-            // XtraReportLaser
+            // XtraReportParts
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
             this.TopMargin,
