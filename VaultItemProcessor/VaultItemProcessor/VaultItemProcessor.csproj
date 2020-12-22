@@ -224,11 +224,11 @@
     <Compile Include="XtraReport14.Designer.cs">
       <DependentUpon>XtraReport14.cs</DependentUpon>
     </Compile>
-    <Compile Include="XtraReportLaser.cs">
+    <Compile Include="XtraReportParts.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="XtraReportLaser.Designer.cs">
-      <DependentUpon>XtraReportLaser.cs</DependentUpon>
+    <Compile Include="XtraReportParts.Designer.cs">
+      <DependentUpon>XtraReportParts.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="PrintIDW.resx">
       <DependentUpon>PrintIDW.cs</DependentUpon>
@@ -265,8 +265,8 @@
     <EmbeddedResource Include="XtraReport14.resx">
       <DependentUpon>XtraReport14.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="XtraReportLaser.resx">
-      <DependentUpon>XtraReportLaser.cs</DependentUpon>
+    <EmbeddedResource Include="XtraReportParts.resx">
+      <DependentUpon>XtraReportParts.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

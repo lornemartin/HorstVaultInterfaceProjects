@@ -1,6 +1,6 @@
 ﻿namespace VaultItemProcessor
 {
-    partial class XtraReportLaser
+    partial class XtraReportParts
     {
         /// <summary>
         /// Required designer variable.

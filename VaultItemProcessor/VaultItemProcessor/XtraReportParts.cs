@@ -12,9 +12,9 @@ using DevExpress.XtraPdfViewer;
 
 namespace VaultItemProcessor
 {
-    public partial class XtraReportLaser : DevExpress.XtraReports.UI.XtraReport
+    public partial class XtraReportParts : DevExpress.XtraReports.UI.XtraReport
     {
-        public XtraReportLaser()
+        public XtraReportParts()
         {
             InitializeComponent();
         }
