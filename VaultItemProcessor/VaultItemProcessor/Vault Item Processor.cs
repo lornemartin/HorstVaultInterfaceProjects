@@ -1115,6 +1115,7 @@ namespace VaultItemProcessor
             ProductionListDataSource ds = new ProductionListDataSource();
             List<string> thicknessList = new List<string>();
             List<string> plantList = new List<string>();
+            List<string> structCodeList = new List<string>();
 
             IEnumerable<ProductionListLineItem> completeList = ds.GetLaserScheduleReport();
 
@@ -1150,11 +1151,18 @@ namespace VaultItemProcessor
                 Type = typeof(System.String),
             };
 
+            Parameter structParam = new Parameter()
+            {
+                Name = "structCode",
+                Type = typeof(System.String),
+            };
+
             laserReport.Parameters.Add(sheetParam);
             laserReport.Parameters.Add(stockParam);
             laserReport.Parameters.Add(opParam);
-            //laserReport.CreateDocument();
+            laserReport.Parameters.Add(structParam);
 
+            // Laser cut parts
             foreach (string location in plantList)
             {
                 thicknessList.Clear();
@@ -1213,6 +1221,73 @@ namespace VaultItemProcessor
                     laserReport.ExportToPdf(outputFolder + thickness + ".pdf");
                 }
             }
+
+
+            // Bandsaw parts
+            foreach (string location in plantList)
+            {
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = false;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    //sheetParam.Value = thickness;
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Bandsaw";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Bandsaw\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/","-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+
+                structCodeList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.StructCode != null && lineItem.StructCode != "")
+                        if (!structCodeList.Contains(lineItem.StructCode))
+                            if (lineItem.PlantID == location && lineItem.IsStock == true && lineItem.Operations == "Bandsaw")
+                                structCodeList.Add(lineItem.StructCode);
+                }
+
+                stockParam.Value = true;
+                foreach (string structCode in structCodeList)
+                {
+                    laserReport = new XtraReportLaser();
+                    //sheetParam.Value = thickness;
+                    structParam.Value = structCode;
+                    plantParam.Value = location;
+                    opParam.Value = "Bandsaw";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.Parameters.Add(structParam);
+                    laserReport.FilterString = "[StructCode] = ?structCode && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\Bandsaw\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    string modifiedStructCode = structCode.Replace("/", "-");
+                    laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
+                }
+            }
+
+
 
             toolStripStatusLabel1.Text = "Generating PDFs...Done";
             SplashScreenManager.CloseForm(false);
