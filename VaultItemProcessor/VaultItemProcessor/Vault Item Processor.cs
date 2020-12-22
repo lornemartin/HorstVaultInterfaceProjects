@@ -81,7 +81,7 @@ namespace VaultItemProcessor
                     this.Close();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
@@ -132,7 +132,7 @@ namespace VaultItemProcessor
 
                 LoadData();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
@@ -148,7 +148,7 @@ namespace VaultItemProcessor
                 delegate ()
                 {
                     processVaultItemExport();
-                    
+
                 }));
 
             this.Invoke(new Action(
@@ -622,7 +622,7 @@ namespace VaultItemProcessor
                     exportTreeList.RefreshDataSource();
                     exportTreeList.Refresh();
                     exportTreeList.Cursor = Cursors.Default;
-                    
+
                     txtBoxQtyHeader.Clear();
                     txtboxCurrentRecordName.Clear();
                     textBoxCurrentProductDesc.Clear();
@@ -696,7 +696,7 @@ namespace VaultItemProcessor
             plProd.OrderNumber = txtBoxOrderNumber.Text;
             txtBoxOrderHeader.Text = plProd.OrderNumber;
 
-            plProd.Qty = (int) (spinEditOrderQty.Value);
+            plProd.Qty = (int)(spinEditOrderQty.Value);
             txtBoxQtyHeader.Text = plProd.Qty.ToString();
 
             txtboxCurrentRecordName.Text = plProd.Number;
@@ -715,7 +715,7 @@ namespace VaultItemProcessor
 
                         Directory.CreateDirectory(Path.Combine(exportFilePath, "Pdfs"));
 
-                        if(!File.Exists(destPdfName))
+                        if (!File.Exists(destPdfName))
                             System.IO.File.Copy(srcPdfName, destPdfName);
                     }
                     catch (Exception ex)
@@ -737,7 +737,7 @@ namespace VaultItemProcessor
             else
                 btnPreviousRecord.Enabled = false;
 
-            
+
         }
         private void btnPreviousRecord_Click(object sender, EventArgs e)
         {
@@ -748,7 +748,7 @@ namespace VaultItemProcessor
 
             if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
             else btnPreviousRecord.Enabled = true;
-            if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
+            if (plProd.ID >= productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
             else btnNextRecord.Enabled = true;
 
             txtBoxOrderHeader.Text = plProd.OrderNumber;
@@ -769,7 +769,7 @@ namespace VaultItemProcessor
 
             if (plProd.ID < 1) btnPreviousRecord.Enabled = false;
             else btnPreviousRecord.Enabled = true;
-            if (plProd.ID >= productionList.productList.Count()-1) btnNextRecord.Enabled = false;
+            if (plProd.ID >= productionList.productList.Count() - 1) btnNextRecord.Enabled = false;
             else btnNextRecord.Enabled = true;
 
             txtBoxOrderHeader.Text = plProd.OrderNumber;
@@ -793,7 +793,7 @@ namespace VaultItemProcessor
         }
         private void btnRemoveRecord_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Are you sure you want to remove the current record?","Confirm", MessageBoxButtons.YesNo);
+            DialogResult result = MessageBox.Show("Are you sure you want to remove the current record?", "Confirm", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
                 if (productionList.productList.Count() > 1)
@@ -860,7 +860,7 @@ namespace VaultItemProcessor
                 //List<string> files = new List<string>();
                 foreach (string d in Directory.GetDirectories(rootFolderPath))
                 {
-                    foreach (string f in Directory.GetFiles(d,searchFileName))
+                    foreach (string f in Directory.GetFiles(d, searchFileName))
                     {
                         filesFound.Add(f);
                     }
@@ -887,7 +887,7 @@ namespace VaultItemProcessor
         private void menuGetPdf_ItemClick(object sender, EventArgs e)
         {
 
-            ExportLineItem selectedItem = (ExportLineItem) exportTreeList.GetDataRecordByNode(exportTreeList.FocusedNode);
+            ExportLineItem selectedItem = (ExportLineItem)exportTreeList.GetDataRecordByNode(exportTreeList.FocusedNode);
 
             string fileName = selectedItem.Number;
 
@@ -917,7 +917,7 @@ namespace VaultItemProcessor
 
             if (selectedItem.Category == "Assembly")
                 fileName += ".iam";
-            if(selectedItem.Category == "Product")
+            if (selectedItem.Category == "Product")
                 fileName += ".iam";
             if (selectedItem.Category == "Part")
                 fileName += ".ipt";
@@ -933,7 +933,7 @@ namespace VaultItemProcessor
                 SplashScreenManager.CloseForm(false);
             }
 
-            if(hlaVault!=null && !hlaVault.IsConnectionActive())
+            if (hlaVault != null && !hlaVault.IsConnectionActive())
             {
                 SplashScreenManager.ShowForm(this, typeof(WaitFormVaultLogin), true, true, false);
                 toolStripStatusLabel1.Text = "Logging into Vault...";
@@ -960,7 +960,7 @@ namespace VaultItemProcessor
                     {
                         SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
                         long vaultIDToPrint = printDialog.SelectedID;
-                        if(!hlaVault.PrintAssociatedIDWToPDF(vaultIDToPrint.ToString()))
+                        if (!hlaVault.PrintAssociatedIDWToPDF(vaultIDToPrint.ToString()))
                         {
                             MessageBox.Show("Problem in printing pdfs. File may be open in windows explorer.");
                         }
@@ -977,7 +977,7 @@ namespace VaultItemProcessor
                 MessageBox.Show("Vault Connection is not active.");
             }
 
-           
+
         }
         protected virtual bool IsFileLocked(FileInfo file)
         {
@@ -1036,7 +1036,7 @@ namespace VaultItemProcessor
                 textBoxOutputFolder.Text = exportFilePath;
                 AppSettings.Set("ExportFilePath", exportFilePath);
             }
-           
+
             string scheduleFileName = exportFilePath + AppSettings.Get("DailyScheduleData").ToString();
 
             productionList = new ProductionListDataSource();
@@ -1051,7 +1051,7 @@ namespace VaultItemProcessor
                     allStock = true;
                 else
                     allStock = false;
-                    
+
                 item.IsStock = allStock;
             }
 
@@ -1103,8 +1103,7 @@ namespace VaultItemProcessor
 
             printTool.ShowRibbonPreview();
         }
-
-        private void btnLaserSave_Click(object sender, EventArgs e)
+        private void btnSavePartsDrawings_Click(object sender, EventArgs e)
         {
             SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
             toolStripStatusLabel1.Text = "Generating PDFs...";
@@ -1121,9 +1120,9 @@ namespace VaultItemProcessor
 
             foreach (ProductionListLineItem lineItem in completeList)
             {
-                if (lineItem.PlantID!=null && lineItem.PlantID != "")
+                if (lineItem.PlantID != null && lineItem.PlantID != "")
                     if (!plantList.Contains(lineItem.PlantID))
-                    plantList.Add(lineItem.PlantID);
+                        plantList.Add(lineItem.PlantID);
             }
 
 
@@ -1170,7 +1169,7 @@ namespace VaultItemProcessor
                 {
                     if (lineItem.MaterialThickness != null && lineItem.MaterialThickness != "")
                         if (!thicknessList.Contains(lineItem.MaterialThickness))
-                            if(lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Laser")
+                            if (lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Laser")
                                 thicknessList.Add(lineItem.MaterialThickness);
                 }
 
@@ -1251,7 +1250,7 @@ namespace VaultItemProcessor
                     string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Bandsaw\\";
                     if (!Directory.Exists(outputFolder))
                         Directory.CreateDirectory(outputFolder);
-                    string modifiedStructCode = structCode.Replace("/","-");
+                    string modifiedStructCode = structCode.Replace("/", "-");
                     laserReport.ExportToPdf(outputFolder + "\\" + modifiedStructCode + ".pdf");
                 }
 
@@ -1471,10 +1470,9 @@ namespace VaultItemProcessor
                 }
             }
 
-
-
+            SplashScreenManager.CloseForm();
             toolStripStatusLabel1.Text = "Generating PDFs...Done";
-            SplashScreenManager.CloseForm(false);
+            statusStrip1.Refresh();
         }
     }
 

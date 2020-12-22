@@ -82,6 +82,7 @@
             this.txtBoxOrderNumber = new System.Windows.Forms.TextBox();
             this.pdfViewer1 = new DevExpress.XtraPdfViewer.PdfViewer();
             this.groupBoxOutput = new System.Windows.Forms.GroupBox();
+            this.btnSavePartsDrawings = new System.Windows.Forms.Button();
             this.btnLaserSched = new System.Windows.Forms.Button();
             this.btnBandsawReport2 = new System.Windows.Forms.Button();
             this.btnSelectOutputFolder = new System.Windows.Forms.Button();
@@ -100,7 +101,6 @@
             this.txtBoxQtyHeader = new System.Windows.Forms.TextBox();
             this.btnUpdateRecord = new System.Windows.Forms.Button();
             this.btnRemoveRecord = new System.Windows.Forms.Button();
-            this.btnLaserSave = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
@@ -508,7 +508,7 @@
             // 
             // groupBoxOutput
             // 
-            this.groupBoxOutput.Controls.Add(this.btnLaserSave);
+            this.groupBoxOutput.Controls.Add(this.btnSavePartsDrawings);
             this.groupBoxOutput.Controls.Add(this.btnLaserSched);
             this.groupBoxOutput.Controls.Add(this.btnBandsawReport2);
             this.groupBoxOutput.Controls.Add(this.btnSelectOutputFolder);
@@ -525,6 +525,16 @@
             this.groupBoxOutput.TabIndex = 7;
             this.groupBoxOutput.TabStop = false;
             this.groupBoxOutput.Text = "Output Data";
+            // 
+            // btnSavePartsDrawings
+            // 
+            this.btnSavePartsDrawings.Location = new System.Drawing.Point(20, 160);
+            this.btnSavePartsDrawings.Name = "btnSavePartsDrawings";
+            this.btnSavePartsDrawings.Size = new System.Drawing.Size(136, 23);
+            this.btnSavePartsDrawings.TabIndex = 13;
+            this.btnSavePartsDrawings.Text = "Save Parts Drawings";
+            this.btnSavePartsDrawings.UseVisualStyleBackColor = true;
+            this.btnSavePartsDrawings.Click += new System.EventHandler(this.btnSavePartsDrawings_Click);
             // 
             // btnLaserSched
             // 
@@ -677,16 +687,6 @@
             this.btnRemoveRecord.UseVisualStyleBackColor = true;
             this.btnRemoveRecord.Click += new System.EventHandler(this.btnRemoveRecord_Click);
             // 
-            // btnLaserSave
-            // 
-            this.btnLaserSave.Location = new System.Drawing.Point(20, 160);
-            this.btnLaserSave.Name = "btnLaserSave";
-            this.btnLaserSave.Size = new System.Drawing.Size(96, 23);
-            this.btnLaserSave.TabIndex = 13;
-            this.btnLaserSave.Text = "Laser Save";
-            this.btnLaserSave.UseVisualStyleBackColor = true;
-            this.btnLaserSave.Click += new System.EventHandler(this.btnLaserSave_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -776,7 +776,7 @@
         private System.Windows.Forms.Button btnRemoveRecord;
         private System.Windows.Forms.Button btnBandsawReport2;
         private System.Windows.Forms.Button btnLaserSched;
-        private System.Windows.Forms.Button btnLaserSave;
+        private System.Windows.Forms.Button btnSavePartsDrawings;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager1;
         //private DevExpress.XtraSplashScreen.SplashScreenManager splashScreenManager2;
     }
