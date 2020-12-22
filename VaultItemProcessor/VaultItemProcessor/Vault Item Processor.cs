@@ -1106,51 +1106,116 @@ namespace VaultItemProcessor
 
         private void btnLaserSave_Click(object sender, EventArgs e)
         {
+            SplashScreenManager.ShowForm(this, typeof(WaitForm1), true, true, false);
+            toolStripStatusLabel1.Text = "Generating PDFs...";
+            statusStrip1.Refresh();
+
             XtraReportLaser laserReport = new XtraReportLaser();
 
             ProductionListDataSource ds = new ProductionListDataSource();
             List<string> thicknessList = new List<string>();
+            List<string> plantList = new List<string>();
 
-            //  ****this is the block of code I feel is redundant**********
-            // this is a duplicate retrieval of data that the report should already have, just not sure how to access it.
-            foreach(ProductionListLineItem lineItem in ds.GetLaserScheduleReport())
+            IEnumerable<ProductionListLineItem> completeList = ds.GetLaserScheduleReport();
+
+            foreach (ProductionListLineItem lineItem in completeList)
             {
-                if (lineItem.MaterialThickness != "")
-                    if(!thicknessList.Contains(lineItem.MaterialThickness))
-                        thicknessList.Add(lineItem.MaterialThickness);
+                if (lineItem.PlantID!=null && lineItem.PlantID != "")
+                    if (!plantList.Contains(lineItem.PlantID))
+                    plantList.Add(lineItem.PlantID);
             }
+
 
             Parameter sheetParam = new Parameter()
             {
                 Name = "sheetThickness",
                 Type = typeof(System.String),
-                Value = "0.062 in"
             };
             Parameter stockParam = new Parameter()
             {
                 Name = "stock",
                 Type = typeof(System.Boolean),
-                Value = false
+            };
+
+            Parameter plantParam = new Parameter()
+            {
+                Name = "location",
+                Type = typeof(System.String),
+                Value = "Plant1",
+            };
+
+            Parameter opParam = new Parameter()
+            {
+                Name = "operation",
+                Type = typeof(System.String),
             };
 
             laserReport.Parameters.Add(sheetParam);
             laserReport.Parameters.Add(stockParam);
-            laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-            // manually create document so we can get number of pages.
-            laserReport.CreateDocument();
+            laserReport.Parameters.Add(opParam);
+            //laserReport.CreateDocument();
 
-            foreach (string thickness in thicknessList)
+            foreach (string location in plantList)
             {
-                laserReport = new XtraReportLaser();
-                sheetParam.Value = thickness;
-                laserReport.Parameters.Clear();
-                laserReport.Parameters.Add(sheetParam);
-                laserReport.Parameters.Add(stockParam);
-                laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock";
-                laserReport.ExportToPdf(textBoxOutputFolder.Text + "Laser " + thickness + ".pdf");
+                thicknessList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.MaterialThickness != null && lineItem.MaterialThickness != "")
+                        if (!thicknessList.Contains(lineItem.MaterialThickness))
+                            if(lineItem.PlantID == location && lineItem.IsStock == false && lineItem.Operations == "Laser")
+                                thicknessList.Add(lineItem.MaterialThickness);
+                }
 
+                stockParam.Value = false;
+                foreach (string thickness in thicknessList)
+                {
+                    laserReport = new XtraReportLaser();
+                    sheetParam.Value = thickness;
+                    plantParam.Value = location;
+                    opParam.Value = "Laser";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(sheetParam);
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Make To Order\\Laser\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    laserReport.ExportToPdf(outputFolder + thickness + ".pdf");
+                }
 
+                thicknessList.Clear();
+                foreach (ProductionListLineItem lineItem in completeList)
+                {
+                    if (lineItem.MaterialThickness != null && lineItem.MaterialThickness != "")
+                        if (!thicknessList.Contains(lineItem.MaterialThickness))
+                            if (lineItem.PlantID == location && lineItem.IsStock == true && lineItem.Operations == "Laser")
+                                thicknessList.Add(lineItem.MaterialThickness);
+                }
+
+                stockParam.Value = true;
+                foreach (string thickness in thicknessList)
+                {
+                    laserReport = new XtraReportLaser();
+                    sheetParam.Value = thickness;
+                    plantParam.Value = location;
+                    opParam.Value = "Laser";
+                    laserReport.Parameters.Clear();
+                    laserReport.Parameters.Add(sheetParam);
+                    laserReport.Parameters.Add(stockParam);
+                    laserReport.Parameters.Add(plantParam);
+                    laserReport.Parameters.Add(opParam);
+                    laserReport.FilterString = "[MaterialThickness] = ?sheetThickness && [IsStock] = ?stock && [PlantID] = ?location && [Operations] = ?operation";
+                    string outputFolder = textBoxOutputFolder.Text + location + "\\Stock\\Laser\\";
+                    if (!Directory.Exists(outputFolder))
+                        Directory.CreateDirectory(outputFolder);
+                    laserReport.ExportToPdf(outputFolder + thickness + ".pdf");
+                }
             }
+
+            toolStripStatusLabel1.Text = "Generating PDFs...Done";
+            SplashScreenManager.CloseForm(false);
         }
     }
 

@@ -183,13 +183,17 @@ namespace VaultItemProcessor
         public IEnumerable<ProductionListLineItem> GetLaserScheduleReport()
         {
             Load();
+
             List<ProductionListLineItem> subList = new List<ProductionListLineItem>();
             List<ProductionListLineItem> completeList = new List<ProductionListLineItem>();
 
             foreach (ProductionListProduct prod in productList)
             {
-                subList = prod.SubItems.Where(i => i.Operations == "Laser").ToList();
-                foreach(ProductionListLineItem lItem in subList)
+                // this was used to retrieve only laser parts, now we want to retrieve all parts.
+                //subList = prod.SubItems.Where(i => i.Operations == "Laser").ToList();
+
+                subList = prod.SubItems;
+                foreach (ProductionListLineItem lItem in subList)
                 {
                     completeList.Add(lItem);
                 }
