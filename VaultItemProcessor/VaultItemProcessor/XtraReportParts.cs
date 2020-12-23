@@ -54,6 +54,10 @@ namespace VaultItemProcessor
                     xrPictureBox2.ImageSource = new DevExpress.XtraPrinting.Drawing.ImageSource(bitmap);
                 }
             }
+            else
+            {
+                xrPictureBox2.ImageSource = null;
+            }
         }
     }
 }

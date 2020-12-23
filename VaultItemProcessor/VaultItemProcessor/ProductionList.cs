@@ -193,7 +193,7 @@ namespace VaultItemProcessor
                 //subList = prod.SubItems.Where(i => i.Operations == "Laser").ToList();
 
                 subList = prod.SubItems;
-                foreach (ProductionListLineItem lItem in subList)
+                foreach (ProductionListLineItem lItem in subList.Where(p => p.Category == "Part").ToList())
                 {
                     completeList.Add(lItem);
                 }
