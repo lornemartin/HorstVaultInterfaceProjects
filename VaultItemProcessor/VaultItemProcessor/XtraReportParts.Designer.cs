@@ -288,11 +288,12 @@
             // GroupHeader1
             // 
             this.GroupHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.table2,
             this.table1});
             this.GroupHeader1.GroupFields.AddRange(new DevExpress.XtraReports.UI.GroupField[] {
             new DevExpress.XtraReports.UI.GroupField("Number", DevExpress.XtraReports.UI.XRColumnSortOrder.Ascending)});
             this.GroupHeader1.GroupUnion = DevExpress.XtraReports.UI.GroupUnion.WithFirstDetail;
-            this.GroupHeader1.HeightF = 27F;
+            this.GroupHeader1.HeightF = 55.74992F;
             this.GroupHeader1.Level = 1;
             this.GroupHeader1.Name = "GroupHeader1";
             this.GroupHeader1.PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand;
@@ -303,7 +304,7 @@
             this.table1.Name = "table1";
             this.table1.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow1});
-            this.table1.SizeF = new System.Drawing.SizeF(756.0001F, 25F);
+            this.table1.SizeF = new System.Drawing.SizeF(755.9999F, 25F);
             // 
             // tableRow1
             // 
@@ -326,12 +327,10 @@
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Number]")});
             this.tableCell2.Name = "tableCell2";
             this.tableCell2.StyleName = "GroupData1";
-            this.tableCell2.Weight = 1.0734049137454045D;
+            this.tableCell2.Weight = 1.073404632044711D;
             // 
             // GroupHeader2
             // 
-            this.GroupHeader2.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.table2});
             this.GroupHeader2.GroupUnion = DevExpress.XtraReports.UI.GroupUnion.WithFirstDetail;
             this.GroupHeader2.HeightF = 28F;
             this.GroupHeader2.Level = 2;
@@ -339,7 +338,7 @@
             // 
             // table2
             // 
-            this.table2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.table2.LocationFloat = new DevExpress.Utils.PointFloat(0.0001033147F, 27.00001F);
             this.table2.Name = "table2";
             this.table2.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow2});
@@ -366,14 +365,14 @@
             this.tableCell3.StylePriority.UseTextAlignment = false;
             this.tableCell3.Text = "Qty";
             this.tableCell3.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
-            this.tableCell3.Weight = 0.068871835561899034D;
+            this.tableCell3.Weight = 0.089672094003524577D;
             // 
             // tableCell4
             // 
             this.tableCell4.Name = "tableCell4";
             this.tableCell4.StyleName = "DetailCaption1";
             this.tableCell4.Text = "Item Description";
-            this.tableCell4.Weight = 0.2155524620643029D;
+            this.tableCell4.Weight = 0.19475220362267737D;
             // 
             // tableCell5
             // 
@@ -387,14 +386,14 @@
             this.tableCell6.Name = "tableCell6";
             this.tableCell6.StyleName = "DetailCaption1";
             this.tableCell6.Text = "Material Thickness";
-            this.tableCell6.Weight = 0.24202742356520432D;
+            this.tableCell6.Weight = 0.15869402567545726D;
             // 
             // tableCell7
             // 
             this.tableCell7.Name = "tableCell7";
             this.tableCell7.StyleName = "DetailCaption1";
             this.tableCell7.Text = "Struct Code";
-            this.tableCell7.Weight = 0.16399593646709737D;
+            this.tableCell7.Weight = 0.24732933435684443D;
             // 
             // tableCell8
             // 
@@ -465,7 +464,7 @@
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[MaterialThickness]")});
             this.tableCell12.Name = "tableCell12";
             this.tableCell12.StyleName = "DetailData1";
-            this.tableCell12.Weight = 0.24202742356520432D;
+            this.tableCell12.Weight = 0.15869416554768789D;
             // 
             // tableCell13
             // 
@@ -473,7 +472,7 @@
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[StructCode]")});
             this.tableCell13.Name = "tableCell13";
             this.tableCell13.StyleName = "DetailData1";
-            this.tableCell13.Weight = 0.16399593646709737D;
+            this.tableCell13.Weight = 0.24732919448461377D;
             // 
             // tableCell14
             // 
@@ -530,9 +529,9 @@
             // 
             // label3
             // 
-            this.label3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 3.4F);
+            this.label3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 3.400008F);
             this.label3.Name = "label3";
-            this.label3.SizeF = new System.Drawing.SizeF(22.5F, 14.88444F);
+            this.label3.SizeF = new System.Drawing.SizeF(44.7667F, 14.88444F);
             this.label3.StyleName = "TotalCaption1";
             this.label3.Text = "SUM";
             // 
@@ -541,9 +540,9 @@
             this.label4.CanGrow = false;
             this.label4.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "sumSum([Qty])")});
-            this.label4.LocationFloat = new DevExpress.Utils.PointFloat(22.5F, 3.4F);
+            this.label4.LocationFloat = new DevExpress.Utils.PointFloat(97.50001F, 3.400008F);
             this.label4.Name = "label4";
-            this.label4.SizeF = new System.Drawing.SizeF(22.26669F, 14.88444F);
+            this.label4.SizeF = new System.Drawing.SizeF(105.6F, 14.88444F);
             this.label4.StyleName = "TotalData1";
             this.label4.StylePriority.UseTextAlignment = false;
             xrSummary1.Running = DevExpress.XtraReports.UI.SummaryRunning.Group;
