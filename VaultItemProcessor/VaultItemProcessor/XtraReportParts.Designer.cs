@@ -480,7 +480,7 @@
             this.xrPageBreak2,
             this.xrPictureBox2,
             this.panel1});
-            this.GroupFooter2.HeightF = 1407.127F;
+            this.GroupFooter2.HeightF = 1510.127F;
             this.GroupFooter2.Level = 1;
             this.GroupFooter2.Name = "GroupFooter2";
             // 
@@ -488,7 +488,7 @@
             // 
             this.xrFullPagePdf.LocationFloat = new DevExpress.Utils.PointFloat(0F, 609.7083F);
             this.xrFullPagePdf.Name = "xrFullPagePdf";
-            this.xrFullPagePdf.SizeF = new System.Drawing.SizeF(755.9999F, 781.6688F);
+            this.xrFullPagePdf.SizeF = new System.Drawing.SizeF(755.9999F, 900.4188F);
             this.xrFullPagePdf.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrFullPagePdf.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrFullPagePdf_BeforePrint);
             // 
