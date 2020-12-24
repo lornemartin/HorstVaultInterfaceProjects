@@ -82,8 +82,6 @@
             this.label3 = new DevExpress.XtraReports.UI.XRLabel();
             this.label4 = new DevExpress.XtraReports.UI.XRLabel();
             this.label5 = new DevExpress.XtraReports.UI.XRLabel();
-            this.ReportFooter = new DevExpress.XtraReports.UI.ReportFooterBand();
-            this.panel2 = new DevExpress.XtraReports.UI.XRPanel();
             ((System.ComponentModel.ISupportInitialize)(this.objectDataSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
@@ -549,20 +547,6 @@
             this.label5.Text = "Number [Number]";
             this.label5.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             // 
-            // ReportFooter
-            // 
-            this.ReportFooter.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.panel2});
-            this.ReportFooter.HeightF = 54.42162F;
-            this.ReportFooter.Name = "ReportFooter";
-            // 
-            // panel2
-            // 
-            this.panel2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.panel2.Name = "panel2";
-            this.panel2.SizeF = new System.Drawing.SizeF(756F, 49.38444F);
-            this.panel2.StyleName = "GrandTotalBackground1";
-            // 
             // XtraReportParts
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -571,8 +555,7 @@
             this.GroupHeader1,
             this.Detail,
             this.GroupFooter1,
-            this.GroupFooter2,
-            this.ReportFooter});
+            this.GroupFooter2});
             this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
             this.objectDataSource1});
             this.DataSource = this.objectDataSource1;
@@ -650,8 +633,6 @@
         private DevExpress.XtraReports.UI.XRLabel label3;
         private DevExpress.XtraReports.UI.XRLabel label4;
         private DevExpress.XtraReports.UI.XRLabel label5;
-        private DevExpress.XtraReports.UI.ReportFooterBand ReportFooter;
-        private DevExpress.XtraReports.UI.XRPanel panel2;
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox2;
         private DevExpress.XtraReports.UI.XRPictureBox xrFullPagePdf;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
