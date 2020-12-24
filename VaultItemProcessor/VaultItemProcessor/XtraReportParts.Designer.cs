@@ -480,7 +480,7 @@
             this.xrPageBreak2,
             this.xrPictureBox2,
             this.panel1});
-            this.GroupFooter2.HeightF = 1644.085F;
+            this.GroupFooter2.HeightF = 1407.127F;
             this.GroupFooter2.Level = 1;
             this.GroupFooter2.Name = "GroupFooter2";
             // 
@@ -488,7 +488,8 @@
             // 
             this.xrFullPagePdf.LocationFloat = new DevExpress.Utils.PointFloat(0F, 609.7083F);
             this.xrFullPagePdf.Name = "xrFullPagePdf";
-            this.xrFullPagePdf.SizeF = new System.Drawing.SizeF(755.9999F, 998.3355F);
+            this.xrFullPagePdf.SizeF = new System.Drawing.SizeF(755.9999F, 781.6688F);
+            this.xrFullPagePdf.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.xrFullPagePdf.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.xrFullPagePdf_BeforePrint);
             // 
             // xrPageBreak2
@@ -602,8 +603,6 @@
         }
 
         #endregion
-
-        private DevExpress.DataAccess.ObjectBinding.ObjectDataSource objectDataSource1;
         private DevExpress.XtraReports.UI.XRControlStyle Title;
         private DevExpress.XtraReports.UI.XRControlStyle GroupCaption1;
         private DevExpress.XtraReports.UI.XRControlStyle GroupData1;
@@ -656,5 +655,6 @@
         private DevExpress.XtraReports.UI.XRPictureBox xrPictureBox2;
         private DevExpress.XtraReports.UI.XRPictureBox xrFullPagePdf;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
+        private DevExpress.DataAccess.ObjectBinding.ObjectDataSource objectDataSource1;
     }
 }
