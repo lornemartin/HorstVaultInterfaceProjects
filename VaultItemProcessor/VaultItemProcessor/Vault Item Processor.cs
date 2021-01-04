@@ -1116,7 +1116,7 @@ namespace VaultItemProcessor
             List<string> plantList = new List<string>();
             List<string> structCodeList = new List<string>();
 
-            IEnumerable<ProductionListLineItem> completeList = ds.GetLaserScheduleReport();
+            IEnumerable<ProductionListLineItem> completeList = ds.GetScheduleReport();
 
             foreach (ProductionListLineItem lineItem in completeList)
             {

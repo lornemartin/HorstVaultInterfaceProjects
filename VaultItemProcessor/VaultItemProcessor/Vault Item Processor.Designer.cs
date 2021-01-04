@@ -530,9 +530,9 @@
             // 
             this.btnSavePartsDrawings.Location = new System.Drawing.Point(20, 160);
             this.btnSavePartsDrawings.Name = "btnSavePartsDrawings";
-            this.btnSavePartsDrawings.Size = new System.Drawing.Size(136, 23);
+            this.btnSavePartsDrawings.Size = new System.Drawing.Size(151, 23);
             this.btnSavePartsDrawings.TabIndex = 13;
-            this.btnSavePartsDrawings.Text = "Save Parts Drawings";
+            this.btnSavePartsDrawings.Text = "Save Schedule Drawings";
             this.btnSavePartsDrawings.UseVisualStyleBackColor = true;
             this.btnSavePartsDrawings.Click += new System.EventHandler(this.btnSavePartsDrawings_Click);
             // 
