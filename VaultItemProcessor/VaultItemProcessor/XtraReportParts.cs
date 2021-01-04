@@ -99,5 +99,12 @@ namespace VaultItemProcessor
                 xrFullPagePdf.ImageSource = null;
             }
         }
+
+        private void Detail_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            int numOfRows = this.DisplayableRowCount;
+            DetailBand detail = (DetailBand)sender;
+            var v = detail.Report.GetCurrentRow();
+        }
     }
 }
