@@ -82,6 +82,7 @@
             this.label4 = new DevExpress.XtraReports.UI.XRLabel();
             this.label5 = new DevExpress.XtraReports.UI.XRLabel();
             this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
+            this.NumberOfDetailRows = new DevExpress.XtraReports.UI.CalculatedField();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -548,6 +549,11 @@
             this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
             this.objectDataSource1.Name = "objectDataSource1";
             // 
+            // NumberOfDetailRows
+            // 
+            this.NumberOfDetailRows.Expression = "[][^.[Number]=[Number]].Count() ";
+            this.NumberOfDetailRows.Name = "NumberOfDetailRows";
+            // 
             // XtraReportParts
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -557,6 +563,8 @@
             this.Detail,
             this.GroupFooter1,
             this.GroupFooter2});
+            this.CalculatedFields.AddRange(new DevExpress.XtraReports.UI.CalculatedField[] {
+            this.NumberOfDetailRows});
             this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
             this.objectDataSource1});
             this.DataSource = this.objectDataSource1;
@@ -638,5 +646,6 @@
         private DevExpress.XtraReports.UI.XRPictureBox xrFullPagePdf;
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
         private DevExpress.DataAccess.ObjectBinding.ObjectDataSource objectDataSource1;
+        private DevExpress.XtraReports.UI.CalculatedField NumberOfDetailRows;
     }
 }

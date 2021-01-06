@@ -105,6 +105,8 @@ namespace VaultItemProcessor
             int numOfRows = this.DisplayableRowCount;
             DetailBand detail = (DetailBand)sender;
             var v = detail.Report.GetCurrentRow();
+
+            int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
         }
     }
 }
