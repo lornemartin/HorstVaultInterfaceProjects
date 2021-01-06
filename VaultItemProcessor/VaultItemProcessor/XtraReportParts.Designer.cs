@@ -380,12 +380,15 @@
             // 
             // table3
             // 
+            this.table3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "StyleName", "Iif([NumberOfDetailRows]<5, \'xrControlStyle1\', \'xrControlStyle2\')")});
+            this.table3.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.table3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.table3.Name = "table3";
-            this.table3.OddStyleName = "DetailData3_Odd";
             this.table3.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow3});
             this.table3.SizeF = new System.Drawing.SizeF(756F, 25F);
+            this.table3.StylePriority.UseFont = false;
             // 
             // tableRow3
             // 
@@ -396,8 +399,6 @@
             this.tableCell12,
             this.tableCell13,
             this.tableCell14});
-            this.tableRow3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "StyleName", "Iif([NumberOfDetailRows]<2, \'xrControlStyle1\', \'xrControlStyle2\')")});
             this.tableRow3.Name = "tableRow3";
             this.tableRow3.Weight = 11.5D;
             // 
@@ -557,7 +558,7 @@
             this.xrControlStyle1.BorderColor = System.Drawing.Color.Transparent;
             this.xrControlStyle1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
             this.xrControlStyle1.BorderWidth = 2F;
-            this.xrControlStyle1.Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.xrControlStyle1.Font = new System.Drawing.Font("Arial", 2.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.xrControlStyle1.ForeColor = System.Drawing.Color.Black;
             this.xrControlStyle1.Name = "xrControlStyle1";
             this.xrControlStyle1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
@@ -569,7 +570,7 @@
             this.xrControlStyle2.BorderColor = System.Drawing.Color.Transparent;
             this.xrControlStyle2.Borders = DevExpress.XtraPrinting.BorderSide.Left;
             this.xrControlStyle2.BorderWidth = 2F;
-            this.xrControlStyle2.Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.xrControlStyle2.Font = new System.Drawing.Font("Arial", 2.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.xrControlStyle2.ForeColor = System.Drawing.Color.Black;
             this.xrControlStyle2.Name = "xrControlStyle2";
             this.xrControlStyle2.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
