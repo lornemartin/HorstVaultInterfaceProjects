@@ -380,8 +380,6 @@
             // 
             // table3
             // 
-            this.table3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "StyleName", "Iif([NumberOfDetailRows]<5, \'xrControlStyle1\', \'xrControlStyle2\')")});
             this.table3.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.table3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.table3.Name = "table3";
