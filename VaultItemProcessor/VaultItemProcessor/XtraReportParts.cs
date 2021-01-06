@@ -102,11 +102,23 @@ namespace VaultItemProcessor
 
         private void Detail_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            int numOfRows = this.DisplayableRowCount;
-            DetailBand detail = (DetailBand)sender;
-            var v = detail.Report.GetCurrentRow();
-
             int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
+            
+            table3.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Italic);
+            table3.StylePriority.UseFont = true;
+          
+            
+
+            //foreach (XRTableRow row in table3.Rows)
+            //{
+            //    //row.StylePriority.UseFont = true;
+            //    row.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
+            //    foreach(XRTableCell cell in row)
+            //    {
+            //        //cell.StylePriority.UseFont = true;
+            //        cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
+            //    }
+            //}
         }
     }
 }

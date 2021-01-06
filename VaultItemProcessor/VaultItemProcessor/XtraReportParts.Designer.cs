@@ -83,6 +83,8 @@
             this.label5 = new DevExpress.XtraReports.UI.XRLabel();
             this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             this.NumberOfDetailRows = new DevExpress.XtraReports.UI.CalculatedField();
+            this.xrControlStyle1 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.xrControlStyle2 = new DevExpress.XtraReports.UI.XRControlStyle();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -394,6 +396,8 @@
             this.tableCell12,
             this.tableCell13,
             this.tableCell14});
+            this.tableRow3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "StyleName", "Iif([NumberOfDetailRows]<2, \'xrControlStyle1\', \'xrControlStyle2\')")});
             this.tableRow3.Name = "tableRow3";
             this.tableRow3.Weight = 11.5D;
             // 
@@ -554,6 +558,28 @@
             this.NumberOfDetailRows.Expression = "[][^.[Number]=[Number]].Count() ";
             this.NumberOfDetailRows.Name = "NumberOfDetailRows";
             // 
+            // xrControlStyle1
+            // 
+            this.xrControlStyle1.BorderColor = System.Drawing.Color.Transparent;
+            this.xrControlStyle1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.xrControlStyle1.BorderWidth = 2F;
+            this.xrControlStyle1.Font = new System.Drawing.Font("Arial", 8.25F);
+            this.xrControlStyle1.ForeColor = System.Drawing.Color.Black;
+            this.xrControlStyle1.Name = "xrControlStyle1";
+            this.xrControlStyle1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.xrControlStyle1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // xrControlStyle2
+            // 
+            this.xrControlStyle2.BorderColor = System.Drawing.Color.Transparent;
+            this.xrControlStyle2.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.xrControlStyle2.BorderWidth = 2F;
+            this.xrControlStyle2.Font = new System.Drawing.Font("Arial", 3.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.xrControlStyle2.ForeColor = System.Drawing.Color.Black;
+            this.xrControlStyle2.Name = "xrControlStyle2";
+            this.xrControlStyle2.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.xrControlStyle2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
             // XtraReportParts
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -584,7 +610,9 @@
             this.GrandTotalCaption1,
             this.GrandTotalData1,
             this.GrandTotalBackground1,
-            this.PageInfo});
+            this.PageInfo,
+            this.xrControlStyle1,
+            this.xrControlStyle2});
             this.Version = "20.1";
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
@@ -647,5 +675,7 @@
         private DevExpress.XtraReports.UI.XRPageBreak xrPageBreak2;
         private DevExpress.DataAccess.ObjectBinding.ObjectDataSource objectDataSource1;
         private DevExpress.XtraReports.UI.CalculatedField NumberOfDetailRows;
+        private DevExpress.XtraReports.UI.XRControlStyle xrControlStyle1;
+        private DevExpress.XtraReports.UI.XRControlStyle xrControlStyle2;
     }
 }
