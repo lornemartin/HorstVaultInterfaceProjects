@@ -105,25 +105,65 @@ namespace VaultItemProcessor
             int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
 
             if (rowCount > 5)
+            {
                 table3.BackColor = Color.Green;
+                table3.Font = new Font(table3.Font.FontFamily, 12, FontStyle.Italic);
+                table3.HeightF = 12;
+
+
+                foreach (XRTableRow row in table3.Rows)
+                {
+                    row.CanGrow = false;
+                    row.CanGrow = false;
+
+                    row.HeightF = 12;
+                    row.Font = new Font(table3.Font.FontFamily, 4, FontStyle.Italic);
+                    row.StylePriority.UseFont = true;
+                    foreach (XRTableCell cell in row)
+                    {
+                        //cell.StylePriority.UseFont = true;
+                        //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
+                        cell.WordWrap = false;
+                    }
+                }
+            }
+
+
             else
+            {
                 table3.BackColor = Color.Red;
+                table3.Font = new Font(table3.Font.FontFamily, 4, FontStyle.Bold);
+                table3.HeightF = 4;
 
-            //table3.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Italic);
-            //table3.StylePriority.UseFont = true;
-          
-            
+                foreach (XRTableRow row in table3.Rows)
+                {
+                    row.CanGrow = false;
+                    row.CanGrow = false;
+                    row.HeightF = 1;
+                    row.Font = new Font(table3.Font.FontFamily, 1, FontStyle.Bold);
+                    row.StylePriority.UseFont = true;
+                    foreach (XRTableCell cell in row)
+                    {
+                        //cell.StylePriority.UseFont = true;
+                        //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
+                        cell.WordWrap = false;
+                    }
+                }
+            }
 
-            //foreach (XRTableRow row in table3.Rows)
-            //{
-            //    //row.StylePriority.UseFont = true;
-            //    row.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
-            //    foreach(XRTableCell cell in row)
-            //    {
-            //        //cell.StylePriority.UseFont = true;
-            //        cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
-            //    }
-            //}
+            table3.StylePriority.UseFont = true;
+
+
+
+            foreach (XRTableRow row in table3.Rows)
+            {
+                row.HeightF = 1;
+                //foreach (XRTableCell cell in row)
+                //{
+                //    //cell.StylePriority.UseFont = true;
+                //    //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
+                //}
+            }
         }
     }
 }

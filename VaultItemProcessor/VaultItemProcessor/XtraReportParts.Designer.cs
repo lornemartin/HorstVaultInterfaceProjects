@@ -380,13 +380,15 @@
             // 
             // table3
             // 
-            this.table3.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.table3.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.table3.ForeColor = System.Drawing.Color.Orange;
             this.table3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.table3.Name = "table3";
             this.table3.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
             this.tableRow3});
-            this.table3.SizeF = new System.Drawing.SizeF(756F, 25F);
+            this.table3.SizeF = new System.Drawing.SizeF(756F, 10F);
             this.table3.StylePriority.UseFont = false;
+            this.table3.StylePriority.UseForeColor = false;
             // 
             // tableRow3
             // 
@@ -398,7 +400,7 @@
             this.tableCell13,
             this.tableCell14});
             this.tableRow3.Name = "tableRow3";
-            this.tableRow3.Weight = 11.5D;
+            this.tableRow3.Weight = 4.5999999999999979D;
             // 
             // tableCell9
             // 
