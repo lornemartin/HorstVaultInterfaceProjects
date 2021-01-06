@@ -81,10 +81,10 @@
             this.label3 = new DevExpress.XtraReports.UI.XRLabel();
             this.label4 = new DevExpress.XtraReports.UI.XRLabel();
             this.label5 = new DevExpress.XtraReports.UI.XRLabel();
-            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             this.NumberOfDetailRows = new DevExpress.XtraReports.UI.CalculatedField();
             this.xrControlStyle1 = new DevExpress.XtraReports.UI.XRControlStyle();
             this.xrControlStyle2 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.objectDataSource1 = new DevExpress.DataAccess.ObjectBinding.ObjectDataSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
@@ -233,7 +233,7 @@
             // 
             // TopMargin
             // 
-            this.TopMargin.HeightF = 37.5F;
+            this.TopMargin.HeightF = 38F;
             this.TopMargin.Name = "TopMargin";
             // 
             // BottomMargin
@@ -546,13 +546,6 @@
             this.label5.Text = "Number [Number]";
             this.label5.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
             // 
-            // objectDataSource1
-            // 
-            this.objectDataSource1.Constructor = objectConstructorInfo1;
-            this.objectDataSource1.DataMember = "GetScheduleReport";
-            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
-            this.objectDataSource1.Name = "objectDataSource1";
-            // 
             // NumberOfDetailRows
             // 
             this.NumberOfDetailRows.Expression = "[][^.[Number]=[Number]].Count() ";
@@ -560,10 +553,11 @@
             // 
             // xrControlStyle1
             // 
+            this.xrControlStyle1.BackColor = System.Drawing.Color.Red;
             this.xrControlStyle1.BorderColor = System.Drawing.Color.Transparent;
             this.xrControlStyle1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
             this.xrControlStyle1.BorderWidth = 2F;
-            this.xrControlStyle1.Font = new System.Drawing.Font("Arial", 8.25F);
+            this.xrControlStyle1.Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.xrControlStyle1.ForeColor = System.Drawing.Color.Black;
             this.xrControlStyle1.Name = "xrControlStyle1";
             this.xrControlStyle1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
@@ -571,14 +565,22 @@
             // 
             // xrControlStyle2
             // 
+            this.xrControlStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             this.xrControlStyle2.BorderColor = System.Drawing.Color.Transparent;
             this.xrControlStyle2.Borders = DevExpress.XtraPrinting.BorderSide.Left;
             this.xrControlStyle2.BorderWidth = 2F;
-            this.xrControlStyle2.Font = new System.Drawing.Font("Arial", 3.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.xrControlStyle2.Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.xrControlStyle2.ForeColor = System.Drawing.Color.Black;
             this.xrControlStyle2.Name = "xrControlStyle2";
             this.xrControlStyle2.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
             this.xrControlStyle2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // objectDataSource1
+            // 
+            this.objectDataSource1.Constructor = objectConstructorInfo1;
+            this.objectDataSource1.DataMember = "GetScheduleReport";
+            this.objectDataSource1.DataSource = typeof(VaultItemProcessor.ProductionListDataSource);
+            this.objectDataSource1.Name = "objectDataSource1";
             // 
             // XtraReportParts
             // 

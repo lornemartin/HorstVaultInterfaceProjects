@@ -102,10 +102,10 @@ namespace VaultItemProcessor
 
         private void Detail_BeforePrint(object sender, System.Drawing.Printing.PrintEventArgs e)
         {
-            int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
+            //int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
             
-            table3.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Italic);
-            table3.StylePriority.UseFont = true;
+            //table3.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Italic);
+            //table3.StylePriority.UseFont = true;
           
             
 
