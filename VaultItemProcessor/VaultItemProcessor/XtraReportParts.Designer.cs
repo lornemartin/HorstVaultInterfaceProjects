@@ -374,7 +374,7 @@
             // 
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.table3});
-            this.Detail.HeightF = 36.41682F;
+            this.Detail.HeightF = 10F;
             this.Detail.Name = "Detail";
             this.Detail.BeforePrint += new System.Drawing.Printing.PrintEventHandler(this.Detail_BeforePrint);
             // 
