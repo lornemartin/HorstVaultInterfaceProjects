@@ -532,7 +532,7 @@
             this.btnSavePartsDrawings.Name = "btnSavePartsDrawings";
             this.btnSavePartsDrawings.Size = new System.Drawing.Size(151, 23);
             this.btnSavePartsDrawings.TabIndex = 13;
-            this.btnSavePartsDrawings.Text = "Save Schedule Drawings";
+            this.btnSavePartsDrawings.Text = "Parts Drawings Save";
             this.btnSavePartsDrawings.UseVisualStyleBackColor = true;
             this.btnSavePartsDrawings.Click += new System.EventHandler(this.btnSavePartsDrawings_Click);
             // 
@@ -540,9 +540,9 @@
             // 
             this.btnLaserSched.Location = new System.Drawing.Point(20, 131);
             this.btnLaserSched.Name = "btnLaserSched";
-            this.btnLaserSched.Size = new System.Drawing.Size(96, 23);
+            this.btnLaserSched.Size = new System.Drawing.Size(151, 23);
             this.btnLaserSched.TabIndex = 12;
-            this.btnLaserSched.Text = "Laser Preview";
+            this.btnLaserSched.Text = "Parts Drawings  Preview";
             this.btnLaserSched.UseVisualStyleBackColor = true;
             this.btnLaserSched.Click += new System.EventHandler(this.btnLaserSched_Click);
             // 
@@ -550,9 +550,9 @@
             // 
             this.btnBandsawReport2.Location = new System.Drawing.Point(20, 102);
             this.btnBandsawReport2.Name = "btnBandsawReport2";
-            this.btnBandsawReport2.Size = new System.Drawing.Size(96, 23);
+            this.btnBandsawReport2.Size = new System.Drawing.Size(151, 23);
             this.btnBandsawReport2.TabIndex = 11;
-            this.btnBandsawReport2.Text = "Bandsaw";
+            this.btnBandsawReport2.Text = "Assy + Bandsaw Drawings";
             this.btnBandsawReport2.UseVisualStyleBackColor = true;
             this.btnBandsawReport2.Click += new System.EventHandler(this.btnBandsawReport2_Click);
             // 

@@ -154,7 +154,10 @@ namespace VaultItemProcessor
                             assy.Qty = lineItem.Qty;
 
                             order.Qty = prod.Qty;
-                            order.OrderNumber = prod.OrderNumber;
+                            if (prod.OrderNumber.ToLower().Contains("batch"))
+                                order.OrderNumber = prod.Number;
+                            else
+                                order.OrderNumber = prod.OrderNumber;
                             assy.ReportOrders = new List<Reports2.BandsawReportOrder2>();
                             assy.ReportOrders.Add(order);
                             assy.Pages = new List<Bitmap>();
@@ -176,7 +179,7 @@ namespace VaultItemProcessor
 
                                 for (int p = 1; p <= numPages; p++)
                                 {
-                                    PdfPage page = doc.Pages[p-1];
+                                    PdfPage page = doc.Pages[p - 1];
                                     Bitmap bitmap = pdfViewer.CreateBitmap(p, 950);
 
                                     float h = (float)page.Height;
@@ -185,7 +188,7 @@ namespace VaultItemProcessor
                                     var orient = page.Orientation;
                                     if ((page.Orientation == PdfSharp.PageOrientation.Portrait && angle == 90) || (page.Orientation == PdfSharp.PageOrientation.Portrait && h < w))
                                         bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
-                                    
+
                                     assy.Pages.Add(bitmap);
                                 }
 
@@ -194,7 +197,7 @@ namespace VaultItemProcessor
                                 pdfViewer.Dispose();
                             }
 
-                                reportProd.ReportAssemblies.Add(assy);
+                            reportProd.ReportAssemblies.Add(assy);
                         }
                         if (lineItem.Category == "Part" && lineItem.IsStock == false && lineItem.Operations == "Bandsaw")
                         {
@@ -209,7 +212,10 @@ namespace VaultItemProcessor
                                 prt.Pages = new List<Bitmap>();
 
                                 order.Qty = prod.Qty;
-                                order.OrderNumber = prod.OrderNumber;
+                                if (prod.OrderNumber.ToLower().Contains("batch"))
+                                    order.OrderNumber = prod.Number;
+                                else
+                                    order.OrderNumber = prod.OrderNumber;
                                 prt.ReportOrders = new List<Reports2.BandsawReportOrder2>();
                                 prt.ReportOrders.Add(order);
 
@@ -259,7 +265,10 @@ namespace VaultItemProcessor
                                 cutItem.Qty = lineItem.Qty;
 
                                 order.Qty = prod.Qty;
-                                order.OrderNumber = prod.OrderNumber;
+                                if (prod.OrderNumber.ToLower().Contains("batch"))
+                                    order.OrderNumber = prod.Number;
+                                else
+                                    order.OrderNumber = prod.OrderNumber;
                                 cutItem.ReportOrders = new List<Reports2.BandsawReportOrder2>();
                                 cutItem.ReportOrders.Add(order);
 
@@ -274,13 +283,17 @@ namespace VaultItemProcessor
                     // only add the order number to the existing product, instead of adding a new record
                     Reports2.BandsawReportOrder2 newOrder = new Reports2.BandsawReportOrder2();
                     newOrder.Qty = prod.Qty;
-                    newOrder.OrderNumber = prod.OrderNumber;
+                    if (prod.OrderNumber.ToLower().Contains("batch"))
+                        newOrder.OrderNumber = prod.Number;
+                    else
+                        newOrder.OrderNumber = prod.OrderNumber;
 
                     searchProd.AddReportOrder(newOrder);
                 }
             }
 
             return report.ReportProducts.ToList();
+
         }
 
         public bool SaveToFile()
