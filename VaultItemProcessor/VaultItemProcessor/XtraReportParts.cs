@@ -104,7 +104,7 @@ namespace VaultItemProcessor
         {
             int rowCount = (int)GetCurrentColumnValue("NumberOfDetailRows");
 
-            if (rowCount > 5)
+            if (rowCount < 5)
             {
                 table3.BackColor = Color.Green;
                 //table3.Font = new Font(table3.Font.FontFamily, 12, FontStyle.Italic);
