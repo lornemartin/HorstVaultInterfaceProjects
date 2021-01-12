@@ -107,6 +107,11 @@ namespace VaultItemProcessor
                 subList = prod.SubItems;
                 foreach (ProductionListLineItem lItem in subList.Where(p => p.Category == "Part").ToList())
                 {
+                    if (prod.OrderNumber.ToLower().Contains("batch"))
+                        lItem.OrderNumber = prod.Number;
+                    else
+                        lItem.OrderNumber = prod.OrderNumber;
+
                     completeList.Add(lItem);
                 }
             }

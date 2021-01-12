@@ -124,7 +124,7 @@ namespace VaultItemProcessor
                     {
                         //cell.StylePriority.UseFont = true;
                         //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
-                        cell.WordWrap = false;
+                        cell.WordWrap = true;
                     }
                 }
             }
