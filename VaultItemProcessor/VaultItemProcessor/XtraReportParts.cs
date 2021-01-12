@@ -106,11 +106,8 @@ namespace VaultItemProcessor
 
             if (rowCount < 16)
             {
-                table3.BackColor = Color.Green;
-                //table3.Font = new Font(table3.Font.FontFamily, 12, FontStyle.Italic);
-                //table3.HeightF = 50;
+                //table3.BackColor = Color.Green;
                 Detail.HeightF = 50;
-
 
                 foreach (XRTableRow row in table3.Rows)
                 {
@@ -118,23 +115,16 @@ namespace VaultItemProcessor
                     row.CanShrink = false;
 
                     row.HeightF = 50;
-                    //row.Font = new Font(table3.Font.FontFamily, 4, FontStyle.Italic);
-                    //row.StylePriority.UseFont = true;
                     foreach (XRTableCell cell in row)
                     {
-                        //cell.StylePriority.UseFont = true;
-                        //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
                         cell.WordWrap = true;
                     }
                 }
             }
 
-
             else
             {
-                table3.BackColor = Color.Red;
-                //table3.Font = new Font(table3.Font.FontFamily, 4, FontStyle.Bold);
-                //table3.HeightF = 4;
+                //table3.BackColor = Color.Red;
                 Detail.HeightF = 4;
 
 
@@ -143,19 +133,12 @@ namespace VaultItemProcessor
                     row.CanGrow = false;
                     row.CanShrink = false;
                     row.HeightF = 4;
-                    //row.Font = new Font(table3.Font.FontFamily, 1, FontStyle.Bold);
-                    //row.StylePriority.UseFont = true;
                     foreach (XRTableCell cell in row)
                     {
-                        //cell.StylePriority.UseFont = true;
-                        //cell.Font = new Font(table3.Font.FontFamily, 24, FontStyle.Regular);
                         cell.WordWrap = false;
                     }
                 }
             }
-
-            //table3.StylePriority.UseFont = true;
-
         }
     }
 }
