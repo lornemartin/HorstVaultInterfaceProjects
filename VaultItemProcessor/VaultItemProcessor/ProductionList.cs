@@ -115,9 +115,8 @@ namespace VaultItemProcessor
                     completeList.Add(lItem);
                 }
             }
-
             
-            completeList = completeList.OrderBy(i => i.MaterialThickness).ToList();
+            completeList = completeList.OrderBy(i => i.Operations).ToList();
 
             return completeList;
         }
