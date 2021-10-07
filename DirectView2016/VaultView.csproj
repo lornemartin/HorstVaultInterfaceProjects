@@ -158,7 +158,9 @@
   <ItemGroup>
     <Compile Include="AppSettings.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="VaultViewCommandExtension.cs" />
+    <Compile Include="VaultViewCommandExtension.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="MyCustomTabControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -180,8 +182,8 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="VaultView.vcet.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Key.snk" />
     <None Include="Properties\Settings.settings">

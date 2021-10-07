@@ -4,12 +4,12 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "DirectView 2021"
+!define APP_NAME "DirectView 2022"
 !define COMP_NAME "Lorne Martin"
-!define VERSION "01.30.00.00"
-!define COPYRIGHT "Author  © 2021"
+!define VERSION "01.40.00.00"
+!define COPYRIGHT "Author  © 2022"
 !define DESCRIPTION "Vault Viewer"
-!define INSTALLER_NAME "M:\Custom Code 2021 Deployment Files\DirectView\DirectView Setup.exe"
+!define INSTALLER_NAME "M:\Custom Code 2022 Deployment Files\DirectView\DirectView Setup.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
 !define UNINSTALL_PATH "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
@@ -32,7 +32,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${UNINSTALL_PATH}" "UninstallString"
-InstallDir "$APPDATA\Autodesk\Vault 2021\Extensions\DirectView"
+InstallDir "$APPDATA\Autodesk\Vault 2022\Extensions\DirectView"
 
 ######################################################################
 
@@ -103,7 +103,7 @@ Function .onInit
 		; point to ProgramData folder
 		; instead of current user's Roaming folder
 		SetShellVarContext all
-		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2021\Extensions\DirectView"
+		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2022\Extensions\DirectView"
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
 		CreateDirectory $INSTDIR
@@ -154,64 +154,7 @@ SectionEnd
 
 Section Uninstall
 ${INSTALL_TYPE}
-Delete "$INSTDIR\AppSettings.xml"
-Delete "$INSTDIR\Autodesk.Connectivity.Explorer.Extensibility.dll"
-Delete "$INSTDIR\Autodesk.Connectivity.Explorer.Extensibility.xml"
-Delete "$INSTDIR\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll"
-Delete "$INSTDIR\Autodesk.Connectivity.Explorer.ExtensibilityTools.xml"
-Delete "$INSTDIR\Autodesk.Connectivity.Extensibility.Framework.dll"
-Delete "$INSTDIR\Autodesk.Connectivity.Extensibility.Framework.xml"
-Delete "$INSTDIR\Autodesk.Connectivity.WebServices.dll"
-Delete "$INSTDIR\Autodesk.Connectivity.WebServices.Interop.dll"
-Delete "$INSTDIR\Autodesk.Connectivity.WebServices.xml"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.dll"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Forms.dll"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Forms.xml"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Vault.dll"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Vault.Forms.xml"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.Vault.xml"
-Delete "$INSTDIR\Autodesk.DataManagement.Client.Framework.xml"
-Delete "$INSTDIR\DevExpress.Data.v15.1.dll"
-Delete "$INSTDIR\DevExpress.Data.v16.1.dll"
-Delete "$INSTDIR\DevExpress.Office.v16.1.Core.dll"
-Delete "$INSTDIR\DevExpress.Pdf.v16.1.Core.dll"
-Delete "$INSTDIR\DevExpress.Pdf.v16.1.Drawing.dll"
-Delete "$INSTDIR\DevExpress.Printing.v15.1.Core.dll"
-Delete "$INSTDIR\DevExpress.Printing.v16.1.Core.dll"
-Delete "$INSTDIR\DevExpress.RichEdit.v16.1.Core.dll"
-Delete "$INSTDIR\DevExpress.Sparkline.v16.1.Core.dll"
-Delete "$INSTDIR\DevExpress.Utils.v15.1.dll"
-Delete "$INSTDIR\DevExpress.Utils.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraBars.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraBars.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraEditors.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraEditors.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraGrid.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraGrid.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraLayout.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraLayout.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraPrinting.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraPrinting.v16.1.dll"
-Delete "$INSTDIR\DevExpress.XtraTreeList.v15.1.dll"
-Delete "$INSTDIR\DevExpress.XtraTreeList.v16.1.dll"
-Delete "$INSTDIR\log4net.config"
-Delete "$INSTDIR\log4net.dll"
-Delete "$INSTDIR\Microsoft.Web.Services3.dll"
-Delete "$INSTDIR\PdfSharp.dll"
-Delete "$INSTDIR\PrintPDF.dll"
-Delete "$INSTDIR\PrintPDF.pdb"
-Delete "$INSTDIR\VaultAccess.dll"
-Delete "$INSTDIR\VaultAccess.dll.config"
-Delete "$INSTDIR\VaultAccess.pdb"
-Delete "$INSTDIR\VaultView.dll"
-Delete "$INSTDIR\VaultView.dll.config"
-Delete "$INSTDIR\VaultView.pdb"
-Delete "$INSTDIR\VaultView.vcet.config"
-Delete "$INSTDIR\ShowPDF.exe"
- 
- 
-Delete "$INSTDIR\uninstall.exe"
+Delete "$INSTDIR\*.*"
 !ifdef WEB_SITE
 Delete "$INSTDIR\${APP_NAME} website.url"
 !endif
