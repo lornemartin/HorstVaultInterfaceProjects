@@ -361,8 +361,8 @@ namespace VaultView
 
                 if (!System.IO.File.Exists(IvFullPath))
                 {
-                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2021\Bin\InventorView.exe";
-                    string Path2 = @"C:\Program Files\Autodesk\Inventor2021\Bin\InventorView.exe";
+                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2022\Bin\InventorView.exe";
+                    string Path2 = @"C:\Program Files\Autodesk\Inventor2022\Bin\InventorView.exe";
                     if (System.IO.File.Exists(Path1))
                     {
                         IvFullPath = Path1;
