@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.102
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultItemProcessor", "VaultItemProcessor\VaultItemProcessor.csproj", "{A5E1EAEF-EED3-4194-BE46-7CF540AB9EB2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D} = {9F1A34EA-95C2-4474-8DB7-9D22F82A132D}
+		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD} = {720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ItemExport", "..\ItemExport\ItemExport.csproj", "{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}"
 EndProject
