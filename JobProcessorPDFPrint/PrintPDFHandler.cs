@@ -27,7 +27,7 @@ using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
 
-[assembly: ApiVersion("14.0")]
+[assembly: ApiVersion("15.0")]
 [assembly: ExtensionId("312306fb-a57f-410e-959d-79d9708f9fb7")]
 
 namespace JobProcessorPrintPDF
