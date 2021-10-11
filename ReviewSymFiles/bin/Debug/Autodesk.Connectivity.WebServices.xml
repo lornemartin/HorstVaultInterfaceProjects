@@ -17,8 +17,8 @@
     <member name="P:Autodesk.Connectivity.WebServices.IWebService.ClientCertificate">
       <summary>Client certificate for making web service calls over an SSL connection.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.IWebService.SecurityHeader">
-      <summary>The security header.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.IWebService.Session">
+      <summary>The session.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.IWebService.Timeout">
       <summary>The time to wait, in milliseconds, for an HTTP response.</summary>
@@ -88,6 +88,9 @@
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.AuthTyp.ActiveDir">
       <summary>Active Directory handles the authentication.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.AuthTyp.Autodesk">
+      <summary>The Autodesk account handles the authentication.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.BehaviorAssignmentType">
       <summary>Different ways that behaviors or categories can be assigned.</summary>
@@ -766,6 +769,9 @@ State</summary>
     <member name="F:Autodesk.Connectivity.WebServices.LicensingAgent.Server">
       <summary>Obtain license server-side.</summary>
     </member>
+    <member name="F:Autodesk.Connectivity.WebServices.LicensingAgent.Token">
+      <summary>Obtain AutodeskId license.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.MappingDirection">
       <summary>The direction of a mapping.</summary>
     </member>
@@ -789,6 +795,15 @@ State</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.ProductRestricCode">
       <summary>An enumeration of restrictions for Item operations. See page on Restriction Codes for more information.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ProfileAssoc">
+      <summary>Types the Profile Attribute Definition is associated with.<br /></summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProfileAssoc.User">
+      <summary>User association.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProfileAssoc.Group">
+      <summary>Group association.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropConstrTyp">
       <summary>Property constraint types.</summary>
@@ -860,10 +875,40 @@ State</summary>
       <summary>The cause of the restriction.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteStatus">
-      <summary>For internal use only</summary>
+      <summary>Status of property update operation.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropWriteStatus.Success">
+      <summary>Property value updated successfully.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropWriteStatus.Failure">
+      <summary>Property value update failed.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.PropWriteStatus.NoCreate">
+      <summary>Property would be updated, but wasn’t because it is read only and doesn’t exist in the file.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.ProvStatus">
-      <summary>For internal use only</summary>
+      <summary>An enumeration containing the resulting states of a content source property based operation.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.Success">
+      <summary>The operation succeeded without errors.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.NotSupported">
+      <summary>The file or content is not supported by the property provider.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.AccessError">
+      <summary>An error accessing the file or property provider.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.IFilterNotFound">
+      <summary>The IFilter could not be found.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.CorruptionError">
+      <summary>An unexpected data format or type was returned.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.ProviderNotFound">
+      <summary>The propery provider could not be found for the given file.</summary>
+    </member>
+    <member name="F:Autodesk.Connectivity.WebServices.ProvStatus.Error">
+      <summary>A general error occurred.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PrpgType">
       <summary>The types of ACL propagation.</summary>
@@ -1069,6 +1114,9 @@ State</summary>
     <member name="T:Autodesk.Connectivity.WebServices.AccessPermis">
       <summary>A boolean value for a certain permission</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.Acct">
+      <summary>An object containing information about the authentication account of Vault User.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.ACE">
       <summary>Access Control Entry. Represents the access rights of a specific user or group.</summary>
     </member>
@@ -1128,6 +1176,13 @@ facilitate encapsulation of the underlying service implementation.</summary>
     <member name="T:Autodesk.Connectivity.WebServices.AuthServiceBase">
       <summary>Not intended for public use. Base class for the AuthService
 that helps facilitate encapsulation of the underlying service implemnation</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.AutodeskAuthService">
+      <summary>Contains methods for logging into and out of vaults using AutodeskID credentials.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase">
+      <summary>Not intended for public use. Base class for the AutodeskAuthService that helps facilitate encapsulation of
+the underlying service implementation.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.AutogenField">
       <summary>A numeric scheme field that automatically increments itself. Implementation of NumingSchmField.</summary>
@@ -1286,9 +1341,6 @@ underlying service implemnation</summary>
       <summary>Not intended for public use. Base class for the CustomEntityService that helps facilitate encapsulation of
 the underlying service implemnation</summary>
     </member>
-    <member name="T:Autodesk.Connectivity.WebServices.DbOwn">
-      <summary>Database ownership information. Database ownership covers anything that is not entity based.</summary>
-    </member>
     <member name="T:Autodesk.Connectivity.WebServices.DeleteChangeOrderCommandEventArgs">
       <summary>Information about the delete Change Order operation</summary>
     </member>
@@ -1380,9 +1432,6 @@ encapsulation of the underlying service implemnation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.EntLfCyc">
       <summary>The lifecycle information for an Entity.</summary>
-    </member>
-    <member name="T:Autodesk.Connectivity.WebServices.EntOwn">
-      <summary>Ownership information on an entity.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.EntsAndACLs">
       <summary>A collection of Entity IDs and associated ACL objects.</summary>
@@ -1523,6 +1572,9 @@ of the underlying service implemnation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.ForumService">
       <summary>Contains methods for posting messages.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ForumServiceBase">
+      <summary>Not intended for public use</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.FreeTxtField">
       <summary>An section of text with variable values and size. Implementation of NumSchmField.</summary>
@@ -1730,6 +1782,12 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.ProductRestric">
       <summary>A restriction on an operation.</summary>
     </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ProfileAttr">
+      <summary>A profile attribute for a given user or group.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.ProfileAttrDef">
+      <summary>Definition of a profile attribute.</summary>
+    </member>
     <member name="T:Autodesk.Connectivity.WebServices.PromoteItemCommandEventArgs">
       <summary>Information about when an Item is created or updated from File data.</summary>
     </member>
@@ -1776,16 +1834,16 @@ of the underlying service implemnation</summary>
       <summary>A restriction on a property operation.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteReq">
-      <summary>For internal use only</summary>
+      <summary>Request to update specific file property.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteRequests">
-      <summary>For internal use only</summary>
+      <summary>Incapsulates set of properties to update within the file.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteResult">
-      <summary>For internal use only</summary>
+      <summary>Result of specific file property update.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.PropWriteResults">
-      <summary>For internal use only</summary>
+      <summary>Incapsulates results of the property updates.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.ReplicationService">
       <summary>Contains methods for transfering ownerhsip between workgroups.</summary>
@@ -1838,9 +1896,6 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.SchedJob">
       <summary>A task that can be scheduled to run at a given cadance recurringly.</summary>
     </member>
-    <member name="T:Autodesk.Connectivity.WebServices.SecurityHeader">
-      <summary>Security information about the current login.</summary>
-    </member>
     <member name="T:Autodesk.Connectivity.WebServices.SecurityService">
       <summary>Contains methods for logging into and out of vaults and setting security on specific Entities.</summary>
     </member>
@@ -1852,6 +1907,9 @@ of the underlying service implemnation</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.ServerIdentities">
       <summary>The locations of the data server and filestore server.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServices.Session">
+      <summary>Information about the current login.<!--DXMETADATA end --></summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServices.SiteCompat">
       <summary>Information regarding site compatibility.</summary>
@@ -1955,14 +2013,23 @@ of the underlying service implemnation</summary>
     <member name="T:Autodesk.Connectivity.WebServices.WorkflowState">
       <summary>A Workflow State.</summary>
     </member>
-    <member name="T:Autodesk.Connectivity.WebServices.XferStatus">
-      <summary>Transfer status.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServices.AccessPermis.Id">
       <summary>A numeric value representing they type of operation. There are currently 4 types. 1=AllowRead, 2=AllowWrite, 3=AllowDelete, 4=AllowDownload</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AccessPermis.Val">
       <summary>True means that the operation is allowed. False means that the operation is not allowed.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Acct.Auth">
+      <summary>The type of the account (Vault, Active Directory, Autodesk).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Acct.Email">
+      <summary>The email associated with the account.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Acct.IsAct">
+      <summary>Is the account active (enabled).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Acct.Name">
+      <summary>The name of the account for signin purposes.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ACE.PermisArray">
       <summary>An array of access permissions.</summary>
@@ -2090,7 +2157,7 @@ of the underlying service implemnation</summary>
     <member name="F:Autodesk.Connectivity.WebServices.AddItemCommandEventArgs.CategoryId">
       <summary>The category for the Item.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddGroup(System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.Boolean,System.String,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddGroup(System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Creates a new Group of Users.</summary>
       <returns>The newly created group.</returns>
     </member>
@@ -2106,11 +2173,15 @@ of the underlying service implemnation</summary>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddGroupToVault(System.Int64,System.Int64)">
       <summary>Gives a Group access to a Vault.</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddProfileAttributeDef(System.String,System.String,Autodesk.Connectivity.WebServices.ProfileAssoc)">
+      <summary>Adds a new profile attribute definition. Added to end of the display order.</summary>
+      <returns>The newly created Profile Attribute Definition.</returns>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddRole(System.String,System.String,System.Int64[])">
       <summary>Creates a new user-defined role.</summary>
       <returns>The newly created role.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddUser(System.String,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.String,System.String,System.Boolean,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddUser(System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Adds a user.</summary>
       <returns>A User object with the newly created user data.</returns>
     </member>
@@ -2123,6 +2194,9 @@ of the underlying service implemnation</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.AddUserToGroup(System.Int64,System.Int64)">
       <summary>Adds a User to a Group.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.ChangeVaultAccountPassword(System.Int64,System.String,System.String)">
+      <summary>Changes the user's password. Now requires the old password to be specified.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.CheckRolePermissions(System.String[])">
       <summary>Check if the current logged in user has permission to execute specific web service APIs</summary>
@@ -2142,6 +2216,9 @@ of the underlying service implemnation</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.DeleteGroupsFromGroup(System.Int64[],System.Int64)">
       <summary>Removes child Groups from a Group.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.DeleteProfileAttributeDef(System.Int64)">
+      <summary>Deletes an existing profile attribute definition.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.DeleteRole(System.Int64)">
       <summary>Deletes a user-defined role.</summary>
@@ -2225,6 +2302,16 @@ administrator before logging in is possible.</returns>
       <summary>Gets the permissions for a user.</summary>
       <returns>An array listing the permissions the user has. This includes any permissions that are granted by being part of a group.</returns>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.GetProfileAttributeDefs(Autodesk.Connectivity.WebServices.ProfileAssoc)">
+      <summary>Gets all profile attributes for the given association (returned in display order).</summary>
+      <returns>An array listing all the Profile Atrribute Definitions for the given association.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.GetProfileAttributes(System.Int64[],System.Int64[])">
+      <summary>Gets profile attributes for the combination of user/group ids and attribute ids.</summary>
+      <returns>
+        <font color="#172B4D" size="3" face="Segoe UI">Returns a sparse array based on existing data.</font>
+      </returns>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.GetRolesByUserId(System.Int64)">
       <summary>Gets the roles for a user.</summary>
       <returns>An array listing the roles the user has.</returns>
@@ -2249,31 +2336,56 @@ administrator before logging in is possible.</returns>
       <summary>Gets a set of user information for a set of user IDs.</summary>
       <returns>An array of user information.</returns>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.LinkActiveDirAccountToGroup(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Associates an active directory account with the group by groupId.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.LinkActiveDirAccountToUser(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Associates an active directory account with the user by userId.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.LinkAutodeskAccountToUser(System.Int64,System.String,System.Boolean)">
+      <summary>Associates an Autodesk account with the user by userID</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.LinkVaultAccountToUser(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Associates a Vault account and password with the user by userId. Can be used to reset Vault account password for the user.</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.SetCreateDomainUserOnLogin(System.Boolean)">
       <summary>Turns on or off the feature that allows domain users to be automatically created when a user first logs in.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateGroupInfo(System.Int64,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.Boolean,System.Int64[],System.Int64[],System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.SetProfileAttributeOrder(System.Int64[])">
+      <summary>Sets display order for profile attributes (<strong>GetProfileAttributeDefs</strong> will return results in the same order).</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateGroupInfo(System.Int64,System.String,System.String,System.Boolean,System.Int64[],System.Int64[],System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Updates a group and its associations.</summary>
       <returns>The updated GroupInfo object.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdatePassword(System.Int64,System.String)">
-      <summary>Changes the password for a user.</summary>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateProfileAttributeDef(System.Int64,System.String,System.String,Autodesk.Connectivity.WebServices.ProfileAssoc)">
+      <summary>Updates a profile attribute definition.</summary>
+      <returns>The updated ProfileAttributeDef object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateRole(System.Int64,System.String,System.String,System.Int64[])">
       <summary>Updates a user-defined role.</summary>
       <returns>The updated Role object.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateUser(System.Int64,System.String,System.String,System.String)">
-      <summary>Updates the basic data for a user.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateUserInfo(System.Int64,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.String,System.String,System.Boolean,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminService.UpdateUserInfo(System.Int64,System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Updates a User and its associations.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AdminService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.AdminService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.AdminService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AdminService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AdminService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AdminService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AdminService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AdminService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -2284,7 +2396,7 @@ administrator before logging in is possible.</returns>
     <member name="E:Autodesk.Connectivity.WebServices.AdminService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddGroup(System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.Boolean,System.String,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddGroup(System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddGroupRole(System.Int64,System.Int64)">
@@ -2299,10 +2411,13 @@ administrator before logging in is possible.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddGroupToVault(System.Int64,System.Int64)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddProfileAttributeDef(System.String,System.String,Autodesk.Connectivity.WebServices.ProfileAssoc)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddRole(System.String,System.String,System.Int64[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddUser(System.String,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.String,System.String,System.Boolean,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddUser(System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddUserRole(System.Int64,System.Int64)">
@@ -2312,6 +2427,9 @@ administrator before logging in is possible.</returns>
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.AddUserToGroup(System.Int64,System.Int64)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.ChangeVaultAccountPassword(System.Int64,System.String,System.String)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.CheckRolePermissions(System.String[])">
@@ -2330,6 +2448,9 @@ administrator before logging in is possible.</returns>
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.DeleteGroupsFromGroup(System.Int64[],System.Int64)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.DeleteProfileAttributeDef(System.Int64)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.DeleteRole(System.Int64)">
@@ -2395,6 +2516,12 @@ administrator before logging in is possible.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.GetPermissionsByUserId(System.Int64)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.GetProfileAttributeDefs(Autodesk.Connectivity.WebServices.ProfileAssoc)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.GetProfileAttributes(System.Int64[],System.Int64[])">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.GetRolesByUserId(System.Int64)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
@@ -2413,19 +2540,34 @@ administrator before logging in is possible.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.GetUserInfosByUserIds(System.Int64[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.LinkActiveDirAccountToGroup(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.LinkActiveDirAccountToUser(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.LinkAutodeskAccountToUser(System.Int64,System.String,System.Boolean)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.LinkVaultAccountToUser(System.Int64,System.String,System.String,System.Boolean)">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.SetCreateDomainUserOnLogin(System.Boolean)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateGroupInfo(System.Int64,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.Boolean,System.Int64[],System.Int64[],System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.SetProfileAttributeOrder(System.Int64[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdatePassword(System.Int64,System.String)">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateGroupInfo(System.Int64,System.String,System.String,System.Boolean,System.Int64[],System.Int64[],System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateUser(System.Int64,System.String,System.String,System.String)">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateProfileAttributeDef(System.Int64,System.String,System.String,Autodesk.Connectivity.WebServices.ProfileAssoc)">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateUserInfo(System.Int64,System.String,Autodesk.Connectivity.WebServices.AuthTyp,System.String,System.String,System.String,System.Boolean,System.Int64[],System.Int64[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateRole(System.Int64,System.String,System.String,System.Int64[])">
+      <summary>Not intended for public use. Consult the AdminService</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AdminServiceBase.UpdateUserInfo(System.Int64,System.String,System.String,System.Boolean,System.Int64[],System.Int64[],Autodesk.Connectivity.WebServices.ProfileAttr[])">
       <summary>Not intended for public use. Consult the AdminService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AnalyticsService.GetDuplicateSearchConfiguration">
@@ -2442,8 +2584,20 @@ administrator before logging in is possible.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AnalyticsService.WebServiceManager">
       <summary>
@@ -2451,6 +2605,12 @@ administrator before logging in is possible.</returns>
           <span id="ContentItemType|Autodesk.Connectivity.WebServices~Autodesk.Connectivity.WebServices.AdminService~WebServiceManager|SUMMARY" class="dxeditwrapper" contenteditable="true" style="WIDTH: 100%">A reference to the WebServiceManager that created this object. Value may be null.</span>
         </div>
       </summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.AnalyticsService.PostInvokeEvents">
+      <summary>Subscribe to this event to get a notification after every web service call.</summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.AnalyticsService.PreInvokeEvents">
+      <summary>Subscribe to this event to get a notification before every web service call.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AnalyticsServiceBase.GetDuplicateSearchConfiguration">
       <summary>Not intended for public use. Consult AnalyticsService</summary>
@@ -2522,29 +2682,49 @@ version of a File.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.AttmtConflict.IsSame">
       <summary>If true, the attachment is the same as an existing attachment.</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AuthService.GetSession(System.String)">
+      <summary>Returns Session object by sessionId.</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignIn(System.String,System.String,System.String,System.String)">
       <summary>Authenticates to a specific Vault via username and password.<!--DXMETADATA end --></summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignIn2(System.String,System.String,System.String)">
       <summary>Authenticates to the server but not to a specific Vault database.<!--DXMETADATA end --></summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignInAltLicense(System.String,System.String,System.String,System.String,System.Byte[])">
-      <summary>Reserved for future use<!--DXMETADATA end --></summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignInGetLicense(System.String,System.String,System.String,System.String)">
       <summary>Authenticates to the server by getting license server-side.</summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignInReadOnly(System.String,System.String,System.String,System.String)">
       <summary>Authenticates to a specific Vault with read only permissions.<!--DXMETADATA end --></summary>
+      <returns>Returns Session object.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignOut">
+    <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignInWithLicense(System.String,System.String,System.String,System.String,System.String)">
+      <summary>Authenticates to a specific Knowledge Vault via AutodeskID token that will be used for licensing only.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AuthService.SignOut(System.String)">
       <summary>Clears out the authentication information.<!--DXMETADATA end --></summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AuthService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.AuthService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.AuthService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AuthService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AuthService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AuthService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AuthService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AuthService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -2566,7 +2746,7 @@ version of a File.</summary>
         <para>Not intended for public use. Consult the AuthService</para>
       </summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AuthServiceBase.SignInAltLicense(System.String,System.String,System.String,System.String,System.Byte[])">
+    <member name="M:Autodesk.Connectivity.WebServices.AuthServiceBase.SignInGetLicense(System.String,System.String,System.String,System.String)">
       <summary>
         <para>Not intended for public use. Consult the AuthService</para>
       </summary>
@@ -2576,9 +2756,86 @@ version of a File.</summary>
         <para>Not intended for public use. Consult the AuthService</para>
       </summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.AuthServiceBase.SignOut">
+    <member name="M:Autodesk.Connectivity.WebServices.AuthServiceBase.SignInWithLicense(System.String,System.String,System.String,System.String,System.String)">
       <summary>
         <para>Not intended for public use. Consult the AuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AuthServiceBase.SignOut(System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthService.SignIn(System.String,System.String,System.String)">
+      <summary>Authenticates to a specific Knowledge Vault via AutodeskID token.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthService.SignIn2(System.String,System.String)">
+      <summary>Authenticates via AutodeskID credentials to ADMS but not to a specific Knowledge Vault.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthService.SignInGetLicense(System.String,System.String,System.String)">
+      <summary>Authenticates to the server by getting license server-side.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthService.SignInReadOnly(System.String,System.String,System.String)">
+      <summary>Authenticates to a specific Vault with read only permissions via AutodeskID authentication.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthService.SignInWithLicense(System.String,System.String,System.String)">
+      <summary>Authenticates to a specific Knowledge Vault via AutodeskID token that will be used for licensing also.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.AllowInvokeEvents">
+      <summary>Tells if invoke events should fire. This value is true by default.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.AutodeskAuthService.WebServiceManager">
+      <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.AutodeskAuthService.PostInvokeEvents">
+      <summary>Subscribe to this event to get a notification after every web service call.</summary>
+    </member>
+    <member name="E:Autodesk.Connectivity.WebServices.AutodeskAuthService.PreInvokeEvents">
+      <summary>Subscribe to this event to get a notification before every web service call.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase.SignIn(System.String,System.String,System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AutodeskAuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase.SignIn2(System.String,System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AutodeskAuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase.SignInGetLicense(System.String,System.String,System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AutodeskAuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase.SignInReadOnly(System.String,System.String,System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AutodeskAuthService</para>
+      </summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.AutodeskAuthServiceBase.SignInWithLicense(System.String,System.String,System.String)">
+      <summary>
+        <para>Not intended for public use. Consult the AutodeskAuthService</para>
       </summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.AutogenField.FieldTyp">
@@ -2616,8 +2873,20 @@ version of a File.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.BehaviorService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -2983,8 +3252,22 @@ of the parent assembly. A value of false indicates that purchased children shoul
     <member name="P:Autodesk.Connectivity.WebServices.CategoryService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.ClientCertificate">
+      <summary>
+        <para>Client certificate for making web service calls over an SSL connection.</para>
+      </summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CategoryService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.CategoryService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -3093,6 +3376,9 @@ of the parent assembly. A value of false indicates that purchased children shoul
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrder.Num">
       <summary>The Change Order number. Numbers are generated based on the Numbering Scheme.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrder.StateColor">
+      <summary>Change order state color.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrder.StateDispName">
       <summary>The display name of the state.</summary>
@@ -3461,8 +3747,16 @@ cannot change item lifecycle states.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.ClientCertificate">
+      <summary>
+        <para>Client certificate for making web service calls over an SSL connection.</para>
+      </summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.CommitChangeOrderEvents">
       <summary>A collection of Web Service Command Events for commit Change Order operations.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.DeleteChangeOrderEvents">
       <summary>A collection of Web Service Command Events for delete Change Order operations.</summary>
@@ -3470,8 +3764,14 @@ cannot change item lifecycle states.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.EditChangeOrderEvents">
       <summary>A collection of Web Service Command Events for edit Change Order operations.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ChangeOrderService.UpdateChangeOrderLifecycleStateEvents">
       <summary>A collection of Web Service Command Events for Change Order lifecycle change operations.</summary>
@@ -4016,8 +4316,22 @@ provider, but the provider is not registered.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.ClientCertificate">
+      <summary>
+        <para>Client certificate for making web service calls over an SSL connection.</para>
+      </summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.CustomEntityService.UpdateCustomEntityLifecycleStateEvents">
       <summary>A collection of Web Service Command Events for Custom Entity lifecycle change operations.</summary>
@@ -4087,18 +4401,6 @@ provider, but the provider is not registered.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.CustomEntityServiceBase.UpdateCustomEntityPropertyDefinitions(System.Int64[],System.Int64[],System.Int64[])">
       <summary>Not intended for public use. Consult the CustomEntityService</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DbOwn.ExpDate">
-      <summary>The expiration date and time of the lease.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DbOwn.IsExp">
-      <summary>If true, the lease has expired. If false, the lease is still active.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DbOwn.IsLocalOwn">
-      <summary>If true, the site that currently connected to has ownership. If false, another workgroup has ownerhsip.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DbOwn.WkgrpId">
-      <summary>The workgroup that owns the database.</summary>
     </member>
     <member name="F:Autodesk.Connectivity.WebServices.DeleteChangeOrderCommandEventArgs.ChangeOrderIds">
       <summary>The Change Orders being deleted.</summary>
@@ -4774,6 +5076,14 @@ the Vault.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentService.CheckoutFileEvents">
       <summary>A collection of Web Service Command Events for checkout File operations.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.ClientCertificate">
+      <summary>
+        <para>Client certificate for making web service calls over an SSL connection.</para>
+      </summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentService.DeleteFileEvents">
       <summary>A collection of Web Service Command Events for delete File operations.</summary>
     </member>
@@ -4789,8 +5099,14 @@ the Vault.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentService.MoveFolderEvents">
       <summary>A collection of Web Service Command Events for move Folder operations.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -4800,6 +5116,9 @@ the Vault.</returns>
     </member>
     <member name="E:Autodesk.Connectivity.WebServices.DocumentService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddDesignRepresentationFileAttachment(System.Int64,Autodesk.Connectivity.WebServices.FileAssocParam)">
+      <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.AddDesignVisualizationFileAttachment(System.Int64,Autodesk.Connectivity.WebServices.FileAssocParam)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
@@ -5173,6 +5492,9 @@ the Vault.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.MoveLink(System.Int64,System.Int64,System.Int64)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.RemoveDesignRepresentationFileAttachment(System.Int64,System.Int64)">
+      <summary>Not intended for public use. Consult the DocumentService</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.DocumentServiceBase.ReserveFileNamingDescriptions(System.Int64,System.Int32)">
       <summary>Not intended for public use. Consult the DocumentService</summary>
     </member>
@@ -5356,8 +5678,22 @@ the Vault.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.ClientCertificate">
+      <summary>
+        <para>Client certificate for making web service calls over an SSL connection.</para>
+      </summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DocumentServiceExtensions.UpdateFileLifecycleStateEvents">
       <summary>A collection of Web Service Command Events for File lifecycle change operations.</summary>
@@ -5478,6 +5814,9 @@ the Vault.</returns>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.IsFoldersConfigured">
       <summary>Are any folders configured for indexing</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.SiteSearchIndexingStatus">
+      <summary>The status of the indexing engine.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.DuplicateSearchStatus.Snapshot">
       <summary>A snapshot of DuplicateSearch data</summary>
@@ -5618,21 +5957,6 @@ the values are equivalent or not.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.EntLfCyc.Obsolete">
       <summary>Indicates if entity is in a life cycle state that is designated as obsolete</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.EntOwn.EntId">
-      <summary>The entity ID.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.EntOwn.ExpDate">
-      <summary>The expiration date and time of the lease.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.EntOwn.IsExp">
-      <summary>If true, the lease has expired. If false, the lease is still active.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.EntOwn.IsLocalOwn">
-      <summary>If true, the site that currently connected to has ownership. If false, another workgroup has ownerhsip.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.EntOwn.WkgrpId">
-      <summary>The workgroup that has ownership.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.EntsAndACLs.ACLArray">
       <summary>An array of referenced ACL objects.</summary>
@@ -5956,6 +6280,9 @@ type has no resolver or you don't know that the resolver expects.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.FileLfCyc.Consume">
       <summary>Tells if the current file version is in a consumable (released) state.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FileLfCyc.IterLfCycStateId">
+      <summary>The ID of the life cycle state iteration for the latest file within the same revision.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.FileLfCyc.LfCycDefId">
       <summary>The ID of the life cycle definition for the latest file within the same revision.</summary>
     </member>
@@ -6055,6 +6382,10 @@ type has no resolver or you don't know that the resolver expects.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.FileRollbackStatus.File">
       <summary>Target file for rolling back the file's Lifecycle state</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.FilestoreService.CopyFile(System.Byte[],System.String,System.Boolean,Autodesk.Connectivity.WebServices.PropWriteRequests,Autodesk.Connectivity.WebServices.PropWriteResults@)">
+      <summary>This function copies the binary contents of a file in the filestore. The Vault meta data, such as Name and Version Number, are not copied.</summary>
+      <returns>Returns byte array of the copied file.</returns>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.FilestoreService.DownloadFilePart(System.Byte[],System.Int64,System.Int64,System.Boolean)">
       <summary>Downloads the binary content of a file.</summary>
       <returns>The a stream of the contents the file part.</returns>
@@ -6063,7 +6394,8 @@ type has no resolver or you don't know that the resolver expects.</summary>
       <summary>Internal use only.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.FilestoreService.GetContentSourceProperties(System.Byte[],System.Boolean)">
-      <summary>Internal use only.</summary>
+      <summary>Gets CtntSrcProps object which contains content source properties array.</summary>
+      <returns>Returns CtntSrcProps object which contains content source properties array.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.FilestoreService.GetContentSourcePropertyDefinitions(System.Byte[],System.Boolean)">
       <summary>Gets the property definitions internal to the file.<!--DXMETADATA end --></summary>
@@ -6091,14 +6423,26 @@ multiple parts.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.CompressionHeaderValue">
       <summary>Information about the compression on the binary data.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.FileTransferHeaderValue">
       <summary>Information on the file transfer.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.SecurityHeader">
-      <summary>The security header. (from IWebService). This value will always be null.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -6168,8 +6512,20 @@ multiple parts.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.SecurityHeader">
-      <summary>The security header. (from IWebService). This value will always be null.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.FilestoreVaultService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -6290,11 +6646,35 @@ file is uploaded across multiple parts, this value is true for the last part and
     <member name="P:Autodesk.Connectivity.WebServices.FolderDelRestricArray.FolderDeleteRestrictions">
       <summary>An array of folder delete restrictions.</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumService.CheckRolePermissions(System.String[])">
+      <summary>Check if the current logged in user has permission to execute specific web service APIs</summary>
+      <returns>Array indicating whether or not the current logged in user has permission to execute each specified API</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumService.GetMessageGroupsByForumId(System.Int64)">
+      <summary>Gets all of the Messages and attachments for a Forum.</summary>
+      <returns>An array of all Message Groups for the Forum.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumService.GetMessagesByForumId(System.Int64)">
+      <summary>Gets all the Messages for a Forum.</summary>
+      <returns>An array of Messages for the Forum.</returns>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ForumService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ForumService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.ForumService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ForumService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ForumService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ForumService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ForumService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ForumService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -6304,6 +6684,15 @@ file is uploaded across multiple parts, this value is true for the last part and
     </member>
     <member name="E:Autodesk.Connectivity.WebServices.ForumService.PreInvokeEvents">
       <summary>Subscribe to this event to get a notification before every web service call.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumServiceBase.CheckRolePermissions(System.String[])">
+      <summary>Not intended for public use</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumServiceBase.GetMessageGroupsByForumId(System.Int64)">
+      <summary>Not intended for public use</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ForumServiceBase.GetMessagesByForumId(System.Int64)">
+      <summary>Not intended for public use</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.FreeTxtField.DfltVal">
       <summary>The default value.</summary>
@@ -6344,14 +6733,20 @@ file is uploaded across multiple parts, this value is true for the last part and
     <member name="P:Autodesk.Connectivity.WebServices.Group.Id">
       <summary>The identifier for the object.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.Group.IsActive">
-      <summary>If true, the Group is active. If false, the Group is inactive.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.Group.IsAct">
+      <summary>Is the group active</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.Group.IsSys">
       <summary>If true, the Group is a system group. If false, the Group is user-defined.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.Group.Name">
       <summary>The unique name of the Group.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.GroupInfo.Accounts">
+      <summary>Accounts associated with this group.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.GroupInfo.Attributes">
+      <summary>Profile attributes of this group.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.GroupInfo.Group">
       <summary>A Group.</summary>
@@ -6374,8 +6769,20 @@ file is uploaded across multiple parts, this value is true for the last part and
     <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.IdentificationService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -6412,8 +6819,20 @@ file is uploaded across multiple parts, this value is true for the last part and
     <member name="P:Autodesk.Connectivity.WebServices.InformationService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.InformationService.SecurityHeader">
-      <summary>The security header. (from IWebService). This value will always be null.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.InformationService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.InformationService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.InformationService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.InformationService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.InformationService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.InformationService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -7090,8 +7509,14 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.ItemService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ItemService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ItemService.CommitItemEvents">
       <summary>A collection of Web Service Command Events for commit Item operations.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ItemService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ItemService.DeleteItemEvents">
       <summary>A collection of Web Service Command Events for delete Item operations.</summary>
@@ -7105,8 +7530,14 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.ItemService.PromoteItemEvents">
       <summary>A collection of Web Service Command Events for promote Item operations.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ItemService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.ItemService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ItemService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ItemService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ItemService.UpdateItemLifecycleStateEvents">
       <summary>A collection of Web Service Command Events for change Item lifecycle state operations.</summary>
@@ -7130,6 +7561,9 @@ of the actual assigned Item</summary>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddItemRevision(System.Int64)">
+      <summary>Not intended for public use.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddItemRevisionWithScheme(System.Int64,System.Int64)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ItemServiceBase.AddUnitOfMeasure(System.String,System.String,System.Double,System.Int64)">
@@ -7496,8 +7930,20 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.JobService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.JobService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.JobService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.JobService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.JobService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.JobService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.JobService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.JobService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -7636,8 +8082,20 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.KnowledgeVaultService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -7971,8 +8429,20 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.LifeCycleService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -8173,8 +8643,17 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.NumberingService.ClientCertificate">
       <summary>Client certificate for making web service calls over an SSL connection.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.SecurityHeader">
-      <summary>The security header.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.NumberingService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.NumberingService.Timeout">
       <summary>The time to wait, in milliseconds, for an HTTP response.</summary>
@@ -8292,8 +8771,20 @@ of the actual assigned Item</summary>
     <member name="P:Autodesk.Connectivity.WebServices.PackageService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.PackageService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.PackageService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PackageService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PackageService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PackageService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PackageService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.PackageService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -8590,6 +9081,27 @@ name.</summary>
     <member name="P:Autodesk.Connectivity.WebServices.ProductRestric.ParamArray">
       <summary>Extra information specific to the restriction code.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttr.AttrId">
+      <summary>The id of the current attribute.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttr.UserGrpId">
+      <summary>User or group id that profile attribute is associated with.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttr.Value">
+      <summary>The value of the profile attribute.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttrDef.ActiveDirMap">
+      <summary>Active Directory field the attribute is mapped from (null if not mapped).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttrDef.Assoc">
+      <summary>The association type (can be none, user, group, or both depending on combination of flags).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttrDef.Id">
+      <summary>The profile attribute id.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ProfileAttrDef.Name">
+      <summary>Name of the profile attribute (must be unique).</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.PromoteItemCommandEventArgs.ReturnValue">
       <summary>The updated Items and related Files.</summary>
     </member>
@@ -8845,8 +9357,23 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.PropertyService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropertyService.WebServiceManager">
+      <summary>The WebServiceManager object that created the service. Will be null if the service was not created by a WebServiceManager.</summary>
     </member>
     <member name="E:Autodesk.Connectivity.WebServices.PropertyService.PostInvokeEvents">
       <summary>Subscribe to this event to get a notification after every web service call.</summary>
@@ -8986,6 +9513,45 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.PropRestric.PropDefId">
       <summary>The property defintion.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteReq.CanCreate">
+      <summary>The flag that allows to create a property if it doesn’t exist. (for read only property == false)</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteReq.Moniker">
+      <summary>The unique ID.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteReq.Val">
+      <summary>The value that needs to be set.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteRequests.Bom">
+      <summary>Bill of Materials data, 'null' is acceptable.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteRequests.Requests">
+      <summary>Set of properties update requests.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResult.Moniker">
+      <summary>The unique ID</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResult.Msg">
+      <summary>The failure message, not null if status is Failure.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResult.NewVal">
+      <summary>Updated property value.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResult.OrigVal">
+      <summary>Original property value.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResult.Status">
+      <summary>Status of property update operation.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResults.Bom">
+      <summary>Bill of Materials data.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResults.ProvStatus">
+      <summary>Status of properties update operation.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.PropWriteResults.Results">
+      <summary>Set of properties update operation results.</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.CheckRolePermissions(System.String[])">
       <summary>Check if the current logged in user has permission to execute specific web service APIs</summary>
       <returns>Array indicating whether or not the current logged in user has permission to execute each specified API</returns>
@@ -8994,21 +9560,9 @@ specified.</returns>
       <summary>Gets all the workgroups.</summary>
       <returns>An array of Workgroup objects.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.GetDatabaseOwnership(Autodesk.Connectivity.WebServices.DatabaseType)">
-      <summary>Get ownership infromation of a database. Database ownership covers anything that can't be owned on an entity basis.</summary>
-      <returns>Onwership information.</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.GetDefaultLeaseDuration">
-      <summary>Gets the default lease duration.</summary>
-      <returns>The default lease duration in minutes.</returns>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.GetLocalWorkgroup">
       <summary>Gets the workgroup that you are currently connected to.</summary>
       <returns>The workgroup object.</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.GetOwnershipByEntityId(System.Int64[])">
-      <summary>Gets the ownership for an entity.</summary>
-      <returns>The ownership information.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.GetReplicatingWorkgroupsByDatabaseType(Autodesk.Connectivity.WebServices.DatabaseType)">
       <summary>Gets the workgroups that are replicating the current database.</summary>
@@ -9022,24 +9576,26 @@ specified.</returns>
       <summary>Gets the Workgroups that have the signed in database.</summary>
       <returns>The Workgroups that have the signed in database.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.SetDefaultLeaseDuration(System.Int32)">
-      <summary>Sets the default lease duration.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.TransferDatabaseOwnership(Autodesk.Connectivity.WebServices.DatabaseType,System.Int64,System.Int32)">
-      <summary>Sets the database ownership for a database. Database ownership covers anything that can't be owned on an entity basis.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationService.TransferEntityGroupOwnership(System.Int64,Autodesk.Connectivity.WebServices.LongArray[],System.Int32)">
-      <summary>Transfers ownership on groups of entities.</summary>
-      <returns>The status of the transfer. It is possible for some groups to succeed while others fail. This array will not be the same size as the 'entityIDGroups' array.</returns>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.KnowledgeLibraryHeaderValue">
       <summary>Internal use only.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ReplicationService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -9056,16 +9612,7 @@ specified.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetAllWorkgroups">
       <summary>Not intended for public use.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetDatabaseOwnership(Autodesk.Connectivity.WebServices.DatabaseType)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetDefaultLeaseDuration">
-      <summary>Not intended for public use.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetLocalWorkgroup">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetOwnershipByEntityId(System.Int64[])">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetReplicatingWorkgroupsByDatabaseType(Autodesk.Connectivity.WebServices.DatabaseType)">
@@ -9075,15 +9622,6 @@ specified.</returns>
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.GetWorkgroupsByDatabaseType(Autodesk.Connectivity.WebServices.DatabaseType)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.SetDefaultLeaseDuration(System.Int32)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.TransferDatabaseOwnership(Autodesk.Connectivity.WebServices.DatabaseType,System.Int64,System.Int32)">
-      <summary>Not intended for public use.</summary>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.ReplicationServiceBase.TransferEntityGroupOwnership(System.Int64,Autodesk.Connectivity.WebServices.LongArray[],System.Int32)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ReplicationServiceBase.KnowledgeLibraryHeaderValue">
@@ -9187,8 +9725,20 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.RevisionService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.RevisionService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.RevisionService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -9370,12 +9920,6 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.SchedJob.VaultId">
       <summary>The ID of the Vault that the job applies to.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.SecurityHeader.Ticket">
-      <summary>The authentication ticket.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.SecurityHeader.UserId">
-      <summary>The ID of the logged-in user.</summary>
-    </member>
     <member name="M:Autodesk.Connectivity.WebServices.SecurityService.AddSystemACL(Autodesk.Connectivity.WebServices.ACE[])">
       <summary>Adds a new system ACL.</summary>
       <returns>The newly created system ACL. However it is not yet bound to any entities.</returns>
@@ -9406,8 +9950,20 @@ specified.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.SecurityService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.ClientCertificate">
+      <summary>Client certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.SecurityService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.SecurityService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -9470,6 +10026,21 @@ a content source property.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.ServerIdentities.FileServer">
       <summary>The file store server location, which is where all the file information resides.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Session.Authorization">
+      <summary>Authorization token for the current session.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Session.CreateDate">
+      <summary>The date of session creation.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Session.Id">
+      <summary>The current session Id</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Session.User">
+      <summary>The logged in User.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.Session.Vault">
+      <summary>The Vault to which the current session is connected.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.SiteCompat.FacilityArray">
       <summary>If the site is less than the system, this property is an array of facilities missing from the site. If the system is less than the site, this property is an
@@ -9639,23 +10210,23 @@ and printed in the format "MM/dd/yyyy HH:mm:ss".</summary>
     <member name="P:Autodesk.Connectivity.WebServices.User.Email">
       <summary>The email address of the user.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.User.FirstName">
-      <summary>The first name of the user.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServices.User.Id">
       <summary>A unique number that the Vault uses to reference the user.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.User.IsActive">
-      <summary>If false, the user account is inactive, and the user cannot log in.</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.User.IsAct">
+      <summary>Is the user active</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.User.IsSys">
       <summary>If true, the user is a system user.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.User.LastName">
-      <summary>The last name of the user.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServices.User.Name">
       <summary>The login name of the user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.UserInfo.Accounts">
+      <summary>Accounts associated with this user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.UserInfo.Attributes">
+      <summary>Profile attributes of this user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.UserInfo.Groups">
       <summary>An array of Group objects the user is a direct member of</summary>
@@ -9705,28 +10276,41 @@ and printed in the format "MM/dd/yyyy HH:mm:ss".</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignIn(System.String,System.String)">
       <summary>Authenticates to a specific Knowledge Vault via Windows credentials.</summary>
-      <returns>Although there is no return value, a successful sign in will populate the SecurityHeaderValue of the security service. The SecurityHeaderValue information is
-then used for other web service calls.</returns>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignIn2(System.String)">
       <summary>Authenticates via Windows credentials to ADMS but not to a specific Knowledge Vault.</summary>
-      <returns>Although there is no return value, a successful sign in will populate the SecurityHeaderValue of the security service. The SecurityHeaderValue information is
-then used for other web service calls.</returns>
-    </member>
-    <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignInAltLicense(System.String,System.String,System.Byte[])">
-      <summary>Reserved for future use</summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignInGetLicense(System.String,System.String)">
       <summary>Authenticates to the server by getting license server-side.</summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignInReadOnly(System.String,System.String)">
       <summary>Authenticates to a specific Vault with read only permissions via Windows authentication.</summary>
+      <returns>Returns Session object.</returns>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.WinAuthService.SignInWithLicense(System.String,System.String,System.String)">
+      <summary>Authenticates to a specific Knowledge Vault via AutodeskID token that will be used for licensing only.</summary>
+      <returns>Returns Session object.</returns>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.AllowInvokeEvents">
       <summary>Tells if invoke events should fire. This value is true by default.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.SecurityHeader">
-      <summary>The security header. (from IWebService)</summary>
+    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.ClientCertificate">
+      <summary>Client Certificate for making web service calls over an SSL connection.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.CurrentlySetSession">
+      <summary>This is information about the current session of the signed-in user.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.QueryString">
+      <summary>The query string.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.RedirectedTo">
+      <summary>Contains the ADMS that handled the replication redirect (if applicable).</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.Session">
+      <summary>This is information about the session of the signed-in user.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.WinAuthService.WebServiceManager">
       <summary>A reference to the WebServiceManager that created this object. Value may be null.</summary>
@@ -9743,10 +10327,13 @@ then used for other web service calls.</returns>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthServiceBase.SignIn2(System.String)">
       <summary>Not intended for public use.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServices.WinAuthServiceBase.SignInAltLicense(System.String,System.String,System.Byte[])">
+    <member name="M:Autodesk.Connectivity.WebServices.WinAuthServiceBase.SignInGetLicense(System.String,System.String)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServices.WinAuthServiceBase.SignInReadOnly(System.String,System.String)">
+      <summary>Not intended for public use.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServices.WinAuthServiceBase.SignInWithLicense(System.String,System.String,System.String)">
       <summary>Not intended for public use.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServices.Wkgrp.DbServer">
@@ -9842,6 +10429,9 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.WorkflowInfo.WorkflowStateArray">
       <summary>An array of all the states in the Workflow.</summary>
     </member>
+    <member name="P:Autodesk.Connectivity.WebServices.WorkflowState.Color">
+      <summary>WorkflowState color.</summary>
+    </member>
     <member name="P:Autodesk.Connectivity.WebServices.WorkflowState.DispName">
       <summary>The display name.</summary>
     </member>
@@ -9854,26 +10444,14 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServices.WorkflowState.SuccessorActivityIdArray">
       <summary>An array of activities avilable for this state.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServices.XferStatus.EntId">
-      <summary>The entity ID.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.XferStatus.ErrorCode">
-      <summary>The error code. This parameter is only used if 'isSuccess' is false.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.XferStatus.ErrorParam">
-      <summary>Additional information on the error. This parameter is only used if 'isSuccess' is false.</summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.XferStatus.IsComplete">
-      <summary>
-        <para>If true, it indicates that the transfer was successful and already completed.</para>
-        <para>If false, it indicates that either the transfer failed or needs to wait for a sync to complete.</para>
-      </summary>
-    </member>
-    <member name="P:Autodesk.Connectivity.WebServices.XferStatus.IsSuccess">
-      <summary>If true the entity has successfully transfered ownership. If false, the transfer has failed.</summary>
-    </member>
     <member name="T:Autodesk.Connectivity.WebServicesTools.AnonymousCredentials">
       <summary>Credentials for making anonymous server calls.</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServicesTools.AutodeskAccount">
+      <summary>Desktop support for signing into Autodesk Account</summary>
+    </member>
+    <member name="T:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials">
+      <summary>Credentials for making server calls with Windows user account information.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServicesTools.ContainerCredentials">
       <summary>A set of credentials that contains another set of credentials. This is useful for cases where a new sign in is not required, but a re-sign-in may be needed.</summary>
@@ -9881,7 +10459,7 @@ then used for other web service calls.</returns>
     <member name="T:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials">
       <summary>Properties and methods for establishing and maintaining authentication data.</summary>
     </member>
-    <member name="T:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials">
+    <member name="T:Autodesk.Connectivity.WebServicesTools.SessionCredentials">
       <summary>Credentials for making server calls with userId and ticket information from a previous sign in.</summary>
     </member>
     <member name="T:Autodesk.Connectivity.WebServicesTools.UserPasswordCredentials">
@@ -9918,9 +10496,47 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServicesTools.AnonymousCredentials.SupportsSignOut">
       <summary>Gets the value telling if the credentials can sign out.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.#ctor(Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials,Autodesk.Connectivity.WebServices.SecurityHeader)">
+    <member name="M:Autodesk.Connectivity.WebServicesTools.AutodeskAccount.Login(System.IntPtr)">
+      <summary>Log into Autodesk Account returning IAutodeskAccount for use in Autodesk Authentication</summary>
+      <param>Parent window handle for UI</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.AutodeskAccount.LogOut(System.IntPtr)">
+      <summary>Log out of Autodesk Account returning IAutodeskAccount for use in Autodesk Authentication</summary>
+      <param>Parent window handle for UI</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.Boolean,Autodesk.Connectivity.WebServices.IAutodeskAccount)">
+      <summary>The Constructor.</summary>
+      <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The read only setting. Default is false.The Autodesk account to use for authentication</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,Autodesk.Connectivity.WebServices.IAutodeskAccount,Autodesk.Connectivity.WebServices.LicensingAgent)">
+      <summary>The Constructor.</summary>
+      <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The Autodesk Account to use for authenticationWhether license is obtained server-side or client-side.</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,Autodesk.Connectivity.WebServices.IAutodeskAccount,System.String)">
+      <summary>The Constructor.</summary>
+      <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The Autodesk Account to use for authenticationThe token received after autodesk ID login</param>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.AutodeskAccount">
+      <summary>The Autodesk account to use for authentication</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.RequiresClientLicense">
+      <summary>Gets the value telling if a client-side license is required.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.RequiresSignIn">
+      <summary>Gets the value telling if a sign in is required before a service can be used.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.RequiresSignOut">
+      <summary>Gets the value telling if a sign out should be called when the service goes out of scope.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.SupportsSignIn">
+      <summary>Gets the value telling if the credentials can sign in.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.AutodeskAuthCredentials.SupportsSignOut">
+      <summary>Gets the value telling if the credentials can sign out.</summary>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.#ctor(Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials,Autodesk.Connectivity.WebServices.Session)">
       <summary>The constructor.</summary>
-      <param>The existing credentials.The Security header</param>
+      <param>The existing credentials.The session</param>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.RequiresClientLicense">
       <summary>Gets the value telling if a client-side license is required.</summary>
@@ -9931,11 +10547,11 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.RequiresSignOut">
       <summary>Gets the value telling if a sign out should be called when the service goes out of scope.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.SecurityHeader">
-      <summary>Gets the security header.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.ServerIdentities">
       <summary>Gets the server identity.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.Session">
+      <summary>Gets the security header.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.SupportsSignIn">
       <summary>Gets the value telling if the credentials can sign in.</summary>
@@ -9946,14 +10562,14 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServicesTools.ContainerCredentials.VaultName">
       <summary>Gets the vault name.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SignIn(Autodesk.Connectivity.WebServices.AuthService,Autodesk.Connectivity.WebServices.WinAuthService)">
+    <member name="M:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SignIn(Autodesk.Connectivity.WebServices.AuthService,Autodesk.Connectivity.WebServices.WinAuthService,Autodesk.Connectivity.WebServices.AutodeskAuthService)">
       <summary>Signs in to the Vault server.</summary>
-      <param>An AuthService object.A Win Auth Service object.</param>
+      <param>An AuthService object.A Win Auth Service object.An Autodesk Auth Service object.</param>
       <returns>The security header from the sign in.</returns>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SignOut(Autodesk.Connectivity.WebServices.AuthService,Autodesk.Connectivity.WebServices.WinAuthService)">
+    <member name="M:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SignOut(Autodesk.Connectivity.WebServices.AuthService,Autodesk.Connectivity.WebServices.WinAuthService,Autodesk.Connectivity.WebServices.AutodeskAuthService)">
       <summary>Signs out from the Vault server.</summary>
-      <param>A AuthService object.A Win Auth Service object.</param>
+      <param>A AuthService object.A Win Auth Service object.An Autodesk Auth Service object.</param>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.RequiresClientLicense">
       <summary>Gets the value telling if a client-side license is required.</summary>
@@ -9964,11 +10580,11 @@ then used for other web service calls.</returns>
     <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.RequiresSignOut">
       <summary>Gets the value telling if a sign out should be called when the service goes out of scope.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SecurityHeader">
-      <summary>Gets the security header.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.ServerIdentities">
       <summary>The server identity.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.Session">
+      <summary>Gets the session.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.IWebServiceCredentials.SupportsSignIn">
       <summary>Gets the value telling if the SignIn method is implemented.</summary>
@@ -9983,23 +10599,23 @@ then used for other web service calls.</returns>
       <summary>If the credentials are for Windows Authentication and require non default Windows Authentication credentials (i.e. credentials that are different than the
 current user), then this will return those credentials. Otherwise, this returns null.</summary>
     </member>
-    <member name="M:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.Int64,System.String)">
+    <member name="M:Autodesk.Connectivity.WebServicesTools.SessionCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.String)">
       <summary>The constructor.</summary>
-      <param>The set of Vault servers.The name of the Vault.The User IDThe security ticket.</param>
+      <param>The set of Vault servers.The name of the Vault.The session ID.</param>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.RequiresClientLicense">
+    <member name="P:Autodesk.Connectivity.WebServicesTools.SessionCredentials.RequiresClientLicense">
       <summary>Gets the value telling if a client-side license is required.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.RequiresSignIn">
+    <member name="P:Autodesk.Connectivity.WebServicesTools.SessionCredentials.RequiresSignIn">
       <summary>Gets the value telling if a sign in is required before a service can be used.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.RequiresSignOut">
+    <member name="P:Autodesk.Connectivity.WebServicesTools.SessionCredentials.RequiresSignOut">
       <summary>Gets the value telling if a sign out should be called when the service goes out of scope.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.SupportsSignIn">
+    <member name="P:Autodesk.Connectivity.WebServicesTools.SessionCredentials.SupportsSignIn">
       <summary>Gets the value telling if the credentials can sign in.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.UserIdTicketCredentials.SupportsSignOut">
+    <member name="P:Autodesk.Connectivity.WebServicesTools.SessionCredentials.SupportsSignOut">
       <summary>Gets the value telling if the credentials can sign out.</summary>
     </member>
     <member name="M:Autodesk.Connectivity.WebServicesTools.UserPasswordCredentials.#ctor">
@@ -10008,6 +10624,10 @@ current user), then this will return those credentials. Otherwise, this returns 
     <member name="M:Autodesk.Connectivity.WebServicesTools.UserPasswordCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.String,System.String,Autodesk.Connectivity.WebServices.LicensingAgent)">
       <summary>The Constructor.</summary>
       <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The user name.The password.Whether license is obtained server-side, client-side, or unlicensed (readonly).</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.UserPasswordCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.String,System.String,System.String)">
+      <summary>The Constructor.</summary>
+      <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The user name.The password.The token received after autodesk ID login</param>
     </member>
     <member name="M:Autodesk.Connectivity.WebServicesTools.UserPasswordCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.String,System.String,System.Boolean)">
       <summary>The Constructor.</summary>
@@ -10053,11 +10673,11 @@ current user), then this will return those credentials. Otherwise, this returns 
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceCredentials.SupportsSignOut">
       <summary>Gets the value telling if the credentials can sign out.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceCredentialsBase.SecurityHeader">
-      <summary>Gets the security header.</summary>
-    </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceCredentialsBase.ServerIdentities">
       <summary>Gets the server identity.</summary>
+    </member>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceCredentialsBase.Session">
+      <summary>Gets the security header.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceCredentialsBase.VaultName">
       <summary>Gets the vault name.</summary>
@@ -10095,6 +10715,10 @@ current user), then this will return those credentials. Otherwise, this returns 
     <member name="M:Autodesk.Connectivity.WebServicesTools.WebServiceManager.GetServerIdentities(System.String)">
       <summary>Calls the identification service to determine server identities</summary>
     </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.WebServiceManager.IgnoreReplicationLag">
+      <summary>For duration of the returned 'using' block, ignore any replication lag from previous write operations. Use with caution to optimize batch operations on a
+replication subscriber.</summary>
+    </member>
     <member name="M:Autodesk.Connectivity.WebServicesTools.WebServiceManager.Initialize">
       <summary>Initializes the WebServiceManager. This should be called on application startup.</summary>
     </member>
@@ -10110,8 +10734,8 @@ current user), then this will return those credentials. Otherwise, this returns 
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AuthService">
       <summary>Gets the auth service object, or creates one if needed.</summary>
     </member>
-    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AutoTransferOwnership">
-      <summary>Gets or sets the automatic ownership behavior on all the services in the WebServiceManager.</summary>
+    <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.AutodeskAuthService">
+      <summary>Gets the AutodeskAuth service object, or creates one if needed.</summary>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WebServiceManager.BehaviorService">
       <summary>Gets the Behavior service object, or creates one if needed.</summary>
@@ -10196,6 +10820,10 @@ current user), then this will return those credentials. Otherwise, this returns 
     <member name="M:Autodesk.Connectivity.WebServicesTools.WinAuthCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.Net.NetworkCredential,Autodesk.Connectivity.WebServices.LicensingAgent)">
       <summary>The Constructor.</summary>
       <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The Windows credentials to use.Whether license is obtained server-side or client-side.</param>
+    </member>
+    <member name="M:Autodesk.Connectivity.WebServicesTools.WinAuthCredentials.#ctor(Autodesk.Connectivity.WebServices.ServerIdentities,System.String,System.String,System.Net.NetworkCredential)">
+      <summary>The Constructor.</summary>
+      <param>The set of Vault servers.The vault name. Enter null for cases that need global access.The token received after autodesk ID loginThe Windows credentials to use.</param>
     </member>
     <member name="P:Autodesk.Connectivity.WebServicesTools.WinAuthCredentials.RequiresClientLicense">
       <summary>Gets the value telling if a client-side license is required.</summary>
