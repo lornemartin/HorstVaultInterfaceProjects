@@ -32,7 +32,7 @@ using System.Data.Sql;
 using System.Data.SqlClient;
 using JobProcessorPrintPDF;
 
-[assembly: ApiVersion("14.0")]
+[assembly: ApiVersion("15.0")]
 [assembly: ExtensionId("d270be0e-58ff-4ad7-8dab-6be289c5d21a")]
 
 namespace JobProcessorFileUpdate
