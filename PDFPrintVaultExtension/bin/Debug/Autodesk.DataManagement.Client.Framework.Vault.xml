@@ -169,6 +169,9 @@ implement custom property definitions, create dependencies between existing prop
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignMissingDestinationLocation">
       <summary>Looks up a localized string similar to Missing destination location.</summary>
     </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.CopyDesignModelStateNotUpdate">
+      <summary>Looks up a localized string similar to Cannot copy file properties for model state enabled files. You can modify the properties after copying the files..</summary>
+    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.copyDesignProgressBarAnalyzingData">
       <summary>Looks up a localized string similar to Analyzing Data.</summary>
     </member>
@@ -390,6 +393,9 @@ references. Please run the Update File Reference command on parent file..</summa
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.IncompatibleServerWithVersion">
       <summary>Looks up a localized string similar to {0} {1} is not compatible with the following applications on {2}:.</summary>
     </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.InvalidAutodeskAccountError">
+      <summary>Looks up a localized string similar to Autodesk credentials must be provided for sign-in..</summary>
+    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.InvalidDirectoryPathException">
       <summary>Looks up a localized string similar to Invalid directory path.</summary>
     </member>
@@ -548,14 +554,6 @@ references. Please run the Update File Reference command on parent file..</summa
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.ServerNotFoundErrorText">
       <summary>Looks up a localized string similar to Server could not be found..</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.SignInExceptionUsePSAuth">
-      <summary>Looks up a localized string similar to The user name appears to be a Vault user and not a Vault Domain user; please turn off the Windows Authentication option
-and try again..</summary>
-    </member>
-    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.SignInExceptionUseWinAuth">
-      <summary>Looks up a localized string similar to The user name appears to be a Vault Domain user and not a Vault user; please turn on the Windows Authentication option
-and try again..</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Resource.SignInInvalidDatabaseName">
       <summary>Looks up a localized string similar to The database name appears to be invalid; please try again..</summary>
@@ -907,8 +905,14 @@ and try again..</summary>
       <summary>A connection to a server but not a specific vault.</summary>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags.ServerLicense">
-      <summary>An optional bit that can be combined with one of the other authentication types to specify whether license should be obtained server-side. Most commonly used
-for web applications.</summary>
+      <summary>An optional bit that can be combined with one of the other authentication types to specify whether license should be obtained server-side(network license).
+Most commonly used for web applications.</summary>
+    </member>
+    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags.AutodeskAuthentication">
+      <summary>A connection using Autodesk Authentication</summary>
+    </member>
+    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags.UserTokenLicense">
+      <summary>Specify whether user license should be obtained use Autodesk ID token at server-side. Most commonly used for web applications.</summary>
     </member>
     <member name="T:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.CachedObjects">
       <summary>The types of Caches in a Vault Connection</summary>
@@ -993,6 +997,9 @@ for web applications.</summary>
       <param>The object to test for equality.</param>
       <returns>True if <paramref name="obj" /> is equal to this object.</returns>
     </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection.AppCode">
+      <summary>The app name to use for server-side audit logging. By default this is the name of the process.</summary>
+    </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection.CategoryManager">
       <summary>Gets an object which encapsulates all access to Vault Categories</summary>
     </member>
@@ -1019,6 +1026,9 @@ for web applications.</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection.IsAnonymousConnection">
       <summary>Gets a value which identifies whether or not we have an anonymous connection to the server.</summary>
+    </member>
+    <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection.IsAutodeskAuthenticatedConnection">
+      <summary>Gets a value which identifies whether or not the connection to the server used windows authentication.</summary>
     </member>
     <member name="P:Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.Connection.IsConnected">
       <summary>Gets a values which tells if this connection object has an active connection. If a logout occurs, then the connection will essentially be invalid.</summary>
@@ -3169,6 +3179,9 @@ PropertyDefinition</param>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.FileComplianceVer">
       <summary>The "Compliance(Ver)" property</summary>
     </member>
+    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.FileExtension">
+      <summary>The "File Extension" property</summary>
+    </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.FileName">
       <summary>The "ClientFileName" property</summary>
     </member>
@@ -3186,6 +3199,9 @@ PropertyDefinition</param>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.HasDrawing">
       <summary>The "HasDrawing" property</summary>
+    </member>
+    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.HasModelState">
+      <summary>A property that indicates whether or not a file has any model state</summary>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.HasParentRelationship">
       <summary>The "HasParentRelationship" property</summary>
@@ -3261,12 +3277,6 @@ PropertyDefinition</param>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.ReleasedRevision">
       <summary>The "ReleasedRevision" property</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.ReplicationCurrentOwner">
-      <summary>The "ReplicationCurrentOwner" property</summary>
-    </member>
-    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.ReplicationLeasedUntil">
-      <summary>The "ReplicationLeasedUntil" property</summary>
     </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Currency.Properties.PropertyDefinitionIds.Server.Revision">
       <summary>The "Revision" property</summary>
@@ -3710,6 +3720,9 @@ for a specific type of file</summary>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Results.LogInResult.LogInErrors.InvalidUserName">
       <summary>The error is related to the UserName and/or Password</summary>
     </member>
+    <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Results.LogInResult.LogInErrors.InvalidAutodeskAccount">
+      <summary>The error is related to the Autodesk Account</summary>
+    </member>
     <member name="F:Autodesk.DataManagement.Client.Framework.Vault.Results.LogInResult.LogInErrors.InvalidServer">
       <summary>The error is related to the Server name</summary>
     </member>
@@ -3948,6 +3961,30 @@ Restricted.</summary>
     <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Services.IVaultConnectionManagerService.LogIn(System.String,System.String,System.String,System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags,System.Func{System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.LoginStates,System.Boolean})">
       <summary>Create a new connection to a vault. Username/PW are ignored for WinAuth and Anonymous connections</summary>
       <param>The name of the serverThe name of the vaultThe user name to authenticate with. This is ignored for Win Auth or Anonymous connections.The password to authenticate with. This is ignored for Win Auth or Anonymous connections.Additional options that control the type of connections that is being requested (ie. Read Only)An optional callback method that can be used to monitor the progress of the Log In operation. The method has a syntax of bool callBack(string message,
+Framework.Vault.Services.LoginStates state_enum). The implementation of the method should return false of the LogIn workflow should be cancelled. The message
+variable is a string representation of the current state of the log in. This can be used to update a status bar. The state_enum communicates what the log in
+workflow is currently executing. This can be used to write conditional logic based on what is currently being executed.</param>
+      <returns>An object which contains the new vault Connection, or any error conditions.</returns>
+    </member>
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Services.IVaultConnectionManagerService.LogIn(System.String,System.String,Autodesk.Connectivity.WebServices.IAutodeskAccount,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags,System.Func{System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.LoginStates,System.Boolean})">
+      <summary>Create a new connection to a vault using an Autodesk Account.</summary>
+      <param>The name of the serverThe name of the vaultThe Autodesk account to authenticate with. This is only used for Autodesk Auth connections.Additional options that control the type of connections that is being requested (ie. Read Only)An optional callback method that can be used to monitor the progress of the Log In operation. The method has a syntax of bool callBack(string message,
+Framework.Vault.Services.LoginStates state_enum). The implementation of the method should return false of the LogIn workflow should be cancelled. The message
+variable is a string representation of the current state of the log in. This can be used to update a status bar. The state_enum communicates what the log in
+workflow is currently executing. This can be used to write conditional logic based on what is currently being executed.</param>
+      <returns>An object which contains the new vault Connection, or any error conditions.</returns>
+    </member>
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Services.IVaultConnectionManagerService.LogInWithUserLicense(System.String,System.String,System.String,System.String,System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags,System.Func{System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.LoginStates,System.Boolean})">
+      <summary>Create a new connection to a vault. Username/PW are ignored for WinAuth and Anonymous connections</summary>
+      <param>The name of the serverThe name of the vaultThe user name to authenticate with. This is ignored for Win Auth or Anonymous connections.The password to authenticate with. This is ignored for Win Auth or Anonymous connections.The token received after Autodesk Id login.Additional options that control the type of connections that is being requested (ie. Read Only)An optional callback method that can be used to monitor the progress of the Log In operation. The method has a syntax of bool callBack(string message,
+Framework.Vault.Services.LoginStates state_enum). The implementation of the method should return false of the LogIn workflow should be cancelled. The message
+variable is a string representation of the current state of the log in. This can be used to update a status bar. The state_enum communicates what the log in
+workflow is currently executing. This can be used to write conditional logic based on what is currently being executed.</param>
+      <returns>An object which contains the new vault Connection, or any error conditions.</returns>
+    </member>
+    <member name="M:Autodesk.DataManagement.Client.Framework.Vault.Services.IVaultConnectionManagerService.LogInWithUserLicense(System.String,System.String,Autodesk.Connectivity.WebServices.IAutodeskAccount,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.AuthenticationFlags,System.Func{System.String,Autodesk.DataManagement.Client.Framework.Vault.Currency.Connections.LoginStates,System.Boolean})">
+      <summary>Create a new connection to a vault using an Autodesk Account.</summary>
+      <param>The name of the serverThe name of the vaultThe Autodesk account to authenticate with. This is only used for Autodesk Auth connections.Additional options that control the type of connections that is being requested (ie. Read Only)An optional callback method that can be used to monitor the progress of the Log In operation. The method has a syntax of bool callBack(string message,
 Framework.Vault.Services.LoginStates state_enum). The implementation of the method should return false of the LogIn workflow should be cancelled. The message
 variable is a string representation of the current state of the log in. This can be used to update a status bar. The state_enum communicates what the log in
 workflow is currently executing. This can be used to write conditional logic based on what is currently being executed.</param>

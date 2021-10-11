@@ -51,9 +51,10 @@ C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface P
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.Connectivity.WebServices.xml
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.DataManagement.Client.Framework.xml
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.DataManagement.Client.Framework.Vault.xml
-C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.csprojAssemblyReference.cache
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.csproj.CoreCompileInputs.cache
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.csproj.CopyComplete
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.dll
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.pdb
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.Connectivity.LicenseWrapper.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\bin\Debug\Autodesk.Connectivity.AdSSOWrapper.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\PDFPrintVaultExtension\obj\Debug\PrintPDFVaultExtension.csproj.AssemblyReference.cache
