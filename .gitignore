@@ -338,7 +338,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-
-/ReviewSymFiles/bin/Debug
-*.exe
-*.pdb
