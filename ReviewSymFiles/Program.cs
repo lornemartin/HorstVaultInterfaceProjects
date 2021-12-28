@@ -518,7 +518,7 @@ namespace ConsoleApplication1
             // set up some variable for sending the notification emails.
             var fromAddress = new MailAddress("lrn.martin@gmail.com", "Automatic Updater");
             var toAddress = new MailAddress("lorne@horstwelding.com", "To Name");
-            const string fromPassword = "hDr47IFHVRbw";
+            const string fromPassword = "waualkqcglauckdd";
             string subject = "PDF File Updates";
             string body = null;
 
@@ -580,7 +580,7 @@ namespace ConsoleApplication1
            var fromAddress = new MailAddress("lrn.martin@gmail.com", "Automatic Updater");
            var toAddress = new MailAddress("lorne@horstwelding.com", "To Name");
            MailAddress bcc = new MailAddress("henryt@horstwelding.com");
-           const string fromPassword = "hDr47IFHVRbw";
+           const string fromPassword = "waualkqcglauckdd";
            string subject = "Sym File Updates";
            string body = null;
 

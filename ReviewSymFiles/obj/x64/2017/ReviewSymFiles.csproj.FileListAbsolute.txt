@@ -87,3 +87,4 @@ C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface P
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.exe
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.pdb
 C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\bin\Debug\Autodesk.Connectivity.AdSSOWrapper.dll
+C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\ReviewSymFiles\obj\x64\2017\ReviewSymFiles.csproj.AssemblyReference.cache

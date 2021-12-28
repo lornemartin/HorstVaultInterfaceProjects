@@ -26,7 +26,7 @@
     <StartArguments>"\\Cutter-hp\radan\Vault SYM files"                       "debug.txt" "sync.txt"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '2017|x64'">
-    <StartArguments>"M:\Radan Sym Files\Vault Sym Files\\" "changes.txt" "craig" "craig" "HWVSVT01" "Vault" "Y" "M:\\PDF Drawing Files\\"</StartArguments>
+    <StartArguments>"M:\Radan Sym Files\Vault Sym Files\\" "changes.txt" "craig" "craig" "HWVSVT01" "Vault" "N" "M:\\PDF Drawing Files\\"</StartArguments>
   </PropertyGroup>
   <PropertyGroup>
     <ReferencePath>C:\Users\lorne\source\repos\Vault Interface Projects\Vault 2021 SDK Binaries\</ReferencePath>
