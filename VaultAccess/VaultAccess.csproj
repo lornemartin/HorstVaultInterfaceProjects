@@ -120,39 +120,33 @@
     </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=27.1.90.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices.WCF">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Forms">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Vault 2022 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms">
+      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Inventor.Interop, Version=22.0.0.0, Culture=neutral, PublicKeyToken=d84147f8b4276564, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\Vault 2019 SDK Binaries\InventorInterop\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
+    <Reference Include="DevExpress.Utils.v21.1, Version=21.1.5.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\..\Radan\RadanMaster\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
@@ -272,8 +266,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\Vault 2022 SDK Binaries\AdskLicensingSDK_5.dll" "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultAccess\bin\Debug\AdskLicensingSDK_5.dll"
-copy "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\Vault 2022 SDK Binaries\AdskLicensingSDK_5.dll" "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultAccess\bin\Release\AdskLicensingSDK_5.dll"
+    <PostBuildEvent>copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\Debug\AdskLicensingSDK_6.dll"
+copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\Release\AdskLicensingSDK_6.dll"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

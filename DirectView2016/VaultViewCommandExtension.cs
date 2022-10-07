@@ -35,7 +35,7 @@ using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("689e45ae-b49b-4fcb-954f-181bc48cdf25")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("15.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("16.0")]
 
 
 namespace VaultView
@@ -361,8 +361,8 @@ namespace VaultView
 
                 if (!System.IO.File.Exists(IvFullPath))
                 {
-                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2022\Bin\InventorView.exe";
-                    string Path2 = @"C:\Program Files\Autodesk\Inventor2022\Bin\InventorView.exe";
+                    string Path1 = @"C:\Program Files\Autodesk\Inventor View 2023\Bin\InventorView.exe";
+                    string Path2 = @"C:\Program Files\Autodesk\Inventor2023\Bin\InventorView.exe";
                     if (System.IO.File.Exists(Path1))
                     {
                         IvFullPath = Path1;

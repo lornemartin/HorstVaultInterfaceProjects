@@ -4,12 +4,12 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "DirectView 2022"
+!define APP_NAME "DirectView 2023"
 !define COMP_NAME "Lorne Martin"
-!define VERSION "01.40.00.00"
-!define COPYRIGHT "Author  © 2022"
+!define VERSION "01.50.00.00"
+!define COPYRIGHT "Author  © 2023"
 !define DESCRIPTION "Vault Viewer"
-!define INSTALLER_NAME "M:\Custom Code 2022 Deployment Files\DirectView\DirectView Setup.exe"
+!define INSTALLER_NAME "M:\Installers\Custom Code 2023 Deployment Files\DirectView\DirectView Setup.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
 !define UNINSTALL_PATH "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
@@ -32,7 +32,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${UNINSTALL_PATH}" "UninstallString"
-InstallDir "$APPDATA\Autodesk\Vault 2022\Extensions\DirectView"
+InstallDir "$APPDATA\Autodesk\Vault 2023\Extensions\DirectView"
 
 ######################################################################
 
@@ -84,7 +84,7 @@ Function .onInit
 
 		config_file_not_found:
 			DetailPrint "Writing config file"
-			File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\AppSettings.xml"
+			File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultItemProcessor\VaultItemProcessor\AppSettings.xml"
 		end_of_test:
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
@@ -103,7 +103,7 @@ Function .onInit
 		; point to ProgramData folder
 		; instead of current user's Roaming folder
 		SetShellVarContext all
-		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2022\Extensions\DirectView"
+		StrCpy $INSTDIR "$APPDATA\Autodesk\Vault 2023\Extensions\DirectView"
 		
 		# Make the directory "$INSTDIR" read write accessible by all users
 		CreateDirectory $INSTDIR
@@ -127,8 +127,8 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
-File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\DirectView2016\bin\Debug\*.*"
-File "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\AutoHotKey\ShowPDF\ShowPDF.exe"
+File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\DirectView2016\bin\Release\*.*"
+File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\AutoHotKey\ShowPDF\ShowPDF.exe"
 
 SectionEnd
 
