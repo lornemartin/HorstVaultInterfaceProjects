@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ItemExport", "ItemExport.csproj", "{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}"
 EndProject
@@ -20,8 +20,8 @@ Global
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.64 bit|x64.ActiveCfg = 64 bit|x64
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.64 bit|x64.Build.0 = 64 bit|x64
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.64 bit|x64.Deploy.0 = 64 bit|x64
-		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|x64.ActiveCfg = Debug|x64
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Debug|x64.Build.0 = Debug|x64
 		{9F1A34EA-95C2-4474-8DB7-9D22F82A132D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -31,5 +31,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {83689AEF-64F8-41D6-ABE8-FCD17502E2A8}
 	EndGlobalSection
 EndGlobal
