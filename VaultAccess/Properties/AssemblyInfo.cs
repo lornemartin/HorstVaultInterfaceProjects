@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("VaultAccess")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Autodesk")]
-[assembly: AssemblyProduct("VDFGridSample")]
-[assembly: AssemblyCopyright("Copyright Â© Autodesk 2015")]
+[assembly: AssemblyCompany("Horst Welding")]
+[assembly: AssemblyProduct("")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("21.0.59.0")]
-[assembly: AssemblyFileVersion("21.0.59.0")]
+[assembly: AssemblyVersion("2023.0.0.0")]
+[assembly: AssemblyFileVersion("2023.0.0.0")]

@@ -27,7 +27,6 @@ using System.Collections;
 
 
 // These 5 assembly attributes must be specified or your extension will not load. 
-[assembly: AssemblyCompany("Horst Welding")]
 [assembly: AssemblyProduct("VaultItemExportCommandExtension")]
 [assembly: AssemblyDescription("Vault Item Export")]
 

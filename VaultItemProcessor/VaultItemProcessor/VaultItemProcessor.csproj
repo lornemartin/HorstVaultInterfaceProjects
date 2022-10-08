@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VaultItemProcessor</RootNamespace>
-    <AssemblyName>Vault Item Processor 2022.0</AssemblyName>
+    <AssemblyName>Vault Item Processor 2023.0</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
@@ -77,17 +77,14 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.WebServices, Version=26.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Vault 2022 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices">
+      <HintPath>..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=26.0.63.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Vault 2022 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices.WCF">
+      <HintPath>..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=26.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Vault 2022 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
+      <HintPath>..\..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.Data.v20.1, Version=20.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
     <Reference Include="DevExpress.Pdf.v20.1.Core, Version=20.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
@@ -255,6 +252,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\ItemExport\ItemExport.csproj">
+      <Project>{9f1a34ea-95c2-4474-8db7-9d22f82a132d}</Project>
+      <Name>ItemExport</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\VaultAccess\VaultAccess.csproj">
       <Project>{15635c05-be90-4f08-8b87-21f85b406a00}</Project>
       <Name>VaultAccess</Name>
@@ -262,7 +263,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\Vault 2022 SDK Binaries\AdskLicensingSDK_5.dll" "C:\Users\lorne\OneDrive - Horst Welding\Documents\source\repos\Vault Interface Projects\VaultItemProcessor\VaultItemProcessor\bin\Debug"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultItemProcessor\VaultItemProcessor\bin\Debug"
+xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultItemProcessor\VaultItemProcessor\bin\Release"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

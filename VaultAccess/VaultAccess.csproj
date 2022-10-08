@@ -266,8 +266,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\Debug\AdskLicensingSDK_6.dll"
-copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\Release\AdskLicensingSDK_6.dll"
+    <PostBuildEvent>copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Debug\AdskLicensingSDK_6.dll"
+copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Release\AdskLicensingSDK_6.dll"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
