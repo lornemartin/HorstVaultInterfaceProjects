@@ -127,7 +127,7 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
-File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\DirectView2016\bin\Release\*.*"
+File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\DirectView2016\bin\x64\Release\*.*"
 File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\AutoHotKey\ShowPDF\ShowPDF.exe"
 
 SectionEnd
