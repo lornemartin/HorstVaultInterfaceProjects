@@ -1003,7 +1003,7 @@ namespace VaultAccess
                         Inventor.PropertySet userDefinedPropertiesSet;
                         userDefinedPropertiesSet = apprenticeDoc.PropertySets["User Defined Properties"];
                         Inventor.Property thickProp = userDefinedPropertiesSet["Thickness"];
-                        thickness = thickProp.Value;
+                        thickness = (string)thickProp.Value;
                     }
                     catch (Exception)
                     {
@@ -1014,7 +1014,7 @@ namespace VaultAccess
                     {
                         Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                         Inventor.Property materialProp = designTrackingProperties["Material"];
-                        material = materialProp.Value;
+                        material = (string) materialProp.Value;
                     }
                     catch (Exception)
                     {
@@ -1025,7 +1025,7 @@ namespace VaultAccess
                     {
                         Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                         Inventor.Property materialProp = designTrackingProperties["Description"];
-                        desc = materialProp.Value;
+                        desc = (string) materialProp.Value;
                     }
                     catch (Exception)
                     {
@@ -1118,7 +1118,7 @@ namespace VaultAccess
                     Inventor.PropertySet userDefinedPropertiesSet;
                     userDefinedPropertiesSet = apprenticeDoc.PropertySets["User Defined Properties"];
                     Inventor.Property thickProp = userDefinedPropertiesSet["Thickness"];
-                    thickness = thickProp.Value;
+                    thickness = (string)thickProp.Value;
                 }
                 catch (Exception)
                 {
@@ -1129,7 +1129,7 @@ namespace VaultAccess
                 {
                     Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                     Inventor.Property materialProp = designTrackingProperties["Material"];
-                    material = materialProp.Value;
+                    material = (string)materialProp.Value;
                 }
                 catch (Exception)
                 {
@@ -1140,7 +1140,7 @@ namespace VaultAccess
                 {
                     Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                     Inventor.Property materialProp = designTrackingProperties["Description"];
-                    desc = materialProp.Value;
+                    desc = (string)materialProp.Value;
                 }
                 catch (Exception)
                 {
@@ -1219,13 +1219,13 @@ namespace VaultAccess
                                 // if the part is not released, we really don't want to find an alternate file, so i'll just leave it for now....
                                 string fName = Path.GetFileNameWithoutExtension(objcompOccurrence.ReferencedDocumentDescriptor.FullDocumentName);
                                 Inventor.ApprenticeServerDocument appDoc = apprentice.Open(fName);
-                                objcompOccurrence = appDoc.ComponentDefinition.Document;
+                                objcompOccurrence = (Inventor.ComponentOccurrence)appDoc.ComponentDefinition.Document;
                             }
 
                             Debug.WriteLine("Before cDef");
                             Inventor.ComponentDefinition cDef = objcompOccurrence.Definition;
                             Debug.WriteLine("Before appenticeDoc");
-                            apprenticeDoc = objcompOccurrence.Definition.Document;
+                            apprenticeDoc = (Inventor.ApprenticeServerDocument)objcompOccurrence.Definition.Document;
                             Debug.WriteLine("Before apprentice");
                             apprentice.Open(apprenticeDoc.FullFileName);
 
@@ -1247,7 +1247,7 @@ namespace VaultAccess
                                 Inventor.PropertySet userDefinedPropertiesSet;
                                 userDefinedPropertiesSet = apprenticeDoc.PropertySets["User Defined Properties"];
                                 Inventor.Property thickProp = userDefinedPropertiesSet["Thickness"];
-                                thickness = thickProp.Value;
+                                thickness = (string) thickProp.Value;
                             }
                             catch (Exception)
                             {
@@ -1258,7 +1258,7 @@ namespace VaultAccess
                             {
                                 Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                                 Inventor.Property materialProp = designTrackingProperties["Material"];
-                                material = materialProp.Value;
+                                material = (string) materialProp.Value;
                             }
                             catch (Exception)
                             {
@@ -1269,7 +1269,7 @@ namespace VaultAccess
                             {
                                 Inventor.PropertySet designTrackingProperties = apprenticeDoc.PropertySets["Design Tracking Properties"];
                                 Inventor.Property materialProp = designTrackingProperties["Description"];
-                                desc = materialProp.Value;
+                                desc = (string) materialProp.Value;
                             }
                             catch (Exception)
                             {
@@ -1281,7 +1281,7 @@ namespace VaultAccess
                                 Debug.WriteLine("Before cDef2");
                                 objcompOccurrence = (Inventor.ComponentOccurrence)objoccsEnumerator.Current;
                                 Debug.WriteLine("Before appenticeDoc2");
-                                Inventor.ApprenticeServerDocument apprenticeParentDoc = objcompOccurrence.Parent.Document;
+                                Inventor.ApprenticeServerDocument apprenticeParentDoc = (Inventor.ApprenticeServerDocument)objcompOccurrence.Parent.Document;
                                 Debug.WriteLine("Before apprentice2");
                                 apprentice.Open(apprenticeParentDoc.FullFileName);
 
