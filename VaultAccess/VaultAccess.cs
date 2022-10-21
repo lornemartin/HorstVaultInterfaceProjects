@@ -493,67 +493,6 @@ namespace VaultAccess
 
             return true;
         }
-        public Vault.Currency.Entities.FileIteration BrowseVaultAndReturnFile()
-        {
-            Vault.Currency.Entities.FileIteration selectedFile = null;
-
-            if (m_conn != null)
-            {
-                VaultBrowser vbForm = new VaultBrowser(m_conn, m_lastAccessedFolder, "Assembly Files (*.iam)", ".+iam");
-                DialogResult dResult = vbForm.ShowDialog();
-                if (dResult == DialogResult.OK)
-                {
-                    selectedFile = vbForm.m_selectedItem;
-                    m_lastAccessedFolder = vbForm.m_currentFolder;
-                    return selectedFile;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-                return null;
-        }
-
-        public List<Dictionary<string, string>> BrowseVaultAndGetPartProperties(bool matchPartNumber = true)
-        {
-            List<string> propNames = new List<string>();
-            propNames.Add("PartNumber");
-            propNames.Add("Title");
-            propNames.Add("Description");
-
-            Dictionary<string, string> propDict = new Dictionary<string, string>();
-
-            // a list of dictionaries of the downloaded inventor file properties
-            List<Dictionary<string, string>> propDictList = new List<Dictionary<string, string>>();
-
-            Vault.Currency.Entities.FileIteration selectedFile = null;
-
-
-            if (m_conn != null)
-            {
-                VaultBrowser vbForm = new VaultBrowser(m_conn, m_lastAccessedFolder, "Part Files (*.ipt)", ".+ipt");
-                DialogResult dResult = vbForm.ShowDialog();
-                if (dResult == DialogResult.OK)
-                {
-                    Application.UseWaitCursor = true;
-                    Application.DoEvents();
-
-                    selectedFile = vbForm.m_selectedItem;
-                    m_lastAccessedFolder = vbForm.m_currentFolder;
-
-                    propDictList = GetPartProperties(selectedFile, matchPartNumber);
-                }
-                else
-                {
-                    // not logged in, so return an empty list
-                }
-            }
-
-            Application.UseWaitCursor = false;
-            return propDictList;
-        }
         public Task<List<Dictionary<string, string>>> RefreshAssemblyPropertiesFromVault(IProgress<string> prog, long vaultID)
         {
             return Task.Run(async () =>
