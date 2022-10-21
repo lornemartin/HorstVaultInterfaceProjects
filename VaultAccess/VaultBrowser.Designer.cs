@@ -59,8 +59,6 @@
             // vaultBrowserControl1
             // 
             resources.ApplyResources(this.vaultBrowserControl1, "vaultBrowserControl1");
-            this.tableLayoutPanel1.SetColumnSpan(this.vaultBrowserControl1, 3);
-            this.vaultBrowserControl1.Name = "vaultBrowserControl1";
             // 
             // vaultNavigationPathComboboxControl1
             // 
@@ -108,7 +106,6 @@
             // tableLayoutPanel1
             // 
             resources.ApplyResources(this.tableLayoutPanel1, "tableLayoutPanel1");
-            this.tableLayoutPanel1.Controls.Add(this.vaultBrowserControl1, 0, 1);
             this.tableLayoutPanel1.Controls.Add(this.lookIn_label, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.vaultNavigationPathComboboxControl1, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.toolStrip1, 2, 0);

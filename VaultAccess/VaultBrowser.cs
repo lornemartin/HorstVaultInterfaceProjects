@@ -104,7 +104,6 @@ namespace VaultAccess
             m_model.ParentChanged += new EventHandler(m_model_ParentChanged);
             m_model.SelectedContentChanged += new EventHandler<Forms.Currency.SelectionChangedEventArgs>(m_model_SelectedContentChanged);
 
-            vaultBrowserControl1.SetDataSource(initialConfig, m_model);
             vaultBrowserControl1.OptionsCustomizations.CanDisplayEntityHandler = canDisplayEntity;
             vaultBrowserControl1.OptionsBehavior.MultiSelect = false;
             vaultBrowserControl1.OptionsBehavior.AllowOverrideSelections = false;
@@ -228,7 +227,6 @@ namespace VaultAccess
         {
             //logout presents the user the option to log in again, so we need to be sure to handle that case
             m_conn = Vault.Forms.Library.Logout(m_conn, null);
-            vaultBrowserControl1.SetDataSource(null, null);
             fileName_multiPartTextBox.Parts = new List<string>();
             controlStates(m_conn != null);
             if (m_conn != null)
@@ -276,7 +274,6 @@ namespace VaultAccess
             //when a new filetype filter is selected, we need to update the saved filter function then tell the grid to update
             Forms.Settings.SelectEntitySettings.EntityFilter filter = fileType_comboBox.SelectedItem as Forms.Settings.SelectEntitySettings.EntityFilter;
             m_filterCanDisplayEntity = filter.CanDisplayEntity;
-            vaultBrowserControl1.ReEvaluateCustomFilters();
         }
 
         #endregion
@@ -291,7 +288,6 @@ namespace VaultAccess
         {
             vaultNavigationPathComboboxControl1.Enabled = activeConnection;
             switchView_toolStripSplitButton.Enabled = activeConnection;
-            vaultBrowserControl1.Enabled = activeConnection;
             fileType_comboBox.Enabled = activeConnection;
             m_advancedFindToolStripMenuItem.Enabled = activeConnection;
 
