@@ -21,11 +21,12 @@ using Autodesk.Connectivity.Extensibility.Framework;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
-using log4net.Config;
-using log4net;
-using log4net.Appender;
 using System.Reflection;
 using Environment = System.Environment;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
+using Serilog.Core;
 
 namespace PrintPDF
 {
@@ -34,54 +35,22 @@ namespace PrintPDF
     {
         public PrintObject()
         {
-            if (!log4net.LogManager.GetRepository().Configured)
-            {
-                
-                // my DLL is referenced by web service applications to log SOAP requests before
-                // execution is passed to the web method itself, so I load the log4net.config
-                // file that resides in the web application root folder
-                //var configFileDirectory = (new DirectoryInfo(TraceExtension.AssemblyDirectory)).Parent; // not the bin folder but up one level
-                var configFileDirectory = new DirectoryInfo(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
-                var configFile = new FileInfo(configFileDirectory.FullName + "\\log4net.config");
-
-                if (!configFile.Exists)
-                {
-                    throw new FileLoadException(String.Format("The configuration file {0} does not exist", configFile));
-                }
-
-                log4net.Config.XmlConfigurator.Configure(configFile);
-            }
         }
-
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
         public Boolean printToPDF(string idw, string outputFolder, string pdfPrinterName, ref string errMessage, ref string logMessage)
         {
             {
                 try
                 {
-                    // set log file location
-                    XmlConfigurator.Configure();
-                    log4net.Repository.Hierarchy.Hierarchy h =
-                    (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
-                    foreach (IAppender a in h.Root.Appenders)
-                    {
-                        if (a is FileAppender)
-                        {
-                            FileAppender fa = (FileAppender)a;
-                            // Programmatically set this to the desired location here
-                            string logFileLocation = outputFolder + "PDFPrint.log";
-
-                            // Uncomment the lines below if you want to retain the base file name
-                            // and change the folder name...
-                            //FileInfo fileInfo = new FileInfo(fa.File);
-                            //logFileLocation = string.Format(@"C:\MySpecialFolder\{0}", fileInfo.Name);
-
-                            fa.File = logFileLocation;
-                            fa.ActivateOptions();
-                            break;
-                        }
-                    }
+                    LoggingLevelSwitch levelSwitch = new LoggingLevelSwitch();
+                    levelSwitch.MinimumLevel = LogEventLevel.Verbose;
+                    string logFileLocation = outputFolder + "PDFPrint.log";
+                    Log.Logger = new LoggerConfiguration()
+                                    // add a rolling file for all logs
+                                    .WriteTo.File(logFileLocation,
+                                                  fileSizeLimitBytes: 5000000)
+                                    // set default minimum level
+                                    .MinimumLevel.ControlledBy(levelSwitch)
+                                   .CreateLogger();
 
                     ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
                     ApprenticeServerDrawingDocument drgDoc;
@@ -127,14 +96,6 @@ namespace PrintPDF
                             }
                         }
                     }
-
-
-
-
-
-
-
-
                     
                     foreach (Sheet sh in drgDoc.Sheets)
                     {
@@ -160,7 +121,7 @@ namespace PrintPDF
                         }
                     }
 
-                    log.Info("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
+                    Log.Information("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
 
                     string printer = pdfPrinterName;
                     string pdfFileName = "";
@@ -237,14 +198,14 @@ namespace PrintPDF
                                     //if (psFileName.Contains(","))
                                     //{
                                     //    psFileName = psFileName.Replace(',', '~');
-                                    //    log.Warn("One or more characters replaced with '~' in " + pdfFileName);
+                                    //    Log.Warning("One or more characters replaced with '~' in " + pdfFileName);
                                     //    //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
                                     //}
 
                                     //if (psFileName.Contains("°"))
                                     //{
                                     //    psFileName = psFileName.Replace('°', '~');
-                                    //    log.Warn("One or more characters replaced with '°' in " + pdfFileName);
+                                    //    Log.Warning("One or more characters replaced with '°' in " + pdfFileName);
                                     //    //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
                                     //}
 
@@ -252,11 +213,11 @@ namespace PrintPDF
 
                                     if (System.IO.File.Exists(pdfFileName))
                                     {
-                                        log.Info("PDF file generated for " + pdfFileName);
+                                        Log.Information("PDF file generated for " + pdfFileName);
                                     }
                                     else
                                     {
-                                        log.Warn("PDF file for " + pdfFileName + "could not be generated.");
+                                        Log.Warning("PDF file for " + pdfFileName + "could not be generated.");
                                         continue;   // skip trying to create a pdf if we couldn't generate a ps
                                     }
 
@@ -336,12 +297,12 @@ namespace PrintPDF
                                 // double check to make sure file got generated and saved properly.
                                 if (!System.IO.File.Exists(pdfFileName))
                                 {
-                                    log.Warn("No PDF Generated for " + pdfFileName);
+                                    Log.Warning("No PDF Generated for " + pdfFileName);
                                     //logMessage += "No PDF Generated for " + pdfFileName + "\r\n";
                                 }
                                 else
                                 {
-                                    log.Info("PDF Generated for " + pdfFileName);
+                                    Log.Information("PDF Generated for " + pdfFileName);
                                 }
                             }
                             else
@@ -355,8 +316,8 @@ namespace PrintPDF
                     {
                         //errMessage += "PDF Generation Error in printToPDF\r\n";
                         //errMessage += ex.Message + "\r\n";
-                        log.Error("PDF Generation Error in printToPDF");
-                        log.Error(ex.Message);
+                        Log.Error("PDF Generation Error in printToPDF");
+                        Log.Error(ex.Message);
                         return false;
                     }
                 }
@@ -365,8 +326,8 @@ namespace PrintPDF
                 {
                     //errMessage += "IDW File Read Error in printToPDF\r\n";
                     //errMessage += ex.Message + "\r\n";
-                    log.Error("IDW File Read Error in printToPDF");
-                    log.Error(ex.Message);
+                    Log.Error("IDW File Read Error in printToPDF");
+                    Log.Error(ex.Message);
                     return false;
                 }
                 return true;
@@ -378,29 +339,6 @@ namespace PrintPDF
         {
             try
             {
-                // set log file location
-                XmlConfigurator.Configure();
-                log4net.Repository.Hierarchy.Hierarchy h =
-                (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
-                foreach (IAppender a in h.Root.Appenders)
-                {
-                    if (a is FileAppender)
-                    {
-                        FileAppender fa = (FileAppender)a;
-                        // Programmatically set this to the desired location here
-                        string logFileLocation = folder + "PDFPrint.log";
-
-                        // Uncomment the lines below if you want to retain the base file name
-                        // and change the folder name...
-                        //FileInfo fileInfo = new FileInfo(fa.File);
-                        //logFileLocation = string.Format(@"C:\MySpecialFolder\{0}", fileInfo.Name);
-
-                        fa.File = logFileLocation;
-                        fa.ActivateOptions();
-                        break;
-                    }
-                }
-
                 List<string> filesToDelete = new List<string>();
                 string baseFileName = System.IO.Path.GetFileNameWithoutExtension(fileName);
 
@@ -415,25 +353,25 @@ namespace PrintPDF
                 if (filesToDelete.Count > 0)
                 {
                     //logMessage += @" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ";
-                    log.Info(@" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ");
+                    Log.Information(@" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ");
 
 
                     foreach (string f in filesToDelete)
                     {
                         //logMessage += "File to delete: " + f + @" " + "\r\n" + @" ";
-                        log.Info("File to delete: " + f + @" " + "\r\n" + @" ");
+                        Log.Information("File to delete: " + f + @" " + "\r\n" + @" ");
                         if (System.IO.File.Exists(f))
                         {
                             System.IO.File.Delete(f);
                             //logMessage += "Deleted File " + f + @" " + "\r\n" + @" ";
-                            log.Info("Deleted File " + f + @" " + "\r\n" + @" ");
+                            Log.Information("Deleted File " + f + @" " + "\r\n" + @" ");
                         }
                     }
                 }
                 else
                 {
                     //logMessage += @" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ";
-                    log.Info(@" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ");
+                    Log.Information(@" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ");
                 }
 
                 return true;
