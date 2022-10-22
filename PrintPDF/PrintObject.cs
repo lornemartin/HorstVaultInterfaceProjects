@@ -64,7 +64,7 @@ namespace PrintPDF
                     idwFileToPrint.idwName = idw;
                     idwFileToPrint.pageCount = drgDoc.Sheets.Count;
 
-                    Dictionary<string, PrintOrientationEnum> dwgSheets = new Dictionary<string, PrintOrientationEnum>();
+                    List<DrawingSheet> drawingSheets = new List<DrawingSheet>();
 
                     // delete previous pdfs so we don't double up assembly drawings.
                     foreach (Sheet sh in drgDoc.Sheets)
@@ -73,36 +73,37 @@ namespace PrintPDF
                         {
                             if (sh.DrawingViews.Count > 0)
                             {
+                                DrawingSheet drawingSheet = new DrawingSheet();
                                 //string modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                                string modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
-                                string pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
+                                drawingSheet.modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
+                                drawingSheet.pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(drawingSheet.modelName) + ".pdf";
 
                                 PrintOrientationEnum sheetOrientation = new PrintOrientationEnum();
                                 switch (sh.Orientation)
                                 {
                                     case PageOrientationTypeEnum.kLandscapePageOrientation:
-                                        sheetOrientation = PrintOrientationEnum.kLandscapeOrientation;
+                                        drawingSheet.orientation = PrintOrientationEnum.kLandscapeOrientation;
                                         break;
                                     case PageOrientationTypeEnum.kDefaultPageOrientation:
-                                        sheetOrientation = PrintOrientationEnum.kDefaultOrientation;
+                                        drawingSheet.orientation = PrintOrientationEnum.kDefaultOrientation;
                                         break;
                                     case PageOrientationTypeEnum.kPortraitPageOrientation:
-                                        sheetOrientation = PrintOrientationEnum.kPortraitOrientation;
+                                        drawingSheet.orientation = PrintOrientationEnum.kPortraitOrientation;
                                         break;
                                 }
 
-                                dwgSheets.Add(modelName, sheetOrientation);
+                                drawingSheets.Add(drawingSheet);
 
                                 try
                                 {
-                                    if (System.IO.File.Exists(pdfName))
+                                    if (System.IO.File.Exists(drawingSheet.pdfName))
                                     {
-                                        if (CheckIfFileIsBeingUsed(pdfName))
+                                        if (CheckIfFileIsBeingUsed(drawingSheet.pdfName))
                                         {
                                             // if file is in use, can't delete it.
                                             return false;
                                         }
-                                        System.IO.File.Delete(pdfName);
+                                        System.IO.File.Delete(drawingSheet.pdfName);
                                     }
                                 }
                                 catch (Exception ex)
@@ -114,9 +115,9 @@ namespace PrintPDF
                         }
                     }
 
-                    foreach (KeyValuePair<string, PrintOrientationEnum> element in dwgSheets)
+                    foreach (DrawingSheet drawingSheet1 in drawingSheets)
                     {
-                        string modelName = element.Key;
+                        string modelName = drawingSheet1.modelName;
 
                         if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
                         {
@@ -144,12 +145,12 @@ namespace PrintPDF
                         int modifiedSheetIndex = 1;
                         int missingSheetsCount = 0;
 
-                        foreach (KeyValuePair<string, PrintOrientationEnum> element in dwgSheets)
+                        foreach (DrawingSheet drawingSheet in drawingSheets)
                         {
                             string modelName;
                             {
                                 //modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                                modelName = element.Key;
+                                modelName = drawingSheet.modelName;
 
                                 // this doesn't work right on files with special characters.
                                 //modelName = Path.GetFileNameWithoutExtension(modelName);
@@ -163,7 +164,7 @@ namespace PrintPDF
 
                                 string newName = "";
 
-                                pMgr.Orientation = element.Value;
+                                pMgr.Orientation = drawingSheet.orientation;
 
                                 pMgr.SetSheetRange(actualSheetIndex - missingSheetsCount, actualSheetIndex - missingSheetsCount);
                                 pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
@@ -374,6 +375,13 @@ namespace PrintPDF
             public int pageCount;
             public List<string> sheetNames;
 
+        };
+
+        struct DrawingSheet
+        {
+            public string modelName;
+            public string pdfName;
+            public PrintOrientationEnum orientation;
         };
     }
 
