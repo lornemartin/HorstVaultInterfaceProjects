@@ -43,11 +43,12 @@ namespace PrintPDF
                 {
                     LoggingLevelSwitch levelSwitch = new LoggingLevelSwitch();
                     levelSwitch.MinimumLevel = LogEventLevel.Verbose;
-                    string logFileLocation = outputFolder + "PDFPrint.log";
+                    string logFileLocation = outputFolder + "PDFPrint2.log";
                     Log.Logger = new LoggerConfiguration()
                                     // add a rolling file for all logs
                                     .WriteTo.File(logFileLocation,
-                                                  fileSizeLimitBytes: 5000000)
+                                         shared: true, fileSizeLimitBytes: 5000000)
+                                    .WriteTo.Console()
                                     // set default minimum level
                                     .MinimumLevel.ControlledBy(levelSwitch)
                                    .CreateLogger();
@@ -75,6 +76,7 @@ namespace PrintPDF
                             {
                                 DrawingSheet drawingSheet = new DrawingSheet();
                                 //string modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                // we were using the DisplayName property here until the 2023 update, when accessing it would thrown an exception quite often
                                 drawingSheet.modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
                                 drawingSheet.pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(drawingSheet.modelName) + ".pdf";
 
@@ -93,6 +95,15 @@ namespace PrintPDF
                                 }
 
                                 drawingSheets.Add(drawingSheet);
+
+                                if (drawingSheet.modelName.EndsWith(".ipt") || drawingSheet.modelName.EndsWith(".iam"))
+                                {
+                                    int index = drawingSheet.modelName.LastIndexOf('.');
+                                    drawingSheet.modelName = index == -1 ? drawingSheet.modelName : drawingSheet.modelName.Substring(0, index);
+                                }
+
+                                idwFileToPrint.sheetNames.Add(drawingSheet.modelName);
+                                pageCount++;
 
                                 try
                                 {
@@ -114,22 +125,6 @@ namespace PrintPDF
                             }
                         }
                     }
-
-                    foreach (DrawingSheet drawingSheet1 in drawingSheets)
-                    {
-                        string modelName = drawingSheet1.modelName;
-
-                        if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
-                        {
-                            int index = modelName.LastIndexOf('.');
-                            modelName = index == -1 ? modelName : modelName.Substring(0, index);
-                        }
-
-                        idwFileToPrint.sheetNames.Add(modelName);
-                        pageCount++;
-
-                    }
-
                     Log.Information("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
 
                     string printer = pdfPrinterName;
