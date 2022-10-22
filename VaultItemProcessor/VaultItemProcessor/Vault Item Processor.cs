@@ -296,6 +296,11 @@ namespace VaultItemProcessor
                         parentItem = itemList.Where(i => i.Number == parentString).FirstOrDefault();    // first search for exact match
                         if (parentItem == null)             // if not exact match, use contains instead of equals, I forget why this is necessary but I don't think it'll hurt....
                             parentItem = itemList.Where(i => i.Number.Contains(parentString)).FirstOrDefault();
+                        if (parentItem == null)
+                        {
+                            // parent item must be a purchased part, and those aren't saved in the list I guess?
+                            return item.Qty;
+                        }
                     }
 
                 }
