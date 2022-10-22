@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobProcessorPrintPDF", "JobProcessorPrintPDF.csproj", "{98552653-01D6-4916-82C0-03B1D1B01F53}"
 EndProject
@@ -21,8 +21,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Mixed Platforms.ActiveCfg = Release|x64
+		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|Mixed Platforms.Build.0 = Release|x64
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|x64.ActiveCfg = Debug|x64
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|x64.Build.0 = Debug|x64
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Debug|x86.ActiveCfg = Debug|Any CPU
@@ -35,8 +35,8 @@ Global
 		{98552653-01D6-4916-82C0-03B1D1B01F53}.Release|x86.ActiveCfg = Release|Any CPU
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Mixed Platforms.ActiveCfg = Release|x64
+		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|Mixed Platforms.Build.0 = Release|x64
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|x64.ActiveCfg = Debug|x64
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|x64.Build.0 = Debug|x64
 		{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}.Debug|x86.ActiveCfg = Debug|Any CPU
@@ -52,5 +52,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D173A6A2-43F7-4CFE-99A2-122084867554}
 	EndGlobalSection
 EndGlobal
