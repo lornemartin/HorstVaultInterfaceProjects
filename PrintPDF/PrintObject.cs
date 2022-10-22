@@ -64,7 +64,7 @@ namespace PrintPDF
                     idwFileToPrint.idwName = idw;
                     idwFileToPrint.pageCount = drgDoc.Sheets.Count;
 
-
+                    Dictionary<string, PrintOrientationEnum> dwgSheets = new Dictionary<string, PrintOrientationEnum>();
 
                     // delete previous pdfs so we don't double up assembly drawings.
                     foreach (Sheet sh in drgDoc.Sheets)
@@ -73,8 +73,25 @@ namespace PrintPDF
                         {
                             if (sh.DrawingViews.Count > 0)
                             {
-                                string modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                //string modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                string modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
                                 string pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(modelName) + ".pdf";
+
+                                PrintOrientationEnum sheetOrientation = new PrintOrientationEnum();
+                                switch (sh.Orientation)
+                                {
+                                    case PageOrientationTypeEnum.kLandscapePageOrientation:
+                                        sheetOrientation = PrintOrientationEnum.kLandscapeOrientation;
+                                        break;
+                                    case PageOrientationTypeEnum.kDefaultPageOrientation:
+                                        sheetOrientation = PrintOrientationEnum.kDefaultOrientation;
+                                        break;
+                                    case PageOrientationTypeEnum.kPortraitPageOrientation:
+                                        sheetOrientation = PrintOrientationEnum.kPortraitOrientation;
+                                        break;
+                                }
+
+                                dwgSheets.Add(modelName, sheetOrientation);
 
                                 try
                                 {
@@ -96,29 +113,20 @@ namespace PrintPDF
                             }
                         }
                     }
-                    
-                    foreach (Sheet sh in drgDoc.Sheets)
+
+                    foreach (KeyValuePair<string, PrintOrientationEnum> element in dwgSheets)
                     {
-                        if (!sh.ExcludeFromPrinting)
+                        string modelName = element.Key;
+
+                        if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
                         {
-                            if (sh.DrawingViews.Count > 0)
-                            {
-                                string modelName;
-                                modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                                // this doesn't work right on files with special characters.
-                                //modelName = Path.GetFileNameWithoutExtension(modelName);
-
-                                if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
-                                {
-                                    int index = modelName.LastIndexOf('.');
-                                    modelName = index == -1 ? modelName : modelName.Substring(0, index);
-                                }
-
-                                idwFileToPrint.sheetNames.Add(modelName);
-                                pageCount++;
-
-                            }
+                            int index = modelName.LastIndexOf('.');
+                            modelName = index == -1 ? modelName : modelName.Substring(0, index);
                         }
+
+                        idwFileToPrint.sheetNames.Add(modelName);
+                        pageCount++;
+
                     }
 
                     Log.Information("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
@@ -136,163 +144,127 @@ namespace PrintPDF
                         int modifiedSheetIndex = 1;
                         int missingSheetsCount = 0;
 
-                        foreach (Sheet sh in drgDoc.Sheets)
+                        foreach (KeyValuePair<string, PrintOrientationEnum> element in dwgSheets)
                         {
-                            if (!sh.ExcludeFromPrinting)
+                            string modelName;
                             {
-                                string modelName;
-                                //string modelExtension;
-                                if (sh.DrawingViews.Count > 0)  // added to make sure sheet has at least one drawing view
+                                //modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                modelName = element.Key;
+
+                                // this doesn't work right on files with special characters.
+                                //modelName = Path.GetFileNameWithoutExtension(modelName);
+
+                                if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
                                 {
-                                    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                    int index = modelName.LastIndexOf('.');
+                                    modelName = index == -1 ? modelName : modelName.Substring(0, index);
 
-                                    // this doesn't work right on files with special characters.
-                                    //modelName = Path.GetFileNameWithoutExtension(modelName);
+                                }
 
-                                    if (modelName.EndsWith(".ipt") || modelName.EndsWith(".iam"))
+                                string newName = "";
+
+                                pMgr.Orientation = element.Value;
+
+                                pMgr.SetSheetRange(actualSheetIndex - missingSheetsCount, actualSheetIndex - missingSheetsCount);
+                                pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
+                                pMgr.ScaleMode = PrintScaleModeEnum.kPrintBestFitScale;
+
+
+                                //if (more than one matching pdf name)
+                                if (idwFileToPrint.sheetNames.Where(x => x.Equals(idwFileToPrint.sheetNames[modifiedSheetIndex - 1])).Count() > 1)
+                                {
+                                    newName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
+
+                                    if (System.IO.File.Exists(outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf"))
                                     {
-                                        int index = modelName.LastIndexOf('.');
-                                        modelName = index == -1 ? modelName : modelName.Substring(0, index);
-
+                                        assemblyFileNameList.Add(newName);
+                                        newName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + "~" + 1 + ".pdf";
+                                        if (System.IO.File.Exists(newName)) System.IO.File.Delete(newName);
+                                        System.IO.File.Move(outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf", newName);
+                                        assemblyFileNameList.Add(newName);
                                     }
+                                }
 
-                                    string newName = "";
+                                pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
-                                    switch (sh.Orientation)
-                                    {
-                                        case PageOrientationTypeEnum.kLandscapePageOrientation:
-                                            pMgr.Orientation = PrintOrientationEnum.kLandscapeOrientation;
-                                            break;
-                                        case PageOrientationTypeEnum.kDefaultPageOrientation:
-                                            pMgr.Orientation = PrintOrientationEnum.kDefaultOrientation;
-                                            break;
-                                        case PageOrientationTypeEnum.kPortraitPageOrientation:
-                                            pMgr.Orientation = PrintOrientationEnum.kPortraitOrientation;
-                                            break;
-                                    }
+                                pMgr.PrintToFile(pdfFileName);
 
-                                    pMgr.SetSheetRange(actualSheetIndex - missingSheetsCount, actualSheetIndex - missingSheetsCount);
-                                    pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
-                                    pMgr.ScaleMode = PrintScaleModeEnum.kPrintBestFitScale;
-
-
-                                    //if (more than one matching pdf name)
-                                    if (idwFileToPrint.sheetNames.Where(x => x.Equals(idwFileToPrint.sheetNames[modifiedSheetIndex - 1])).Count() > 1)
-                                    {
-                                        newName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
-
-                                        if (System.IO.File.Exists(outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf"))
-                                        {
-                                            assemblyFileNameList.Add(newName);
-                                            newName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + "~" + 1 + ".pdf";
-                                            if (System.IO.File.Exists(newName)) System.IO.File.Delete(newName);
-                                            System.IO.File.Move(outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf", newName);
-                                            assemblyFileNameList.Add(newName);
-                                        }
-                                    }
-
-                                    pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
-
-                                    // for some reason if a ps filename contains a comma it doesn't want to print.
-                                    // we'll replace it with a tilde.
-                                    //if (psFileName.Contains(","))
-                                    //{
-                                    //    psFileName = psFileName.Replace(',', '~');
-                                    //    Log.Warning("One or more characters replaced with '~' in " + pdfFileName);
-                                    //    //logMessage += "One or more characters replaced with '~' in " + pdfFileName + "\r\n";
-                                    //}
-
-                                    //if (psFileName.Contains("°"))
-                                    //{
-                                    //    psFileName = psFileName.Replace('°', '~');
-                                    //    Log.Warning("One or more characters replaced with '°' in " + pdfFileName);
-                                    //    //logMessage += "One or more characters replaced with '°' in " + pdfFileName + "\r\n";
-                                    //}
-
-                                    pMgr.PrintToFile(pdfFileName);
-
-                                    if (System.IO.File.Exists(pdfFileName))
-                                    {
-                                        Log.Information("PDF file generated for " + pdfFileName);
-                                    }
-                                    else
-                                    {
-                                        Log.Warning("PDF file for " + pdfFileName + "could not be generated.");
-                                        continue;   // skip trying to create a pdf if we couldn't generate a ps
-                                    }
-
-                                    if (assemblyFileNameList != null)
-                                    {
-                                        if (assemblyFileNameList.Count > 1)   // combine multiple assembly drawings into one pdf file
-                                        {
-                                            // Open the input files
-                                            PdfDocument inputDocument1 = new PdfDocument();
-                                            PdfDocument inputDocument2 = new PdfDocument();
-
-                                            if (System.IO.File.Exists(assemblyFileNameList[0]))
-                                            {
-                                                inputDocument1 = PdfReader.Open(assemblyFileNameList[0], PdfDocumentOpenMode.Import);
-                                            }
-
-                                            if (System.IO.File.Exists(assemblyFileNameList[1]))
-                                            {
-                                                inputDocument2 = PdfReader.Open(assemblyFileNameList[1], PdfDocumentOpenMode.Import);
-                                            }
-
-                                            // Create the output document
-                                            PdfDocument outputDocument = new PdfDocument();
-
-                                            // Show consecutive pages facing. Requires Acrobat 5 or higher.
-                                            outputDocument.PageLayout = inputDocument1.PageLayout;
-
-                                            int count = Math.Max(inputDocument1.PageCount, inputDocument2.PageCount);
-                                            for (int idx = 0; idx < count; idx++)
-                                            {
-                                                PdfPage page1 = new PdfPage();
-                                                PdfPage page2 = new PdfPage();
-
-                                                if (inputDocument1.PageCount > idx)
-                                                {
-                                                    page1 = inputDocument1.Pages[idx];
-                                                    page1 = outputDocument.AddPage(page1);
-                                                }
-
-                                                if (inputDocument2.PageCount > idx)
-                                                {
-                                                    page2 = inputDocument2.Pages[idx];
-                                                    page2 = outputDocument.AddPage(page2);
-                                                }
-                                            }
-
-                                            if (System.IO.File.Exists(assemblyFileNameList[0]))
-                                            {
-                                                System.IO.File.Delete(assemblyFileNameList[0]);
-                                            }
-
-                                            // Save the document...
-                                            while (!(System.IO.File.Exists(assemblyFileNameList[0])))
-                                            {
-                                                string filename = assemblyFileNameList[0];
-                                                outputDocument.Save(filename);
-                                            }
-
-                                            // delete the temp file and clear the list
-                                            if (System.IO.File.Exists(assemblyFileNameList[1]))
-                                                System.IO.File.Delete(assemblyFileNameList[1]);
-
-                                            assemblyFileNameList.Clear();
-                                        }
-                                    }
-
-                                    actualSheetIndex++;
-                                    modifiedSheetIndex++;
+                                if (System.IO.File.Exists(pdfFileName))
+                                {
+                                    Log.Information("PDF file generated for " + pdfFileName);
                                 }
                                 else
                                 {
-                                    actualSheetIndex++;   // still need to increment sheet index, even if no drawing view was found
-                                                          // on current sheet...
-                                                 
+                                    Log.Warning("PDF file for " + pdfFileName + "could not be generated.");
+                                    continue;   // skip trying to create a pdf if we couldn't generate a ps
                                 }
+
+                                if (assemblyFileNameList != null)
+                                {
+                                    if (assemblyFileNameList.Count > 1)   // combine multiple assembly drawings into one pdf file
+                                    {
+                                        // Open the input files
+                                        PdfDocument inputDocument1 = new PdfDocument();
+                                        PdfDocument inputDocument2 = new PdfDocument();
+
+                                        if (System.IO.File.Exists(assemblyFileNameList[0]))
+                                        {
+                                            inputDocument1 = PdfReader.Open(assemblyFileNameList[0], PdfDocumentOpenMode.Import);
+                                        }
+
+                                        if (System.IO.File.Exists(assemblyFileNameList[1]))
+                                        {
+                                            inputDocument2 = PdfReader.Open(assemblyFileNameList[1], PdfDocumentOpenMode.Import);
+                                        }
+
+                                        // Create the output document
+                                        PdfDocument outputDocument = new PdfDocument();
+
+                                        // Show consecutive pages facing. Requires Acrobat 5 or higher.
+                                        outputDocument.PageLayout = inputDocument1.PageLayout;
+
+                                        int count = Math.Max(inputDocument1.PageCount, inputDocument2.PageCount);
+                                        for (int idx = 0; idx < count; idx++)
+                                        {
+                                            PdfPage page1 = new PdfPage();
+                                            PdfPage page2 = new PdfPage();
+
+                                            if (inputDocument1.PageCount > idx)
+                                            {
+                                                page1 = inputDocument1.Pages[idx];
+                                                page1 = outputDocument.AddPage(page1);
+                                            }
+
+                                            if (inputDocument2.PageCount > idx)
+                                            {
+                                                page2 = inputDocument2.Pages[idx];
+                                                page2 = outputDocument.AddPage(page2);
+                                            }
+                                        }
+
+                                        if (System.IO.File.Exists(assemblyFileNameList[0]))
+                                        {
+                                            System.IO.File.Delete(assemblyFileNameList[0]);
+                                        }
+
+                                        // Save the document...
+                                        while (!(System.IO.File.Exists(assemblyFileNameList[0])))
+                                        {
+                                            string filename = assemblyFileNameList[0];
+                                            outputDocument.Save(filename);
+                                        }
+
+                                        // delete the temp file and clear the list
+                                        if (System.IO.File.Exists(assemblyFileNameList[1]))
+                                            System.IO.File.Delete(assemblyFileNameList[1]);
+
+                                        assemblyFileNameList.Clear();
+                                    }
+                                }
+
+                                actualSheetIndex++;
+                                modifiedSheetIndex++;
+
 
                                 // double check to make sure file got generated and saved properly.
                                 if (!System.IO.File.Exists(pdfFileName))
@@ -304,11 +276,7 @@ namespace PrintPDF
                                 {
                                     Log.Information("PDF Generated for " + pdfFileName);
                                 }
-                            }
-                            else
-                            {
-                                actualSheetIndex++;   // still need to increment sheet index, if sheet is set not to print
-                                missingSheetsCount++;
+
                             }
                         }
                     }
