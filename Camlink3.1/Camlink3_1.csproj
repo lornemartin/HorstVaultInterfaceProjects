@@ -12,7 +12,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Camlink3_1</RootNamespace>
     <AssemblyName>Camlink3_1</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
@@ -135,20 +135,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\ObjectListView\ObjectListView2012.csproj">
-      <Project>{18feda0c-d147-4286-b39a-01204808106a}</Project>
-      <Name>ObjectListView2012</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Radan\RadanInterface2\RadanInterface2.csproj">
-      <Project>{33aab76e-ffab-4b0c-b6a4-f66d4726195a}</Project>
-      <Name>RadanInterface2</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Radan\RadanProject\RadanProject.csproj">
-      <Project>{2ee4097d-e0fe-4a4b-b913-dd38fee62fce}</Project>
-      <Name>RadanProject</Name>
-    </ProjectReference>
   </ItemGroup>
   <!--ItemGroup>
     <ProjectReference Include=L:\Source_Code\Lorne%27s Source Code\Projects\RadanInterface0.2\RadanInterface.csproj>
