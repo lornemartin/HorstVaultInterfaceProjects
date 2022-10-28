@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31624.102
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanMaster", "RadanMaster\RadanMaster.csproj", "{3FF0E81B-9A2B-444F-B993-D9BA54CB976F}"
 EndProject
@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanInterface2", "..\Radan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RadanProject", "..\RadanProject\RadanProject.csproj", "{2EE4097D-E0FE-4A4B-B913-DD38FEE62FCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultAccess", "..\..\Vault Interface Projects\VaultAccess\VaultAccess.csproj", "{15635C05-BE90-4F08-8B87-21F85B406A00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultAccess", "..\..\VaultAccess\VaultAccess.csproj", "{15635C05-BE90-4F08-8B87-21F85B406A00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

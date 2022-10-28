@@ -995,7 +995,7 @@
             this.IconOptions.Icon = ((System.Drawing.Icon)(resources.GetObject("Form1.IconOptions.Icon")));
             this.Name = "Form1";
             this.Ribbon = this.ribbonControl1;
-            this.Text = "RadanMaster 2.1.0.0";
+            this.Text = "RadanMaster 2.3.0.0";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
