@@ -236,7 +236,10 @@ namespace JobProcessorFileUpdate
                                 errMessage += " " + sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName + "found";
                                 if (sh.DrawingViews.Count > 0)
                                 {
-                                    modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                    // we were using the DisplayName property here until the 2023 update, when accessing it would thrown an exception quite often
+                                    // this was observed only when print pdfs, but I thought i might be prudent to change it here as well
+                                    //modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
+                                    modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
 
                                     PrintObject printOb = new PrintObject();
                                     if (printOb.deletePDF(modelName, m_PDFPath, ref logMessage, ref errMessage))
