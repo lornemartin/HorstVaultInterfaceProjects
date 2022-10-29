@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="symFolder" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Sym Files\</Value>
+      <Value Profile="(Default)">\HLAFILESRVR2\EngCommon\PDF Drawing Files</Value>
     </Setting>
     <Setting Name="extensionFolder" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\ProgramData\Autodesk\Vault 2016\Extensions\Camlink3.1\</Value>
@@ -15,7 +15,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="useSecondarySymLocation" Type="System.String" Scope="User">
-      <Value Profile="(Default)">yes</Value>
+      <Value Profile="(Default)">no</Value>
     </Setting>
   </Settings>
 </SettingsFile>

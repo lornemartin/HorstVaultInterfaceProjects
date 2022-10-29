@@ -25,7 +25,7 @@ namespace Camlink3_1.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Sym Files\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("\\HLAFILESRVR2\\EngCommon\\PDF Drawing Files")]
         public string symFolder {
             get {
                 return ((string)(this["symFolder"]));
@@ -73,7 +73,7 @@ namespace Camlink3_1.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("yes")]
+        [global::System.Configuration.DefaultSettingValueAttribute("no")]
         public string useSecondarySymLocation {
             get {
                 return ((string)(this["useSecondarySymLocation"]));
