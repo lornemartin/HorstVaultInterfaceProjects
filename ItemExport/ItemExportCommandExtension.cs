@@ -359,47 +359,36 @@ namespace ItemExport
 
                         ItemAssoc[] subItemAssociations = GetChildItems(selectedItem, connection);
 
+                        // first update the top level item
+                        UpdateItem(selectedItem, connection);
 
-
-
-
-
-                        ////// first update the top level item
-                        //UpdateItem(selectedItem, connection);
-
-                        //// then also all the child items
-                        //ItemService itemSvc = connection.WebServiceManager.ItemService;
-                        //foreach (ItemAssoc subItemAssoc in subItemAssociations)
-                        //{
-                        //    long subID = subItemAssoc.CldItemID;
-
-                        //    Item subItem = itemSvc.GetItemsByIds(new long[] { subID })[0];
-
-                        //    if (subItem != null)
-                        //        UpdateItem(subItem, connection);
-                        //}
-
-
-
-
-                        //attempt to update all items at once, i didn't get it to work yet...
-                        Item[] itemArray = new Item[subItemAssociations.Count() + 1];
-                        itemArray[0] = selectedItem;
-
-                        int index = 1;
+                        // then also all the child items
                         ItemService itemSvc = connection.WebServiceManager.ItemService;
                         foreach (ItemAssoc subItemAssoc in subItemAssociations)
                         {
                             long subID = subItemAssoc.CldItemID;
+
                             Item subItem = itemSvc.GetItemsByIds(new long[] { subID })[0];
-                            itemArray[index] = subItem;
-                            index++;
+
+                            if (subItem != null)
+                                UpdateItem(subItem, connection);
                         }
 
-                        UpdateItems(itemArray, connection);
+                        // attempt to update all items at once, i didn't get it to work yet...
+                        //Item[] itemArray = new Item[subItemAssociations.Count() + 1];
+                        //itemArray[0] = selectedItem;
 
+                        //int index = 1;
+                        //ItemService itemSvc = connection.WebServiceManager.ItemService;
+                        //foreach (ItemAssoc assoc in subItemAssociations)
+                        //{
+                        //    long subID = assoc.CldItemID;
+                        //    Item subItem = itemSvc.GetItemsByIds(new long[] { subID })[0];
+                        //    itemArray[index] = subItem;
+                        //    index++;
+                        //}
 
-
+                        //UpdateItems(itemArray, connection);
                         okToProcess = true;
                         Execute(selectedItem, connection, okToProcess);
                     }
@@ -581,9 +570,9 @@ namespace ItemExport
             //itemRevisionIds[0] = item.RevId;
 
             int index = 0;
-            foreach (Item item in itemArray)
+            foreach(Item item in itemArray)
             {
-                itemRevisionIds[index] = item.RevId;
+                itemRevisionIds[index] = item.Id;
                 index++;
             }
 
@@ -593,36 +582,12 @@ namespace ItemExport
             {
                 ItemService itemSvc = connection.WebServiceManager.ItemService;
 
-                /////////////////////////
-                ///not sure if this is safe to leave out or not????
-                ///
-                /// 
-                /// 
-                /// 
-                /// 
-                /// 
-                //// ????????????????????doesn't seem to be necessary to put items into edit state to update them
-                //List<Item> allItems = new List<Item>();
-                //allItems = itemSvc.EditItems(itemRevisionIds).ToList();
-                //itemSvc.UpdateAndCommitItems(allItems.ToArray());
+                // doesn't seem to be necessary to put items into edit state to update them
+                //itemSvc.EditItems(itemRevisionIds);     
 
-
-                //itemSvc.UpdatePromoteComponents(itemRevisionIds, ItemAssignAll.Default, false);
+                itemSvc.UpdatePromoteComponents(itemRevisionIds, ItemAssignAll.Yes, false);
 
                 DateTime now = DateTime.Now;
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 GetPromoteOrderResults compO = itemSvc.GetPromoteComponentOrder(out now);
 
@@ -683,7 +648,7 @@ namespace ItemExport
                     // itemSvc.UpdateAndCommitItems(items);
                 }
             }
-            catch(Exception ex)
+            catch
             {
                 // get the items that need to be undone
                 for (int i = 0; i < itemsToCommit.Length; i++)
@@ -726,7 +691,6 @@ namespace ItemExport
                 ItemService itemSvc = connection.WebServiceManager.ItemService;
 
                 // put item into edit state so that timedate stamp gets updated.
-                
                 List<Item> topLevelItems = new List<Item>();
                 topLevelItems = itemSvc.EditItems(itemRevisionIds).ToList();
                 itemSvc.UpdateAndCommitItems(topLevelItems.ToArray());
