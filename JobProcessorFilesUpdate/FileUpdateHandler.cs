@@ -233,7 +233,7 @@ namespace JobProcessorFileUpdate
                                                             // kept failing.  This line fixed the problemf or that file
                                                             // but it is definitely not well tested...
                             {
-                                errMessage += " " + sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName + "found";
+                                errMessage += " " + sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName + "found";
                                 if (sh.DrawingViews.Count > 0)
                                 {
                                     // we were using the DisplayName property here until the 2023 update, when accessing it would thrown an exception quite often
