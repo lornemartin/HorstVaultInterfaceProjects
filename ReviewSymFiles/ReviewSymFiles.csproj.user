@@ -20,7 +20,7 @@
     <StartArguments>"\\hlavault\radan\Vault SYM files" "changes.txt" "Administrator" "" "localhost" "Test" "Y" "\\HLAFILESRVR2\EngCommon\PDF Drawing Files"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <StartArguments>"\\hlavault\radan\Vault SYM files" "changes.txt" "Administrator" "" "localhost" "Test" "Y" "\\HLAFILESRVR2\EngCommon\PDF Drawing Files"</StartArguments>
+    <StartArguments>"\\hwvsse01\EngCommon\Radan Sym Files\Vault SYM files" "changes.txt" "lorne" "lorne" "hwvsvt01" "Vault" "Y" "\\hwvsse01\EngCommon\PDF Drawing Files"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <StartArguments>"\\Cutter-hp\radan\Vault SYM files"                       "debug.txt" "sync.txt"</StartArguments>

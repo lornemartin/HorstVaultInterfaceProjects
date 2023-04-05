@@ -117,7 +117,11 @@ namespace ConsoleApplication1
                 );
 
             if (!results.Success)
+            {
+                Console.WriteLine("Error in connecting to Vault: " + results.Exception.Message);
+                Console.ReadKey();
                 return false;
+            }
 
             connection = results.Connection;
             return true;
@@ -518,7 +522,11 @@ namespace ConsoleApplication1
             // set up some variable for sending the notification emails.
             var fromAddress = new MailAddress("lrn.martin@gmail.com", "Automatic Updater");
             var toAddress = new MailAddress("lorne@horstwelding.com", "To Name");
-            const string fromPassword = "waualkqcglauckdd";
+            MailAddress bcc = new MailAddress("henryt@horstwelding.com");
+            MailAddress bcc2 = new MailAddress("jakef@horstwelding.com");
+            MailAddress bcc3 = new MailAddress("henryk@horstwelding.com");
+
+            const string fromPassword = "aocjpmpjdllmsoyh";
             string subject = "PDF File Updates";
             string body = null;
 
@@ -567,6 +575,9 @@ namespace ConsoleApplication1
             {
                 if (l != null)
                 {
+                    message.Bcc.Add(bcc);
+                    message.Bcc.Add(bcc2);
+                    message.Bcc.Add(bcc3);
                     smtp.Send(message);
                 }
             }
@@ -580,7 +591,9 @@ namespace ConsoleApplication1
            var fromAddress = new MailAddress("lrn.martin@gmail.com", "Automatic Updater");
            var toAddress = new MailAddress("lorne@horstwelding.com", "To Name");
            MailAddress bcc = new MailAddress("henryt@horstwelding.com");
-           const string fromPassword = "waualkqcglauckdd";
+           MailAddress bcc2 = new MailAddress("jakef@horstwelding.com");
+            MailAddress bcc3 = new MailAddress("henryk@horstwelding.com");
+            const string fromPassword = "aocjpmpjdllmsoyh";
            string subject = "Sym File Updates";
            string body = null;
 
@@ -644,7 +657,9 @@ namespace ConsoleApplication1
                if (l != null)
                {
                    message.Bcc.Add(bcc);
-                   smtp.Send(message);
+                    message.Bcc.Add(bcc2);
+                    message.Bcc.Add(bcc3);
+                    smtp.Send(message);
                }
            }
 
