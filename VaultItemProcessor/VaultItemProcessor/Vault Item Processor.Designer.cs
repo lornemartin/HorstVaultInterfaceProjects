@@ -659,7 +659,7 @@
             this.Controls.Add(this.groupBoxOutput);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Vault Item Processor 2023";
+            this.Text = "Vault Item Processor 2024";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.repositoryItemTextEdit1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.exportTreeList)).EndInit();
