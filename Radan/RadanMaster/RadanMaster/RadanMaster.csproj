@@ -62,35 +62,35 @@
   <ItemGroup>
     <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.Extensibility.Framework, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Connectivity.WebServices.WCF, Version=27.1.90.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Forms, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.DataManagement.Client.Framework.Vault.Forms, Version=27.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
+      <HintPath>..\..\..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.BonusSkins.v20.1" />
     <Reference Include="DevExpress.Data.v20.1, Version=20.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
@@ -291,8 +291,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Radan\RadanMaster\RadanMaster\bin\x64\Debug"
-xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Radan\RadanMaster\RadanMaster\bin\x64\Release"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2024 SDK Binaries\AdskLicensingSDK_7.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Radan\RadanMaster\RadanMaster\bin\x64\Debug"
+xcopy /Y  "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2024 SDK Binaries\AdskLicensingSDK_7.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Radan\RadanMaster\RadanMaster\bin\x64\Release"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
