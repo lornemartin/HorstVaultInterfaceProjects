@@ -66,28 +66,37 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.Extensibility, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.Connectivity.Explorer.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.Explorer.ExtensibilityTools">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Explorer.ExtensibilityTools, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.Connectivity.Explorer.ExtensibilityTools.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.Extensibility.Framework">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.Extensibility.Framework, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.Connectivity.Extensibility.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.JobProcessor.Extensibility">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.JobProcessor.Extensibility, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.Connectivity.JobProcessor.Extensibility.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.Connectivity.WebServices">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+    <Reference Include="Autodesk.Connectivity.WebServices, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
-      <HintPath>..\Vault 2023 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault, Version=28.0.0.0, Culture=neutral, PublicKeyToken=215b0879a7566597, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Vault 2024 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.Services3">
       <HintPath>.\Microsoft.Web.Services3.dll</HintPath>

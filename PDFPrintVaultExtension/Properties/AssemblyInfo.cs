@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyTitle("PrintPDFVaultExtension")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCopyright("Copyright © Horst Welding 2019")]
+[assembly: AssemblyCopyright("Copyright © Horst Welding 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
