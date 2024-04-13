@@ -112,8 +112,9 @@
     <Reference Include="Microsoft.Web.Services3">
       <HintPath>.\Microsoft.Web.Services3.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF">
-      <HintPath>..\PrintPDF\bin\x64\Release\PrintPDF.dll</HintPath>
+    <Reference Include="PrintPDF, Version=2023.0.0.0, Culture=neutral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
