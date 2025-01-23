@@ -23,8 +23,6 @@ using Framework = Autodesk.DataManagement.Client.Framework;
 using Vault = Autodesk.DataManagement.Client.Framework.Vault;
 using Forms = Autodesk.DataManagement.Client.Framework.Vault.Forms;
 using ADSK = Autodesk.Connectivity.WebServices;
-using Inventor;
-
 
 using RadanInterface2;
 using RadProject;
