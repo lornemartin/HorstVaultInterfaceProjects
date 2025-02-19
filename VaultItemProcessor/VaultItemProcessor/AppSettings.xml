@@ -6,7 +6,7 @@
   </Setting>
   <Setting>
     <Key>Iv_FullPath</Key>
-    <Value xsi:type="xsd:string">C:\Program Files\Autodesk\Inventor View 2019\Bin\InventorView.exe</Value>
+    <Value xsi:type="xsd:string">C:\Program Files\Autodesk\Inventor View 2023\Bin\InventorView.exe</Value>
   </Setting>
   <Setting>
     <Key>ExportFile</Key>
@@ -18,7 +18,7 @@
   </Setting>
   <Setting>
     <Key>ExportFilePath</Key>
-    <Value xsi:type="xsd:string">\\hwvsse01\folderredirection$\lorne\Desktop\test2\</Value>
+    <Value xsi:type="xsd:string">C:\testSchedule\2025-01-22\</Value>
   </Setting>
   <Setting>
     <Key>SymFileFolder</Key>
@@ -26,7 +26,7 @@
   </Setting>
   <Setting>
     <Key>PdfPath</Key>
-    <Value xsi:type="xsd:string">C:\PDF Drawing Files\</Value>
+    <Value xsi:type="xsd:string">S:\PDF Drawing Files\</Value>
   </Setting>
   <Setting>
     <Key>JobName</Key>
@@ -34,19 +34,19 @@
   </Setting>
   <Setting>
     <Key>VaultUserName</Key>
-    <Value xsi:type="xsd:string">Administrator</Value>
+    <Value xsi:type="xsd:string">lorne</Value>
   </Setting>
   <Setting>
     <Key>VaultPassword</Key>
-    <Value xsi:type="xsd:string" />
+    <Value xsi:type="xsd:string">lorne</Value>
   </Setting>
   <Setting>
     <Key>VaultServer</Key>
-    <Value xsi:type="xsd:string">HWVMVT02</Value>
+    <Value xsi:type="xsd:string">hwvsvt02</Value>
   </Setting>
   <Setting>
     <Key>VaultVault</Key>
-    <Value xsi:type="xsd:string">TEST Vault</Value>
+    <Value xsi:type="xsd:string">Vault</Value>
   </Setting>
   <Setting>
     <Key>DailyScheduleData</Key>
@@ -66,7 +66,11 @@
   </Setting>
   <Setting>
     <Key>PrintPDFPrinter</Key>
-    <Value xsi:type="xsd:string">Bullzip PDF Printer</Value>
+    <Value xsi:type="xsd:string">Microsoft Print To PDF</Value>
+  </Setting>
+  <Setting>
+    <Key>PrintPDFPrinterMicrosoft</Key>
+    <Value xsi:type="xsd:string">Microsoft Print to PDF</Value>
   </Setting>
   <Setting>
     <Key>PrintPDFPS2PDF</Key>
