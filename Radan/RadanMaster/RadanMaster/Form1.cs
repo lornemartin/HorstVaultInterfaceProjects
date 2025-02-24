@@ -509,7 +509,7 @@ namespace RadanMaster
                     }
 
                     // check for completed orders....right now this only work one way, it won't uncheck completed orders that are no longer complete
-                    bool orderComplete = true;
+                    bool orderComplete = false;
                     //List<OrderItem> orderItemsToSync = dbContext.OrderItems.ToList();               // this may cause performance problems eventually
                     List<OrderItem> orderItemsToSync = dbContext.OrderItems.Where(oi => oi.Order.IsComplete == false).Where(oi => oi.IsInProject).ToList();
                     foreach (OrderItem syncItem in orderItemsToSync)
