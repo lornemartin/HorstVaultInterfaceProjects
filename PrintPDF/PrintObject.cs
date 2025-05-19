@@ -70,7 +70,7 @@ namespace PrintPDF
                     // delete previous pdfs so we don't double up assembly drawings.
                     foreach (Sheet sh in drgDoc.Sheets)
                     {
-                        if(!sh.ExcludeFromPrinting)
+                        if (!sh.ExcludeFromPrinting)
                         {
                             if (sh.DrawingViews.Count > 0)
                             {
@@ -79,6 +79,11 @@ namespace PrintPDF
                                 // we were using the DisplayName property here until the 2023 update, when accessing it would thrown an exception quite often
                                 drawingSheet.modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
                                 drawingSheet.pdfName = outputFolder + System.IO.Path.GetFileNameWithoutExtension(drawingSheet.modelName) + ".pdf";
+
+                                var drgView = sh.DrawingViews[1];
+
+                                //bool isRaster = sh.DrawingViews[1].IsRasterView;
+                                bool isRaster = false;
 
                                 PrintOrientationEnum sheetOrientation = new PrintOrientationEnum();
                                 switch (sh.Orientation)
@@ -94,33 +99,36 @@ namespace PrintPDF
                                         break;
                                 }
 
-                                drawingSheets.Add(drawingSheet);
-
-                                if (drawingSheet.modelName.EndsWith(".ipt") || drawingSheet.modelName.EndsWith(".iam"))
+                                if (!isRaster)
                                 {
-                                    int index = drawingSheet.modelName.LastIndexOf('.');
-                                    drawingSheet.modelName = index == -1 ? drawingSheet.modelName : drawingSheet.modelName.Substring(0, index);
-                                }
+                                    drawingSheets.Add(drawingSheet);
 
-                                idwFileToPrint.sheetNames.Add(drawingSheet.modelName);
-                                pageCount++;
-
-                                try
-                                {
-                                    if (System.IO.File.Exists(drawingSheet.pdfName))
+                                    if (drawingSheet.modelName.EndsWith(".ipt") || drawingSheet.modelName.EndsWith(".iam"))
                                     {
-                                        if (CheckIfFileIsBeingUsed(drawingSheet.pdfName))
-                                        {
-                                            // if file is in use, can't delete it.
-                                            return false;
-                                        }
-                                        System.IO.File.Delete(drawingSheet.pdfName);
+                                        int index = drawingSheet.modelName.LastIndexOf('.');
+                                        drawingSheet.modelName = index == -1 ? drawingSheet.modelName : drawingSheet.modelName.Substring(0, index);
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    logMessage += ex.Message;
-                                    return false;
+
+                                    idwFileToPrint.sheetNames.Add(drawingSheet.modelName);
+                                    pageCount++;
+
+                                    try
+                                    {
+                                        if (System.IO.File.Exists(drawingSheet.pdfName))
+                                        {
+                                            if (CheckIfFileIsBeingUsed(drawingSheet.pdfName))
+                                            {
+                                                // if file is in use, can't delete it.
+                                                return false;
+                                            }
+                                            System.IO.File.Delete(drawingSheet.pdfName);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logMessage += ex.Message;
+                                        return false;
+                                    }
                                 }
                             }
                         }
@@ -132,16 +140,18 @@ namespace PrintPDF
 
                     try
                     {
-                        ApprenticeDrawingPrintManager pMgr;
-                        drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
-                        pMgr = (ApprenticeDrawingPrintManager)drgDoc.PrintManager;
-                        pMgr.Printer = printer;
                         int actualSheetIndex = 1;
                         int modifiedSheetIndex = 1;
                         int missingSheetsCount = 0;
 
                         foreach (DrawingSheet drawingSheet in drawingSheets)
                         {
+                            ApprenticeDrawingPrintManager pMgr;
+                            drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
+                            pMgr = (ApprenticeDrawingPrintManager)drgDoc.PrintManager;
+                            pMgr.Printer = printer;
+
+
                             string modelName;
                             {
                                 //modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
@@ -165,7 +175,6 @@ namespace PrintPDF
                                 pMgr.PrintRange = PrintRangeEnum.kPrintSheetRange;
                                 pMgr.ScaleMode = PrintScaleModeEnum.kPrintBestFitScale;
 
-
                                 //if (more than one matching pdf name)
                                 if (idwFileToPrint.sheetNames.Where(x => x.Equals(idwFileToPrint.sheetNames[modifiedSheetIndex - 1])).Count() > 1)
                                 {
@@ -183,7 +192,15 @@ namespace PrintPDF
 
                                 pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
-                                pMgr.PrintToFile(pdfFileName);
+                                try
+                                {
+                                    pMgr.PrintToFile(pdfFileName);
+                                }
+                                catch(Exception ex)
+                                {
+                                    Log.Warning("PDF file for " + pdfFileName + "could not be generated. " + ex.Message);
+                                    continue;   // skip trying to create a pdf if we couldn't generate a page
+                                }
 
                                 if (System.IO.File.Exists(pdfFileName))
                                 {
