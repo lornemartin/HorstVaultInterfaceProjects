@@ -54,7 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="radraft.interop">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Hexagon\RADAN 2021.0\Radraft\bin\radraft.interop.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Hexagon\RADAN 2024.1\Radraft\bin\radraft.interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
