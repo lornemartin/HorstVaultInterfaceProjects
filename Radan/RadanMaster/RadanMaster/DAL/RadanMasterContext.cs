@@ -9,7 +9,7 @@ namespace RadanMaster.DAL
 {
     public class RadanMasterContext : DbContext
     {
-        public RadanMasterContext() : base("RadanMasterContext")
+        public RadanMasterContext() : base("RadanMaster")
         {
         }
 
