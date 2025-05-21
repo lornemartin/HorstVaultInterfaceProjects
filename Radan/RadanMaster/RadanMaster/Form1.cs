@@ -89,7 +89,25 @@ namespace RadanMaster
                 log4net.Config.XmlConfigurator.Configure(); // configure logging
                 logger.Info("Starting Program.");
 
-                dbContext = new DAL.RadanMasterContext();
+
+                try
+                {
+                    dbContext = new DAL.RadanMasterContext();
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Cannot load database. \n" + ex.Message);
+                    if (System.Windows.Forms.Application.MessageLoop)
+                    {
+                        // WinForms app
+                        System.Windows.Forms.Application.Exit();
+                    }
+                    else
+                    {
+                        // Console app
+                        System.Environment.Exit(1);
+                    }
+                }
 
                 logger.Info("dbContext initialized.");
 
@@ -114,12 +132,29 @@ namespace RadanMaster
                     logger.Info("Could not connect to Radan.");
                 }
 
-                dbContext.OrderItems.Load();
-                dbContext.Parts.Load();
-                dbContext.Orders.Load();
-                dbContext.RadanIDs.Load();
-                dbContext.Nests.Load();
-                dbContext.NestedParts.Load();
+                try
+                {
+                    dbContext.OrderItems.Load();
+                    dbContext.Parts.Load();
+                    dbContext.Orders.Load();
+                    dbContext.RadanIDs.Load();
+                    dbContext.Nests.Load();
+                    dbContext.NestedParts.Load();
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Cannot load database. ]n" + ex.InnerException);
+                    if (System.Windows.Forms.Application.MessageLoop)
+                    {
+                        // WinForms app
+                        System.Windows.Forms.Application.Exit();
+                    }
+                    else
+                    {
+                        // Console app
+                        System.Environment.Exit(1);
+                    }
+                }
 
                 logger.Info("dbContext loaded.");
                 logger.Info("Test2");
