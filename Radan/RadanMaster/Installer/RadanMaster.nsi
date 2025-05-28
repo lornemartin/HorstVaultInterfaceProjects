@@ -4,12 +4,12 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "RadanMaster 2025.0"
+!define APP_NAME "RadanMaster 2025.1"
 !define COMP_NAME "Horst Welding"
-!define VERSION "2025.00.00.00"
+!define VERSION "2025.10.00.00"
 !define COPYRIGHT "Lorne Martin  © 2025"
 !define DESCRIPTION ""
-!define INSTALLER_NAME "M:\Installers\2025\Custom Code 2025 Deployment Files\RadanMaster\RadanMaster Setup 2025.0.exe"
+!define INSTALLER_NAME "M:\Installers\2025\Custom Code 2025 Deployment Files\RadanMaster\RadanMaster Setup 2025.1.exe"
 !define MAIN_APP_EXE "RadanMaster.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
@@ -36,7 +36,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
-InstallDir "$PROGRAMFILES64\RadanMaster 2025.0"
+InstallDir "$PROGRAMFILES64\RadanMaster 2025.1"
 
 ######################################################################
 
@@ -53,7 +53,7 @@ InstallDir "$PROGRAMFILES64\RadanMaster 2025.0"
 
 !ifdef REG_START_MENU
 !define MUI_STARTMENUPAGE_NODISABLE
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "RadanMaster 2025.0"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "RadanMaster 2025.1"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "${REG_ROOT}"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "${UNINSTALL_PATH}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${REG_START_MENU}"
@@ -92,7 +92,7 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 
-StrCpy $INSTDIR "$PROGRAMFILES64\RadanMaster 2025.0"
+StrCpy $INSTDIR "$PROGRAMFILES64\RadanMaster 2025.1"
 SetOutPath "$INSTDIR"
 
 File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Radan\RadanMaster\RadanMaster\bin\x64\Release\*.*"
@@ -125,13 +125,13 @@ CreateShortCut "$SMPROGRAMS\$SM_Folder\${APP_NAME} Website.lnk" "$INSTDIR\${APP_
 !endif
 
 !ifndef REG_START_MENU
-CreateDirectory "$SMPROGRAMS\RadanMaster 2025.0"
-CreateShortCut "$SMPROGRAMS\RadanMaster 2025.0\${APP_NAME}.lnk" "$INSTDIR\${MAIN_APP_EXE}"
-CreateShortCut "$SMPROGRAMS\RadanMaster 2025.0\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+CreateDirectory "$SMPROGRAMS\RadanMaster 2025.1"
+CreateShortCut "$SMPROGRAMS\RadanMaster 2025.1\${APP_NAME}.lnk" "$INSTDIR\${MAIN_APP_EXE}"
+CreateShortCut "$SMPROGRAMS\RadanMaster 2025.1\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
 
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
-CreateShortCut "$SMPROGRAMS\RadanMaster 2025.0\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
+CreateShortCut "$SMPROGRAMS\RadanMaster 2025.1\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
 !endif
 !endif
 
@@ -180,12 +180,12 @@ RmDir "$SMPROGRAMS\$SM_Folder"
 !endif
 
 !ifndef REG_START_MENU
-Delete "$SMPROGRAMS\RadanMaster 2025.0\${APP_NAME}.lnk"
-Delete "$SMPROGRAMS\RadanMaster 2025.0\Uninstall ${APP_NAME}.lnk"
+Delete "$SMPROGRAMS\RadanMaster 2025.1\${APP_NAME}.lnk"
+Delete "$SMPROGRAMS\RadanMaster 2025.1\Uninstall ${APP_NAME}.lnk"
 !ifdef WEB_SITE
 Delete "$SMPROGRAMS\RadanMaster 2025\${APP_NAME} Website.lnk"
 !endif
-RmDir "$SMPROGRAMS\RadanMaster 2025.0"
+RmDir "$SMPROGRAMS\RadanMaster 2025.1"
 !endif
 
 DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
