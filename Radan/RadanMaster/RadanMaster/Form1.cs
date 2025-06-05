@@ -96,7 +96,7 @@ namespace RadanMaster
                 }
                 catch(Exception ex)
                 {
-                    MessageBox.Show("Cannot load database. \n" + ex.Message);
+                    MessageBox.Show("Cannot load database1. \n" + ex.Message);
                     if (System.Windows.Forms.Application.MessageLoop)
                     {
                         // WinForms app
@@ -143,7 +143,7 @@ namespace RadanMaster
                 }
                 catch(Exception ex)
                 {
-                    MessageBox.Show("Cannot load database. ]n" + ex.InnerException);
+                    MessageBox.Show("Cannot load database2. \n" + ex.Message);
                     if (System.Windows.Forms.Application.MessageLoop)
                     {
                         // WinForms app
