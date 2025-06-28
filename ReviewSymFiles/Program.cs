@@ -526,7 +526,7 @@ namespace ConsoleApplication1
             MailAddress bcc2 = new MailAddress("jakef@horstwelding.com");
             MailAddress bcc3 = new MailAddress("henryk@horstwelding.com");
 
-            const string fromPassword = "aocjpmpjdllmsoyh";
+            const string fromPassword = "cycnnijjsxykfrud";
             string subject = "PDF File Updates";
             string body = null;
 
@@ -593,7 +593,7 @@ namespace ConsoleApplication1
            MailAddress bcc = new MailAddress("henryt@horstwelding.com");
            MailAddress bcc2 = new MailAddress("jakef@horstwelding.com");
             MailAddress bcc3 = new MailAddress("henryk@horstwelding.com");
-            const string fromPassword = "aocjpmpjdllmsoyh";
+            const string fromPassword = "cycnnijjsxykfrud";
            string subject = "Sym File Updates";
            string body = null;
 
