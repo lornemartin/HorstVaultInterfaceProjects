@@ -41,6 +41,14 @@ namespace PrintPDF
             {
                 try
                 {
+                    // Get Ghostscript path for PS to PDF conversion
+                    string ghostScriptPath = "";
+                    try
+                    {
+                        ghostScriptPath = AppSettings.Get("GhostScriptWorkingFolder").ToString();
+                    }
+                    catch { }
+
                     LoggingLevelSwitch levelSwitch = new LoggingLevelSwitch();
                     levelSwitch.MinimumLevel = LogEventLevel.Verbose;
                     string logFileLocation = outputFolder + "PDFPrint2.log";
@@ -191,7 +199,62 @@ namespace PrintPDF
                                 pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
                                 logMessage += "Calling PrintToFile: " + pdfFileName + "\r\n";
-                                pMgr.PrintToFile(pdfFileName);
+                                try
+                                {
+                                    pMgr.PrintToFile(pdfFileName);
+                                }
+                                catch (Exception printEx)
+                                {
+                                    logMessage += "PrintToFile FAILED for sheet " + actualSheetIndex + " (" + modelName + "): " + printEx.ToString() + "\r\n";
+                                    Log.Error("PrintToFile FAILED for sheet " + actualSheetIndex + " (" + modelName + "): " + printEx.ToString());
+                                    actualSheetIndex++;
+                                    modifiedSheetIndex++;
+                                    continue;
+                                }
+
+                                if (!System.IO.File.Exists(pdfFileName))
+                                {
+                                    logMessage += "PDF file for " + pdfFileName + " could not be generated.\r\n";
+                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated.");
+                                    continue;
+                                }
+
+                                // Bullzip produces PostScript, not PDF. Convert PS to PDF using Ghostscript.
+                                if (!string.IsNullOrEmpty(ghostScriptPath))
+                                {
+                                    string psFileName = pdfFileName + ".ps";
+                                    System.IO.File.Move(pdfFileName, psFileName);
+                                    logMessage += "Converting PS to PDF: " + psFileName + "\r\n";
+
+                                    string gsExe = System.IO.Path.Combine(ghostScriptPath, "gswin64c.exe");
+                                    string gsArgs = "-dBATCH -dNOPAUSE -dQUIET -sDEVICE=pdfwrite -sOutputFile=\"" + pdfFileName + "\" \"" + psFileName + "\"";
+
+                                    Process gsProcess = new Process();
+                                    gsProcess.StartInfo.FileName = gsExe;
+                                    gsProcess.StartInfo.Arguments = gsArgs;
+                                    gsProcess.StartInfo.UseShellExecute = false;
+                                    gsProcess.StartInfo.RedirectStandardError = true;
+                                    gsProcess.StartInfo.CreateNoWindow = true;
+                                    gsProcess.Start();
+                                    string gsError = gsProcess.StandardError.ReadToEnd();
+                                    gsProcess.WaitForExit();
+
+                                    if (gsProcess.ExitCode != 0)
+                                    {
+                                        logMessage += "Ghostscript conversion failed (exit code " + gsProcess.ExitCode + "): " + gsError + "\r\n";
+                                        Log.Error("Ghostscript conversion failed: " + gsError);
+                                        actualSheetIndex++;
+                                        modifiedSheetIndex++;
+                                        continue;
+                                    }
+
+                                    // Clean up the PostScript file
+                                    if (System.IO.File.Exists(psFileName))
+                                    {
+                                        System.IO.File.Delete(psFileName);
+                                    }
+                                    logMessage += "PS to PDF conversion successful: " + pdfFileName + "\r\n";
+                                }
 
                                 if (System.IO.File.Exists(pdfFileName))
                                 {
@@ -200,27 +263,28 @@ namespace PrintPDF
                                 }
                                 else
                                 {
-                                    logMessage += "PDF file for " + pdfFileName + " could not be generated.\r\n";
-                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated.");
-                                    continue;   // skip trying to create a pdf if we couldn't generate a ps
+                                    logMessage += "PDF file for " + pdfFileName + " could not be generated after conversion.\r\n";
+                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated after conversion.");
+                                    continue;
                                 }
 
                                 if (assemblyFileNameList != null)
                                 {
                                     if (assemblyFileNameList.Count > 1)   // combine multiple assembly drawings into one pdf file
                                     {
-                                        // Open the input files
+                                        // Wait for printer driver to finish writing the PDF files
+                                        logMessage += "Waiting for PDF files to be ready for merge...\r\n";
                                         PdfDocument inputDocument1 = new PdfDocument();
                                         PdfDocument inputDocument2 = new PdfDocument();
 
                                         if (System.IO.File.Exists(assemblyFileNameList[0]))
                                         {
-                                            inputDocument1 = PdfReader.Open(assemblyFileNameList[0], PdfDocumentOpenMode.Import);
+                                            inputDocument1 = WaitAndOpenPdf(assemblyFileNameList[0], ref logMessage);
                                         }
 
                                         if (System.IO.File.Exists(assemblyFileNameList[1]))
                                         {
-                                            inputDocument2 = PdfReader.Open(assemblyFileNameList[1], PdfDocumentOpenMode.Import);
+                                            inputDocument2 = WaitAndOpenPdf(assemblyFileNameList[1], ref logMessage);
                                         }
 
                                         // Create the output document
@@ -290,9 +354,9 @@ namespace PrintPDF
                     catch (Exception ex)
                     {
                         errMessage += "PDF Generation Error in printToPDF\r\n";
-                        errMessage += ex.Message + "\r\n";
+                        errMessage += ex.ToString() + "\r\n";
                         Log.Error("PDF Generation Error in printToPDF");
-                        Log.Error(ex.Message);
+                        Log.Error(ex.ToString());
                         return false;
                     }
                 }
@@ -358,6 +422,42 @@ namespace PrintPDF
             }
         }
 
+
+        PdfDocument WaitAndOpenPdf(string filePath, ref string logMessage)
+        {
+            int maxRetries = 10;
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    return PdfReader.Open(filePath, PdfDocumentOpenMode.Import);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Log the file header to identify what format the printer actually produced
+                    if (i == 0)
+                    {
+                        try
+                        {
+                            byte[] header = new byte[20];
+                            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            {
+                                fs.Read(header, 0, header.Length);
+                            }
+                            string headerText = System.Text.Encoding.ASCII.GetString(header);
+                            long fileSize = new FileInfo(filePath).Length;
+                            logMessage += "File header: [" + headerText + "] Size: " + fileSize + " bytes\r\n";
+                            logMessage += "PdfSharp error: " + ex.Message + "\r\n";
+                        }
+                        catch { }
+                    }
+                    logMessage += "PDF not ready yet (" + filePath + "), waiting... attempt " + (i + 1) + "/" + maxRetries + "\r\n";
+                    Log.Warning("PDF not ready yet (" + filePath + "), attempt " + (i + 1));
+                    Thread.Sleep(1000);
+                }
+            }
+            throw new InvalidOperationException("PDF file not valid after " + maxRetries + " attempts: " + filePath);
+        }
 
         bool CheckIfFileIsBeingUsed(string fileName)
         {
