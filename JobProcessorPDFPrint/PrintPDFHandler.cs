@@ -74,8 +74,8 @@ namespace JobProcessorPrintPDF
 
         public ACJE.JobOutcome Execute(ACJE.IJobProcessorServices context, ACJE.IJob job)
         {
-            string errorMessage = "";
-            string logMessage = "";
+            string errMsg = "";
+            string logMsg = "";
             try
             {
                 long EntityId = Convert.ToInt64(job.Params["EntityId"]);
@@ -105,7 +105,7 @@ namespace JobProcessorPrintPDF
                     catch (Exception)
                     {
                         context.Log("No Vault File Found ", ACJE.MessageType.eInformation);
-                        context.Log(logMessage, ACJE.MessageType.eInformation);
+                        context.Log(logMsg, ACJE.MessageType.eInformation);
 
                         return ACJE.JobOutcome.Success;
                     }
@@ -114,16 +114,16 @@ namespace JobProcessorPrintPDF
                 // Download and print the file
                 //
                 // make sure folder exists for downloading idw into.
-                logMessage += "Checking Target Directory...";
+                logMsg += "Checking Target Directory...";
                 System.IO.DirectoryInfo targetDir = new System.IO.DirectoryInfo(TargetFolder);
                 if (!targetDir.Exists)
                 {
                     targetDir.Create();
                 }
-                logMessage += "OK" + "\r\n";
+                logMsg += "OK" + "\r\n";
 
                 // download the idw from the vault
-                logMessage += "Downloading idw from the vault...";
+                logMsg += "Downloading idw from the vault...";
                 VDF.Vault.Settings.AcquireFilesSettings downloadSettings = new VDF.Vault.Settings.AcquireFilesSettings(context.Connection)
                 {
                     LocalPath = new VDF.Currency.FolderPathAbsolute(targetDir.FullName),
@@ -132,20 +132,22 @@ namespace JobProcessorPrintPDF
                 downloadSettings.AddFileToAcquire(fileIter, VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download);
                 context.Connection.FileManager.AcquireFiles(downloadSettings);
                 string fileName = downloadSettings.LocalPath.ToString() + @"\" + fileIter.ToString();
+                logMsg += "OK\r\n";
+                logMsg += "File: " + fileName + "\r\n";
+                logMsg += "PDF Output: " + PDFPath + "\r\n";
+                logMsg += "Printer: " + pdfPrinterName + "\r\n";
                 PrintObject printOb = new PrintObject();
-                string errMsg = "";
-                string logMsg = "";
                 if (printOb.printToPDF(fileName, PDFPath, pdfPrinterName, ref errMsg, ref logMsg))
                 {
                     context.Log("Successfully printed " + fileString + " to PDF\n\r", ACJE.MessageType.eInformation);
-                    context.Log(logMessage,ACJE.MessageType.eInformation);
-                    
+                    context.Log(logMsg, ACJE.MessageType.eInformation);
+
                     return ACJE.JobOutcome.Success;
                 }
                 else
                 {
-                    context.Log("Error printing " + fileString + " to PDF. \n\r" + errorMessage, ACJE.MessageType.eError);
-                    context.Log(logMessage, ACJE.MessageType.eInformation);
+                    context.Log("Error printing " + fileString + " to PDF. \n\r" + errMsg, ACJE.MessageType.eError);
+                    context.Log(logMsg, ACJE.MessageType.eInformation);
                     return ACJE.JobOutcome.Failure;
                 }
             }

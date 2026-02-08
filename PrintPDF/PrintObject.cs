@@ -112,6 +112,7 @@ namespace PrintPDF
                                         if (CheckIfFileIsBeingUsed(drawingSheet.pdfName))
                                         {
                                             // if file is in use, can't delete it.
+                                            errMessage += "File is in use, cannot delete: " + drawingSheet.pdfName + "\r\n";
                                             return false;
                                         }
                                         System.IO.File.Delete(drawingSheet.pdfName);
@@ -119,12 +120,14 @@ namespace PrintPDF
                                 }
                                 catch (Exception ex)
                                 {
-                                    logMessage += ex.Message;
+                                    errMessage += "Error deleting existing PDF: " + drawingSheet.pdfName + " - " + ex.Message + "\r\n";
                                     return false;
                                 }
                             }
                         }
                     }
+                    logMessage += "Sheet Names All Read When Printing " + idwFileToPrint.idwName + "\r\n";
+                    logMessage += "Sheet count: " + drawingSheets.Count + "\r\n";
                     Log.Information("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
 
                     string printer = pdfPrinterName;
@@ -132,10 +135,13 @@ namespace PrintPDF
 
                     try
                     {
+                        logMessage += "Initializing PrintManager...\r\n";
                         ApprenticeDrawingPrintManager pMgr;
                         drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
                         pMgr = (ApprenticeDrawingPrintManager)drgDoc.PrintManager;
+                        logMessage += "Setting printer to: " + printer + "\r\n";
                         pMgr.Printer = printer;
+                        logMessage += "Printer set successfully.\r\n";
                         int actualSheetIndex = 1;
                         int modifiedSheetIndex = 1;
                         int missingSheetsCount = 0;
@@ -159,6 +165,7 @@ namespace PrintPDF
 
                                 string newName = "";
 
+                                logMessage += "Sheet " + actualSheetIndex + ": " + modelName + " - Setting print options...\r\n";
                                 pMgr.Orientation = drawingSheet.orientation;
 
                                 pMgr.SetSheetRange(actualSheetIndex - missingSheetsCount, actualSheetIndex - missingSheetsCount);
@@ -183,15 +190,18 @@ namespace PrintPDF
 
                                 pdfFileName = outputFolder + idwFileToPrint.sheetNames[modifiedSheetIndex - 1] + ".pdf";
 
+                                logMessage += "Calling PrintToFile: " + pdfFileName + "\r\n";
                                 pMgr.PrintToFile(pdfFileName);
 
                                 if (System.IO.File.Exists(pdfFileName))
                                 {
+                                    logMessage += "PDF file generated for " + pdfFileName + "\r\n";
                                     Log.Information("PDF file generated for " + pdfFileName);
                                 }
                                 else
                                 {
-                                    Log.Warning("PDF file for " + pdfFileName + "could not be generated.");
+                                    logMessage += "PDF file for " + pdfFileName + " could not be generated.\r\n";
+                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated.");
                                     continue;   // skip trying to create a pdf if we couldn't generate a ps
                                 }
 
@@ -265,11 +275,12 @@ namespace PrintPDF
                                 // double check to make sure file got generated and saved properly.
                                 if (!System.IO.File.Exists(pdfFileName))
                                 {
+                                    logMessage += "No PDF Generated for " + pdfFileName + "\r\n";
                                     Log.Warning("No PDF Generated for " + pdfFileName);
-                                    //logMessage += "No PDF Generated for " + pdfFileName + "\r\n";
                                 }
                                 else
                                 {
+                                    logMessage += "PDF Generated for " + pdfFileName + "\r\n";
                                     Log.Information("PDF Generated for " + pdfFileName);
                                 }
 
@@ -278,8 +289,8 @@ namespace PrintPDF
                     }
                     catch (Exception ex)
                     {
-                        //errMessage += "PDF Generation Error in printToPDF\r\n";
-                        //errMessage += ex.Message + "\r\n";
+                        errMessage += "PDF Generation Error in printToPDF\r\n";
+                        errMessage += ex.Message + "\r\n";
                         Log.Error("PDF Generation Error in printToPDF");
                         Log.Error(ex.Message);
                         return false;
@@ -288,8 +299,8 @@ namespace PrintPDF
 
                 catch (Exception ex)
                 {
-                    //errMessage += "IDW File Read Error in printToPDF\r\n";
-                    //errMessage += ex.Message + "\r\n";
+                    errMessage += "IDW File Read Error in printToPDF\r\n";
+                    errMessage += ex.Message + "\r\n";
                     Log.Error("IDW File Read Error in printToPDF");
                     Log.Error(ex.Message);
                     return false;
