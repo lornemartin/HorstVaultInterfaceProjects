@@ -20,9 +20,9 @@ namespace PrintPdfTest2
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //string fileName = @"C:\Vault Workspace\Designs\Main\Blades\SB1000\SB1000(Assembly).idw";
+            string fileName = @"C:\Vault Workspace\Designs\Main\Blades\SB1000\SB1000(Assembly).idw";
             //string fileName = @"C:\Vault Workspace\Designs\Main\Blades\Dirt Blades\Grader Blade\GB-Parts.idw";
-            string fileName = @"C:\Vault Workspace\Designs\Main\Blades\Direct Mount Frames\SB4000 Direct Mounts\John Deere Direct Mounts\JD 6000 Series\JD6000 with front pump\DM JD6000 with pump Drawings.idw";
+            //string fileName = @"C:\Vault Workspace\Designs\Main\Blades\Direct Mount Frames\SB4000 Direct Mounts\John Deere Direct Mounts\JD 6000 Series\JD6000 with front pump\DM JD6000 with pump Drawings.idw";
             string PDFPath = @"C:\TempPDF\";
             string pdfPrinterName = "Microsoft Print To Pdf";
 
