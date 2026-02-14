@@ -1,0 +1,12 @@
+@page "/admin/configuration"
+@attribute [Authorize(Policy = "Admin")]
+
+<PageTitle>Configuration - HorstMFG</PageTitle>
+
+<h1>System Configuration</h1>
+
+<div class="placeholder-page">
+    <h3>Configuration</h3>
+    <p>Manage system-wide settings such as file paths, Vault connection, and Ghostscript configuration.</p>
+    <p>Settings are stored in the database and replace the legacy AppSettings.xml files.</p>
+</div>

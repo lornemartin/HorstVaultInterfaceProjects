@@ -1,0 +1,75 @@
+@inject NavigationManager Navigation
+
+<div class="nav-menu">
+    <div class="nav-brand">
+        <h4>HorstMFG</h4>
+    </div>
+
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            <nav>
+                <div class="nav-section">
+                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                        Home
+                    </NavLink>
+                </div>
+
+                <AuthorizeView Policy="Engineering">
+                    <Authorized Context="engContext">
+                        <div class="nav-section">
+                            <div class="nav-section-title">Engineering</div>
+                            <NavLink class="nav-link" href="/bom-import">
+                                BOM Import
+                            </NavLink>
+                            <NavLink class="nav-link" href="/engineering/orders">
+                                Orders
+                            </NavLink>
+                            <NavLink class="nav-link" href="/pdf-management">
+                                PDF Management
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="ShopFloor">
+                    <Authorized Context="sfContext">
+                        <div class="nav-section">
+                            <div class="nav-section-title">Production</div>
+                            <NavLink class="nav-link" href="/orders">
+                                Orders
+                            </NavLink>
+                            <NavLink class="nav-link" href="/parts">
+                                Parts
+                            </NavLink>
+                            <NavLink class="nav-link" href="/nesting">
+                                Nesting
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="Admin">
+                    <Authorized Context="adminContext">
+                        <div class="nav-section">
+                            <div class="nav-section-title">Admin</div>
+                            <NavLink class="nav-link" href="/admin/users">
+                                Users
+                            </NavLink>
+                            <NavLink class="nav-link" href="/admin/configuration">
+                                Configuration
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </nav>
+
+            <div class="nav-footer">
+                <div class="nav-user-info">
+                    <small>@authContext.User.Identity?.Name</small>
+                    <br />
+                    <small class="text-muted">@authContext.User.FindFirst("PlantName")?.Value</small>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>

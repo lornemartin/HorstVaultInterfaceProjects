@@ -1,0 +1,114 @@
+@page "/login"
+@layout LoginLayout
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@using HorstMFG.Infrastructure.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Login - HorstMFG</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <h2>HorstMFG</h2>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div style="color: #e50000; margin-bottom: 1rem; text-align: center;">
+                @_errorMessage
+            </div>
+        }
+
+        <EditForm Model="_loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 600;">Username</label>
+                <InputText @bind-Value="_loginModel.UserName" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 600;">Password</label>
+                <InputText @bind-Value="_loginModel.Password" type="password" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
+            </div>
+            <button type="submit" style="width: 100%; padding: 0.75rem; background-color: #3b82f6; color: white; border: none; border-radius: 0.25rem; font-size: 1rem; cursor: pointer;">
+                Sign In
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginModel _loginModel { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? Logout { get; set; }
+
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext is null) return;
+
+        if (Logout == "true")
+        {
+            await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        if (httpContext.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext is null) return;
+
+        var user = await DbContext.Users
+            .Include(u => u.Roles)
+            .Include(u => u.Plant)
+            .FirstOrDefaultAsync(u => u.UserName == _loginModel.UserName && u.IsActive);
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(_loginModel.Password, user.PasswordHash))
+        {
+            _errorMessage = "Invalid username or password.";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.FullName),
+            new("UserName", user.UserName),
+            new("PlantId", user.PlantId.ToString()),
+            new("PlantName", user.Plant.Name)
+        };
+
+        foreach (var role in user.Roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.RoleName.ToString()));
+        }
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        await httpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties { IsPersistent = true });
+
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private class LoginModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

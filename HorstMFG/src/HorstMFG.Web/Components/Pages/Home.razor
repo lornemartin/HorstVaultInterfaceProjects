@@ -1,0 +1,31 @@
+@page "/"
+@attribute [Authorize]
+
+<PageTitle>Home - HorstMFG</PageTitle>
+
+<h1>Dashboard</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <p>Welcome, @context.User.Identity?.Name. You are logged in to <strong>@context.User.FindFirst("PlantName")?.Value</strong>.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 2rem;">
+            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4>BOM Import</h4>
+                <p style="color: #64748b;">Import and manage Bills of Materials</p>
+            </div>
+            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4>Orders</h4>
+                <p style="color: #64748b;">Track production orders</p>
+            </div>
+            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4>Nesting</h4>
+                <p style="color: #64748b;">Manage Radan nesting projects</p>
+            </div>
+            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4>PDFs</h4>
+                <p style="color: #64748b;">Generate and manage shop drawings</p>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>

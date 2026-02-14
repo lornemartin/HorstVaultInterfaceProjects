@@ -1,0 +1,15 @@
+namespace HorstMFG.Core.Entities;
+
+public class Plant
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+
+    public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<Nest> Nests { get; set; } = new List<Nest>();
+    public ICollection<RadanIdAssignment> RadanIdAssignments { get; set; } = new List<RadanIdAssignment>();
+    public ICollection<BomImportBatch> BomImportBatches { get; set; } = new List<BomImportBatch>();
+}
