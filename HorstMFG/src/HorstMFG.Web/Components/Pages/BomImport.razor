@@ -1,12 +1,226 @@
 @page "/bom-import"
 @attribute [Authorize(Policy = "Engineering")]
+@rendermode InteractiveServer
+@inject IBomService BomService
+@inject ApplicationDbContext DbContext
+@inject IHttpContextAccessor HttpContextAccessor
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>BOM Import - HorstMFG</PageTitle>
 
-<h1>BOM Import</h1>
+<h3>BOM Import</h3>
 
-<div class="placeholder-page">
-    <h3>BOM Import</h3>
-    <p>Import Bills of Materials from Vault as Make to Order (MTO) or Make to Stock (MTS).</p>
-    <p>This page will allow uploading BOM exports and importing them into the database.</p>
-</div>
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div style="padding: 0.75rem; margin-bottom: 1rem; border-radius: 0.25rem;
+                background-color: @(_isError ? "#fee2e2" : "#dcfce7");
+                color: @(_isError ? "#991b1b" : "#166534");">
+        @_message
+    </div>
+}
+
+@if (_importComplete)
+{
+    <div style="margin-bottom: 1rem;">
+        <p>Batch "<strong>@_batchName</strong>" imported successfully with @_parsedLines.Count items.</p>
+        <SfButton CssClass="e-primary" OnClick="Reset">Import Another</SfButton>
+    </div>
+}
+else
+{
+    <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+        <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">BOM Type</label>
+            <SfRadioButton Label="Make to Order" Name="bomType" Value="@("MakeToOrder")"
+                           @bind-Checked="SelectedBomTypeStr" TChecked="string" />
+            <SfRadioButton Label="Make to Stock" Name="bomType" Value="@("MakeToStock")"
+                           @bind-Checked="SelectedBomTypeStr" TChecked="string"
+                           style="margin-left: 1rem;" />
+        </div>
+
+        <div style="min-width: 200px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Plant</label>
+            <SfDropDownList TValue="int" TItem="Plant"
+                            @bind-Value="_selectedPlantId"
+                            DataSource="_plants"
+                            Enabled="_isAdmin">
+                <DropDownListFieldSettings Text="Name" Value="Id" />
+            </SfDropDownList>
+        </div>
+
+        <div style="min-width: 200px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch Name</label>
+            <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-02-14 Order 12345" />
+        </div>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Upload Vault Export File</label>
+        <InputFile OnChange="OnFileSelected" accept=".txt,.tsv" />
+    </div>
+
+    @if (_parsing)
+    {
+        <p>Parsing file...</p>
+    }
+
+    @if (_parsedLines.Count > 0)
+    {
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <strong>@_parsedLines.Count items parsed</strong>
+            <span>|</span>
+            <span>Processed: @_parsedLines.Count(l => l.IsProcessed)</span>
+            <span>|</span>
+            <span>Skipped: @_parsedLines.Count(l => !l.IsProcessed)</span>
+        </div>
+
+        <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="450">
+            <GridColumns>
+                <GridColumn Field="@nameof(BomExportLine.IsProcessed)" HeaderText="Process" Width="80" TextAlign="TextAlign.Center"
+                            DisplayAsCheckBox="true" />
+                <GridColumn Field="@nameof(BomExportLine.Number)" HeaderText="Number" Width="150" />
+                <GridColumn Field="@nameof(BomExportLine.Title)" HeaderText="Title" Width="180" />
+                <GridColumn Field="@nameof(BomExportLine.Category)" HeaderText="Category" Width="100" />
+                <GridColumn Field="@nameof(BomExportLine.Material)" HeaderText="Material" Width="120" />
+                <GridColumn Field="@nameof(BomExportLine.Thickness)" HeaderText="Thickness" Width="90" />
+                <GridColumn Field="@nameof(BomExportLine.Operations)" HeaderText="Operations" Width="110" />
+                <GridColumn Field="@nameof(BomExportLine.Qty)" HeaderText="Qty" Width="60" TextAlign="TextAlign.Right" />
+                <GridColumn Field="@nameof(BomExportLine.IsStock)" HeaderText="Stock" Width="70" TextAlign="TextAlign.Center"
+                            DisplayAsCheckBox="true" />
+                <GridColumn Field="@nameof(BomExportLine.StructCode)" HeaderText="Struct Code" Width="180" />
+                <GridColumn Field="@nameof(BomExportLine.Parent)" HeaderText="Parent" Width="140" />
+                <GridColumn Field="@nameof(BomExportLine.LifecycleState)" HeaderText="State" Width="90" />
+                <GridColumn Field="@nameof(BomExportLine.Notes)" HeaderText="Notes" Width="150" />
+            </GridColumns>
+        </SfGrid>
+
+        <div style="margin-top: 1rem;">
+            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName))">
+                @if (_importing)
+                {
+                    <span>Importing...</span>
+                }
+                else
+                {
+                    <span>Import to Database</span>
+                }
+            </SfButton>
+        </div>
+    }
+}
+
+@code {
+    private List<BomExportLine> _parsedLines = new();
+    private List<Plant> _plants = new();
+    private string SelectedBomTypeStr = "MakeToOrder";
+    private BomType SelectedBomType => SelectedBomTypeStr == "MakeToStock" ? BomType.MakeToStock : BomType.MakeToOrder;
+    private int _selectedPlantId;
+    private string _batchName = "";
+    private bool _parsing;
+    private bool _importing;
+    private bool _importComplete;
+    private bool _isAdmin;
+    private int _userId;
+    private string? _message;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var uid))
+                _userId = uid;
+
+            var plantIdClaim = httpContext.User.FindFirst("PlantId")?.Value;
+            if (int.TryParse(plantIdClaim, out var pid))
+                _selectedPlantId = pid;
+
+            _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
+        }
+
+        // Default batch name
+        _batchName = DateTime.Now.ToString("yyyy-MM-dd");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _parsing = true;
+        _message = null;
+        _parsedLines.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var file = e.File;
+            // 10MB max
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            _parsedLines = BomService.ParseExportFile(ms, SelectedBomType);
+
+            if (_parsedLines.Count == 0)
+            {
+                _message = "No items found in the file. Make sure it is a valid Vault Item Export file.";
+                _isError = true;
+            }
+
+            // Auto-set batch name from file name if still default
+            if (_batchName == DateTime.Now.ToString("yyyy-MM-dd"))
+            {
+                var baseName = Path.GetFileNameWithoutExtension(file.Name);
+                if (baseName != "VaultExportData")
+                    _batchName = $"{DateTime.Now:yyyy-MM-dd} {baseName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error parsing file: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _parsing = false;
+        }
+    }
+
+    private async Task ImportBatch()
+    {
+        if (_parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName)) return;
+
+        _importing = true;
+        _message = null;
+        StateHasChanged();
+
+        try
+        {
+            await BomService.ImportBatchAsync(_batchName, SelectedBomType, _selectedPlantId, _userId, _parsedLines);
+            _importComplete = true;
+            _message = null;
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error importing batch: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
+    private void Reset()
+    {
+        _parsedLines.Clear();
+        _importComplete = false;
+        _batchName = DateTime.Now.ToString("yyyy-MM-dd");
+        _message = null;
+        _isError = false;
+    }
+}

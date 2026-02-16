@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using HorstMFG.Core.Interfaces;
 using HorstMFG.Infrastructure.Data;
 using HorstMFG.Web.Components;
+using HorstMFG.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -40,6 +42,9 @@ try
         .AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"))
         .AddPolicy("Engineering", policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Engineering"))
         .AddPolicy("ShopFloor", policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "ShopFloor"));
+
+    // Services
+    builder.Services.AddScoped<IBomService, BomService>();
 
     // Syncfusion
     Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(

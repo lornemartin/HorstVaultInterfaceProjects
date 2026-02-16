@@ -2,9 +2,9 @@ namespace HorstMFG.Core.Enums;
 
 public enum PartCategory
 {
-    SheetMetal,
-    Machined,
-    Purchased,
+    Product,
     Assembly,
+    Part,
+    Purchased,
     Other
 }

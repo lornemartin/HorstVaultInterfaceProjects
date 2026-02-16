@@ -67,10 +67,10 @@ public class ApplicationDbContext : DbContext
             e.Property(p => p.FileName).HasMaxLength(255);
             e.Property(p => p.Title).HasMaxLength(255);
             e.Property(p => p.Description).HasMaxLength(1000);
-            e.Property(p => p.Category).HasConversion<string>().HasMaxLength(50);
+            e.Property(p => p.Category).HasConversion<string>().HasMaxLength(100);
             e.Property(p => p.Material).HasMaxLength(100);
             e.Property(p => p.Thickness).HasPrecision(10, 4);
-            e.Property(p => p.StructCode).HasMaxLength(50);
+            e.Property(p => p.StructCode).HasMaxLength(200);
             e.Property(p => p.Operations).HasMaxLength(500);
             e.Property(p => p.Keywords).HasMaxLength(500);
             e.Property(p => p.LifecycleState).HasMaxLength(50);
