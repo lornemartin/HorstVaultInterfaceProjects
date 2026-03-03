@@ -4,6 +4,7 @@
 @inject IBomService BomService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
 
@@ -23,7 +24,13 @@
 @if (_importComplete)
 {
     <div style="margin-bottom: 1rem;">
-        <p>Batch "<strong>@_batchName</strong>" imported successfully with @_parsedLines.Count items.</p>
+        <p>
+            "@_batchName" imported successfully with @_parsedLines.Count items.
+            @if (_pdfsCopied.HasValue)
+            {
+                <span> PDFs copied: @_pdfsCopied.Value of @_parsedLines.Select(l => l.Number).Distinct().Count().</span>
+            }
+        </p>
         <SfButton CssClass="e-primary" OnClick="Reset">Import Another</SfButton>
     </div>
 }
@@ -50,9 +57,17 @@ else
         </div>
 
         <div style="min-width: 200px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch Name</label>
-            <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-02-14 Order 12345" />
+            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch/Schedule Name</label>
+            <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-02-14 Schedule A" />
         </div>
+
+        @if (SelectedBomTypeStr == "MakeToStock")
+        {
+            <div style="min-width: 200px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Number <span style="color: #b91c1c;">*</span></label>
+                <SfTextBox @bind-Value="_orderNumber" Placeholder="e.g. 12345" />
+            </div>
+        }
     </div>
 
     <div style="margin-bottom: 1.5rem;">
@@ -70,15 +85,27 @@ else
         <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
             <strong>@_parsedLines.Count items parsed</strong>
             <span>|</span>
-            <span>Processed: @_parsedLines.Count(l => l.IsProcessed)</span>
-            <span>|</span>
-            <span>Skipped: @_parsedLines.Count(l => !l.IsProcessed)</span>
+            <span style="color: @(_missingPdfCount > 0 ? "#b91c1c" : "#166534");">Missing PDFs: @_missingPdfCount</span>
         </div>
 
-        <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="450">
+        <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="450"
+                AllowSelection="true" TValue="BomExportLine">
+            <GridEditSettings AllowEditing="true" Mode="Syncfusion.Blazor.Grids.EditMode.Batch" />
+            <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" />
+            <GridEvents RowSelected="OnRowSelected" RowDataBound="OnRowDataBound" TValue="BomExportLine" />
+            <GridSortSettings>
+                <GridSortColumns>
+                    <GridSortColumn Field="@nameof(BomExportLine.SortOrder)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Category)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Operations)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Thickness)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Material)" Direction="SortDirection.Ascending" />
+                </GridSortColumns>
+            </GridSortSettings>
             <GridColumns>
-                <GridColumn Field="@nameof(BomExportLine.IsProcessed)" HeaderText="Process" Width="80" TextAlign="TextAlign.Center"
-                            DisplayAsCheckBox="true" />
+                <GridColumn Field="@nameof(BomExportLine.SortOrder)" HeaderText="Sort" Width="0" Visible="false" />
+                <GridColumn Field="@nameof(BomExportLine.HasPdf)" HeaderText="PDF" Width="70" TextAlign="TextAlign.Center"
+                            DisplayAsCheckBox="true" AllowEditing="false" />
                 <GridColumn Field="@nameof(BomExportLine.Number)" HeaderText="Number" Width="150" />
                 <GridColumn Field="@nameof(BomExportLine.Title)" HeaderText="Title" Width="180" />
                 <GridColumn Field="@nameof(BomExportLine.Category)" HeaderText="Category" Width="100" />
@@ -87,16 +114,53 @@ else
                 <GridColumn Field="@nameof(BomExportLine.Operations)" HeaderText="Operations" Width="110" />
                 <GridColumn Field="@nameof(BomExportLine.Qty)" HeaderText="Qty" Width="60" TextAlign="TextAlign.Right" />
                 <GridColumn Field="@nameof(BomExportLine.IsStock)" HeaderText="Stock" Width="70" TextAlign="TextAlign.Center"
-                            DisplayAsCheckBox="true" />
+                            DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
                 <GridColumn Field="@nameof(BomExportLine.StructCode)" HeaderText="Struct Code" Width="180" />
                 <GridColumn Field="@nameof(BomExportLine.Parent)" HeaderText="Parent" Width="140" />
-                <GridColumn Field="@nameof(BomExportLine.LifecycleState)" HeaderText="State" Width="90" />
                 <GridColumn Field="@nameof(BomExportLine.Notes)" HeaderText="Notes" Width="150" />
             </GridColumns>
         </SfGrid>
 
+        @if (_selectedLine is not null)
+        {
+            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: #f9fafb;">
+                <h4 style="margin: 0 0 0.75rem 0;">@_selectedLine.Number — @_selectedLine.Title</h4>
+
+                @if (_selectedLine.HasPdf)
+                {
+                    <iframe src="/api/pdf/@(Uri.EscapeDataString(_selectedLine.Number))"
+                            style="width: 100%; height: 600px; border: 1px solid #e5e7eb; border-radius: 0.25rem;"
+                            title="PDF Preview" />
+                }
+                else
+                {
+                    <div style="padding: 0.75rem; background: #fef3c7; color: #92400e; border-radius: 0.25rem; margin-bottom: 0.75rem;">
+                        No PDF found on share for this item. (State: @_selectedLine.LifecycleState)
+                    </div>
+                    <SfButton CssClass="e-primary" OnClick="GeneratePdf" Disabled="@_generatingPdf">
+                        @if (_generatingPdf)
+                        {
+                            <span>Generating PDF...</span>
+                        }
+                        else
+                        {
+                            <span>Generate PDF</span>
+                        }
+                    </SfButton>
+                    @if (_generateResult is not null)
+                    {
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 0.25rem;
+                                    background: @(_generateSuccess ? "#dcfce7" : "#fee2e2");
+                                    color: @(_generateSuccess ? "#166534" : "#991b1b");">
+                            @_generateResult
+                        </div>
+                    }
+                }
+            </div>
+        }
+
         <div style="margin-top: 1rem;">
-            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName))">
+            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || MtsOrderNumberMissing)">
                 @if (_importing)
                 {
                     <span>Importing...</span>
@@ -106,6 +170,10 @@ else
                     <span>Import to Database</span>
                 }
             </SfButton>
+            @if (MtsOrderNumberMissing)
+            {
+                <span style="margin-left: 1rem; color: #b91c1c; font-size: 0.875rem;">Order Number is required for Make to Stock.</span>
+            }
         </div>
     }
 }
@@ -115,8 +183,10 @@ else
     private List<Plant> _plants = new();
     private string SelectedBomTypeStr = "MakeToOrder";
     private BomType SelectedBomType => SelectedBomTypeStr == "MakeToStock" ? BomType.MakeToStock : BomType.MakeToOrder;
+    private bool MtsOrderNumberMissing => SelectedBomTypeStr == "MakeToStock" && string.IsNullOrWhiteSpace(_orderNumber);
     private int _selectedPlantId;
     private string _batchName = "";
+    private string _orderNumber = "";
     private bool _parsing;
     private bool _importing;
     private bool _importComplete;
@@ -124,6 +194,13 @@ else
     private int _userId;
     private string? _message;
     private bool _isError;
+    private BomExportLine? _selectedLine;
+    private bool _generatingPdf;
+    private string? _generateResult;
+    private bool _generateSuccess;
+    private int _missingPdfCount;
+    private bool _jsReady;
+    private int? _pdfsCopied;
 
     protected override async Task OnInitializedAsync()
     {
@@ -143,8 +220,37 @@ else
             _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
         }
 
-        // Default batch name
         _batchName = DateTime.Now.ToString("yyyy-MM-dd");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsReady = true;
+
+            var savedBomType = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_bomType");
+            if (!string.IsNullOrEmpty(savedBomType))
+                SelectedBomTypeStr = savedBomType;
+
+            var savedPlantId = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_plantId");
+            if (!string.IsNullOrEmpty(savedPlantId) && int.TryParse(savedPlantId, out var pid) && _isAdmin)
+                _selectedPlantId = pid;
+
+            var savedBatchName = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_batchName");
+            if (!string.IsNullOrEmpty(savedBatchName))
+                _batchName = savedBatchName;
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveStickyValues()
+    {
+        if (!_jsReady) return;
+        await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_bomType", SelectedBomTypeStr);
+        await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_plantId", _selectedPlantId.ToString());
+        await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_batchName", _batchName);
     }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
@@ -157,13 +263,13 @@ else
         try
         {
             var file = e.File;
-            // 10MB max
             using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             ms.Position = 0;
 
             _parsedLines = BomService.ParseExportFile(ms, SelectedBomType);
+            _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
 
             if (_parsedLines.Count == 0)
             {
@@ -171,7 +277,6 @@ else
                 _isError = true;
             }
 
-            // Auto-set batch name from file name if still default
             if (_batchName == DateTime.Now.ToString("yyyy-MM-dd"))
             {
                 var baseName = Path.GetFileNameWithoutExtension(file.Name);
@@ -193,20 +298,34 @@ else
     private async Task ImportBatch()
     {
         if (_parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName)) return;
+        if (MtsOrderNumberMissing) return;
 
         _importing = true;
         _message = null;
+        _pdfsCopied = null;
         StateHasChanged();
 
         try
         {
-            await BomService.ImportBatchAsync(_batchName, SelectedBomType, _selectedPlantId, _userId, _parsedLines);
+            if (SelectedBomType == BomType.MakeToStock)
+            {
+                var schedule = await BomService.ImportScheduleAsync(
+                    _batchName, _orderNumber.Trim(), _selectedPlantId, _userId, _parsedLines);
+                _pdfsCopied = _parsedLines.Count(l => l.HasPdf);
+            }
+            else
+            {
+                var batch = await BomService.ImportBatchAsync(
+                    _batchName, _selectedPlantId, _userId, _parsedLines);
+                _pdfsCopied = _parsedLines.Count(l => l.HasPdf);
+            }
+
+            await SaveStickyValues();
             _importComplete = true;
-            _message = null;
         }
         catch (Exception ex)
         {
-            _message = $"Error importing batch: {ex.Message}";
+            _message = $"Error importing: {ex.Message}";
             _isError = true;
         }
         finally
@@ -215,12 +334,64 @@ else
         }
     }
 
+    private void OnRowDataBound(RowDataBoundEventArgs<BomExportLine> args)
+    {
+        if (!args.Data.HasPdf)
+            args.Row.AddClass(new[] { "row-no-pdf" });
+        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+            args.Row.AddClass(new[] { "row-has-notes" });
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<BomExportLine> args)
+    {
+        _selectedLine = args.Data;
+        _generateResult = null;
+    }
+
+    private async Task GeneratePdf()
+    {
+        if (_selectedLine is null) return;
+
+        _generatingPdf = true;
+        _generateResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var success = await BomService.GeneratePdfAsync(_selectedLine.Number);
+            _generateSuccess = success;
+            if (success)
+            {
+                _selectedLine.HasPdf = true;
+                _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+                _generateResult = $"PDF generated successfully for {_selectedLine.Number}.";
+            }
+            else
+            {
+                _generateResult = $"PDF generation failed for {_selectedLine.Number}. Check logs for details.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _generateSuccess = false;
+            _generateResult = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _generatingPdf = false;
+        }
+    }
+
     private void Reset()
     {
         _parsedLines.Clear();
         _importComplete = false;
-        _batchName = DateTime.Now.ToString("yyyy-MM-dd");
+        _orderNumber = "";
         _message = null;
         _isError = false;
+        _selectedLine = null;
+        _generateResult = null;
+        _missingPdfCount = 0;
+        _pdfsCopied = null;
     }
 }

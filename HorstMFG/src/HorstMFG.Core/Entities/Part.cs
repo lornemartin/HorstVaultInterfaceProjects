@@ -24,6 +24,5 @@ public class Part
     public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
 
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-    public ICollection<BomLineItem> BomLineItems { get; set; } = new List<BomLineItem>();
     public ICollection<PdfDocument> PdfDocuments { get; set; } = new List<PdfDocument>();
 }

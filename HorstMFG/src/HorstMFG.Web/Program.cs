@@ -76,6 +76,21 @@ try
     app.UseAuthorization();
     app.UseAntiforgery();
 
+    // Minimal API: serve PDFs from the share
+    var pdfSharePath = builder.Configuration["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
+    app.MapGet("/api/pdf/{fileName}", (string fileName) =>
+    {
+        // Sanitize — only allow alphanumeric, dash, underscore, dot
+        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            return Results.BadRequest("Invalid file name");
+
+        var path = Path.Combine(pdfSharePath, fileName + ".pdf");
+        if (!File.Exists(path))
+            return Results.NotFound();
+
+        return Results.File(path, "application/pdf");
+    }).RequireAuthorization();
+
     app.MapRazorComponents<App>()
         .AddInteractiveServerRenderMode();
 

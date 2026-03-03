@@ -1,0 +1,29 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace HorstMFG.Infrastructure.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddDescriptionToBomLineItem : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "Description",
+                table: "bom_line_items",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "Description",
+                table: "bom_line_items");
+        }
+    }
+}

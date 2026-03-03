@@ -1,5 +1,4 @@
 using HorstMFG.Core.Entities;
-using HorstMFG.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HorstMFG.Infrastructure.Data;
@@ -12,8 +11,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Part> Parts => Set<Part>();
-    public DbSet<BomImportBatch> BomImportBatches => Set<BomImportBatch>();
-    public DbSet<BomLineItem> BomLineItems => Set<BomLineItem>();
+    public DbSet<Batch> Batches => Set<Batch>();
+    public DbSet<BatchProduct> BatchProducts => Set<BatchProduct>();
+    public DbSet<Schedule> Schedules => Set<Schedule>();
+    public DbSet<ScheduleOrder> ScheduleOrders => Set<ScheduleOrder>();
+    public DbSet<PartLineItem> PartLineItems => Set<PartLineItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Nest> Nests => Set<Nest>();
@@ -78,27 +80,62 @@ public class ApplicationDbContext : DbContext
             e.HasIndex(p => p.Number).IsUnique();
         });
 
-        // BomImportBatch
-        modelBuilder.Entity<BomImportBatch>(e =>
+        // Batch
+        modelBuilder.Entity<Batch>(e =>
         {
-            e.ToTable("bom_import_batches");
+            e.ToTable("batches");
             e.HasKey(b => b.Id);
             e.Property(b => b.Name).HasMaxLength(200).IsRequired();
-            e.Property(b => b.BomType).HasConversion<string>().HasMaxLength(20).IsRequired();
-            e.HasOne(b => b.Plant).WithMany(p => p.BomImportBatches).HasForeignKey(b => b.PlantId);
-            e.HasOne(b => b.ImportedByUser).WithMany(u => u.ImportedBatches).HasForeignKey(b => b.ImportedByUserId);
+            e.Property(b => b.LocalPdfFolder).HasMaxLength(500);
+            e.HasOne(b => b.Plant).WithMany(p => p.Batches).HasForeignKey(b => b.PlantId);
+            e.HasOne(b => b.ImportedByUser).WithMany().HasForeignKey(b => b.ImportedByUserId);
         });
 
-        // BomLineItem
-        modelBuilder.Entity<BomLineItem>(e =>
+        // BatchProduct
+        modelBuilder.Entity<BatchProduct>(e =>
         {
-            e.ToTable("bom_line_items");
-            e.HasKey(l => l.Id);
-            e.Property(l => l.Number).HasMaxLength(100).IsRequired();
-            e.Property(l => l.ParentNumber).HasMaxLength(100);
-            e.HasOne(l => l.Batch).WithMany(b => b.LineItems).HasForeignKey(l => l.BatchId);
-            e.HasOne(l => l.Parent).WithMany(l => l.Children).HasForeignKey(l => l.ParentId);
-            e.HasOne(l => l.Part).WithMany(p => p.BomLineItems).HasForeignKey(l => l.PartId);
+            e.ToTable("batch_products");
+            e.HasKey(bp => bp.Id);
+            e.Property(bp => bp.ProductName).HasMaxLength(200).IsRequired();
+            e.HasOne(bp => bp.Batch).WithMany(b => b.BatchProducts).HasForeignKey(bp => bp.BatchId);
+        });
+
+        // Schedule
+        modelBuilder.Entity<Schedule>(e =>
+        {
+            e.ToTable("schedules");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).HasMaxLength(200).IsRequired();
+            e.Property(s => s.LocalPdfFolder).HasMaxLength(500);
+            e.HasOne(s => s.Plant).WithMany(p => p.Schedules).HasForeignKey(s => s.PlantId);
+            e.HasOne(s => s.ImportedByUser).WithMany().HasForeignKey(s => s.ImportedByUserId);
+        });
+
+        // ScheduleOrder
+        modelBuilder.Entity<ScheduleOrder>(e =>
+        {
+            e.ToTable("schedule_orders");
+            e.HasKey(so => so.Id);
+            e.Property(so => so.OrderNumber).HasMaxLength(100).IsRequired();
+            e.HasOne(so => so.Schedule).WithMany(s => s.ScheduleOrders).HasForeignKey(so => so.ScheduleId);
+        });
+
+        // PartLineItem
+        modelBuilder.Entity<PartLineItem>(e =>
+        {
+            e.ToTable("part_line_items");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.PartNumber).HasMaxLength(100).IsRequired();
+            e.Property(p => p.Title).HasMaxLength(255);
+            e.Property(p => p.Description).HasMaxLength(1000);
+            e.Property(p => p.Category).HasMaxLength(100);
+            e.Property(p => p.Material).HasMaxLength(100);
+            e.Property(p => p.Thickness).HasMaxLength(50);
+            e.Property(p => p.StructCode).HasMaxLength(200);
+            e.Property(p => p.Operations).HasMaxLength(500);
+            e.Property(p => p.Notes).HasMaxLength(2000);
+            e.HasOne(p => p.BatchProduct).WithMany(bp => bp.Parts).HasForeignKey(p => p.BatchProductId).IsRequired(false);
+            e.HasOne(p => p.ScheduleOrder).WithMany(so => so.Parts).HasForeignKey(p => p.ScheduleOrderId).IsRequired(false);
         });
 
         // Order
@@ -161,7 +198,6 @@ public class ApplicationDbContext : DbContext
             e.Property(d => d.FilePath).HasMaxLength(500).IsRequired();
             e.Property(d => d.Department).HasMaxLength(100);
             e.HasOne(d => d.Part).WithMany(p => p.PdfDocuments).HasForeignKey(d => d.PartId);
-            e.HasOne(d => d.Batch).WithMany(b => b.PdfDocuments).HasForeignKey(d => d.BatchId);
         });
 
         // SystemConfiguration

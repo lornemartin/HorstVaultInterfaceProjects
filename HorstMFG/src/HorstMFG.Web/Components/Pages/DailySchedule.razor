@@ -1,12 +1,278 @@
 @page "/engineering/orders"
 @attribute [Authorize(Policy = "Engineering")]
+@rendermode InteractiveServer
+@inject IBomService BomService
+@inject ApplicationDbContext DbContext
+@inject IHttpContextAccessor HttpContextAccessor
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
-<h1>Orders</h1>
+<h3>Orders</h3>
 
-<div class="placeholder-page">
-    <h3>Orders</h3>
-    <p>Review and manage Make To Order (MTO) and Make To Stock (MTS) orders.</p>
-    <p>Select a batch to review its line items, then generate all PDFs at once.</p>
+<div style="display: flex; gap: 2rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;">
+    <div style="min-width: 200px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Plant</label>
+        <SfDropDownList TValue="int?" TItem="PlantOption"
+                        Value="_selectedPlantId"
+                        ValueChanged="OnPlantChanged"
+                        DataSource="_plantOptions"
+                        Enabled="_isAdmin">
+            <DropDownListFieldSettings Text="Name" Value="Id" />
+        </SfDropDownList>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+        <SfCheckBox Label="Show Processed Items" @bind-Checked="_showProcessed" ValueChange="OnShowProcessedChanged" TChecked="bool" />
+    </div>
 </div>
+
+<SfTab>
+    <TabItems>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="Daily Schedule" />
+            </ChildContent>
+            <ContentTemplate>
+                <div style="padding-top: 0.5rem;">
+                    @if (_mtoItems.Count == 0)
+                    {
+                        <p style="color: #64748b; padding: 2rem; text-align: center;">No Make-to-Order batches found.</p>
+                    }
+                    else
+                    {
+                        <SfTreeGrid DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    TreeColumnIndex="0" AllowSorting="true" Height="550">
+                            <TreeGridEvents RowDataBound="OnRowDataBound" TValue="ExportTreeItem" />
+                            <TreeGridColumns>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="200">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow)
+                                            {
+                                                <strong>@item.BatchName</strong>
+                                            }
+                                            else if (item.IsProductRow)
+                                            {
+                                                <span style="font-style: italic;">@item.ProductName</span>
+                                            }
+                                            else
+                                            {
+                                                @item.Number
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Title)" HeaderText="Title" Width="180">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (!item!.IsBatchRow && !item.IsProductRow)
+                                            {
+                                                @item.Title
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Category)" HeaderText="Category" Width="100" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Material)" HeaderText="Material" Width="120" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Thickness)" HeaderText="Thickness" Width="90" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Operations)" HeaderText="Operations" Width="110" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Qty)" HeaderText="Qty" Width="70" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow || item.IsProductRow)
+                                            {
+                                                <span style="color: #6b7280;">@item.ItemCount items</span>
+                                            }
+                                            else
+                                            {
+                                                @item.Qty
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.IsStock)" HeaderText="Stock" Width="70"
+                                                DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.HasPdf)" HeaderText="PDF" Width="70"
+                                                DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Notes)" HeaderText="Notes" Width="150" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.ImportDate)" HeaderText="Imported" Width="140">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow && item.ImportDate.HasValue)
+                                            {
+                                                @item.ImportDate.Value.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                            </TreeGridColumns>
+                        </SfTreeGrid>
+                    }
+                </div>
+            </ContentTemplate>
+        </TabItem>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="Batches" />
+            </ChildContent>
+            <ContentTemplate>
+                <div style="padding-top: 0.5rem;">
+                    @if (_mtsItems.Count == 0)
+                    {
+                        <p style="color: #64748b; padding: 2rem; text-align: center;">No Make-to-Stock schedules found.</p>
+                    }
+                    else
+                    {
+                        <SfTreeGrid DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    TreeColumnIndex="0" AllowSorting="true" Height="550">
+                            <TreeGridEvents RowDataBound="OnRowDataBound" TValue="ExportTreeItem" />
+                            <TreeGridColumns>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="200">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow)
+                                            {
+                                                <strong>@item.BatchName</strong>
+                                            }
+                                            else if (item.IsProductRow)
+                                            {
+                                                <span>Order: <strong>@item.OrderNumber</strong></span>
+                                            }
+                                            else
+                                            {
+                                                @item.Number
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Title)" HeaderText="Title" Width="180">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (!item!.IsBatchRow && !item.IsProductRow)
+                                            {
+                                                @item.Title
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Category)" HeaderText="Category" Width="100" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Material)" HeaderText="Material" Width="120" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Thickness)" HeaderText="Thickness" Width="90" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Operations)" HeaderText="Operations" Width="110" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Qty)" HeaderText="Qty" Width="70" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow || item.IsProductRow)
+                                            {
+                                                <span style="color: #6b7280;">@item.ItemCount items</span>
+                                            }
+                                            else
+                                            {
+                                                @item.Qty
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.IsStock)" HeaderText="Stock" Width="70"
+                                                DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.HasPdf)" HeaderText="PDF" Width="70"
+                                                DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Notes)" HeaderText="Notes" Width="150" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.ImportDate)" HeaderText="Imported" Width="140">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            @if (item!.IsBatchRow && item.ImportDate.HasValue)
+                                            {
+                                                @item.ImportDate.Value.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
+                                            }
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
+                            </TreeGridColumns>
+                        </SfTreeGrid>
+                    }
+                </div>
+            </ContentTemplate>
+        </TabItem>
+    </TabItems>
+</SfTab>
+
+@code {
+    private List<ExportTreeItem> _mtoItems = new();
+    private List<ExportTreeItem> _mtsItems = new();
+    private List<PlantOption> _plantOptions = new();
+    private int? _selectedPlantId;
+    private bool _showProcessed;
+    private bool _isAdmin;
+
+    private record PlantOption(int? Id, string Name);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+        _plantOptions = new List<PlantOption> { new(null, "All Plants") };
+        _plantOptions.AddRange(plants.Select(p => new PlantOption(p.Id, p.Name)));
+
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
+
+            if (!_isAdmin)
+            {
+                var plantIdClaim = httpContext.User.FindFirst("PlantId")?.Value;
+                if (int.TryParse(plantIdClaim, out var pid))
+                    _selectedPlantId = pid;
+            }
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _mtoItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
+        _mtsItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
+    }
+
+    private async Task OnPlantChanged(int? value)
+    {
+        _selectedPlantId = value;
+        await LoadData();
+    }
+
+    private async Task OnShowProcessedChanged(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+    {
+        _showProcessed = args.Checked;
+        await LoadData();
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow)
+        {
+            args.Row.AddClass(new[] { "row-batch" });
+        }
+        else if (args.Data.IsProductRow)
+        {
+            args.Row.AddClass(new[] { "row-product" });
+        }
+        else
+        {
+            if (args.Data.IsProcessed)
+                args.Row.AddClass(new[] { "row-processed" });
+            if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+                args.Row.AddClass(new[] { "row-has-notes" });
+        }
+    }
+}

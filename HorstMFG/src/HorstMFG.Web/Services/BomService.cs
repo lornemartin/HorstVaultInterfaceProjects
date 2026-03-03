@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using HorstMFG.Core.DTOs;
 using HorstMFG.Core.Entities;
 using HorstMFG.Core.Enums;
 using HorstMFG.Core.Interfaces;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace HorstMFG.Web.Services;
@@ -12,11 +14,17 @@ public class BomService : IBomService
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<BomService> _log;
+    private readonly string _pdfSharePath;
+    private readonly string _localPdfPath;
+    private readonly string _powerJobsScriptPath;
 
-    public BomService(ApplicationDbContext db, ILogger<BomService> log)
+    public BomService(ApplicationDbContext db, ILogger<BomService> log, IConfiguration config)
     {
         _db = db;
         _log = log;
+        _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
+        _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
+        _powerJobsScriptPath = config["PowerJobs:ScriptPath"] ?? @"\\HWVMWK02\Jobs\Horst.PrintOnDemand.ps1";
     }
 
     /// <summary>
@@ -140,8 +148,8 @@ public class BomService : IBomService
             // Determine if this line should be processed based on MTO/MTS + IsStock
             bool isProcessed = bomType switch
             {
-                BomType.MakeToOrder => !isStock,
-                BomType.MakeToStock => isStock,
+                BomType.MakeToOrder => isStock,
+                BomType.MakeToStock => !isStock,
                 _ => true
             };
 
@@ -211,7 +219,15 @@ public class BomService : IBomService
             }
         }
 
-        _log.LogInformation("Parsed {Count} BOM lines from export file", deduped.Count);
+        // Check PDF existence and set sort order (<top> items pinned first)
+        foreach (var line in deduped)
+        {
+            line.HasPdf = PdfExistsOnShare(line.Number);
+            line.SortOrder = line.Parent == "<top>" ? 0 : 1;
+        }
+
+        _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",
+            deduped.Count, deduped.Count(l => !l.HasPdf));
         return deduped;
     }
 
@@ -223,7 +239,6 @@ public class BomService : IBomService
         var parentItem = itemList.FirstOrDefault(i => i.Number == item.Parent);
         if (parentItem == null)
         {
-            // Try without extension
             string parentNoExt = Path.GetFileNameWithoutExtension(item.Parent);
             parentItem = itemList.FirstOrDefault(i => i.Number == parentNoExt);
             if (parentItem == null)
@@ -236,165 +251,397 @@ public class BomService : IBomService
         return item.Qty;
     }
 
-    public async Task<BomImportBatch> ImportBatchAsync(
-        string name, BomType bomType, int plantId, int userId, List<BomExportLine> lines)
+    public async Task<Batch> ImportBatchAsync(string name, int plantId, int userId, List<BomExportLine> lines)
     {
-        var batch = new BomImportBatch
+        var localFolder = Path.Combine(_localPdfPath, "Batches", name);
+
+        var batch = new Batch
         {
             Name = name,
-            BomType = bomType,
             PlantId = plantId,
             ImportedByUserId = userId,
             ImportDate = DateTime.UtcNow,
+            LocalPdfFolder = localFolder,
         };
-        _db.BomImportBatches.Add(batch);
+        _db.Batches.Add(batch);
         await _db.SaveChangesAsync();
 
-        // Get or create Parts for each line
-        var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var existingParts = await _db.Parts
-            .Where(p => partNumbers.Contains(p.Number))
-            .ToDictionaryAsync(p => p.Number);
+        // Group lines by their Level-1 ancestor prefix
+        // Level-1 lines (no dot in level) become BatchProduct headers
+        // Child lines are keyed by their top-level prefix (e.g., "1", "2")
+        var groups = lines.GroupBy(l => GetLevel1Prefix(l.Level));
 
-        foreach (var line in lines)
+        foreach (var group in groups)
         {
-            if (!existingParts.TryGetValue(line.Number, out var part))
+            var level1Line = group.FirstOrDefault(l => !l.Level.Contains('.'));
+            string productName = level1Line?.Number ?? group.Key;
+
+            var product = new BatchProduct
             {
-                part = new Part
+                BatchId = batch.Id,
+                ProductName = productName,
+            };
+            _db.BatchProducts.Add(product);
+            await _db.SaveChangesAsync();
+
+            // All non-Level-1 lines in this group become PartLineItems
+            var childLines = group.Where(l => l.Level.Contains('.')).ToList();
+            foreach (var line in childLines)
+            {
+                var item = new PartLineItem
                 {
-                    Number = line.Number,
+                    BatchProductId = product.Id,
+                    PartNumber = line.Number,
                     Title = line.Title,
                     Description = line.ItemDescription,
-                    Category = ParseCategory(line.Category),
+                    Category = line.Category,
+                    Qty = line.Qty,
                     Material = line.Material,
-                    Thickness = ParseThickness(line.Thickness),
+                    Thickness = line.Thickness,
                     StructCode = line.StructCode,
                     Operations = line.Operations,
                     IsStock = line.IsStock,
-                    LifecycleState = line.LifecycleState,
-                    Keywords = line.Keywords,
-                    Notes = line.Notes,
+                    RequiresPdf = line.RequiresPdf,
+                    Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
+                    HasPdf = line.HasPdf,
+                    IsProcessed = line.IsProcessed,
                 };
-                _db.Parts.Add(part);
-                existingParts[line.Number] = part;
-            }
-            else
-            {
-                // Update existing part with latest data
-                part.Title = line.Title;
-                part.Description = line.ItemDescription;
-                part.Category = ParseCategory(line.Category);
-                part.Material = line.Material;
-                part.Thickness = ParseThickness(line.Thickness);
-                part.StructCode = line.StructCode;
-                part.Operations = line.Operations;
-                part.IsStock = line.IsStock;
-                part.LifecycleState = line.LifecycleState;
-                part.Keywords = line.Keywords;
-                part.Notes = line.Notes;
-                part.ModifiedDate = DateTime.UtcNow;
+                _db.PartLineItems.Add(item);
             }
         }
 
         await _db.SaveChangesAsync();
 
-        // Create BomLineItems
-        // Build parent lookup: number -> BomLineItem (for setting ParentId FK)
-        var lineItemsByNumber = new Dictionary<string, BomLineItem>();
+        // Copy PDFs to local folder
+        var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
+        var copyResults = CopyPdfsToLocalFolder(partNumbers, localFolder);
+        int copied = copyResults.Count(r => r.HasPdf);
 
-        foreach (var line in lines)
-        {
-            var part = existingParts[line.Number];
-            var bomLineItem = new BomLineItem
-            {
-                BatchId = batch.Id,
-                PartId = part.Id,
-                Number = line.Number,
-                ParentNumber = line.Parent == "<top>" ? null : line.Parent,
-                UnitQty = line.Qty,
-                RequiresPdf = line.RequiresPdf,
-                HasPdf = false,
-                Level = line.Level.Split('.').Length,
-                IsProcessed = line.IsProcessed,
-            };
-
-            // Set parent reference if not top-level
-            if (line.Parent != "<top>" && lineItemsByNumber.TryGetValue(line.Parent, out var parentLineItem))
-            {
-                bomLineItem.Parent = parentLineItem;
-            }
-
-            _db.BomLineItems.Add(bomLineItem);
-            lineItemsByNumber.TryAdd(line.Number, bomLineItem);
-        }
-
-        await _db.SaveChangesAsync();
-
-        _log.LogInformation("Imported batch '{Name}' with {Count} line items (type: {BomType})",
-            name, lines.Count, bomType);
+        _log.LogInformation(
+            "Imported batch '{Name}' with {GroupCount} products. Copied {Copied}/{Total} PDFs to {Folder}",
+            name, lines.GroupBy(l => GetLevel1Prefix(l.Level)).Count(), copied, partNumbers.Count, localFolder);
 
         return batch;
     }
 
-    private static PartCategory ParseCategory(string category) => category switch
+    public async Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int plantId, int userId, List<BomExportLine> lines)
     {
-        "Product" => PartCategory.Product,
-        "Assembly" => PartCategory.Assembly,
-        "Part" => PartCategory.Part,
-        "Purchased" => PartCategory.Purchased,
-        _ => PartCategory.Other,
-    };
+        var localFolder = Path.Combine(_localPdfPath, "Schedules", name);
 
-    private static decimal? ParseThickness(string thickness)
-    {
-        if (string.IsNullOrWhiteSpace(thickness)) return null;
-        // Remove " in" suffix if present (e.g., "0.062 in")
-        thickness = thickness.Replace(" in", "").Trim();
-        if (decimal.TryParse(thickness, out var val))
-            return val;
-        return null;
+        var schedule = new Schedule
+        {
+            Name = name,
+            PlantId = plantId,
+            ImportedByUserId = userId,
+            ImportDate = DateTime.UtcNow,
+            LocalPdfFolder = localFolder,
+        };
+        _db.Schedules.Add(schedule);
+        await _db.SaveChangesAsync();
+
+        var order = new ScheduleOrder
+        {
+            ScheduleId = schedule.Id,
+            OrderNumber = orderNumber,
+        };
+        _db.ScheduleOrders.Add(order);
+        await _db.SaveChangesAsync();
+
+        foreach (var line in lines)
+        {
+            var item = new PartLineItem
+            {
+                ScheduleOrderId = order.Id,
+                PartNumber = line.Number,
+                Title = line.Title,
+                Description = line.ItemDescription,
+                Category = line.Category,
+                Qty = line.Qty,
+                Material = line.Material,
+                Thickness = line.Thickness,
+                StructCode = line.StructCode,
+                Operations = line.Operations,
+                IsStock = line.IsStock,
+                RequiresPdf = line.RequiresPdf,
+                Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
+                HasPdf = line.HasPdf,
+                IsProcessed = line.IsProcessed,
+            };
+            _db.PartLineItems.Add(item);
+        }
+
+        await _db.SaveChangesAsync();
+
+        var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
+        var copyResults = CopyPdfsToLocalFolder(partNumbers, localFolder);
+        int copied = copyResults.Count(r => r.HasPdf);
+
+        _log.LogInformation(
+            "Imported schedule '{Name}' (order {OrderNumber}) with {Count} items. Copied {Copied}/{Total} PDFs to {Folder}",
+            name, orderNumber, lines.Count, copied, partNumbers.Count, localFolder);
+
+        return schedule;
     }
 
-    public async Task<IEnumerable<BomImportBatch>> GetBatchesAsync(int? plantId = null)
+    private List<(string PartNumber, bool HasPdf)> CopyPdfsToLocalFolder(IEnumerable<string> partNumbers, string destinationFolder)
     {
-        var query = _db.BomImportBatches
+        var results = new List<(string, bool)>();
+        try
+        {
+            Directory.CreateDirectory(destinationFolder);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Could not create local PDF folder: {Folder}", destinationFolder);
+            return results;
+        }
+
+        foreach (var partNumber in partNumbers)
+        {
+            var sourcePath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
+            var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
+            bool hasPdf = false;
+
+            if (File.Exists(sourcePath))
+            {
+                try
+                {
+                    File.Copy(sourcePath, destPath, overwrite: true);
+                    hasPdf = true;
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Failed to copy PDF for {PartNumber}", partNumber);
+                }
+            }
+
+            results.Add((partNumber, hasPdf));
+        }
+
+        return results;
+    }
+
+    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false)
+    {
+        var query = _db.Batches
             .Include(b => b.Plant)
             .Include(b => b.ImportedByUser)
+            .Include(b => b.BatchProducts)
+                .ThenInclude(bp => bp.Parts)
             .AsQueryable();
 
         if (plantId.HasValue)
             query = query.Where(b => b.PlantId == plantId.Value);
 
-        return await query.OrderByDescending(b => b.ImportDate).ToListAsync();
+        var batches = await query.OrderByDescending(b => b.ImportDate).ToListAsync();
+
+        var result = new List<ExportTreeItem>();
+        int treeId = 1;
+
+        foreach (var batch in batches)
+        {
+            // Count visible parts across all products
+            var visibleParts = batch.BatchProducts
+                .SelectMany(bp => bp.Parts)
+                .Where(p => includeProcessed || !p.IsProcessed)
+                .ToList();
+
+            if (visibleParts.Count == 0 && !includeProcessed)
+                continue;
+
+            int batchTreeId = treeId++;
+            result.Add(new ExportTreeItem
+            {
+                TreeId = batchTreeId,
+                TreeParentId = null,
+                IsBatchRow = true,
+                BatchName = batch.Name,
+                ImportDate = batch.ImportDate,
+                PlantName = batch.Plant?.Name,
+                ImportedBy = batch.ImportedByUser?.FullName,
+                ReadyForProduction = batch.ReadyForProduction,
+                ItemCount = visibleParts.Count,
+            });
+
+            foreach (var product in batch.BatchProducts.OrderBy(p => p.ProductName))
+            {
+                var productParts = product.Parts
+                    .Where(p => includeProcessed || !p.IsProcessed)
+                    .ToList();
+
+                if (productParts.Count == 0 && !includeProcessed)
+                    continue;
+
+                int productTreeId = treeId++;
+                result.Add(new ExportTreeItem
+                {
+                    TreeId = productTreeId,
+                    TreeParentId = batchTreeId,
+                    IsProductRow = true,
+                    ProductName = product.ProductName,
+                    ItemCount = productParts.Count,
+                });
+
+                foreach (var part in productParts.OrderBy(p => p.PartNumber))
+                {
+                    result.Add(new ExportTreeItem
+                    {
+                        TreeId = treeId++,
+                        TreeParentId = productTreeId,
+                        Number = part.PartNumber,
+                        Title = part.Title,
+                        Category = part.Category,
+                        Material = part.Material,
+                        Thickness = part.Thickness,
+                        Operations = part.Operations,
+                        Qty = part.Qty,
+                        IsStock = part.IsStock,
+                        HasPdf = part.HasPdf,
+                        Notes = part.Notes,
+                        IsProcessed = part.IsProcessed,
+                    });
+                }
+            }
+        }
+
+        return result;
     }
 
-    public async Task<BomImportBatch?> GetBatchByIdAsync(int id)
+    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false)
     {
-        return await _db.BomImportBatches
-            .Include(b => b.Plant)
-            .Include(b => b.ImportedByUser)
-            .Include(b => b.LineItems)
-                .ThenInclude(l => l.Part)
-            .FirstOrDefaultAsync(b => b.Id == id);
+        var query = _db.Schedules
+            .Include(s => s.Plant)
+            .Include(s => s.ImportedByUser)
+            .Include(s => s.ScheduleOrders)
+                .ThenInclude(so => so.Parts)
+            .AsQueryable();
+
+        if (plantId.HasValue)
+            query = query.Where(s => s.PlantId == plantId.Value);
+
+        var schedules = await query.OrderByDescending(s => s.ImportDate).ToListAsync();
+
+        var result = new List<ExportTreeItem>();
+        int treeId = 1;
+
+        foreach (var schedule in schedules)
+        {
+            var visibleParts = schedule.ScheduleOrders
+                .SelectMany(so => so.Parts)
+                .Where(p => includeProcessed || !p.IsProcessed)
+                .ToList();
+
+            if (visibleParts.Count == 0 && !includeProcessed)
+                continue;
+
+            int scheduleTreeId = treeId++;
+            result.Add(new ExportTreeItem
+            {
+                TreeId = scheduleTreeId,
+                TreeParentId = null,
+                IsBatchRow = true,
+                BatchName = schedule.Name,
+                ImportDate = schedule.ImportDate,
+                PlantName = schedule.Plant?.Name,
+                ImportedBy = schedule.ImportedByUser?.FullName,
+                ReadyForProduction = schedule.ReadyForProduction,
+                ItemCount = visibleParts.Count,
+            });
+
+            foreach (var schedOrder in schedule.ScheduleOrders.OrderBy(so => so.OrderNumber))
+            {
+                var orderParts = schedOrder.Parts
+                    .Where(p => includeProcessed || !p.IsProcessed)
+                    .ToList();
+
+                if (orderParts.Count == 0 && !includeProcessed)
+                    continue;
+
+                int orderTreeId = treeId++;
+                result.Add(new ExportTreeItem
+                {
+                    TreeId = orderTreeId,
+                    TreeParentId = scheduleTreeId,
+                    IsProductRow = true,
+                    OrderNumber = schedOrder.OrderNumber,
+                    ProductName = schedOrder.OrderNumber,
+                    ItemCount = orderParts.Count,
+                });
+
+                foreach (var part in orderParts.OrderBy(p => p.PartNumber))
+                {
+                    result.Add(new ExportTreeItem
+                    {
+                        TreeId = treeId++,
+                        TreeParentId = orderTreeId,
+                        Number = part.PartNumber,
+                        Title = part.Title,
+                        Category = part.Category,
+                        Material = part.Material,
+                        Thickness = part.Thickness,
+                        Operations = part.Operations,
+                        Qty = part.Qty,
+                        IsStock = part.IsStock,
+                        HasPdf = part.HasPdf,
+                        Notes = part.Notes,
+                        IsProcessed = part.IsProcessed,
+                    });
+                }
+            }
+        }
+
+        return result;
     }
 
-    public async Task<IEnumerable<BomLineItem>> GetBomTreeAsync(int batchId)
+    public bool PdfExistsOnShare(string partNumber)
     {
-        return await _db.BomLineItems
-            .Include(l => l.Part)
-            .Include(l => l.Children)
-            .Where(l => l.BatchId == batchId)
-            .OrderBy(l => l.Level)
-            .ThenBy(l => l.Number)
-            .ToListAsync();
+        var path = Path.Combine(_pdfSharePath, partNumber + ".pdf");
+        return File.Exists(path);
     }
 
-    public async Task FinalizeBatchAsync(int batchId)
+    public async Task<bool> GeneratePdfAsync(string partNumber)
     {
-        var batch = await _db.BomImportBatches.FindAsync(batchId);
-        if (batch is null) return;
-        batch.IsFinalized = true;
-        batch.FinalizedDate = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        _log.LogInformation("Triggering PowerJobs PDF generation for {PartNumber}", partNumber);
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = $"-ExecutionPolicy Bypass -File \"{_powerJobsScriptPath}\" -PartName \"{partNumber}\" -OutputFolder \"{_pdfSharePath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        try
+        {
+            using var process = Process.Start(psi);
+            if (process is null) return false;
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                _log.LogWarning("PowerJobs script failed for {PartNumber}. Exit code: {ExitCode}. Error: {Error}",
+                    partNumber, process.ExitCode, error);
+                return false;
+            }
+
+            _log.LogInformation("PowerJobs PDF generation completed for {PartNumber}", partNumber);
+            return PdfExistsOnShare(partNumber);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to run PowerJobs script for {PartNumber}", partNumber);
+            return false;
+        }
+    }
+
+    private static string GetLevel1Prefix(string level)
+    {
+        var dotIndex = level.IndexOf('.');
+        return dotIndex >= 0 ? level[..dotIndex] : level;
     }
 }

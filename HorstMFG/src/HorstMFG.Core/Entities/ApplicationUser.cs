@@ -11,5 +11,4 @@ public class ApplicationUser
 
     public Plant Plant { get; set; } = null!;
     public ICollection<UserRole> Roles { get; set; } = new List<UserRole>();
-    public ICollection<BomImportBatch> ImportedBatches { get; set; } = new List<BomImportBatch>();
 }

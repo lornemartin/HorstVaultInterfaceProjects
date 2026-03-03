@@ -27,4 +27,6 @@ public class BomExportLine
     public string Notes { get; set; } = string.Empty;
     public string Revision { get; set; } = string.Empty;
     public bool IsProcessed { get; set; }
+    public bool HasPdf { get; set; }
+    public int SortOrder { get; set; }
 }

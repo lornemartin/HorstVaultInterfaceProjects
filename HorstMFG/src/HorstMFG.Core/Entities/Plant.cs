@@ -11,5 +11,6 @@ public class Plant
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<Nest> Nests { get; set; } = new List<Nest>();
     public ICollection<RadanIdAssignment> RadanIdAssignments { get; set; } = new List<RadanIdAssignment>();
-    public ICollection<BomImportBatch> BomImportBatches { get; set; } = new List<BomImportBatch>();
+    public ICollection<Batch> Batches { get; set; } = new List<Batch>();
+    public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 }

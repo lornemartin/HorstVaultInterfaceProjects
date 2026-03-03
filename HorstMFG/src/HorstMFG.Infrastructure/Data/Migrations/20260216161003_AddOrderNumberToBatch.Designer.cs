@@ -3,6 +3,7 @@ using System;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HorstMFG.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260216161003_AddOrderNumberToBatch")]
+    partial class AddOrderNumberToBatch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,7 +64,7 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.Batch", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomImportBatch", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -69,26 +72,34 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BomType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("FinalizedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("ImportDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ImportedByUserId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("LocalPdfFolder")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                    b.Property<bool>("IsFinalized")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("OrderNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("PlantId")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("ReadyForProduction")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -96,10 +107,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
                     b.HasIndex("PlantId");
 
-                    b.ToTable("batches", (string)null);
+                    b.ToTable("bom_import_batches", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.BatchProduct", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomLineItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -110,16 +121,45 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Property<int>("BatchId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ProductName")
+                    b.Property<bool>("HasPdf")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsProcessed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Number")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ParentNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PartId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiresPdf")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("UnitQty")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BatchId");
 
-                    b.ToTable("batch_products", (string)null);
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("PartId");
+
+                    b.ToTable("bom_line_items", (string)null);
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
@@ -351,88 +391,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("parts", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.PartLineItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("BatchProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<bool>("HasPdf")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsProcessed")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsStock")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Material")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("Operations")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("PartNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Qty")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("RequiresPdf")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("ScheduleOrderId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("StructCode")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Thickness")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BatchProductId");
-
-                    b.HasIndex("ScheduleOrderId");
-
-                    b.ToTable("part_line_items", (string)null);
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.PdfDocument", b =>
                 {
                     b.Property<int>("Id")
@@ -440,6 +398,9 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BatchId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Department")
                         .HasMaxLength(100)
@@ -462,6 +423,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
 
                     b.HasIndex("PartId");
 
@@ -533,67 +496,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("radan_id_assignments", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ImportDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ImportedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("LocalPdfFolder")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("PlantId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("ReadyForProduction")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ImportedByUserId");
-
-                    b.HasIndex("PlantId");
-
-                    b.ToTable("schedules", (string)null);
-                });
-
-            modelBuilder.Entity("HorstMFG.Core.Entities.ScheduleOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("ScheduleId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ScheduleId");
-
-                    b.ToTable("schedule_orders", (string)null);
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.SystemConfiguration", b =>
                 {
                     b.Property<int>("Id")
@@ -659,16 +561,16 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Plant");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.Batch", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomImportBatch", b =>
                 {
                     b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "ImportedByUser")
-                        .WithMany()
+                        .WithMany("ImportedBatches")
                         .HasForeignKey("ImportedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("HorstMFG.Core.Entities.Plant", "Plant")
-                        .WithMany("Batches")
+                        .WithMany("BomImportBatches")
                         .HasForeignKey("PlantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -678,15 +580,29 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Plant");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.BatchProduct", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomLineItem", b =>
                 {
-                    b.HasOne("HorstMFG.Core.Entities.Batch", "Batch")
-                        .WithMany("BatchProducts")
+                    b.HasOne("HorstMFG.Core.Entities.BomImportBatch", "Batch")
+                        .WithMany("LineItems")
                         .HasForeignKey("BatchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HorstMFG.Core.Entities.BomLineItem", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
+
+                    b.HasOne("HorstMFG.Core.Entities.Part", "Part")
+                        .WithMany("BomLineItems")
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Batch");
+
+                    b.Navigation("Parent");
+
+                    b.Navigation("Part");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
@@ -721,7 +637,7 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Order", b =>
                 {
-                    b.HasOne("HorstMFG.Core.Entities.Batch", "Batch")
+                    b.HasOne("HorstMFG.Core.Entities.BomImportBatch", "Batch")
                         .WithMany("Orders")
                         .HasForeignKey("BatchId");
 
@@ -755,28 +671,21 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Part");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.PartLineItem", b =>
-                {
-                    b.HasOne("HorstMFG.Core.Entities.BatchProduct", "BatchProduct")
-                        .WithMany("Parts")
-                        .HasForeignKey("BatchProductId");
-
-                    b.HasOne("HorstMFG.Core.Entities.ScheduleOrder", "ScheduleOrder")
-                        .WithMany("Parts")
-                        .HasForeignKey("ScheduleOrderId");
-
-                    b.Navigation("BatchProduct");
-
-                    b.Navigation("ScheduleOrder");
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.PdfDocument", b =>
                 {
+                    b.HasOne("HorstMFG.Core.Entities.BomImportBatch", "Batch")
+                        .WithMany("PdfDocuments")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("HorstMFG.Core.Entities.Part", "Part")
                         .WithMany("PdfDocuments")
                         .HasForeignKey("PartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Batch");
 
                     b.Navigation("Part");
                 });
@@ -800,36 +709,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Plant");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
-                {
-                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "ImportedByUser")
-                        .WithMany()
-                        .HasForeignKey("ImportedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HorstMFG.Core.Entities.Plant", "Plant")
-                        .WithMany("Schedules")
-                        .HasForeignKey("PlantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ImportedByUser");
-
-                    b.Navigation("Plant");
-                });
-
-            modelBuilder.Entity("HorstMFG.Core.Entities.ScheduleOrder", b =>
-                {
-                    b.HasOne("HorstMFG.Core.Entities.Schedule", "Schedule")
-                        .WithMany("ScheduleOrders")
-                        .HasForeignKey("ScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Schedule");
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.UserRole", b =>
                 {
                     b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "User")
@@ -843,19 +722,23 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("HorstMFG.Core.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("ImportedBatches");
+
                     b.Navigation("Roles");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.Batch", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomImportBatch", b =>
                 {
-                    b.Navigation("BatchProducts");
+                    b.Navigation("LineItems");
 
                     b.Navigation("Orders");
+
+                    b.Navigation("PdfDocuments");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.BatchProduct", b =>
+            modelBuilder.Entity("HorstMFG.Core.Entities.BomLineItem", b =>
                 {
-                    b.Navigation("Parts");
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
@@ -877,6 +760,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Part", b =>
                 {
+                    b.Navigation("BomLineItems");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("PdfDocuments");
@@ -884,7 +769,7 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Plant", b =>
                 {
-                    b.Navigation("Batches");
+                    b.Navigation("BomImportBatches");
 
                     b.Navigation("Nests");
 
@@ -892,19 +777,7 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
                     b.Navigation("RadanIdAssignments");
 
-                    b.Navigation("Schedules");
-
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
-                {
-                    b.Navigation("ScheduleOrders");
-                });
-
-            modelBuilder.Entity("HorstMFG.Core.Entities.ScheduleOrder", b =>
-                {
-                    b.Navigation("Parts");
                 });
 #pragma warning restore 612, 618
         }

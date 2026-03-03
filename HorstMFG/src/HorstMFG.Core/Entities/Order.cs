@@ -12,7 +12,7 @@ public class Order
     public DateTime? CompletedDate { get; set; }
     public string? ProductNumber { get; set; }
 
-    public BomImportBatch? Batch { get; set; }
+    public Batch? Batch { get; set; }
     public Plant Plant { get; set; } = null!;
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

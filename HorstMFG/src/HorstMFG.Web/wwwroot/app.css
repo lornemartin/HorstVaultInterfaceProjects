@@ -192,3 +192,23 @@ h1:focus {
 .text-muted {
     color: #94a3b8;
 }
+
+/* BOM Import grid row styles */
+.e-grid .e-row.row-no-pdf td,
+.e-grid .e-row.row-no-pdf td .e-rowcell {
+    color: #9ca3af !important;
+}
+
+.e-grid .e-row.row-has-notes td {
+    font-weight: 700;
+}
+
+/* Orders tree grid row styles */
+.e-treegrid .e-row.row-batch td {
+    background-color: #f1f5f9 !important;
+    font-weight: 600;
+}
+
+.e-treegrid .e-row.row-processed td {
+    color: #9ca3af !important;
+}
