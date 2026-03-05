@@ -145,13 +145,9 @@ public class BomService : IBomService
                     thickness = derivedThickness;
             }
 
-            // Determine if this line should be processed based on MTO/MTS + IsStock
-            bool isProcessed = bomType switch
-            {
-                BomType.MakeToOrder => isStock,
-                BomType.MakeToStock => !isStock,
-                _ => true
-            };
+            // All items are imported regardless of stock status.
+            // Display graying (stock vs non-stock) is handled per-tab on the Orders page.
+            bool isProcessed = false;
 
             var line = new BomExportLine
             {
@@ -255,16 +251,22 @@ public class BomService : IBomService
     {
         var localFolder = Path.Combine(_localPdfPath, "Batches", name);
 
-        var batch = new Batch
+        var batch = await _db.Batches
+            .FirstOrDefaultAsync(b => b.Name == name && b.PlantId == plantId);
+
+        if (batch is null)
         {
-            Name = name,
-            PlantId = plantId,
-            ImportedByUserId = userId,
-            ImportDate = DateTime.UtcNow,
-            LocalPdfFolder = localFolder,
-        };
-        _db.Batches.Add(batch);
-        await _db.SaveChangesAsync();
+            batch = new Batch
+            {
+                Name = name,
+                PlantId = plantId,
+                ImportedByUserId = userId,
+                ImportDate = DateTime.UtcNow,
+                LocalPdfFolder = localFolder,
+            };
+            _db.Batches.Add(batch);
+            await _db.SaveChangesAsync();
+        }
 
         // Group lines by their Level-1 ancestor prefix
         // Level-1 lines (no dot in level) become BatchProduct headers
@@ -328,16 +330,22 @@ public class BomService : IBomService
     {
         var localFolder = Path.Combine(_localPdfPath, "Schedules", name);
 
-        var schedule = new Schedule
+        var schedule = await _db.Schedules
+            .FirstOrDefaultAsync(s => s.Name == name && s.PlantId == plantId);
+
+        if (schedule is null)
         {
-            Name = name,
-            PlantId = plantId,
-            ImportedByUserId = userId,
-            ImportDate = DateTime.UtcNow,
-            LocalPdfFolder = localFolder,
-        };
-        _db.Schedules.Add(schedule);
-        await _db.SaveChangesAsync();
+            schedule = new Schedule
+            {
+                Name = name,
+                PlantId = plantId,
+                ImportedByUserId = userId,
+                ImportDate = DateTime.UtcNow,
+                LocalPdfFolder = localFolder,
+            };
+            _db.Schedules.Add(schedule);
+            await _db.SaveChangesAsync();
+        }
 
         var order = new ScheduleOrder
         {
@@ -438,10 +446,15 @@ public class BomService : IBomService
         var result = new List<ExportTreeItem>();
         int treeId = 1;
 
-        foreach (var batch in batches)
+        // Group same-named batches under one header row
+        var groups = batches
+            .GroupBy(b => b.Name)
+            .OrderByDescending(g => g.Max(b => b.ImportDate));
+
+        foreach (var group in groups)
         {
-            // Count visible parts across all products
-            var visibleParts = batch.BatchProducts
+            var allProducts = group.SelectMany(b => b.BatchProducts).ToList();
+            var visibleParts = allProducts
                 .SelectMany(bp => bp.Parts)
                 .Where(p => includeProcessed || !p.IsProcessed)
                 .ToList();
@@ -449,21 +462,22 @@ public class BomService : IBomService
             if (visibleParts.Count == 0 && !includeProcessed)
                 continue;
 
+            var latest = group.OrderByDescending(b => b.ImportDate).First();
             int batchTreeId = treeId++;
             result.Add(new ExportTreeItem
             {
                 TreeId = batchTreeId,
                 TreeParentId = null,
                 IsBatchRow = true,
-                BatchName = batch.Name,
-                ImportDate = batch.ImportDate,
-                PlantName = batch.Plant?.Name,
-                ImportedBy = batch.ImportedByUser?.FullName,
-                ReadyForProduction = batch.ReadyForProduction,
+                BatchName = group.Key,
+                ImportDate = latest.ImportDate,
+                PlantName = latest.Plant?.Name,
+                ImportedBy = latest.ImportedByUser?.FullName,
+                ReadyForProduction = latest.ReadyForProduction,
                 ItemCount = visibleParts.Count,
             });
 
-            foreach (var product in batch.BatchProducts.OrderBy(p => p.ProductName))
+            foreach (var product in allProducts.OrderBy(p => p.ProductName))
             {
                 var productParts = product.Parts
                     .Where(p => includeProcessed || !p.IsProcessed)
@@ -490,6 +504,7 @@ public class BomService : IBomService
                         TreeParentId = productTreeId,
                         Number = part.PartNumber,
                         Title = part.Title,
+                        Description = part.Description,
                         Category = part.Category,
                         Material = part.Material,
                         Thickness = part.Thickness,
@@ -524,9 +539,15 @@ public class BomService : IBomService
         var result = new List<ExportTreeItem>();
         int treeId = 1;
 
-        foreach (var schedule in schedules)
+        // Group same-named schedules under one header row
+        var groups = schedules
+            .GroupBy(s => s.Name)
+            .OrderByDescending(g => g.Max(s => s.ImportDate));
+
+        foreach (var group in groups)
         {
-            var visibleParts = schedule.ScheduleOrders
+            var allOrders = group.SelectMany(s => s.ScheduleOrders).ToList();
+            var visibleParts = allOrders
                 .SelectMany(so => so.Parts)
                 .Where(p => includeProcessed || !p.IsProcessed)
                 .ToList();
@@ -534,21 +555,22 @@ public class BomService : IBomService
             if (visibleParts.Count == 0 && !includeProcessed)
                 continue;
 
+            var latest = group.OrderByDescending(s => s.ImportDate).First();
             int scheduleTreeId = treeId++;
             result.Add(new ExportTreeItem
             {
                 TreeId = scheduleTreeId,
                 TreeParentId = null,
                 IsBatchRow = true,
-                BatchName = schedule.Name,
-                ImportDate = schedule.ImportDate,
-                PlantName = schedule.Plant?.Name,
-                ImportedBy = schedule.ImportedByUser?.FullName,
-                ReadyForProduction = schedule.ReadyForProduction,
+                BatchName = group.Key,
+                ImportDate = latest.ImportDate,
+                PlantName = latest.Plant?.Name,
+                ImportedBy = latest.ImportedByUser?.FullName,
+                ReadyForProduction = latest.ReadyForProduction,
                 ItemCount = visibleParts.Count,
             });
 
-            foreach (var schedOrder in schedule.ScheduleOrders.OrderBy(so => so.OrderNumber))
+            foreach (var schedOrder in allOrders.OrderBy(so => so.OrderNumber))
             {
                 var orderParts = schedOrder.Parts
                     .Where(p => includeProcessed || !p.IsProcessed)
@@ -576,6 +598,7 @@ public class BomService : IBomService
                         TreeParentId = orderTreeId,
                         Number = part.PartNumber,
                         Title = part.Title,
+                        Description = part.Description,
                         Category = part.Category,
                         Material = part.Material,
                         Thickness = part.Thickness,

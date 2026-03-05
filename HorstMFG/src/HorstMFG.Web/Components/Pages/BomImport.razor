@@ -38,10 +38,10 @@ else
 {
     <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">BOM Type</label>
-            <SfRadioButton Label="Make to Order" Name="bomType" Value="@("MakeToOrder")"
+            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Import Type</label>
+            <SfRadioButton Label="Batch" Name="bomType" Value="@("Batch")"
                            @bind-Checked="SelectedBomTypeStr" TChecked="string" />
-            <SfRadioButton Label="Make to Stock" Name="bomType" Value="@("MakeToStock")"
+            <SfRadioButton Label="Order" Name="bomType" Value="@("Order")"
                            @bind-Checked="SelectedBomTypeStr" TChecked="string"
                            style="margin-left: 1rem;" />
         </div>
@@ -56,13 +56,19 @@ else
             </SfDropDownList>
         </div>
 
-        <div style="min-width: 200px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch/Schedule Name</label>
-            <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-02-14 Schedule A" />
-        </div>
-
-        @if (SelectedBomTypeStr == "MakeToStock")
+        @if (SelectedBomTypeStr == "Batch")
         {
+            <div style="min-width: 200px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch Name</label>
+                <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-03-04 Batch" />
+            </div>
+        }
+        else
+        {
+            <div style="min-width: 200px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Schedule Name</label>
+                <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-03-04 Schedule A" />
+            </div>
             <div style="min-width: 200px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Number <span style="color: #b91c1c;">*</span></label>
                 <SfTextBox @bind-Value="_orderNumber" Placeholder="e.g. 12345" />
@@ -160,7 +166,7 @@ else
         }
 
         <div style="margin-top: 1rem;">
-            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || MtsOrderNumberMissing)">
+            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">
                 @if (_importing)
                 {
                     <span>Importing...</span>
@@ -170,9 +176,9 @@ else
                     <span>Import to Database</span>
                 }
             </SfButton>
-            @if (MtsOrderNumberMissing)
+            @if (OrderNumberMissing)
             {
-                <span style="margin-left: 1rem; color: #b91c1c; font-size: 0.875rem;">Order Number is required for Make to Stock.</span>
+                <span style="margin-left: 1rem; color: #b91c1c; font-size: 0.875rem;">Order Number is required for Order imports.</span>
             }
         </div>
     }
@@ -181,9 +187,9 @@ else
 @code {
     private List<BomExportLine> _parsedLines = new();
     private List<Plant> _plants = new();
-    private string SelectedBomTypeStr = "MakeToOrder";
-    private BomType SelectedBomType => SelectedBomTypeStr == "MakeToStock" ? BomType.MakeToStock : BomType.MakeToOrder;
-    private bool MtsOrderNumberMissing => SelectedBomTypeStr == "MakeToStock" && string.IsNullOrWhiteSpace(_orderNumber);
+    private string SelectedBomTypeStr = "Batch";
+    private BomType SelectedBomType => SelectedBomTypeStr == "Order" ? BomType.MakeToStock : BomType.MakeToOrder;
+    private bool OrderNumberMissing => SelectedBomTypeStr == "Order" && string.IsNullOrWhiteSpace(_orderNumber);
     private int _selectedPlantId;
     private string _batchName = "";
     private string _orderNumber = "";
@@ -230,7 +236,7 @@ else
             _jsReady = true;
 
             var savedBomType = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_bomType");
-            if (!string.IsNullOrEmpty(savedBomType))
+            if (savedBomType == "Batch" || savedBomType == "Order")
                 SelectedBomTypeStr = savedBomType;
 
             var savedPlantId = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_plantId");
@@ -298,7 +304,7 @@ else
     private async Task ImportBatch()
     {
         if (_parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName)) return;
-        if (MtsOrderNumberMissing) return;
+        if (OrderNumberMissing) return;
 
         _importing = true;
         _message = null;
@@ -307,7 +313,7 @@ else
 
         try
         {
-            if (SelectedBomType == BomType.MakeToStock)
+            if (SelectedBomTypeStr == "Order")
             {
                 var schedule = await BomService.ImportScheduleAsync(
                     _batchName, _orderNumber.Trim(), _selectedPlantId, _userId, _parsedLines);

@@ -212,3 +212,8 @@ h1:focus {
 .e-treegrid .e-row.row-processed td {
     color: #9ca3af !important;
 }
+
+.e-treegrid .e-row.row-dimmed td {
+    color: #c4c9d4 !important;
+    font-style: italic;
+}

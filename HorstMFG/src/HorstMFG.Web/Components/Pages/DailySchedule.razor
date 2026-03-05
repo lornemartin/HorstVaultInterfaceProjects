@@ -38,15 +38,15 @@
                 <div style="padding-top: 0.5rem;">
                     @if (_mtoItems.Count == 0)
                     {
-                        <p style="color: #64748b; padding: 2rem; text-align: center;">No Make-to-Order batches found.</p>
+                        <p style="color: #64748b; padding: 2rem; text-align: center;">No orders found.</p>
                     }
                     else
                     {
                         <SfTreeGrid DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    TreeColumnIndex="0" AllowSorting="true" Height="550">
-                            <TreeGridEvents RowDataBound="OnRowDataBound" TValue="ExportTreeItem" />
+                                    TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                            <TreeGridEvents RowDataBound="OnMtoRowDataBound" TValue="ExportTreeItem" />
                             <TreeGridColumns>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="200">
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
@@ -60,18 +60,18 @@
                                             }
                                             else
                                             {
-                                                @item.Number
+                                                <span>@item.Number</span>
                                             }
                                         }
                                     </Template>
                                 </TreeGridColumn>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Title)" HeaderText="Title" Width="180">
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Description)" HeaderText="Description" Width="220">
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
                                             @if (!item!.IsBatchRow && !item.IsProductRow)
                                             {
-                                                @item.Title
+                                                <span>@item.Description</span>
                                             }
                                         }
                                     </Template>
@@ -125,15 +125,15 @@
                 <div style="padding-top: 0.5rem;">
                     @if (_mtsItems.Count == 0)
                     {
-                        <p style="color: #64748b; padding: 2rem; text-align: center;">No Make-to-Stock schedules found.</p>
+                        <p style="color: #64748b; padding: 2rem; text-align: center;">No batches found.</p>
                     }
                     else
                     {
                         <SfTreeGrid DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    TreeColumnIndex="0" AllowSorting="true" Height="550">
-                            <TreeGridEvents RowDataBound="OnRowDataBound" TValue="ExportTreeItem" />
+                                    TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                            <TreeGridEvents RowDataBound="OnMtsRowDataBound" TValue="ExportTreeItem" />
                             <TreeGridColumns>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="200">
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
@@ -143,22 +143,22 @@
                                             }
                                             else if (item.IsProductRow)
                                             {
-                                                <span>Order: <strong>@item.OrderNumber</strong></span>
+                                                <span style="font-style: italic;">@item.ProductName</span>
                                             }
                                             else
                                             {
-                                                @item.Number
+                                                <span>@item.Number</span>
                                             }
                                         }
                                     </Template>
                                 </TreeGridColumn>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Title)" HeaderText="Title" Width="180">
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.Description)" HeaderText="Description" Width="220">
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
                                             @if (!item!.IsBatchRow && !item.IsProductRow)
                                             {
-                                                @item.Title
+                                                <span>@item.Description</span>
                                             }
                                         }
                                     </Template>
@@ -241,8 +241,8 @@
 
     private async Task LoadData()
     {
-        _mtoItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
-        _mtsItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
+        _mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
+        _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
     }
 
     private async Task OnPlantChanged(int? value)
@@ -257,22 +257,39 @@
         await LoadData();
     }
 
-    private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
+    // Daily Schedule tab: stock items are dimmed (they belong on the Batches tab)
+    private void OnMtoRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow)
-        {
             args.Row.AddClass(new[] { "row-batch" });
-        }
         else if (args.Data.IsProductRow)
-        {
             args.Row.AddClass(new[] { "row-product" });
-        }
         else
         {
             if (args.Data.IsProcessed)
                 args.Row.AddClass(new[] { "row-processed" });
             if (!string.IsNullOrWhiteSpace(args.Data.Notes))
                 args.Row.AddClass(new[] { "row-has-notes" });
+            if (args.Data.IsStock)
+                args.Row.AddClass(new[] { "row-dimmed" });
+        }
+    }
+
+    // Batches tab: non-stock items are dimmed (they belong on the Daily Schedule tab)
+    private void OnMtsRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow)
+            args.Row.AddClass(new[] { "row-batch" });
+        else if (args.Data.IsProductRow)
+            args.Row.AddClass(new[] { "row-product" });
+        else
+        {
+            if (args.Data.IsProcessed)
+                args.Row.AddClass(new[] { "row-processed" });
+            if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+                args.Row.AddClass(new[] { "row-has-notes" });
+            if (!args.Data.IsStock)
+                args.Row.AddClass(new[] { "row-dimmed" });
         }
     }
 }

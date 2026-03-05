@@ -28,6 +28,7 @@ public class ExportTreeItem
     // Line-item fields (leaf rows)
     public string? Number { get; set; }
     public string? Title { get; set; }
+    public string? Description { get; set; }
     public string? Category { get; set; }
     public string? Material { get; set; }
     public string? Thickness { get; set; }
