@@ -14,6 +14,7 @@ namespace VaultItemProcessor
         [STAThread]
         static void Main()
         {
+            PdfSharp.Fonts.GlobalFontSettings.FontResolver = new WinFontResolver();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

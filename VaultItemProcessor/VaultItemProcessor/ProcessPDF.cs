@@ -81,7 +81,7 @@ namespace VaultItemProcessor
                             fontSize = (int)page.Width / numOfLines/2;
                             if (fontSize > 15) fontSize = 15;   // cap font at max of 15 
 
-                            XFont font = new XFont("Times New Roman", fontSize, XFontStyle.Bold);
+                            XFont font = new XFont("Times New Roman", fontSize, XFontStyleEx.Bold);
                             XTextFormatter tf = new XTextFormatter(gfx);
 
                             XRect rect = new XRect(40, 75, width - 40, height - 75);
@@ -145,7 +145,7 @@ namespace VaultItemProcessor
                         XGraphics gfx = XGraphics.FromPdfPage(page);
 
                         // Create a font
-                        XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                        XFont font = new XFont("Times New Roman", 15, XFontStyleEx.Bold);
 
                         // Create point for upper-left corner of drawing.
                         PointF Line1Point = new PointF(50.0F, 50.0F);
@@ -383,7 +383,7 @@ namespace VaultItemProcessor
                         
                         XGraphics gfx = XGraphics.FromPdfPage(watermarkPage, XGraphicsPdfPageOptions.Prepend);
 
-                        XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                        XFont font = new XFont("Times New Roman", 15, XFontStyleEx.Bold);
                         XTextFormatter tf = new XTextFormatter(gfx);
 
                         XRect rect = new XRect(40, 75, width - 40, height - 75);
@@ -438,7 +438,7 @@ namespace VaultItemProcessor
                 outputDocument.PageLayout = PdfPageLayout.SinglePage;
                 tempDocument.PageLayout = PdfPageLayout.SinglePage;
 
-                XFont font = new XFont("Verdana", 8, XFontStyle.Bold);
+                XFont font = new XFont("Verdana", 8, XFontStyleEx.Bold);
                 XStringFormat format = new XStringFormat();
                 format.Alignment = XStringAlignment.Center;
                 format.LineAlignment = XLineAlignment.Far;
@@ -510,7 +510,7 @@ namespace VaultItemProcessor
                         watermarkPage.Rotate = 0;
                     }
 
-                    font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                    font = new XFont("Times New Roman", 15, XFontStyleEx.Bold);
                     XTextFormatter tf = new XTextFormatter(gfx);
 
                     XRect rect = new XRect(40, height / 2, width - 40, height - 75);
@@ -550,7 +550,7 @@ namespace VaultItemProcessor
 
                 outputDocument.PageLayout = PdfPageLayout.SinglePage;
 
-                XFont font = new XFont("Verdana", 8, XFontStyle.Bold);
+                XFont font = new XFont("Verdana", 8, XFontStyleEx.Bold);
                 XStringFormat format = new XStringFormat();
                 format.Alignment = XStringAlignment.Center;
                 format.LineAlignment = XLineAlignment.Far;
@@ -671,7 +671,7 @@ namespace VaultItemProcessor
 
                 XGraphics gfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Prepend);
 
-                XFont font = new XFont("Times New Roman", 15, XFontStyle.Bold);
+                XFont font = new XFont("Times New Roman", 15, XFontStyleEx.Bold);
                 XTextFormatter tf = new XTextFormatter(gfx);
 
                 XRect rect = new XRect(40, 75, width - 40, height - 75);
@@ -868,14 +868,14 @@ namespace VaultItemProcessor
                     notesSection.AddParagraph(item.Notes);
                 }
 
-                var pdfRenderer = new PdfDocumentRenderer(false);
+                var pdfRenderer = new PdfDocumentRenderer();
                 pdfRenderer.Document = document;
                 //pdfRenderer.RenderDocument();
 
 
                 var tempDocument = document.Clone();
                 tempDocument.BindToRenderer(null);
-                var pdfRenderer3 = new PdfDocumentRenderer(true);
+                var pdfRenderer3 = new PdfDocumentRenderer();
                 pdfRenderer3.Document = tempDocument;
                 pdfRenderer3.RenderDocument();
                 int pageCount = pdfRenderer3.PdfDocument.PageCount;
@@ -1070,14 +1070,14 @@ namespace VaultItemProcessor
                 //}
 
 
-                var pdfRenderer = new PdfDocumentRenderer(false);
+                var pdfRenderer = new PdfDocumentRenderer();
                 pdfRenderer.Document = document;
                 //pdfRenderer.RenderDocument();
 
 
                 var tempDocument = document.Clone();
                 tempDocument.BindToRenderer(null);
-                var pdfRenderer3 = new PdfDocumentRenderer(true);
+                var pdfRenderer3 = new PdfDocumentRenderer();
                 pdfRenderer3.Document = tempDocument;
                 pdfRenderer3.RenderDocument();
                 int pageCount = pdfRenderer3.PdfDocument.PageCount;

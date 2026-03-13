@@ -838,14 +838,14 @@ namespace VaultItemProcessor
                     notesSection.AddParagraph(item.Notes);
                 }
 
-                var pdfRenderer = new PdfDocumentRenderer(false);
+                var pdfRenderer = new PdfDocumentRenderer();
                 pdfRenderer.Document = document;
                 //pdfRenderer.RenderDocument();
 
 
                 var tempDocument = document.Clone();
                 tempDocument.BindToRenderer(null);
-                var pdfRenderer3 = new PdfDocumentRenderer(true);
+                var pdfRenderer3 = new PdfDocumentRenderer();
                 pdfRenderer3.Document = tempDocument;
                 pdfRenderer3.RenderDocument();
                 int pageCount = pdfRenderer3.PdfDocument.PageCount;
@@ -1040,14 +1040,14 @@ namespace VaultItemProcessor
                 //}
 
 
-                var pdfRenderer = new PdfDocumentRenderer(false);
+                var pdfRenderer = new PdfDocumentRenderer();
                 pdfRenderer.Document = document;
                 //pdfRenderer.RenderDocument();
 
 
                 var tempDocument = document.Clone();
                 tempDocument.BindToRenderer(null);
-                var pdfRenderer3 = new PdfDocumentRenderer(true);
+                var pdfRenderer3 = new PdfDocumentRenderer();
                 pdfRenderer3.Document = tempDocument;
                 pdfRenderer3.RenderDocument();
                 int pageCount = pdfRenderer3.PdfDocument.PageCount;
