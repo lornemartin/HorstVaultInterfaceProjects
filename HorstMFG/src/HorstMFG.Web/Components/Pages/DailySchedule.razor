@@ -42,7 +42,7 @@
                     }
                     else
                     {
-                        <SfTreeGrid DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                        <SfTreeGrid ID="OrdersGrid" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents RowDataBound="OnMtoRowDataBound" TValue="ExportTreeItem" />
                             <TreeGridColumns>
@@ -129,7 +129,7 @@
                     }
                     else
                     {
-                        <SfTreeGrid DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                        <SfTreeGrid ID="BatchesGrid" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents RowDataBound="OnMtsRowDataBound" TValue="ExportTreeItem" />
                             <TreeGridColumns>
