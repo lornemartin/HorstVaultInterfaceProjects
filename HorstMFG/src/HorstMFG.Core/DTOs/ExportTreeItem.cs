@@ -12,6 +12,7 @@ public class ExportTreeItem
     public int? TreeParentId { get; set; }
     public bool IsBatchRow { get; set; }
     public bool IsProductRow { get; set; }
+    public bool IsExpanded { get; set; } = true;
 
     // Batch/Schedule-level fields (IsBatchRow = true)
     public string? BatchName { get; set; }

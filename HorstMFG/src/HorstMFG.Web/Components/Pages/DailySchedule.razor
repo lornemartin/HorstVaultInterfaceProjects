@@ -4,8 +4,10 @@
 @inject IBomService BomService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
+@using System.Text.Json
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -43,8 +45,12 @@
                     else
                     {
                         <SfTreeGrid ID="OrdersGrid" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    ExpandStateMapping="IsExpanded"
                                     TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
-                            <TreeGridEvents RowDataBound="OnMtoRowDataBound" TValue="ExportTreeItem" />
+                            <TreeGridEvents TValue="ExportTreeItem"
+                                            RowDataBound="OnMtoRowDataBound"
+                                            Collapsed="OnOrdersRowCollapsed"
+                                            Expanded="OnOrdersRowExpanded" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -130,8 +136,12 @@
                     else
                     {
                         <SfTreeGrid ID="BatchesGrid" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    ExpandStateMapping="IsExpanded"
                                     TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
-                            <TreeGridEvents RowDataBound="OnMtsRowDataBound" TValue="ExportTreeItem" />
+                            <TreeGridEvents TValue="ExportTreeItem"
+                                            RowDataBound="OnMtsRowDataBound"
+                                            Collapsed="OnBatchesRowCollapsed"
+                                            Expanded="OnBatchesRowExpanded" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -215,6 +225,9 @@
     private bool _showProcessed;
     private bool _isAdmin;
 
+    private HashSet<string> _ordersCollapsed = new();
+    private HashSet<string> _batchesCollapsed = new();
+
     private record PlantOption(int? Id, string Name);
 
     protected override async Task OnInitializedAsync()
@@ -236,13 +249,44 @@
             }
         }
 
+        // Data loaded in OnAfterRenderAsync so collapsed state from localStorage is known first
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var oc = await JS.InvokeAsync<string?>("localStorage.getItem", "OrdersGrid_collapsed");
+        if (!string.IsNullOrEmpty(oc))
+            _ordersCollapsed = JsonSerializer.Deserialize<HashSet<string>>(oc) ?? new();
+
+        var bc = await JS.InvokeAsync<string?>("localStorage.getItem", "BatchesGrid_collapsed");
+        if (!string.IsNullOrEmpty(bc))
+            _batchesCollapsed = JsonSerializer.Deserialize<HashSet<string>>(bc) ?? new();
+
         await LoadData();
+        StateHasChanged();
     }
 
     private async Task LoadData()
     {
-        _mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
-        _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
+        var mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
+        var mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
+
+        ApplyExpansionState(mtoItems, _ordersCollapsed);
+        ApplyExpansionState(mtsItems, _batchesCollapsed);
+
+        _mtoItems = mtoItems;
+        _mtsItems = mtsItems;
+    }
+
+    private static void ApplyExpansionState(List<ExportTreeItem> items, HashSet<string> collapsed)
+    {
+        foreach (var item in items)
+        {
+            if (item.IsBatchRow && item.BatchName != null && collapsed.Contains(item.BatchName))
+                item.IsExpanded = false;
+        }
     }
 
     private async Task OnPlantChanged(int? value)
@@ -255,6 +299,47 @@
     {
         _showProcessed = args.Checked;
         await LoadData();
+    }
+
+    private async Task SaveCollapsedAsync(string key, HashSet<string> collapsed)
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(collapsed));
+    }
+
+    private void OnOrdersRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow && args.Data.BatchName != null)
+        {
+            _ordersCollapsed.Add(args.Data.BatchName);
+            _ = SaveCollapsedAsync("OrdersGrid_collapsed", _ordersCollapsed);
+        }
+    }
+
+    private void OnOrdersRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow && args.Data.BatchName != null)
+        {
+            _ordersCollapsed.Remove(args.Data.BatchName);
+            _ = SaveCollapsedAsync("OrdersGrid_collapsed", _ordersCollapsed);
+        }
+    }
+
+    private void OnBatchesRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow && args.Data.BatchName != null)
+        {
+            _batchesCollapsed.Add(args.Data.BatchName);
+            _ = SaveCollapsedAsync("BatchesGrid_collapsed", _batchesCollapsed);
+        }
+    }
+
+    private void OnBatchesRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
+    {
+        if (args.Data.IsBatchRow && args.Data.BatchName != null)
+        {
+            _batchesCollapsed.Remove(args.Data.BatchName);
+            _ = SaveCollapsedAsync("BatchesGrid_collapsed", _batchesCollapsed);
+        }
     }
 
     // Daily Schedule tab: stock items are dimmed (they belong on the Batches tab)
