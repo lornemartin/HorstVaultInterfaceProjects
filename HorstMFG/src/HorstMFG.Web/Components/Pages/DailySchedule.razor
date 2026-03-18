@@ -4,8 +4,8 @@
 @inject IBomService BomService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Core.Entities
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
 
@@ -224,9 +224,12 @@
     private int? _selectedPlantId;
     private bool _showProcessed;
     private bool _isAdmin;
+    private int _userId;
 
     private HashSet<string> _ordersCollapsed = new();
+    private HashSet<string> _ordersProductsCollapsed = new();
     private HashSet<string> _batchesCollapsed = new();
+    private HashSet<string> _batchesProductsCollapsed = new();
 
     private record PlantOption(int? Id, string Name);
 
@@ -241,6 +244,9 @@
         {
             _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
 
+            if (int.TryParse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
+                _userId = uid;
+
             if (!_isAdmin)
             {
                 var plantIdClaim = httpContext.User.FindFirst("PlantId")?.Value;
@@ -249,20 +255,30 @@
             }
         }
 
-        // Data loaded in OnAfterRenderAsync so collapsed state from localStorage is known first
+        // Data loaded in OnAfterRenderAsync so collapsed state from DB is known first
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        var oc = await JS.InvokeAsync<string?>("localStorage.getItem", "OrdersGrid_collapsed");
-        if (!string.IsNullOrEmpty(oc))
-            _ordersCollapsed = JsonSerializer.Deserialize<HashSet<string>>(oc) ?? new();
+        if (_userId > 0)
+        {
+            var prefs = await DbContext.UserGridPreferences
+                .Where(p => p.UserId == _userId && (
+                    p.GridId == "OrdersGrid" || p.GridId == "OrdersGrid_L2" ||
+                    p.GridId == "BatchesGrid" || p.GridId == "BatchesGrid_L2"))
+                .ToListAsync();
 
-        var bc = await JS.InvokeAsync<string?>("localStorage.getItem", "BatchesGrid_collapsed");
-        if (!string.IsNullOrEmpty(bc))
-            _batchesCollapsed = JsonSerializer.Deserialize<HashSet<string>>(bc) ?? new();
+            HashSet<string> Load(string gridId) =>
+                JsonSerializer.Deserialize<HashSet<string>>(
+                    prefs.FirstOrDefault(p => p.GridId == gridId)?.CollapsedState ?? "[]") ?? new();
+
+            _ordersCollapsed         = Load("OrdersGrid");
+            _ordersProductsCollapsed = Load("OrdersGrid_L2");
+            _batchesCollapsed        = Load("BatchesGrid");
+            _batchesProductsCollapsed = Load("BatchesGrid_L2");
+        }
 
         await LoadData();
         StateHasChanged();
@@ -273,18 +289,20 @@
         var mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
         var mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
 
-        ApplyExpansionState(mtoItems, _ordersCollapsed);
-        ApplyExpansionState(mtsItems, _batchesCollapsed);
+        ApplyExpansionState(mtoItems, _ordersCollapsed, _ordersProductsCollapsed);
+        ApplyExpansionState(mtsItems, _batchesCollapsed, _batchesProductsCollapsed);
 
         _mtoItems = mtoItems;
         _mtsItems = mtsItems;
     }
 
-    private static void ApplyExpansionState(List<ExportTreeItem> items, HashSet<string> collapsed)
+    private static void ApplyExpansionState(List<ExportTreeItem> items, HashSet<string> collapsed, HashSet<string> collapsedProducts)
     {
         foreach (var item in items)
         {
             if (item.IsBatchRow && item.BatchName != null && collapsed.Contains(item.BatchName))
+                item.IsExpanded = false;
+            else if (item.IsProductRow && item.ProductName != null && collapsedProducts.Contains(item.ProductName))
                 item.IsExpanded = false;
         }
     }
@@ -301,44 +319,76 @@
         await LoadData();
     }
 
-    private async Task SaveCollapsedAsync(string key, HashSet<string> collapsed)
+    private async Task SaveCollapsedAsync(string gridId, HashSet<string> collapsed)
     {
-        await JS.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(collapsed));
+        if (_userId <= 0) return;
+
+        var pref = await DbContext.UserGridPreferences
+            .FirstOrDefaultAsync(p => p.UserId == _userId && p.GridId == gridId);
+
+        if (pref == null)
+        {
+            pref = new UserGridPreference { UserId = _userId, GridId = gridId };
+            DbContext.UserGridPreferences.Add(pref);
+        }
+
+        pref.CollapsedState = JsonSerializer.Serialize(collapsed);
+        await DbContext.SaveChangesAsync();
     }
 
-    private void OnOrdersRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
+    private async Task OnOrdersRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow && args.Data.BatchName != null)
         {
             _ordersCollapsed.Add(args.Data.BatchName);
-            _ = SaveCollapsedAsync("OrdersGrid_collapsed", _ordersCollapsed);
+            await SaveCollapsedAsync("OrdersGrid", _ordersCollapsed);
+        }
+        else if (args.Data.IsProductRow && args.Data.ProductName != null)
+        {
+            _ordersProductsCollapsed.Add(args.Data.ProductName);
+            await SaveCollapsedAsync("OrdersGrid_L2", _ordersProductsCollapsed);
         }
     }
 
-    private void OnOrdersRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
+    private async Task OnOrdersRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow && args.Data.BatchName != null)
         {
             _ordersCollapsed.Remove(args.Data.BatchName);
-            _ = SaveCollapsedAsync("OrdersGrid_collapsed", _ordersCollapsed);
+            await SaveCollapsedAsync("OrdersGrid", _ordersCollapsed);
+        }
+        else if (args.Data.IsProductRow && args.Data.ProductName != null)
+        {
+            _ordersProductsCollapsed.Remove(args.Data.ProductName);
+            await SaveCollapsedAsync("OrdersGrid_L2", _ordersProductsCollapsed);
         }
     }
 
-    private void OnBatchesRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
+    private async Task OnBatchesRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow && args.Data.BatchName != null)
         {
             _batchesCollapsed.Add(args.Data.BatchName);
-            _ = SaveCollapsedAsync("BatchesGrid_collapsed", _batchesCollapsed);
+            await SaveCollapsedAsync("BatchesGrid", _batchesCollapsed);
+        }
+        else if (args.Data.IsProductRow && args.Data.ProductName != null)
+        {
+            _batchesProductsCollapsed.Add(args.Data.ProductName);
+            await SaveCollapsedAsync("BatchesGrid_L2", _batchesProductsCollapsed);
         }
     }
 
-    private void OnBatchesRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
+    private async Task OnBatchesRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow && args.Data.BatchName != null)
         {
             _batchesCollapsed.Remove(args.Data.BatchName);
-            _ = SaveCollapsedAsync("BatchesGrid_collapsed", _batchesCollapsed);
+            await SaveCollapsedAsync("BatchesGrid", _batchesCollapsed);
+        }
+        else if (args.Data.IsProductRow && args.Data.ProductName != null)
+        {
+            _batchesProductsCollapsed.Remove(args.Data.ProductName);
+            await SaveCollapsedAsync("BatchesGrid_L2", _batchesProductsCollapsed);
         }
     }
 
