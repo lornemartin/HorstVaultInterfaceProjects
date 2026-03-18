@@ -46,7 +46,7 @@
                     {
                         <SfTreeGrid ID="OrdersGrid" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded"
-                                    TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents TValue="ExportTreeItem"
                                             RowDataBound="OnMtoRowDataBound"
                                             Collapsed="OnOrdersRowCollapsed"
@@ -137,7 +137,7 @@
                     {
                         <SfTreeGrid ID="BatchesGrid" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded"
-                                    TreeColumnIndex="0" AllowSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents TValue="ExportTreeItem"
                                             RowDataBound="OnMtsRowDataBound"
                                             Collapsed="OnBatchesRowCollapsed"
