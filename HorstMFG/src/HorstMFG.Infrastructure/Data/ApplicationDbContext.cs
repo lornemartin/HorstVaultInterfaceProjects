@@ -23,7 +23,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<RadanIdAssignment> RadanIdAssignments => Set<RadanIdAssignment>();
     public DbSet<PdfDocument> PdfDocuments => Set<PdfDocument>();
     public DbSet<SystemConfiguration> SystemConfigurations => Set<SystemConfiguration>();
-    public DbSet<UserGridPreference> UserGridPreferences => Set<UserGridPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -212,15 +211,5 @@ public class ApplicationDbContext : DbContext
             e.HasIndex(c => c.Key).IsUnique();
         });
 
-        // UserGridPreference
-        modelBuilder.Entity<UserGridPreference>(e =>
-        {
-            e.ToTable("user_grid_preferences");
-            e.HasKey(p => p.Id);
-            e.Property(p => p.GridId).HasMaxLength(100).IsRequired();
-            e.Property(p => p.CollapsedState).HasMaxLength(4000).IsRequired();
-            e.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId);
-            e.HasIndex(p => new { p.UserId, p.GridId }).IsUnique();
-        });
     }
 }

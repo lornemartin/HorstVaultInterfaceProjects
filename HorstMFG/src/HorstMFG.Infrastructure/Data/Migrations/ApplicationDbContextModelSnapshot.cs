@@ -624,35 +624,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("system_configuration", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.UserGridPreference", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CollapsedState")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<string>("GridId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "GridId")
-                        .IsUnique();
-
-                    b.ToTable("user_grid_preferences", (string)null);
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.UserRole", b =>
                 {
                     b.Property<int>("Id")
@@ -857,17 +828,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Schedule");
-                });
-
-            modelBuilder.Entity("HorstMFG.Core.Entities.UserGridPreference", b =>
-                {
-                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.UserRole", b =>

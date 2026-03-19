@@ -5,9 +5,7 @@
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
 @using HorstMFG.Infrastructure.Data
-@using HorstMFG.Core.Entities
 @using Microsoft.EntityFrameworkCore
-@using System.Text.Json
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -44,13 +42,11 @@
                     }
                     else
                     {
-                        <SfTreeGrid ID="OrdersGrid_v2" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    ExpandStateMapping="IsExpanded"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                        <SfTreeGrid ID="OrdersGrid" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    ExpandStateMapping="IsExpanded" EnablePersistence="true"
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true">
                             <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtoRowDataBound"
-                                            Collapsed="OnOrdersRowCollapsed"
-                                            Expanded="OnOrdersRowExpanded" />
+                                            RowDataBound="OnMtoRowDataBound" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -142,13 +138,11 @@
                     }
                     else
                     {
-                        <SfTreeGrid ID="BatchesGrid_v2" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    ExpandStateMapping="IsExpanded"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
+                        <SfTreeGrid ID="BatchesGrid" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    ExpandStateMapping="IsExpanded" EnablePersistence="true"
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true">
                             <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtsRowDataBound"
-                                            Collapsed="OnBatchesRowCollapsed"
-                                            Expanded="OnBatchesRowExpanded" />
+                                            RowDataBound="OnMtsRowDataBound" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -238,16 +232,10 @@
     private int? _selectedPlantId;
     private bool _showProcessed;
     private bool _isAdmin;
-    private int _userId;
-
-    private HashSet<string> _ordersCollapsed = new();
-    private HashSet<string> _ordersProductsCollapsed = new();
-    private HashSet<string> _batchesCollapsed = new();
-    private HashSet<string> _batchesProductsCollapsed = new();
 
     private record PlantOption(int? Id, string Name);
 
-protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         var plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         _plantOptions = new List<PlantOption> { new(null, "All Plants") };
@@ -258,9 +246,6 @@ protected override async Task OnInitializedAsync()
         {
             _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
 
-            if (int.TryParse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
-                _userId = uid;
-
             if (!_isAdmin)
             {
                 var plantIdClaim = httpContext.User.FindFirst("PlantId")?.Value;
@@ -268,57 +253,19 @@ protected override async Task OnInitializedAsync()
                     _selectedPlantId = pid;
             }
         }
-
-        // Data loaded in OnAfterRenderAsync so collapsed state from DB is known first
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-
-        if (_userId > 0)
-        {
-            var prefs = await DbContext.UserGridPreferences
-                .Where(p => p.UserId == _userId && (
-                    p.GridId == "OrdersGrid" || p.GridId == "OrdersGrid_L2" ||
-                    p.GridId == "BatchesGrid" || p.GridId == "BatchesGrid_L2"))
-                .ToListAsync();
-
-            HashSet<string> Load(string gridId) =>
-                JsonSerializer.Deserialize<HashSet<string>>(
-                    prefs.FirstOrDefault(p => p.GridId == gridId)?.CollapsedState ?? "[]") ?? new();
-
-            _ordersCollapsed         = Load("OrdersGrid");
-            _ordersProductsCollapsed = Load("OrdersGrid_L2");
-            _batchesCollapsed        = Load("BatchesGrid");
-            _batchesProductsCollapsed = Load("BatchesGrid_L2");
-        }
-
         await LoadData();
         StateHasChanged();
     }
 
     private async Task LoadData()
     {
-        var mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
-        var mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
-
-        ApplyExpansionState(mtoItems, _ordersCollapsed, _ordersProductsCollapsed);
-        ApplyExpansionState(mtsItems, _batchesCollapsed, _batchesProductsCollapsed);
-
-        _mtoItems = mtoItems;
-        _mtsItems = mtsItems;
-    }
-
-    private static void ApplyExpansionState(List<ExportTreeItem> items, HashSet<string> collapsed, HashSet<string> collapsedProducts)
-    {
-        foreach (var item in items)
-        {
-            if (item.IsBatchRow && item.BatchName != null && collapsed.Contains(item.BatchName))
-                item.IsExpanded = false;
-            else if (item.IsProductRow && item.ProductName != null && collapsedProducts.Contains(item.ProductName))
-                item.IsExpanded = false;
-        }
+        _mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed);
+        _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed);
     }
 
     private async Task OnPlantChanged(int? value)
@@ -331,79 +278,6 @@ protected override async Task OnInitializedAsync()
     {
         _showProcessed = args.Checked;
         await LoadData();
-    }
-
-    private async Task SaveCollapsedAsync(string gridId, HashSet<string> collapsed)
-    {
-        if (_userId <= 0) return;
-
-        var pref = await DbContext.UserGridPreferences
-            .FirstOrDefaultAsync(p => p.UserId == _userId && p.GridId == gridId);
-
-        if (pref == null)
-        {
-            pref = new UserGridPreference { UserId = _userId, GridId = gridId };
-            DbContext.UserGridPreferences.Add(pref);
-        }
-
-        pref.CollapsedState = JsonSerializer.Serialize(collapsed);
-        await DbContext.SaveChangesAsync();
-    }
-
-    private async Task OnOrdersRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
-    {
-        if (args.Data.IsBatchRow && args.Data.BatchName != null)
-        {
-            _ordersCollapsed.Add(args.Data.BatchName);
-            await SaveCollapsedAsync("OrdersGrid", _ordersCollapsed);
-        }
-        else if (args.Data.IsProductRow && args.Data.ProductName != null)
-        {
-            _ordersProductsCollapsed.Add(args.Data.ProductName);
-            await SaveCollapsedAsync("OrdersGrid_L2", _ordersProductsCollapsed);
-        }
-    }
-
-    private async Task OnOrdersRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
-    {
-        if (args.Data.IsBatchRow && args.Data.BatchName != null)
-        {
-            _ordersCollapsed.Remove(args.Data.BatchName);
-            await SaveCollapsedAsync("OrdersGrid", _ordersCollapsed);
-        }
-        else if (args.Data.IsProductRow && args.Data.ProductName != null)
-        {
-            _ordersProductsCollapsed.Remove(args.Data.ProductName);
-            await SaveCollapsedAsync("OrdersGrid_L2", _ordersProductsCollapsed);
-        }
-    }
-
-    private async Task OnBatchesRowCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
-    {
-        if (args.Data.IsBatchRow && args.Data.BatchName != null)
-        {
-            _batchesCollapsed.Add(args.Data.BatchName);
-            await SaveCollapsedAsync("BatchesGrid", _batchesCollapsed);
-        }
-        else if (args.Data.IsProductRow && args.Data.ProductName != null)
-        {
-            _batchesProductsCollapsed.Add(args.Data.ProductName);
-            await SaveCollapsedAsync("BatchesGrid_L2", _batchesProductsCollapsed);
-        }
-    }
-
-    private async Task OnBatchesRowExpanded(RowExpandedEventArgs<ExportTreeItem> args)
-    {
-        if (args.Data.IsBatchRow && args.Data.BatchName != null)
-        {
-            _batchesCollapsed.Remove(args.Data.BatchName);
-            await SaveCollapsedAsync("BatchesGrid", _batchesCollapsed);
-        }
-        else if (args.Data.IsProductRow && args.Data.ProductName != null)
-        {
-            _batchesProductsCollapsed.Remove(args.Data.ProductName);
-            await SaveCollapsedAsync("BatchesGrid_L2", _batchesProductsCollapsed);
-        }
     }
 
     // Daily Schedule tab: stock items are dimmed (they belong on the Batches tab)
