@@ -506,6 +506,7 @@ public class BomService : IBomService
                         Title = part.Title,
                         Description = part.Description,
                         Category = part.Category,
+                        CategoryOrder = CategoryOrder(part.Category),
                         Material = part.Material,
                         Thickness = part.Thickness,
                         Operations = part.Operations,
@@ -600,6 +601,7 @@ public class BomService : IBomService
                         Title = part.Title,
                         Description = part.Description,
                         Category = part.Category,
+                        CategoryOrder = CategoryOrder(part.Category),
                         Material = part.Material,
                         Thickness = part.Thickness,
                         Operations = part.Operations,
@@ -615,6 +617,14 @@ public class BomService : IBomService
 
         return result;
     }
+
+    private static int CategoryOrder(string? category) => category?.ToLowerInvariant() switch
+    {
+        "product"  => 0,
+        "assembly" => 1,
+        "part"     => 2,
+        _          => int.MaxValue,
+    };
 
     public bool PdfExistsOnShare(string partNumber)
     {

@@ -44,7 +44,7 @@
                     }
                     else
                     {
-                        <SfTreeGrid ID="OrdersGrid" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                        <SfTreeGrid ID="OrdersGrid_v2" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded"
                                     TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents TValue="ExportTreeItem"
@@ -82,7 +82,14 @@
                                         }
                                     </Template>
                                 </TreeGridColumn>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Category)" HeaderText="Category" Width="100" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.CategoryOrder)" HeaderText="Category" Width="100">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            <span>@item!.Category</span>
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Material)" HeaderText="Material" Width="120" />
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Thickness)" HeaderText="Thickness" Width="90" />
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Operations)" HeaderText="Operations" Width="110" />
@@ -135,7 +142,7 @@
                     }
                     else
                     {
-                        <SfTreeGrid ID="BatchesGrid" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                        <SfTreeGrid ID="BatchesGrid_v2" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded"
                                     TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true" EnablePersistence="true">
                             <TreeGridEvents TValue="ExportTreeItem"
@@ -173,7 +180,14 @@
                                         }
                                     </Template>
                                 </TreeGridColumn>
-                                <TreeGridColumn Field="@nameof(ExportTreeItem.Category)" HeaderText="Category" Width="100" />
+                                <TreeGridColumn Field="@nameof(ExportTreeItem.CategoryOrder)" HeaderText="Category" Width="100">
+                                    <Template>
+                                        @{
+                                            var item = context as ExportTreeItem;
+                                            <span>@item!.Category</span>
+                                        }
+                                    </Template>
+                                </TreeGridColumn>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Material)" HeaderText="Material" Width="120" />
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Thickness)" HeaderText="Thickness" Width="90" />
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Operations)" HeaderText="Operations" Width="110" />
@@ -233,7 +247,7 @@
 
     private record PlantOption(int? Id, string Name);
 
-    protected override async Task OnInitializedAsync()
+protected override async Task OnInitializedAsync()
     {
         var plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         _plantOptions = new List<PlantOption> { new(null, "All Plants") };

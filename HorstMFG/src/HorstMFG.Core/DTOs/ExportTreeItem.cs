@@ -31,6 +31,7 @@ public class ExportTreeItem
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Category { get; set; }
+    public int CategoryOrder { get; set; } = int.MaxValue;
     public string? Material { get; set; }
     public string? Thickness { get; set; }
     public string? Operations { get; set; }
