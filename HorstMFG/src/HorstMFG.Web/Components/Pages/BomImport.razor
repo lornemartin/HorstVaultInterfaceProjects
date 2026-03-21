@@ -2,7 +2,7 @@
 @attribute [Authorize(Policy = "Engineering")]
 @rendermode InteractiveServer
 @inject IBomService BomService
-@inject ApplicationDbContext DbContext
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
@@ -220,7 +220,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        _plants = await db.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
 
         var httpContext = HttpContextAccessor.HttpContext;
         if (httpContext?.User.Identity?.IsAuthenticated == true)

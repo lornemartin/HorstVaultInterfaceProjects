@@ -22,7 +22,7 @@ try
     builder.Services.AddHttpContextAccessor();
 
     // Database
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     builder.Services.AddScoped<DbInitializer>();
 

@@ -2,7 +2,7 @@
 @attribute [Authorize(Policy = "Engineering")]
 @rendermode InteractiveServer
 @inject IBomService BomService
-@inject ApplicationDbContext DbContext
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
@@ -270,7 +270,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var plants = await db.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         _plantOptions = new List<PlantOption> { new(null, "All Plants") };
         _plantOptions.AddRange(plants.Select(p => new PlantOption(p.Id, p.Name)));
 
