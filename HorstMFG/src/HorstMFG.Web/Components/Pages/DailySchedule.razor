@@ -4,8 +4,10 @@
 @inject IBomService BomService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Grids
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -44,9 +46,12 @@
                     {
                         <SfTreeGrid ID="OrdersGrid_v3" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded" EnablePersistence="true"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true">
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true"
+                                    ContextMenuItems="@_contextMenuItems">
                             <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtoRowDataBound" />
+                                            RowDataBound="OnMtoRowDataBound"
+                                            ContextMenuOpen="OnContextMenuOpen"
+                                            ContextMenuItemClicked="OnMtoContextMenuClicked" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -140,9 +145,12 @@
                     {
                         <SfTreeGrid ID="BatchesGrid_v3" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
                                     ExpandStateMapping="IsExpanded" EnablePersistence="true"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true">
+                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="550" AllowResizing="true"
+                                    ContextMenuItems="@_contextMenuItems">
                             <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtsRowDataBound" />
+                                            RowDataBound="OnMtsRowDataBound"
+                                            ContextMenuOpen="OnContextMenuOpen"
+                                            ContextMenuItemClicked="OnMtsContextMenuClicked" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -235,6 +243,11 @@
 
     private record PlantOption(int? Id, string Name);
 
+    private readonly List<object> _contextMenuItems = new()
+    {
+        new ContextMenuItemModel { Text = "Laser Parts Report", Id = "laser-report" },
+    };
+
     protected override async Task OnInitializedAsync()
     {
         var plants = await DbContext.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
@@ -278,6 +291,29 @@
     {
         _showProcessed = args.Checked;
         await LoadData();
+    }
+
+    // ── Context menu ─────────────────────────────────────────────────────────
+
+    private void OnContextMenuOpen(ContextMenuOpenEventArgs<ExportTreeItem> args)
+    {
+        // Only show on top-level schedule/batch rows
+        if (args.RowInfo?.RowData is not { IsBatchRow: true })
+            args.Cancel = true;
+    }
+
+    private async Task OnMtoContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
+    {
+        if (args.Item.Id == "laser-report" && args.RowInfo?.RowData?.BatchName is string name)
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/reports/schedule-laser/{Uri.EscapeDataString(name)}", "_blank");
+    }
+
+    private async Task OnMtsContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
+    {
+        if (args.Item.Id == "laser-report" && args.RowInfo?.RowData?.BatchName is string name)
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/reports/batch-laser/{Uri.EscapeDataString(name)}", "_blank");
     }
 
     // Daily Schedule tab: stock items are dimmed (they belong on the Batches tab)
