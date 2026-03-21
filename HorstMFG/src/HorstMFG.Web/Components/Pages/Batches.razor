@@ -1,10 +1,10 @@
-@page "/engineering/orders"
+@page "/engineering/batches"
 @attribute [Authorize(Policy = "Engineering")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
-@inject HorstMFG.Web.Services.ScheduleTreeFilterState ScheduleFilterState
+@inject HorstMFG.Web.Services.BatchTreeFilterState BatchFilterState
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
@@ -12,9 +12,9 @@
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Data
 
-<PageTitle>Orders - HorstMFG</PageTitle>
+<PageTitle>Batches - HorstMFG</PageTitle>
 
-<h3>Orders</h3>
+<h3>Batches</h3>
 
 <div style="display: flex; gap: 2rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
     <div style="min-width: 200px;">
@@ -52,16 +52,17 @@
     </div>
 </div>
 
-<SfTreeGrid TValue="ExportTreeItem" @ref="_schedGrid" ID="OrdersGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+<SfTreeGrid TValue="ExportTreeItem" @ref="_batchGrid" ID="BatchesGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
             HasChildMapping="HasChildren" LoadChildOnDemand="true" EnablePersistence="true"
             TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
+            Toolbar="@_toolbar"
             ContextMenuItems="@_contextMenuItems">
-    <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.ScheduleTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
+    <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.BatchTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
     <TreeGridEvents TValue="ExportTreeItem"
-                    DataBound="OnSchedDataBound"
-                    OnActionBegin="OnSchedActionBegin"
-                    Expanded="OnSchedExpanded"
-                    Collapsed="OnSchedCollapsed"
+                    DataBound="OnBatchDataBound"
+                    OnActionBegin="OnBatchActionBegin"
+                    Expanded="OnBatchExpanded"
+                    Collapsed="OnBatchCollapsed"
                     RowDataBound="OnRowDataBound"
                     ContextMenuOpen="OnContextMenuOpen"
                     ContextMenuItemClicked="OnContextMenuClicked" />
@@ -154,9 +155,11 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
 
-    private SfTreeGrid<ExportTreeItem>? _schedGrid;
+    private SfTreeGrid<ExportTreeItem>? _batchGrid;
 
     private record PlantOption(int? Id, string Name);
+
+    private readonly List<string> _toolbar = new() { "Search" };
 
     private readonly List<object> _contextMenuItems = new()
     {
@@ -209,10 +212,10 @@
 
     private void SyncFilterState()
     {
-        ScheduleFilterState.PlantId = _selectedPlantId;
-        ScheduleFilterState.IncludeProcessed = _showProcessed;
-        ScheduleFilterState.FromDate = _fromDate;
-        ScheduleFilterState.ToDate = _toDate;
+        BatchFilterState.PlantId = _selectedPlantId;
+        BatchFilterState.IncludeProcessed = _showProcessed;
+        BatchFilterState.FromDate = _fromDate;
+        BatchFilterState.ToDate = _toDate;
     }
 
     private async Task LoadData()
@@ -225,7 +228,7 @@
         else
         {
             _awaitingRestore = true;
-            if (_schedGrid is not null) await _schedGrid.RefreshAsync();
+            if (_batchGrid is not null) await _batchGrid.RefreshAsync();
         }
     }
 
@@ -266,11 +269,11 @@
     }
 
     // ── Expansion state persistence ───────────────────────────────────────────
-    private const string ExpandKey = "hfmg-sched-expanded";
+    private const string ExpandKey = "hfmg-batch-expanded";
     private bool _awaitingRestore;
     private bool _restoringExpansion;
 
-    private async Task OnSchedDataBound(object _)
+    private async Task OnBatchDataBound(object _)
     {
         if (!_awaitingRestore || _restoringExpansion) return;
         _awaitingRestore = false;
@@ -279,19 +282,19 @@
         finally { _restoringExpansion = false; }
     }
 
-    private void OnSchedActionBegin(ActionEventArgs<ExportTreeItem> args)
+    private void OnBatchActionBegin(ActionEventArgs<ExportTreeItem> args)
     {
         if (args.RequestType == Syncfusion.Blazor.Grids.Action.Sorting && !_restoringExpansion)
             _awaitingRestore = true;
     }
 
-    private async Task OnSchedExpanded(RowExpandedEventArgs<ExportTreeItem> args)
+    private async Task OnBatchExpanded(RowExpandedEventArgs<ExportTreeItem> args)
     {
         if (_restoringExpansion || !args.Data.IsBatchRow) return;
         await UpdateExpandedStorageAsync(args.Data.TreeId, add: true);
     }
 
-    private async Task OnSchedCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
+    private async Task OnBatchCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
     {
         if (_restoringExpansion || !args.Data.IsBatchRow) return;
         await UpdateExpandedStorageAsync(args.Data.TreeId, add: false);
@@ -299,7 +302,7 @@
 
     private async Task RestoreExpansionAsync()
     {
-        if (_schedGrid is null) return;
+        if (_batchGrid is null) return;
         try
         {
             var json = await JS.InvokeAsync<string?>("localStorage.getItem", ExpandKey);
@@ -307,7 +310,7 @@
             var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(json);
             if (ids is null || ids.Count == 0) return;
             foreach (var id in ids)
-                await _schedGrid.ExpandByKeyAsync(id);
+                await _batchGrid.ExpandByKeyAsync(id);
         }
         catch (JSDisconnectedException) { }
     }
@@ -341,13 +344,13 @@
 
         if (args.Item.Id == "laser-report")
             await JS.InvokeVoidAsync("window.open",
-                $"/api/reports/schedule-laser/{Uri.EscapeDataString(name)}", "_blank");
+                $"/api/reports/batch-laser/{Uri.EscapeDataString(name)}", "_blank");
         else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
             await JS.InvokeVoidAsync("window.open",
-                $"/api/reports/schedule-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
+                $"/api/reports/batch-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
     }
 
-    // Stock items are dimmed — they belong on the Batches page
+    // Non-stock items are dimmed — they belong on the Orders page
     private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow)
@@ -360,7 +363,7 @@
                 args.Row.AddClass(new[] { "row-processed" });
             if (!string.IsNullOrWhiteSpace(args.Data.Notes))
                 args.Row.AddClass(new[] { "row-has-notes" });
-            if (args.Data.IsStock)
+            if (!args.Data.IsStock)
                 args.Row.AddClass(new[] { "row-dimmed" });
         }
     }

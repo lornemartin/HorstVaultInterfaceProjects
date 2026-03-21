@@ -11,7 +11,10 @@
       "WebSearch",
       "WebFetch(domain:blazor.syncfusion.com)",
       "WebFetch(domain:ej2.syncfusion.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:help.syncfusion.com)",
+      "WebFetch(domain:www.syncfusion.com)",
+      "WebFetch(domain:support.syncfusion.com)"
     ]
   }
 }

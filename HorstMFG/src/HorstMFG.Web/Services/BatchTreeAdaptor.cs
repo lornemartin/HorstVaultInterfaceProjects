@@ -28,6 +28,8 @@ public class BatchTreeAdaptor : DataAdaptor
                 parentTreeId = pid;
         }
 
+        _state.LastReadWasRootLoad = !parentTreeId.HasValue;
+
         List<ExportTreeItem> items = parentTreeId.HasValue
             ? await _bomService.GetBatchChildrenByParentTreeIdAsync(parentTreeId.Value, _state.IncludeProcessed)
             : await _bomService.GetBatchTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate);
