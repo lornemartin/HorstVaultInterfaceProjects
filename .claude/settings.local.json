@@ -5,7 +5,13 @@
       "Bash(dotnet add:*)",
       "Bash(powershell:*)",
       "Bash(dotnet build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find /c/Users/lorne/.nuget/packages/syncfusion.blazor.treegrid -name *.xml)",
+      "Bash(echo \"EXIT:$?\")",
+      "WebSearch",
+      "WebFetch(domain:blazor.syncfusion.com)",
+      "WebFetch(domain:ej2.syncfusion.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

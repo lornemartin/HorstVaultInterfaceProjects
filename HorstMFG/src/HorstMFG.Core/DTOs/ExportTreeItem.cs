@@ -22,6 +22,8 @@ public class ExportTreeItem
     public bool ReadyForProduction { get; set; }
     public int ItemCount { get; set; }
 
+    public bool HasChildren { get; set; }
+
     // Product/Order-level fields (IsProductRow = true)
     public string? ProductName { get; set; }
     public string? OrderNumber { get; set; }

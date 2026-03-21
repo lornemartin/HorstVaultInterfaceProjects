@@ -5,10 +5,13 @@
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
+@inject HorstMFG.Web.Services.ScheduleTreeFilterState ScheduleFilterState
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.TreeGrid
 @using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Data
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -58,21 +61,15 @@
             </ChildContent>
             <ContentTemplate>
                 <div style="padding-top: 0.5rem;">
-                    @if (_mtoItems.Count == 0)
-                    {
-                        <p style="color: #64748b; padding: 2rem; text-align: center;">No orders found.</p>
-                    }
-                    else
-                    {
-                        <SfTreeGrid ID="OrdersGrid_v3" DataSource="_mtoItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    ExpandStateMapping="IsExpanded" EnablePersistence="true"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
-                                    Toolbar="@_toolbar"
-                                    ContextMenuItems="@_contextMenuItems">
-                            <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtoRowDataBound"
-                                            ContextMenuOpen="OnContextMenuOpen"
-                                            ContextMenuItemClicked="OnMtoContextMenuClicked" />
+                    <SfTreeGrid TValue="ExportTreeItem" @key="_schedGridKey" ID="OrdersGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                HasChildMapping="HasChildren" LoadChildOnDemand="true"
+                                TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
+                                ContextMenuItems="@_contextMenuItems">
+                        <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.ScheduleTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
+                        <TreeGridEvents TValue="ExportTreeItem"
+                                        RowDataBound="OnMtoRowDataBound"
+                                        ContextMenuOpen="OnContextMenuOpen"
+                                        ContextMenuItemClicked="OnMtoContextMenuClicked" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -151,8 +148,7 @@
                                     </Template>
                                 </TreeGridColumn>
                             </TreeGridColumns>
-                        </SfTreeGrid>
-                    }
+                    </SfTreeGrid>
                 </div>
             </ContentTemplate>
         </TabItem>
@@ -168,8 +164,8 @@
                     }
                     else
                     {
-                        <SfTreeGrid ID="BatchesGrid_v3" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    ExpandStateMapping="IsExpanded" EnablePersistence="true"
+                        <SfTreeGrid ID="BatchesGrid_v4" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                    EnablePersistence="true"
                                     TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
                                     Toolbar="@_toolbar"
                                     ContextMenuItems="@_contextMenuItems">
@@ -264,7 +260,6 @@
 </SfTab>
 
 @code {
-    private List<ExportTreeItem> _mtoItems = new();
     private List<ExportTreeItem> _mtsItems = new();
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
@@ -272,6 +267,9 @@
     private bool _isAdmin;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
+
+    // Daily Schedule load-on-demand (CustomAdaptor reads ScheduleFilterState)
+    private int _schedGridKey = 0;
 
     private record PlantOption(int? Id, string Name);
 
@@ -324,7 +322,13 @@
 
     private async Task LoadData()
     {
-        _mtoItems = await BomService.GetScheduleTreeItemsAsync(_selectedPlantId, _showProcessed, _fromDate, _toDate);
+        // Update filter state — adaptor reads this on next fetch
+        ScheduleFilterState.PlantId = _selectedPlantId;
+        ScheduleFilterState.IncludeProcessed = _showProcessed;
+        ScheduleFilterState.FromDate = _fromDate;
+        ScheduleFilterState.ToDate = _toDate;
+        _schedGridKey++;  // Force SfTreeGrid to remount so adaptor re-fetches with new state
+
         _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed, _fromDate, _toDate);
     }
 

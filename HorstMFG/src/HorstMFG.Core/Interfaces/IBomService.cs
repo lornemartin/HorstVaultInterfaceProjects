@@ -27,11 +27,19 @@ public interface IBomService
     /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.
     /// </summary>
     Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
+    Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
 
     /// <summary>
     /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
     /// </summary>
     Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
+    Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
+
+    /// <summary>
+    /// Get children for a schedule tree row by parent TreeId (used by Web API load-on-demand).
+    /// TreeId scheme: Schedule = schedule.Id, Order = order.Id + 1_000_000, Part = part.Id + 100_000_000.
+    /// </summary>
+    Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
 
     /// <summary>
     /// Check if a PDF exists on the share for the given part number.

@@ -46,6 +46,8 @@ try
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
     builder.Services.AddScoped<ReportService>();
+    builder.Services.AddScoped<ScheduleTreeFilterState>();
+    builder.Services.AddScoped<ScheduleTreeAdaptor>();
 
     // Syncfusion
     Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(
