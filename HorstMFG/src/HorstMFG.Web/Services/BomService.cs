@@ -282,6 +282,7 @@ public class BomService : IBomService
             {
                 BatchId = batch.Id,
                 ProductName = productName,
+                Qty = level1Line?.Qty ?? 1,
             };
             _db.BatchProducts.Add(product);
             await _db.SaveChangesAsync();
@@ -326,7 +327,7 @@ public class BomService : IBomService
         return batch;
     }
 
-    public async Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int plantId, int userId, List<BomExportLine> lines)
+    public async Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int orderQty, int plantId, int userId, List<BomExportLine> lines)
     {
         var localFolder = Path.Combine(_localPdfPath, "Schedules", name);
 
@@ -351,6 +352,7 @@ public class BomService : IBomService
         {
             ScheduleId = schedule.Id,
             OrderNumber = orderNumber,
+            Qty = orderQty < 1 ? 1 : orderQty,
         };
         _db.ScheduleOrders.Add(order);
         await _db.SaveChangesAsync();
@@ -493,6 +495,7 @@ public class BomService : IBomService
                     TreeParentId = batchTreeId,
                     IsProductRow = true,
                     ProductName = product.ProductName,
+                    ParentQty = product.Qty,
                     ItemCount = productParts.Count,
                 });
 
@@ -588,6 +591,7 @@ public class BomService : IBomService
                     IsProductRow = true,
                     OrderNumber = schedOrder.OrderNumber,
                     ProductName = schedOrder.OrderNumber,
+                    ParentQty = schedOrder.Qty,
                     ItemCount = orderParts.Count,
                 });
 

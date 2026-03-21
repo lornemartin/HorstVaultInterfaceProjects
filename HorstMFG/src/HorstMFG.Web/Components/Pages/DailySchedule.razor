@@ -98,9 +98,13 @@
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
-                                            @if (item!.IsBatchRow || item.IsProductRow)
+                                            @if (item!.IsBatchRow)
                                             {
                                                 <span style="color: #6b7280;">@item.ItemCount items</span>
+                                            }
+                                            else if (item.IsProductRow)
+                                            {
+                                                <strong>@item.ParentQty</strong>
                                             }
                                             else
                                             {
@@ -197,9 +201,13 @@
                                     <Template>
                                         @{
                                             var item = context as ExportTreeItem;
-                                            @if (item!.IsBatchRow || item.IsProductRow)
+                                            @if (item!.IsBatchRow)
                                             {
                                                 <span style="color: #6b7280;">@item.ItemCount items</span>
+                                            }
+                                            else if (item.IsProductRow)
+                                            {
+                                                <strong>@item.ParentQty</strong>
                                             }
                                             else
                                             {
@@ -245,7 +253,19 @@
 
     private readonly List<object> _contextMenuItems = new()
     {
-        new ContextMenuItemModel { Text = "Laser Parts Report", Id = "laser-report" },
+        new ContextMenuItemModel { Text = "Laser Parts Report",         Id = "laser-report"      },
+        new ContextMenuItemModel { Text = "Iron Worker Report",         Id = "op-iron-worker"    },
+        new ContextMenuItemModel { Text = "Machine Shop Report",        Id = "op-machine-shop"   },
+        new ContextMenuItemModel { Text = "Bandsaw Report",             Id = "op-bandsaw"        },
+        new ContextMenuItemModel { Text = "Purchased Parts Report",     Id = "op-purchased"      },
+    };
+
+    private static readonly Dictionary<string, string> _opMenuItems = new()
+    {
+        ["op-iron-worker"]  = "Iron Worker",
+        ["op-machine-shop"] = "Machine Shop",
+        ["op-bandsaw"]      = "Bandsaw",
+        ["op-purchased"]    = "Purchased",
     };
 
     protected override async Task OnInitializedAsync()
@@ -304,16 +324,26 @@
 
     private async Task OnMtoContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
     {
-        if (args.Item.Id == "laser-report" && args.RowInfo?.RowData?.BatchName is string name)
+        if (args.RowInfo?.RowData?.BatchName is not string name) return;
+
+        if (args.Item.Id == "laser-report")
             await JS.InvokeVoidAsync("window.open",
                 $"/api/reports/schedule-laser/{Uri.EscapeDataString(name)}", "_blank");
+        else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/reports/schedule-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
     }
 
     private async Task OnMtsContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
     {
-        if (args.Item.Id == "laser-report" && args.RowInfo?.RowData?.BatchName is string name)
+        if (args.RowInfo?.RowData?.BatchName is not string name) return;
+
+        if (args.Item.Id == "laser-report")
             await JS.InvokeVoidAsync("window.open",
                 $"/api/reports/batch-laser/{Uri.EscapeDataString(name)}", "_blank");
+        else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/reports/batch-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
     }
 
     // Daily Schedule tab: stock items are dimmed (they belong on the Batches tab)

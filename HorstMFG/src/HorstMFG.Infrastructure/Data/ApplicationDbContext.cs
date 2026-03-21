@@ -97,6 +97,7 @@ public class ApplicationDbContext : DbContext
             e.ToTable("batch_products");
             e.HasKey(bp => bp.Id);
             e.Property(bp => bp.ProductName).HasMaxLength(200).IsRequired();
+            e.Property(bp => bp.Qty).HasColumnName("qty").HasDefaultValue(1);
             e.HasOne(bp => bp.Batch).WithMany(b => b.BatchProducts).HasForeignKey(bp => bp.BatchId);
         });
 
@@ -117,6 +118,7 @@ public class ApplicationDbContext : DbContext
             e.ToTable("schedule_orders");
             e.HasKey(so => so.Id);
             e.Property(so => so.OrderNumber).HasMaxLength(100).IsRequired();
+            e.Property(so => so.Qty).HasColumnName("qty").HasDefaultValue(1);
             e.HasOne(so => so.Schedule).WithMany(s => s.ScheduleOrders).HasForeignKey(so => so.ScheduleId);
         });
 

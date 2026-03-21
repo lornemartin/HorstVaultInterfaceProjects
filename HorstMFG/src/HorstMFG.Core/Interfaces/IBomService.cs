@@ -21,7 +21,7 @@ public interface IBomService
     /// Import parsed MakeToStock BOM lines: creates a single ScheduleOrder with all lines
     /// as PartLineItems, and copies PDFs to the local folder.
     /// </summary>
-    Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int plantId, int userId, List<BomExportLine> lines);
+    Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int orderQty, int plantId, int userId, List<BomExportLine> lines);
 
     /// <summary>
     /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.

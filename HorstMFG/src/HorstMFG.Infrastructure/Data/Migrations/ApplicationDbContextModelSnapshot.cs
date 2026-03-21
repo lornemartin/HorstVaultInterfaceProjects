@@ -115,6 +115,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int>("Qty")
+                        .HasDefaultValue(1)
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BatchId");
@@ -583,6 +587,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Qty")
+                        .HasDefaultValue(1)
+                        .HasColumnType("integer");
 
                     b.Property<int>("ScheduleId")
                         .HasColumnType("integer");

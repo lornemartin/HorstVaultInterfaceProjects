@@ -73,6 +73,10 @@ else
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Number <span style="color: #b91c1c;">*</span></label>
                 <SfTextBox @bind-Value="_orderNumber" Placeholder="e.g. 12345" />
             </div>
+            <div style="min-width: 100px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Qty</label>
+                <SfNumericTextBox TValue="int" @bind-Value="_orderQty" Min="1" Max="9999" />
+            </div>
         }
     </div>
 
@@ -193,6 +197,7 @@ else
     private int _selectedPlantId;
     private string _batchName = "";
     private string _orderNumber = "";
+    private int _orderQty = 1;
     private bool _parsing;
     private bool _importing;
     private bool _importComplete;
@@ -316,7 +321,7 @@ else
             if (SelectedBomTypeStr == "Order")
             {
                 var schedule = await BomService.ImportScheduleAsync(
-                    _batchName, _orderNumber.Trim(), _selectedPlantId, _userId, _parsedLines);
+                    _batchName, _orderNumber.Trim(), _orderQty, _selectedPlantId, _userId, _parsedLines);
                 _pdfsCopied = _parsedLines.Count(l => l.HasPdf);
             }
             else
@@ -393,6 +398,7 @@ else
         _parsedLines.Clear();
         _importComplete = false;
         _orderNumber = "";
+        _orderQty = 1;
         _message = null;
         _isError = false;
         _selectedLine = null;

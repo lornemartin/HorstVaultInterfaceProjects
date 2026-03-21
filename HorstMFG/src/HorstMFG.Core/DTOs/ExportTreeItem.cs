@@ -25,6 +25,7 @@ public class ExportTreeItem
     // Product/Order-level fields (IsProductRow = true)
     public string? ProductName { get; set; }
     public string? OrderNumber { get; set; }
+    public int? ParentQty { get; set; }
 
     // Line-item fields (leaf rows)
     public string? Number { get; set; }

@@ -96,6 +96,26 @@ try
         return Results.File(bytes, "application/pdf");
     }).RequireAuthorization();
 
+    app.MapGet("/api/reports/schedule-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
+    {
+        var n  = Uri.UnescapeDataString(name);
+        var op = Uri.UnescapeDataString(operation);
+        var bytes = await reports.GenerateScheduleOperationReportAsync(n, op);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{op}-Schedule-{n}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
+    app.MapGet("/api/reports/batch-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
+    {
+        var n  = Uri.UnescapeDataString(name);
+        var op = Uri.UnescapeDataString(operation);
+        var bytes = await reports.GenerateBatchOperationReportAsync(n, op);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{op}-Batch-{n}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
     // Minimal API: serve PDFs from the share
     var pdfSharePath = builder.Configuration["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
     app.MapGet("/api/pdf/{fileName}", (string fileName) =>
@@ -116,7 +136,7 @@ try
 
     app.Run();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
 }
