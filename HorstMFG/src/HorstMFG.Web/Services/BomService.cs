@@ -247,7 +247,7 @@ public class BomService : IBomService
         return item.Qty;
     }
 
-    public async Task<Batch> ImportBatchAsync(string name, int plantId, int userId, List<BomExportLine> lines)
+    public async Task<Batch> ImportBatchAsync(string name, int batchQty, int plantId, int userId, List<BomExportLine> lines)
     {
         var localFolder = Path.Combine(_localPdfPath, "Batches", name);
 
@@ -282,7 +282,7 @@ public class BomService : IBomService
             {
                 BatchId = batch.Id,
                 ProductName = productName,
-                Qty = level1Line?.Qty ?? 1,
+                Qty = (level1Line?.Qty ?? 1) * (batchQty < 1 ? 1 : batchQty),
             };
             _db.BatchProducts.Add(product);
             await _db.SaveChangesAsync();

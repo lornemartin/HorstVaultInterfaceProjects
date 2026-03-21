@@ -15,7 +15,7 @@ public interface IBomService
     /// Import parsed MakeToOrder BOM lines: groups by Level-1 assembly into BatchProducts,
     /// creates PartLineItems, and copies PDFs to the local folder.
     /// </summary>
-    Task<Batch> ImportBatchAsync(string name, int plantId, int userId, List<BomExportLine> lines);
+    Task<Batch> ImportBatchAsync(string name, int batchQty, int plantId, int userId, List<BomExportLine> lines);
 
     /// <summary>
     /// Import parsed MakeToStock BOM lines: creates a single ScheduleOrder with all lines

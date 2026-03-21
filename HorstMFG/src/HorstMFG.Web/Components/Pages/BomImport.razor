@@ -62,6 +62,10 @@ else
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch Name</label>
                 <SfTextBox @bind-Value="_batchName" Placeholder="e.g. 2026-03-04 Batch" />
             </div>
+            <div style="min-width: 100px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Batch Qty</label>
+                <SfNumericTextBox TValue="int" @bind-Value="_batchQty" Min="1" Max="9999" />
+            </div>
         }
         else
         {
@@ -197,6 +201,7 @@ else
     private int _selectedPlantId;
     private string _batchName = "";
     private string _orderNumber = "";
+    private int _batchQty = 1;
     private int _orderQty = 1;
     private bool _parsing;
     private bool _importing;
@@ -327,7 +332,7 @@ else
             else
             {
                 var batch = await BomService.ImportBatchAsync(
-                    _batchName, _selectedPlantId, _userId, _parsedLines);
+                    _batchName, _batchQty, _selectedPlantId, _userId, _parsedLines);
                 _pdfsCopied = _parsedLines.Count(l => l.HasPdf);
             }
 
@@ -398,6 +403,7 @@ else
         _parsedLines.Clear();
         _importComplete = false;
         _orderNumber = "";
+        _batchQty = 1;
         _orderQty = 1;
         _message = null;
         _isError = false;
