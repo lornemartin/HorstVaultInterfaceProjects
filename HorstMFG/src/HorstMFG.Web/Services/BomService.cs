@@ -431,7 +431,7 @@ public class BomService : IBomService
         return results;
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null)
     {
         var query = _db.Batches
             .Include(b => b.Plant)
@@ -442,6 +442,10 @@ public class BomService : IBomService
 
         if (plantId.HasValue)
             query = query.Where(b => b.PlantId == plantId.Value);
+        if (fromDate.HasValue)
+            query = query.Where(b => b.ImportDate >= fromDate.Value.ToUniversalTime());
+        if (toDate.HasValue)
+            query = query.Where(b => b.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
 
         var batches = await query.OrderByDescending(b => b.ImportDate).ToListAsync();
 
@@ -526,7 +530,7 @@ public class BomService : IBomService
         return result;
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null)
     {
         var query = _db.Schedules
             .Include(s => s.Plant)
@@ -537,6 +541,10 @@ public class BomService : IBomService
 
         if (plantId.HasValue)
             query = query.Where(s => s.PlantId == plantId.Value);
+        if (fromDate.HasValue)
+            query = query.Where(s => s.ImportDate >= fromDate.Value.ToUniversalTime());
+        if (toDate.HasValue)
+            query = query.Where(s => s.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
 
         var schedules = await query.OrderByDescending(s => s.ImportDate).ToListAsync();
 

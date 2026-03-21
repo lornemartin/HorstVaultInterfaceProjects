@@ -26,12 +26,12 @@ public interface IBomService
     /// <summary>
     /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
 
     /// <summary>
     /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
 
     /// <summary>
     /// Check if a PDF exists on the share for the given part number.
