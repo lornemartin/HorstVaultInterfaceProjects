@@ -290,13 +290,13 @@
 
     private async Task OnBatchExpanded(RowExpandedEventArgs<ExportTreeItem> args)
     {
-        if (_restoringExpansion || !args.Data.IsBatchRow) return;
+        if (_restoringExpansion || (!args.Data.IsBatchRow && !args.Data.IsProductRow)) return;
         await UpdateExpandedStorageAsync(args.Data.TreeId, add: true);
     }
 
     private async Task OnBatchCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
     {
-        if (_restoringExpansion || !args.Data.IsBatchRow) return;
+        if (_restoringExpansion || (!args.Data.IsBatchRow && !args.Data.IsProductRow)) return;
         await UpdateExpandedStorageAsync(args.Data.TreeId, add: false);
     }
 
@@ -309,8 +309,20 @@
             if (string.IsNullOrEmpty(json)) return;
             var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(json);
             if (ids is null || ids.Count == 0) return;
-            foreach (var id in ids)
-                await _batchGrid.ExpandByKeyAsync(id);
+
+            // Pass 1: expand root rows (batch) — loads their product children
+            foreach (var id in ids.Where(id => id < 1_000_000))
+            {
+                try { await _batchGrid.ExpandByKeyAsync(id); }
+                catch (ArgumentOutOfRangeException) { }
+            }
+
+            // Pass 2: expand product rows — now visible after their parents expanded above
+            foreach (var id in ids.Where(id => id >= 1_000_000))
+            {
+                try { await _batchGrid.ExpandByKeyAsync(id); }
+                catch (ArgumentOutOfRangeException) { }  // parent not expanded, skip
+            }
         }
         catch (JSDisconnectedException) { }
     }
