@@ -433,7 +433,7 @@ public class BomService : IBomService
         return results;
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null)
+    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
 
@@ -449,6 +449,16 @@ public class BomService : IBomService
             query = query.Where(b => b.ImportDate >= fromDate.Value.ToUniversalTime());
         if (toDate.HasValue)
             query = query.Where(b => b.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(b =>
+                EF.Functions.ILike(b.Name, $"%{term}%") ||
+                b.BatchProducts.Any(bp =>
+                    bp.Parts.Any(p =>
+                        EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
+                        (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))));
+        }
 
         var batches = await query.OrderByDescending(b => b.ImportDate).ToListAsync();
         _log.LogInformation("GetBatchTreeItemsAsync: found {Count} batches (plantId={PlantId}, from={From}, to={To})",
@@ -628,7 +638,7 @@ public class BomService : IBomService
         return result;
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null)
+    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
 
@@ -644,6 +654,17 @@ public class BomService : IBomService
             query = query.Where(s => s.ImportDate >= fromDate.Value.ToUniversalTime());
         if (toDate.HasValue)
             query = query.Where(s => s.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(s =>
+                EF.Functions.ILike(s.Name, $"%{term}%") ||
+                s.ScheduleOrders.Any(so =>
+                    EF.Functions.ILike(so.OrderNumber, $"%{term}%") ||
+                    so.Parts.Any(p =>
+                        EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
+                        (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))));
+        }
 
         var schedules = await query.OrderByDescending(s => s.ImportDate).ToListAsync();
 

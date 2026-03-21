@@ -26,7 +26,7 @@ public interface IBomService
     /// <summary>
     /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
+    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
     Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
 
     /// <summary>
@@ -38,7 +38,7 @@ public interface IBomService
     /// <summary>
     /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
+    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
     Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
 
     /// <summary>

@@ -32,7 +32,7 @@ public class BatchTreeAdaptor : DataAdaptor
 
         List<ExportTreeItem> items = parentTreeId.HasValue
             ? await _bomService.GetBatchChildrenByParentTreeIdAsync(parentTreeId.Value, _state.IncludeProcessed)
-            : await _bomService.GetBatchTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate);
+            : await _bomService.GetBatchTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate, _state.SearchTerm);
 
         IEnumerable<ExportTreeItem> result = items;
         if (dm.Sorted?.Count > 0)

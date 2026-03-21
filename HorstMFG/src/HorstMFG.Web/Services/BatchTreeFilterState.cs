@@ -8,5 +8,6 @@ public class BatchTreeFilterState
     public DateTime? ToDate { get; set; }
     // Set by the adaptor on every ReadAsync call so the component can distinguish
     // root loads (no parent filter) from child loads (parent filter present).
+    public string? SearchTerm { get; set; }
     public bool LastReadWasRootLoad { get; set; }
 }

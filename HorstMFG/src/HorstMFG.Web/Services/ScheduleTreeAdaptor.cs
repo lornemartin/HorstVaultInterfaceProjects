@@ -38,7 +38,7 @@ public class ScheduleTreeAdaptor : DataAdaptor
 
         List<ExportTreeItem> items = parentTreeId.HasValue
             ? await _bomService.GetScheduleChildrenByParentTreeIdAsync(parentTreeId.Value, _state.IncludeProcessed)
-            : await _bomService.GetScheduleTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate);
+            : await _bomService.GetScheduleTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate, _state.SearchTerm);
 
         // Apply sort operations so column sorting works with CustomAdaptor
         IEnumerable<ExportTreeItem> result = items;

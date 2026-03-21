@@ -50,6 +50,13 @@
     <div style="display: flex; align-items: center; padding-bottom: 0.25rem;">
         <SfCheckBox Label="Show Processed Items" @bind-Checked="_showProcessed" ValueChange="OnShowProcessedChanged" TChecked="bool" />
     </div>
+
+    <div style="min-width: 240px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Search</label>
+        <input type="text" value="@_searchTerm" @oninput="OnSearchInput"
+               placeholder="Order name, part number, description…"
+               style="width: 100%; padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+    </div>
 </div>
 
 <SfTreeGrid TValue="ExportTreeItem" @ref="_schedGrid" ID="OrdersGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
@@ -207,12 +214,30 @@
         StateHasChanged();
     }
 
+    private string _searchTerm = "";
+    private CancellationTokenSource? _searchCts;
+
+    private async Task OnSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _searchTerm = e.Value?.ToString() ?? "";
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+        try
+        {
+            await Task.Delay(350, token);
+            await LoadData();
+        }
+        catch (TaskCanceledException) { }
+    }
+
     private void SyncFilterState()
     {
         ScheduleFilterState.PlantId = _selectedPlantId;
         ScheduleFilterState.IncludeProcessed = _showProcessed;
         ScheduleFilterState.FromDate = _fromDate;
         ScheduleFilterState.ToDate = _toDate;
+        ScheduleFilterState.SearchTerm = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
     }
 
     private async Task LoadData()
