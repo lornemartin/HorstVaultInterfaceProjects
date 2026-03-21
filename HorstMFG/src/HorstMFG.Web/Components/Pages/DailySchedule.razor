@@ -61,8 +61,8 @@
             </ChildContent>
             <ContentTemplate>
                 <div style="padding-top: 0.5rem;">
-                    <SfTreeGrid TValue="ExportTreeItem" @key="_schedGridKey" ID="OrdersGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                HasChildMapping="HasChildren" LoadChildOnDemand="true"
+                    <SfTreeGrid TValue="ExportTreeItem" @ref="_schedGrid" ID="OrdersGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                HasChildMapping="HasChildren" LoadChildOnDemand="true" EnablePersistence="true"
                                 TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
                                 ContextMenuItems="@_contextMenuItems">
                         <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.ScheduleTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
@@ -269,7 +269,7 @@
     private DateTime? _toDate = DateTime.Today;
 
     // Daily Schedule load-on-demand (CustomAdaptor reads ScheduleFilterState)
-    private int _schedGridKey = 0;
+    private SfTreeGrid<ExportTreeItem>? _schedGrid;
 
     private record PlantOption(int? Id, string Name);
 
@@ -311,7 +311,12 @@
                     _selectedPlantId = pid;
             }
         }
+
+        // Prime filter state so the adaptor has correct values on first fetch
+        SyncFilterState();
     }
+
+    private bool _isFirstLoad = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -320,16 +325,25 @@
         StateHasChanged();
     }
 
-    private async Task LoadData()
+    private void SyncFilterState()
     {
-        // Update filter state — adaptor reads this on next fetch
         ScheduleFilterState.PlantId = _selectedPlantId;
         ScheduleFilterState.IncludeProcessed = _showProcessed;
         ScheduleFilterState.FromDate = _fromDate;
         ScheduleFilterState.ToDate = _toDate;
-        _schedGridKey++;  // Force SfTreeGrid to remount so adaptor re-fetches with new state
+    }
 
+    private async Task LoadData()
+    {
+        SyncFilterState();
         _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed, _fromDate, _toDate);
+
+        // RefreshAsync() crashes before the grid finishes initializing on first render.
+        // The adaptor fires automatically on first load, so only call it after that.
+        if (_isFirstLoad)
+            _isFirstLoad = false;
+        else if (_schedGrid is not null)
+            await _schedGrid.RefreshAsync();
     }
 
     private async Task OnPlantChanged(int? value)

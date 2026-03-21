@@ -40,8 +40,14 @@ public class ScheduleTreeAdaptor : DataAdaptor
             ? await _bomService.GetScheduleChildrenByParentTreeIdAsync(parentTreeId.Value, _state.IncludeProcessed)
             : await _bomService.GetScheduleTreeItemsAsync(_state.PlantId, _state.IncludeProcessed, _state.FromDate, _state.ToDate);
 
+        // Apply sort operations so column sorting works with CustomAdaptor
+        IEnumerable<ExportTreeItem> result = items;
+        if (dm.Sorted?.Count > 0)
+            result = DataOperations.PerformSorting(result, dm.Sorted);
+
+        var list = result.ToList();
         return dm.RequiresCounts
-            ? (object)new DataResult { Result = items, Count = items.Count }
-            : items;
+            ? (object)new DataResult { Result = list, Count = list.Count }
+            : list;
     }
 }
