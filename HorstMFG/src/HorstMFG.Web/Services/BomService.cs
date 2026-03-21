@@ -437,11 +437,10 @@ public class BomService : IBomService
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
 
+        // Load header rows only — children fetched on-demand via GetBatchChildrenByParentTreeIdAsync
         var query = _db.Batches
             .Include(b => b.Plant)
             .Include(b => b.ImportedByUser)
-            .Include(b => b.BatchProducts)
-                .ThenInclude(bp => bp.Parts)
             .AsQueryable();
 
         if (plantId.HasValue)
@@ -455,75 +454,120 @@ public class BomService : IBomService
         _log.LogInformation("GetBatchTreeItemsAsync: found {Count} batches (plantId={PlantId}, from={From}, to={To})",
             batches.Count, plantId, fromDate, toDate);
 
+        // Fast part count per batch name
+        var batchNames = batches.Select(b => b.Name).Distinct().ToList();
+        var partCounts = batchNames.Count > 0
+            ? await _db.Set<PartLineItem>()
+                .Where(p => p.BatchProductId.HasValue && (includeProcessed || !p.IsProcessed))
+                .Where(p => batchNames.Contains(p.BatchProduct!.Batch.Name))
+                .GroupBy(p => p.BatchProduct!.Batch.Name)
+                .Select(g => new { Name = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Name, x => x.Count)
+            : new Dictionary<string, int>();
+
         var result = new List<ExportTreeItem>();
-        int treeId = 1;
 
         foreach (var group in batches.GroupBy(b => b.Name).OrderByDescending(g => g.Max(b => b.ImportDate)))
         {
             var latest = group.OrderByDescending(b => b.ImportDate).First();
-            var allProducts = group.SelectMany(b => b.BatchProducts).OrderBy(bp => bp.ProductName).ToList();
-            int totalParts = allProducts.Sum(bp => bp.Parts.Count(p => includeProcessed || !p.IsProcessed));
-
-            int batchTreeId = treeId++;
             result.Add(new ExportTreeItem
             {
-                TreeId = batchTreeId,
+                TreeId = latest.Id,  // DB id — stable, used by CustomAdaptor load-on-demand
                 TreeParentId = null,
                 IsBatchRow = true,
                 IsExpanded = false,
+                HasChildren = true,
                 BatchName = group.Key,
                 ImportDate = latest.ImportDate,
                 PlantName = latest.Plant?.Name,
                 ImportedBy = latest.ImportedByUser?.FullName,
                 ReadyForProduction = latest.ReadyForProduction,
-                ItemCount = totalParts,
+                ItemCount = partCounts.GetValueOrDefault(group.Key, 0),
             });
-
-            foreach (var product in allProducts)
-            {
-                var productParts = product.Parts
-                    .Where(p => includeProcessed || !p.IsProcessed)
-                    .OrderBy(p => p.PartNumber)
-                    .ToList();
-
-                if (productParts.Count == 0 && !includeProcessed) continue;
-
-                int productTreeId = treeId++;
-                result.Add(new ExportTreeItem
-                {
-                    TreeId = productTreeId,
-                    TreeParentId = batchTreeId,
-                    IsProductRow = true,
-                    ProductName = product.ProductName,
-                    ParentQty = product.Qty,
-                    ItemCount = productParts.Count,
-                });
-
-                foreach (var part in productParts)
-                {
-                    result.Add(new ExportTreeItem
-                    {
-                        TreeId = treeId++,
-                        TreeParentId = productTreeId,
-                        Number = part.PartNumber,
-                        Title = part.Title,
-                        Description = part.Description,
-                        Category = part.Category,
-                        CategoryOrder = CategoryOrder(part.Category),
-                        Material = part.Material,
-                        Thickness = part.Thickness,
-                        Operations = part.Operations,
-                        Qty = part.Qty,
-                        IsStock = part.IsStock,
-                        HasPdf = part.HasPdf,
-                        Notes = part.Notes,
-                        IsProcessed = part.IsProcessed,
-                    });
-                }
-            }
         }
 
         return result;
+    }
+
+    public async Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false)
+    {
+        await using var _db = await _dbFactory.CreateDbContextAsync();
+        const int productOffset = 1_000_000;
+        const int partOffset = 100_000_000;
+
+        if (parentTreeId < productOffset)
+        {
+            // Parent is a Batch row — return BatchProduct children
+            // Resolve batch name so we include all batches with the same name (matching grouping behavior)
+            int batchId = parentTreeId;
+            var batchName = await _db.Batches
+                .Where(b => b.Id == batchId)
+                .Select(b => b.Name)
+                .FirstOrDefaultAsync();
+
+            if (batchName is null) return new List<ExportTreeItem>();
+
+            var products = await _db.Set<BatchProduct>()
+                .Where(bp => bp.Batch.Name == batchName)
+                .OrderBy(bp => bp.ProductName)
+                .ToListAsync();
+
+            if (products.Count == 0) return new List<ExportTreeItem>();
+
+            var productIds = products.Select(p => p.Id).ToList();
+            var partCounts = await _db.Set<PartLineItem>()
+                .Where(p => productIds.Contains(p.BatchProductId!.Value) && (includeProcessed || !p.IsProcessed))
+                .GroupBy(p => p.BatchProductId!.Value)
+                .Select(g => new { ProductId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.ProductId, x => x.Count);
+
+            var result = new List<ExportTreeItem>();
+            foreach (var product in products)
+            {
+                int count = partCounts.GetValueOrDefault(product.Id, 0);
+                if (count == 0 && !includeProcessed) continue;
+                result.Add(new ExportTreeItem
+                {
+                    TreeId = productOffset + product.Id,
+                    TreeParentId = batchId,
+                    IsProductRow = true,
+                    HasChildren = count > 0,
+                    ProductName = product.ProductName,
+                    ParentQty = product.Qty,
+                    ItemCount = count,
+                });
+            }
+            return result;
+        }
+        else
+        {
+            // Parent is a BatchProduct row — return PartLineItem children
+            int productId = parentTreeId - productOffset;
+            var parts = await _db.Set<PartLineItem>()
+                .Where(p => p.BatchProductId == productId && (includeProcessed || !p.IsProcessed))
+                .OrderBy(p => p.PartNumber)
+                .ToListAsync();
+
+            return parts.Select(part => new ExportTreeItem
+            {
+                TreeId = partOffset + part.Id,
+                TreeParentId = parentTreeId,
+                HasChildren = false,
+                Number = part.PartNumber,
+                Title = part.Title,
+                Description = part.Description,
+                Category = part.Category,
+                CategoryOrder = CategoryOrder(part.Category),
+                Material = part.Material,
+                Thickness = part.Thickness,
+                Operations = part.Operations,
+                Qty = part.Qty,
+                IsStock = part.IsStock,
+                HasPdf = part.HasPdf,
+                Notes = part.Notes,
+                IsProcessed = part.IsProcessed,
+            }).ToList();
+        }
     }
 
     public async Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false)

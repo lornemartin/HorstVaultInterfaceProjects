@@ -48,6 +48,8 @@ try
     builder.Services.AddScoped<ReportService>();
     builder.Services.AddScoped<ScheduleTreeFilterState>();
     builder.Services.AddScoped<ScheduleTreeAdaptor>();
+    builder.Services.AddScoped<BatchTreeFilterState>();
+    builder.Services.AddScoped<BatchTreeAdaptor>();
 
     // Syncfusion
     Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(

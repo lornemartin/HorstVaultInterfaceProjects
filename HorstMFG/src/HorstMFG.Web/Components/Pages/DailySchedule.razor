@@ -6,6 +6,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject HorstMFG.Web.Services.ScheduleTreeFilterState ScheduleFilterState
+@inject HorstMFG.Web.Services.BatchTreeFilterState BatchFilterState
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
@@ -158,21 +159,16 @@
             </ChildContent>
             <ContentTemplate>
                 <div style="padding-top: 0.5rem;">
-                    @if (_mtsItems.Count == 0)
-                    {
-                        <p style="color: #64748b; padding: 2rem; text-align: center;">No batches found.</p>
-                    }
-                    else
-                    {
-                        <SfTreeGrid ID="BatchesGrid_v4" DataSource="_mtsItems" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-                                    EnablePersistence="true"
-                                    TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
-                                    Toolbar="@_toolbar"
-                                    ContextMenuItems="@_contextMenuItems">
-                            <TreeGridEvents TValue="ExportTreeItem"
-                                            RowDataBound="OnMtsRowDataBound"
-                                            ContextMenuOpen="OnContextMenuOpen"
-                                            ContextMenuItemClicked="OnMtsContextMenuClicked" />
+                    <SfTreeGrid TValue="ExportTreeItem" @ref="_batchGrid" ID="BatchesGrid_v4" IdMapping="TreeId" ParentIdMapping="TreeParentId"
+                                HasChildMapping="HasChildren" LoadChildOnDemand="true" EnablePersistence="true"
+                                TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
+                                Toolbar="@_toolbar"
+                                ContextMenuItems="@_contextMenuItems">
+                        <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.BatchTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
+                        <TreeGridEvents TValue="ExportTreeItem"
+                                        RowDataBound="OnMtsRowDataBound"
+                                        ContextMenuOpen="OnContextMenuOpen"
+                                        ContextMenuItemClicked="OnMtsContextMenuClicked" />
                             <TreeGridColumns>
                                 <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
                                     <Template>
@@ -251,8 +247,7 @@
                                     </Template>
                                 </TreeGridColumn>
                             </TreeGridColumns>
-                        </SfTreeGrid>
-                    }
+                    </SfTreeGrid>
                 </div>
             </ContentTemplate>
         </TabItem>
@@ -260,7 +255,6 @@
 </SfTab>
 
 @code {
-    private List<ExportTreeItem> _mtsItems = new();
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
     private bool _showProcessed;
@@ -268,8 +262,9 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
 
-    // Daily Schedule load-on-demand (CustomAdaptor reads ScheduleFilterState)
+    // Load-on-demand grids (CustomAdaptors read the filter state services)
     private SfTreeGrid<ExportTreeItem>? _schedGrid;
+    private SfTreeGrid<ExportTreeItem>? _batchGrid;
 
     private record PlantOption(int? Id, string Name);
 
@@ -331,19 +326,28 @@
         ScheduleFilterState.IncludeProcessed = _showProcessed;
         ScheduleFilterState.FromDate = _fromDate;
         ScheduleFilterState.ToDate = _toDate;
+
+        BatchFilterState.PlantId = _selectedPlantId;
+        BatchFilterState.IncludeProcessed = _showProcessed;
+        BatchFilterState.FromDate = _fromDate;
+        BatchFilterState.ToDate = _toDate;
     }
 
     private async Task LoadData()
     {
         SyncFilterState();
-        _mtsItems = await BomService.GetBatchTreeItemsAsync(_selectedPlantId, _showProcessed, _fromDate, _toDate);
 
         // RefreshAsync() crashes before the grid finishes initializing on first render.
-        // The adaptor fires automatically on first load, so only call it after that.
+        // The adaptors fire automatically on first load, so only call after that.
         if (_isFirstLoad)
+        {
             _isFirstLoad = false;
-        else if (_schedGrid is not null)
-            await _schedGrid.RefreshAsync();
+        }
+        else
+        {
+            if (_schedGrid is not null) await _schedGrid.RefreshAsync();
+            if (_batchGrid is not null) await _batchGrid.RefreshAsync();
+        }
     }
 
     private async Task OnPlantChanged(int? value)

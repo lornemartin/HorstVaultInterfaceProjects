@@ -30,6 +30,12 @@ public interface IBomService
     Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
 
     /// <summary>
+    /// Get children for a batch tree row by parent TreeId (used by CustomAdaptor load-on-demand).
+    /// TreeId scheme: Batch = batch.Id, BatchProduct = product.Id + 1_000_000, Part = part.Id + 100_000_000.
+    /// </summary>
+    Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
+
+    /// <summary>
     /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
     /// </summary>
     Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null);
