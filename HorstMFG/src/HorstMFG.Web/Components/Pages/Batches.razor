@@ -438,8 +438,9 @@
             _showStockDialog = true;
             return;
         }
-        item.IsStock = newValue;
         await BomService.UpdatePartIsStockAsync(partId, newValue);
+        _awaitingRestore = true;
+        if (_batchGrid is not null) await _batchGrid.RefreshAsync();
     }
 
     private async Task OnStockDialogThisOnly()
@@ -447,9 +448,10 @@
         _showStockDialog = false;
         if (_stockDialogItem is null) return;
         const int partOffset = 100_000_000;
-        _stockDialogItem.IsStock = _stockDialogNewValue;
         await BomService.UpdatePartIsStockAsync(_stockDialogItem.TreeId - partOffset, _stockDialogNewValue);
         _stockDialogItem = null;
+        _awaitingRestore = true;
+        if (_batchGrid is not null) await _batchGrid.RefreshAsync();
     }
 
     private async Task OnStockDialogAll()
