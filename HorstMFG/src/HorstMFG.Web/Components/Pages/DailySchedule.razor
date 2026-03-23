@@ -12,6 +12,7 @@
 @using Syncfusion.Blazor.TreeGrid
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Popups
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -165,6 +166,27 @@
         <TreeGridColumn Field="TreeId" IsPrimaryKey="true" Visible="false" Width="0" />
     </TreeGridColumns>
 </SfTreeGrid>
+
+<SfDialog @bind-Visible="_showStockDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
+          Header="Update Stock Flag" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            @if (_stockDialogItem is not null)
+            {
+                <p>Part <strong>@_stockDialogItem.Number</strong> appears <strong>@_stockDialogSiblingCount</strong>
+                   time@(_stockDialogSiblingCount != 1 ? "s" : "") in this schedule.</p>
+                <p>Update all instances or just this one?</p>
+            }
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnStockDialogCancel">Cancel</SfButton>
+            <SfButton OnClick="OnStockDialogThisOnly" CssClass="e-outline" style="margin-left: 8px;">This part only</SfButton>
+            <SfButton OnClick="OnStockDialogAll" CssClass="e-primary" style="margin-left: 8px;">
+                All @_stockDialogSiblingCount instance@(_stockDialogSiblingCount != 1 ? "s" : "")
+            </SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
 
 @code {
     private List<PlantOption> _plantOptions = new();
@@ -397,11 +419,54 @@
                 $"/api/reports/schedule-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
     }
 
+    // ── IsStock editing ───────────────────────────────────────────────────────
+    private bool _showStockDialog;
+    private ExportTreeItem? _stockDialogItem;
+    private bool _stockDialogNewValue;
+    private int _stockDialogSiblingCount;
+
     private async Task OnIsStockChanged(ExportTreeItem item, bool newValue)
     {
-        item.IsStock = newValue;
         const int partOffset = 100_000_000;
-        await BomService.UpdatePartIsStockAsync(item.TreeId - partOffset, newValue);
+        var partId = item.TreeId - partOffset;
+        var count = await BomService.CountSiblingsByPartNumberAsync(partId);
+        if (count > 1)
+        {
+            _stockDialogItem = item;
+            _stockDialogNewValue = newValue;
+            _stockDialogSiblingCount = count;
+            _showStockDialog = true;
+            return;
+        }
+        item.IsStock = newValue;
+        await BomService.UpdatePartIsStockAsync(partId, newValue);
+    }
+
+    private async Task OnStockDialogThisOnly()
+    {
+        _showStockDialog = false;
+        if (_stockDialogItem is null) return;
+        const int partOffset = 100_000_000;
+        _stockDialogItem.IsStock = _stockDialogNewValue;
+        await BomService.UpdatePartIsStockAsync(_stockDialogItem.TreeId - partOffset, _stockDialogNewValue);
+        _stockDialogItem = null;
+    }
+
+    private async Task OnStockDialogAll()
+    {
+        _showStockDialog = false;
+        if (_stockDialogItem is null) return;
+        const int partOffset = 100_000_000;
+        await BomService.UpdatePartIsStockForAllSiblingsAsync(_stockDialogItem.TreeId - partOffset, _stockDialogNewValue);
+        _stockDialogItem = null;
+        _awaitingRestore = true;
+        if (_schedGrid is not null) await _schedGrid.RefreshAsync();
+    }
+
+    private void OnStockDialogCancel()
+    {
+        _showStockDialog = false;
+        _stockDialogItem = null;
     }
 
     // Stock items are dimmed — they belong on the Batches page

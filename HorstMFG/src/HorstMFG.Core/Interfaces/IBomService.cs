@@ -53,6 +53,18 @@ public interface IBomService
     Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);
 
     /// <summary>
+    /// Count how many PartLineItems share the same PartNumber within the same Batch or Schedule
+    /// as the given partLineItemId.
+    /// </summary>
+    Task<int> CountSiblingsByPartNumberAsync(int partLineItemId);
+
+    /// <summary>
+    /// Update IsStock for every PartLineItem that shares the same PartNumber within the same
+    /// Batch or Schedule as the given partLineItemId.
+    /// </summary>
+    Task UpdatePartIsStockForAllSiblingsAsync(int partLineItemId, bool isStock);
+
+    /// <summary>
     /// Check if a PDF exists on the share for the given part number.
     /// </summary>
     bool PdfExistsOnShare(string partNumber);

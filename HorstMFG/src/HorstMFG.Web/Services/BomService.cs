@@ -854,6 +854,57 @@ public class BomService : IBomService
         await db.SaveChangesAsync();
     }
 
+    public async Task<int> CountSiblingsByPartNumberAsync(int partLineItemId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>()
+            .AsNoTracking()
+            .Include(p => p.BatchProduct)
+            .Include(p => p.ScheduleOrder)
+            .FirstOrDefaultAsync(p => p.Id == partLineItemId);
+        if (part is null) return 0;
+
+        if (part.BatchProductId.HasValue)
+        {
+            var batchId = part.BatchProduct!.BatchId;
+            return await db.Set<PartLineItem>()
+                .CountAsync(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == part.PartNumber);
+        }
+        if (part.ScheduleOrderId.HasValue)
+        {
+            var schedId = part.ScheduleOrder!.ScheduleId;
+            return await db.Set<PartLineItem>()
+                .CountAsync(p => p.ScheduleOrder!.ScheduleId == schedId && p.PartNumber == part.PartNumber);
+        }
+        return 0;
+    }
+
+    public async Task UpdatePartIsStockForAllSiblingsAsync(int partLineItemId, bool isStock)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>()
+            .AsNoTracking()
+            .Include(p => p.BatchProduct)
+            .Include(p => p.ScheduleOrder)
+            .FirstOrDefaultAsync(p => p.Id == partLineItemId);
+        if (part is null) return;
+
+        if (part.BatchProductId.HasValue)
+        {
+            var batchId = part.BatchProduct!.BatchId;
+            await db.Set<PartLineItem>()
+                .Where(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, isStock));
+        }
+        else if (part.ScheduleOrderId.HasValue)
+        {
+            var schedId = part.ScheduleOrder!.ScheduleId;
+            await db.Set<PartLineItem>()
+                .Where(p => p.ScheduleOrder!.ScheduleId == schedId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, isStock));
+        }
+    }
+
     public bool PdfExistsOnShare(string partNumber)
     {
         var path = Path.Combine(_pdfSharePath, partNumber + ".pdf");
