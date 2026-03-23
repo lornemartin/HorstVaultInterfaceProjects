@@ -65,6 +65,31 @@ public interface IBomService
     Task UpdatePartIsStockForAllSiblingsAsync(int partLineItemId, bool isStock);
 
     /// <summary>
+    /// Permanently delete a PartLineItem from the database.
+    /// </summary>
+    Task RemovePartLineItemAsync(int partLineItemId);
+
+    /// <summary>
+    /// Delete a Batch and all its BatchProducts and PartLineItems.
+    /// </summary>
+    Task DeleteBatchAsync(int batchId);
+
+    /// <summary>
+    /// Delete a BatchProduct and all its PartLineItems.
+    /// </summary>
+    Task DeleteBatchProductAsync(int batchProductId);
+
+    /// <summary>
+    /// Delete a Schedule and all its ScheduleOrders and PartLineItems.
+    /// </summary>
+    Task DeleteScheduleAsync(int scheduleId);
+
+    /// <summary>
+    /// Delete a ScheduleOrder and all its PartLineItems.
+    /// </summary>
+    Task DeleteScheduleOrderAsync(int scheduleOrderId);
+
+    /// <summary>
     /// Check if a PDF exists on the share for the given part number.
     /// </summary>
     bool PdfExistsOnShare(string partNumber);

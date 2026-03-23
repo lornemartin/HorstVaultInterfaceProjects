@@ -217,3 +217,17 @@ h1:focus {
     color: #c4c9d4 !important;
     font-style: italic;
 }
+
+/* ── Context menu visibility per row type ────────────────────────────────── */
+
+/* On a batch/schedule header row: hide the product-level delete item */
+body.cmenu-header #delete-product { display: none !important; }
+
+/* On a product/order row: hide the report items, their separator, and the header-level delete */
+body.cmenu-product #laser-report,
+body.cmenu-product #op-iron-worker,
+body.cmenu-product #op-machine-shop,
+body.cmenu-product #op-bandsaw,
+body.cmenu-product #op-purchased,
+body.cmenu-product #sep-reports,
+body.cmenu-product #delete-batch { display: none !important; }

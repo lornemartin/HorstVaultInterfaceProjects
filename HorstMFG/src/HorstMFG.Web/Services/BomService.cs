@@ -905,6 +905,65 @@ public class BomService : IBomService
         }
     }
 
+    public async Task RemovePartLineItemAsync(int partLineItemId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>().FindAsync(partLineItemId);
+        if (part is null) return;
+        db.Set<PartLineItem>().Remove(part);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteBatchAsync(int batchId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        // Null out Order.BatchId (optional FK) before deleting
+        await db.Set<Order>()
+            .Where(o => o.BatchId == batchId)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.BatchId, (int?)null));
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProduct!.BatchId == batchId)
+            .ExecuteDeleteAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.BatchId == batchId)
+            .ExecuteDeleteAsync();
+        await db.Batches.Where(b => b.Id == batchId).ExecuteDeleteAsync();
+    }
+
+    public async Task DeleteBatchProductAsync(int batchProductId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProductId == batchProductId)
+            .ExecuteDeleteAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.Id == batchProductId)
+            .ExecuteDeleteAsync();
+    }
+
+    public async Task DeleteScheduleAsync(int scheduleId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.ScheduleOrder!.ScheduleId == scheduleId)
+            .ExecuteDeleteAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.ScheduleId == scheduleId)
+            .ExecuteDeleteAsync();
+        await db.Schedules.Where(s => s.Id == scheduleId).ExecuteDeleteAsync();
+    }
+
+    public async Task DeleteScheduleOrderAsync(int scheduleOrderId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.ScheduleOrderId == scheduleOrderId)
+            .ExecuteDeleteAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.Id == scheduleOrderId)
+            .ExecuteDeleteAsync();
+    }
+
     public bool PdfExistsOnShare(string partNumber)
     {
         var path = Path.Combine(_pdfSharePath, partNumber + ".pdf");

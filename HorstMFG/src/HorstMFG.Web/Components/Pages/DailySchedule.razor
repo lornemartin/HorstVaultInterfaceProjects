@@ -202,11 +202,14 @@
 
     private readonly List<object> _contextMenuItems = new()
     {
-        new ContextMenuItemModel { Text = "Laser Parts Report",         Id = "laser-report"      },
-        new ContextMenuItemModel { Text = "Iron Worker Report",         Id = "op-iron-worker"    },
-        new ContextMenuItemModel { Text = "Machine Shop Report",        Id = "op-machine-shop"   },
-        new ContextMenuItemModel { Text = "Bandsaw Report",             Id = "op-bandsaw"        },
-        new ContextMenuItemModel { Text = "Purchased Parts Report",     Id = "op-purchased"      },
+        new ContextMenuItemModel { Text = "Laser Parts Report",         Id = "laser-report"   },
+        new ContextMenuItemModel { Text = "Iron Worker Report",         Id = "op-iron-worker" },
+        new ContextMenuItemModel { Text = "Machine Shop Report",        Id = "op-machine-shop"},
+        new ContextMenuItemModel { Text = "Bandsaw Report",             Id = "op-bandsaw"     },
+        new ContextMenuItemModel { Text = "Purchased Parts Report",     Id = "op-purchased"   },
+        new ContextMenuItemModel { Separator = true,                    Id = "sep-reports"    },
+        new ContextMenuItemModel { Text = "Delete Schedule",            Id = "delete-batch"   },
+        new ContextMenuItemModel { Text = "Delete Order",               Id = "delete-product" },
     };
 
     private static readonly Dictionary<string, string> _opMenuItems = new()
@@ -403,14 +406,38 @@
 
     private void OnContextMenuOpen(ContextMenuOpenEventArgs<ExportTreeItem> args)
     {
-        if (args.RowInfo?.RowData is not { IsBatchRow: true })
+        var row = args.RowInfo?.RowData;
+        if (row is null || (!row.IsBatchRow && !row.IsProductRow))
             args.Cancel = true;
     }
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
     {
-        if (args.RowInfo?.RowData?.BatchName is not string name) return;
+        var row = args.RowInfo?.RowData;
+        if (row is null) return;
 
+        if (args.Item.Id == "delete-batch" && row.IsBatchRow)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm",
+                $"Delete entire schedule '{row.BatchName}'? This will remove all orders and parts and cannot be undone.");
+            if (!confirmed) return;
+            await BomService.DeleteScheduleAsync(row.TreeId);
+            if (_schedGrid is not null) await _schedGrid.RefreshAsync();
+            return;
+        }
+
+        if (args.Item.Id == "delete-product" && row.IsProductRow)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm",
+                $"Delete order '{row.OrderNumber ?? row.ProductName}' and all its parts? This cannot be undone.");
+            if (!confirmed) return;
+            await BomService.DeleteScheduleOrderAsync(row.TreeId - 1_000_000);
+            _awaitingRestore = true;
+            if (_schedGrid is not null) await _schedGrid.RefreshAsync();
+            return;
+        }
+
+        if (row.BatchName is not string name) return;
         if (args.Item.Id == "laser-report")
             await JS.InvokeVoidAsync("window.open",
                 $"/api/reports/schedule-laser/{Uri.EscapeDataString(name)}", "_blank");
