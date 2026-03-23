@@ -845,6 +845,15 @@ public class BomService : IBomService
         _          => int.MaxValue,
     };
 
+    public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>().FindAsync(partLineItemId);
+        if (part is null) return;
+        part.IsStock = isStock;
+        await db.SaveChangesAsync();
+    }
+
     public bool PdfExistsOnShare(string partNumber)
     {
         var path = Path.Combine(_pdfSharePath, partNumber + ".pdf");

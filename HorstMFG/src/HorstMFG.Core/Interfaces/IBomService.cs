@@ -48,6 +48,11 @@ public interface IBomService
     Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
 
     /// <summary>
+    /// Update the IsStock flag on a PartLineItem.
+    /// </summary>
+    Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);
+
+    /// <summary>
     /// Check if a PDF exists on the share for the given part number.
     /// </summary>
     bool PdfExistsOnShare(string partNumber);

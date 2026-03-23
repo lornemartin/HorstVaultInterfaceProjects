@@ -4,6 +4,7 @@
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
+@inject IBomService BomService
 @inject HorstMFG.Web.Services.BatchTreeFilterState BatchFilterState
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
@@ -134,7 +135,19 @@
             </Template>
         </TreeGridColumn>
         <TreeGridColumn Field="@nameof(ExportTreeItem.IsStock)" HeaderText="Stock" Width="70"
-                        DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
+                        TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center">
+            <Template>
+                @{
+                    var item = context as ExportTreeItem;
+                    if (!item!.IsBatchRow && !item.IsProductRow)
+                    {
+                        <input type="checkbox" checked="@item.IsStock"
+                               @onchange="@(async e => await OnIsStockChanged(item, (bool)e.Value!))"
+                               style="cursor: pointer; width: 16px; height: 16px;" />
+                    }
+                }
+            </Template>
+        </TreeGridColumn>
         <TreeGridColumn Field="@nameof(ExportTreeItem.HasPdf)" HeaderText="PDF" Width="70"
                         DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
         <TreeGridColumn Field="@nameof(ExportTreeItem.Notes)" HeaderText="Notes" Width="150" />
@@ -382,6 +395,13 @@
         else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
             await JS.InvokeVoidAsync("window.open",
                 $"/api/reports/batch-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
+    }
+
+    private async Task OnIsStockChanged(ExportTreeItem item, bool newValue)
+    {
+        item.IsStock = newValue;
+        const int partOffset = 100_000_000;
+        await BomService.UpdatePartIsStockAsync(item.TreeId - partOffset, newValue);
     }
 
     // Non-stock items are dimmed — they belong on the Orders page
