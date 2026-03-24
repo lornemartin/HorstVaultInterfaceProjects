@@ -917,7 +917,11 @@ public class BomService : IBomService
     public async Task DeleteBatchAsync(int batchId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        // Null out Order.BatchId (optional FK) before deleting
+        var localFolder = await db.Batches
+            .Where(b => b.Id == batchId)
+            .Select(b => b.LocalPdfFolder)
+            .FirstOrDefaultAsync();
+
         await db.Set<Order>()
             .Where(o => o.BatchId == batchId)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.BatchId, (int?)null));
@@ -928,22 +932,52 @@ public class BomService : IBomService
             .Where(bp => bp.BatchId == batchId)
             .ExecuteDeleteAsync();
         await db.Batches.Where(b => b.Id == batchId).ExecuteDeleteAsync();
+
+        DeleteFolder(localFolder);
     }
 
     public async Task DeleteBatchProductAsync(int batchProductId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var batchProduct = await db.Set<BatchProduct>()
+            .Include(bp => bp.Batch)
+            .Include(bp => bp.Parts)
+            .FirstOrDefaultAsync(bp => bp.Id == batchProductId);
+        if (batchProduct is null) return;
+
+        var partNumbers = batchProduct.Parts.Select(p => p.PartNumber).ToHashSet();
+        var localFolder = batchProduct.Batch.LocalPdfFolder;
+
         await db.Set<PartLineItem>()
             .Where(p => p.BatchProductId == batchProductId)
             .ExecuteDeleteAsync();
         await db.Set<BatchProduct>()
             .Where(bp => bp.Id == batchProductId)
             .ExecuteDeleteAsync();
+
+        // Delete PDF files no longer referenced by any other part in this batch
+        if (!string.IsNullOrEmpty(localFolder) && partNumbers.Count > 0)
+        {
+            var stillUsed = await db.Set<PartLineItem>()
+                .Where(p => p.BatchProduct!.BatchId == batchProduct.BatchId
+                         && partNumbers.Contains(p.PartNumber))
+                .Select(p => p.PartNumber)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var pn in partNumbers.Except(stillUsed))
+                DeleteFile(Path.Combine(localFolder, pn + ".pdf"));
+        }
     }
 
     public async Task DeleteScheduleAsync(int scheduleId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var localFolder = await db.Schedules
+            .Where(s => s.Id == scheduleId)
+            .Select(s => s.LocalPdfFolder)
+            .FirstOrDefaultAsync();
+
         await db.Set<PartLineItem>()
             .Where(p => p.ScheduleOrder!.ScheduleId == scheduleId)
             .ExecuteDeleteAsync();
@@ -951,17 +985,56 @@ public class BomService : IBomService
             .Where(so => so.ScheduleId == scheduleId)
             .ExecuteDeleteAsync();
         await db.Schedules.Where(s => s.Id == scheduleId).ExecuteDeleteAsync();
+
+        DeleteFolder(localFolder);
     }
 
     public async Task DeleteScheduleOrderAsync(int scheduleOrderId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var scheduleOrder = await db.Set<ScheduleOrder>()
+            .Include(so => so.Schedule)
+            .Include(so => so.Parts)
+            .FirstOrDefaultAsync(so => so.Id == scheduleOrderId);
+        if (scheduleOrder is null) return;
+
+        var partNumbers = scheduleOrder.Parts.Select(p => p.PartNumber).ToHashSet();
+        var localFolder = scheduleOrder.Schedule.LocalPdfFolder;
+
         await db.Set<PartLineItem>()
             .Where(p => p.ScheduleOrderId == scheduleOrderId)
             .ExecuteDeleteAsync();
         await db.Set<ScheduleOrder>()
             .Where(so => so.Id == scheduleOrderId)
             .ExecuteDeleteAsync();
+
+        // Delete PDF files no longer referenced by any other part in this schedule
+        if (!string.IsNullOrEmpty(localFolder) && partNumbers.Count > 0)
+        {
+            var stillUsed = await db.Set<PartLineItem>()
+                .Where(p => p.ScheduleOrder!.ScheduleId == scheduleOrder.ScheduleId
+                         && partNumbers.Contains(p.PartNumber))
+                .Select(p => p.PartNumber)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var pn in partNumbers.Except(stillUsed))
+                DeleteFile(Path.Combine(localFolder, pn + ".pdf"));
+        }
+    }
+
+    private void DeleteFolder(string? path)
+    {
+        if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) return;
+        try { Directory.Delete(path, recursive: true); }
+        catch (Exception ex) { _log.LogWarning(ex, "Could not delete PDF folder {Path}", path); }
+    }
+
+    private void DeleteFile(string path)
+    {
+        if (!File.Exists(path)) return;
+        try { File.Delete(path); }
+        catch (Exception ex) { _log.LogWarning(ex, "Could not delete PDF file {Path}", path); }
     }
 
     public bool PdfExistsOnShare(string partNumber)
