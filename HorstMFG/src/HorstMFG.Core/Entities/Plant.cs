@@ -8,7 +8,8 @@ public class Plant
     public bool IsActive { get; set; } = true;
 
     public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
-    public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<NestOrder> NestOrders { get; set; } = new List<NestOrder>();
+    public ICollection<NestBatch> NestBatches { get; set; } = new List<NestBatch>();
     public ICollection<Nest> Nests { get; set; } = new List<Nest>();
     public ICollection<RadanIdAssignment> RadanIdAssignments { get; set; } = new List<RadanIdAssignment>();
     public ICollection<Batch> Batches { get; set; } = new List<Batch>();

@@ -922,9 +922,9 @@ public class BomService : IBomService
             .Select(b => b.LocalPdfFolder)
             .FirstOrDefaultAsync();
 
-        await db.Set<Order>()
-            .Where(o => o.BatchId == batchId)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.BatchId, (int?)null));
+        await db.Set<NestBatch>()
+            .Where(nb => nb.BatchId == batchId)
+            .ExecuteDeleteAsync();
         await db.Set<PartLineItem>()
             .Where(p => p.BatchProduct!.BatchId == batchId)
             .ExecuteDeleteAsync();
