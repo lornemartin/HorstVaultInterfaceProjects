@@ -21,7 +21,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Nest> Nests => Set<Nest>();
     public DbSet<NestedPart> NestedParts => Set<NestedPart>();
     public DbSet<RadanIdAssignment> RadanIdAssignments => Set<RadanIdAssignment>();
-    public DbSet<PdfDocument> PdfDocuments => Set<PdfDocument>();
     public DbSet<SystemConfiguration> SystemConfigurations => Set<SystemConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -189,17 +188,6 @@ public class ApplicationDbContext : DbContext
             e.HasOne(r => r.OrderItem).WithOne(oi => oi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.OrderItemId);
             e.HasOne(r => r.Plant).WithMany(p => p.RadanIdAssignments).HasForeignKey(r => r.PlantId);
             e.HasIndex(r => new { r.RadanIdNumber, r.PlantId }).IsUnique();
-        });
-
-        // PdfDocument
-        modelBuilder.Entity<PdfDocument>(e =>
-        {
-            e.ToTable("pdf_documents");
-            e.HasKey(d => d.Id);
-            e.Property(d => d.FileName).HasMaxLength(255).IsRequired();
-            e.Property(d => d.FilePath).HasMaxLength(500).IsRequired();
-            e.Property(d => d.Department).HasMaxLength(100);
-            e.HasOne(d => d.Part).WithMany(p => p.PdfDocuments).HasForeignKey(d => d.PartId);
         });
 
         // SystemConfiguration

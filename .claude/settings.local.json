@@ -15,7 +15,8 @@
       "WebFetch(domain:help.syncfusion.com)",
       "WebFetch(domain:www.syncfusion.com)",
       "WebFetch(domain:support.syncfusion.com)",
-      "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects/HorstMFG -name *.dll -path *Syncfusion*Grids*)"
+      "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects/HorstMFG -name *.dll -path *Syncfusion*Grids*)",
+      "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects -type d -name HorstMFG*)"
     ]
   }
 }
