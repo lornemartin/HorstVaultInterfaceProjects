@@ -1,0 +1,76 @@
+@page "/production/batches"
+@attribute [Authorize(Policy = "ShopFloor")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Grids
+
+<PageTitle>Batches - HorstMFG</PageTitle>
+
+<h3>Batches</h3>
+
+<SfGrid TValue="BatchItemRow" DataSource="_items" AllowSorting="true" AllowResizing="true"
+        AllowFiltering="true" Height="600">
+    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
+    <GridColumns>
+        <GridColumn Field="@nameof(BatchItemRow.BatchName)" HeaderText="Batch" Width="180" />
+        <GridColumn Field="@nameof(BatchItemRow.FileName)" HeaderText="File Name" Width="220" />
+        <GridColumn Field="@nameof(BatchItemRow.Description)" HeaderText="Description" Width="220" />
+        <GridColumn Field="@nameof(BatchItemRow.Material)" HeaderText="Material" Width="110" />
+        <GridColumn Field="@nameof(BatchItemRow.Thickness)" HeaderText="Thickness" Width="90" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(BatchItemRow.IsComplete)" HeaderText="Complete" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(BatchItemRow.Notes)" HeaderText="Notes" Width="180" />
+    </GridColumns>
+</SfGrid>
+
+@code {
+    private List<BatchItemRow> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        var plantId = HttpContextAccessor.HttpContext?.User.FindFirst("PlantId")?.Value;
+        int.TryParse(plantId, out var pid);
+
+        _items = await db.BatchItems
+            .Include(i => i.NestBatch)
+                .ThenInclude(nb => nb.Batch)
+            .Include(i => i.Part)
+            .Where(i => i.NestBatch.PlantId == pid)
+            .Select(i => new BatchItemRow
+            {
+                BatchName        = i.NestBatch.Batch.Name,
+                FileName         = i.Part.FileName,
+                Description      = i.Part.Description,
+                Material         = i.Part.Material,
+                Thickness        = i.Part.Thickness,
+                QtyRequired      = i.QtyRequired,
+                QtyNested        = i.QtyNested,
+                IsInRadanProject = i.IsInRadanProject,
+                IsComplete       = i.IsComplete,
+                Notes            = i.Notes
+            })
+            .ToListAsync();
+    }
+
+    private record BatchItemRow
+    {
+        public string? BatchName { get; init; }
+        public string? FileName { get; init; }
+        public string? Description { get; init; }
+        public string? Material { get; init; }
+        public decimal? Thickness { get; init; }
+        public int QtyRequired { get; init; }
+        public int QtyNested { get; init; }
+        public bool IsInRadanProject { get; init; }
+        public bool IsComplete { get; init; }
+        public string? Notes { get; init; }
+    }
+}

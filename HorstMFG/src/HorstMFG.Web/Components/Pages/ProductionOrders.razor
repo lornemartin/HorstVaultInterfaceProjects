@@ -1,0 +1,76 @@
+@page "/production/orders"
+@attribute [Authorize(Policy = "ShopFloor")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Grids
+
+<PageTitle>Orders - HorstMFG</PageTitle>
+
+<h3>Orders</h3>
+
+<SfGrid TValue="OrderItemRow" DataSource="_items" AllowSorting="true" AllowResizing="true"
+        AllowFiltering="true" Height="600">
+    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
+    <GridColumns>
+        <GridColumn Field="@nameof(OrderItemRow.OrderNumber)" HeaderText="Order #" Width="120" />
+        <GridColumn Field="@nameof(OrderItemRow.FileName)" HeaderText="File Name" Width="220" />
+        <GridColumn Field="@nameof(OrderItemRow.Description)" HeaderText="Description" Width="220" />
+        <GridColumn Field="@nameof(OrderItemRow.Material)" HeaderText="Material" Width="110" />
+        <GridColumn Field="@nameof(OrderItemRow.Thickness)" HeaderText="Thickness" Width="90" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(OrderItemRow.IsComplete)" HeaderText="Complete" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(OrderItemRow.Notes)" HeaderText="Notes" Width="180" />
+    </GridColumns>
+</SfGrid>
+
+@code {
+    private List<OrderItemRow> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        var plantId = HttpContextAccessor.HttpContext?.User.FindFirst("PlantId")?.Value;
+        int.TryParse(plantId, out var pid);
+
+        _items = await db.OrderItems
+            .Include(i => i.NestOrder)
+                .ThenInclude(o => o.ScheduleOrder)
+            .Include(i => i.Part)
+            .Where(i => i.NestOrder.PlantId == pid)
+            .Select(i => new OrderItemRow
+            {
+                OrderNumber      = i.NestOrder.ScheduleOrder.OrderNumber,
+                FileName         = i.Part.FileName,
+                Description      = i.Part.Description,
+                Material         = i.Part.Material,
+                Thickness        = i.Part.Thickness,
+                QtyRequired      = i.QtyRequired,
+                QtyNested        = i.QtyNested,
+                IsInRadanProject = i.IsInRadanProject,
+                IsComplete       = i.IsComplete,
+                Notes            = i.Notes
+            })
+            .ToListAsync();
+    }
+
+    private record OrderItemRow
+    {
+        public string? OrderNumber { get; init; }
+        public string? FileName { get; init; }
+        public string? Description { get; init; }
+        public string? Material { get; init; }
+        public decimal? Thickness { get; init; }
+        public int QtyRequired { get; init; }
+        public int QtyNested { get; init; }
+        public bool IsInRadanProject { get; init; }
+        public bool IsComplete { get; init; }
+        public string? Notes { get; init; }
+    }
+}
