@@ -195,7 +195,8 @@ public class ApplicationDbContext : DbContext
         {
             e.ToTable("radan_id_assignments");
             e.HasKey(r => r.Id);
-            e.HasOne(r => r.OrderItem).WithOne(oi => oi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.OrderItemId);
+            e.HasOne(r => r.OrderItem).WithOne(oi => oi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.OrderItemId).IsRequired(false);
+            e.HasOne(r => r.BatchItem).WithOne(bi => bi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.BatchItemId).IsRequired(false);
             e.HasOne(r => r.Plant).WithMany(p => p.RadanIdAssignments).HasForeignKey(r => r.PlantId);
             e.HasIndex(r => new { r.RadanIdNumber, r.PlantId }).IsUnique();
         });
