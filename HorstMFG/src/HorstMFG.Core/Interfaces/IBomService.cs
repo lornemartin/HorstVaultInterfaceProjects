@@ -90,6 +90,18 @@ public interface IBomService
     Task DeleteScheduleOrderAsync(int scheduleOrderId);
 
     /// <summary>
+    /// Release a Batch to production: populates NestBatch and BatchItems.
+    /// Throws InvalidOperationException if already released.
+    /// </summary>
+    Task ReleaseBatchToProductionAsync(int batchId);
+
+    /// <summary>
+    /// Release a Schedule to production: populates NestOrders and OrderItems.
+    /// Throws InvalidOperationException if already released.
+    /// </summary>
+    Task ReleaseScheduleToProductionAsync(int scheduleId);
+
+    /// <summary>
     /// Check if a PDF exists on the share for the given part number.
     /// </summary>
     bool PdfExistsOnShare(string partNumber);

@@ -1023,6 +1023,117 @@ public class BomService : IBomService
         }
     }
 
+    public async Task ReleaseBatchToProductionAsync(int batchId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var batch = await db.Batches
+            .Include(b => b.BatchProducts)
+                .ThenInclude(bp => bp.Parts)
+            .FirstOrDefaultAsync(b => b.Id == batchId)
+            ?? throw new InvalidOperationException($"Batch {batchId} not found.");
+
+        if (batch.ReadyForProduction)
+            throw new InvalidOperationException($"Batch '{batch.Name}' has already been released to production.");
+
+        batch.ReadyForProduction = true;
+
+        var nestBatch = new NestBatch
+        {
+            BatchId   = batch.Id,
+            PlantId   = batch.PlantId,
+            EntryDate = DateTime.UtcNow
+        };
+        db.NestBatches.Add(nestBatch);
+        await db.SaveChangesAsync(); // get nestBatch.Id
+
+        foreach (var product in batch.BatchProducts)
+        {
+            foreach (var line in product.Parts.Where(p => p.Operations == "Laser"))
+            {
+                var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
+                if (part is null)
+                {
+                    part = new Part
+                    {
+                        FileName    = line.PartNumber,
+                        Description = line.Description,
+                        Material    = line.Material,
+                        Thickness   = decimal.TryParse(line.Thickness, out var t) ? t : null
+                    };
+                    db.Parts.Add(part);
+                    await db.SaveChangesAsync(); // get part.Id
+                }
+
+                db.BatchItems.Add(new BatchItem
+                {
+                    NestBatchId  = nestBatch.Id,
+                    PartId       = part.Id,
+                    QtyRequired  = line.Qty * product.Qty
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        _log.LogInformation("Batch '{Name}' (Id={Id}) released to production.", batch.Name, batch.Id);
+    }
+
+    public async Task ReleaseScheduleToProductionAsync(int scheduleId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var schedule = await db.Schedules
+            .Include(s => s.ScheduleOrders)
+                .ThenInclude(so => so.Parts)
+            .FirstOrDefaultAsync(s => s.Id == scheduleId)
+            ?? throw new InvalidOperationException($"Schedule {scheduleId} not found.");
+
+        if (schedule.ReadyForProduction)
+            throw new InvalidOperationException($"Schedule '{schedule.Name}' has already been released to production.");
+
+        schedule.ReadyForProduction = true;
+        await db.SaveChangesAsync();
+
+        foreach (var order in schedule.ScheduleOrders)
+        {
+            var nestOrder = new NestOrder
+            {
+                ScheduleOrderId = order.Id,
+                PlantId         = schedule.PlantId,
+                EntryDate       = DateTime.UtcNow
+            };
+            db.NestOrders.Add(nestOrder);
+            await db.SaveChangesAsync(); // get nestOrder.Id
+
+            foreach (var line in order.Parts.Where(p => p.Operations == "Laser"))
+            {
+                var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
+                if (part is null)
+                {
+                    part = new Part
+                    {
+                        FileName    = line.PartNumber,
+                        Description = line.Description,
+                        Material    = line.Material,
+                        Thickness   = decimal.TryParse(line.Thickness, out var t) ? t : null
+                    };
+                    db.Parts.Add(part);
+                    await db.SaveChangesAsync(); // get part.Id
+                }
+
+                db.OrderItems.Add(new OrderItem
+                {
+                    NestOrderId = nestOrder.Id,
+                    PartId      = part.Id,
+                    QtyRequired = line.Qty * order.Qty
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        _log.LogInformation("Schedule '{Name}' (Id={Id}) released to production.", schedule.Name, schedule.Id);
+    }
+
     private void DeleteFolder(string? path)
     {
         if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) return;

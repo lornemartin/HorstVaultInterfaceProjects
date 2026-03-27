@@ -3,57 +3,67 @@
 // requestAnimationFrame fires after Syncfusion shows the popup but before the browser paints.
 
 var _cmRowType = null;
+var _cmIsReleased = false;
 
 document.addEventListener('contextmenu', function (e) {
     var row = e.target.closest('tr.e-row');
     _cmRowType = null;
+    _cmIsReleased = false;
     if (row) {
-        if (row.classList.contains('row-batch'))   _cmRowType = 'header';
+        if (row.classList.contains('row-batch'))        _cmRowType = 'header';
         else if (row.classList.contains('row-product')) _cmRowType = 'product';
+        _cmIsReleased = row.classList.contains('row-released');
     }
 
     if (!_cmRowType) return;
 
-    requestAnimationFrame(function () {
-        applyContextMenuVisibility(_cmRowType);
-    });
+    requestAnimationFrame(function () { applyContextMenuVisibility(_cmRowType, _cmIsReleased); });
 
     // Belt-and-suspenders: also run after a short delay in case rAF fires too early
-    setTimeout(function () {
-        applyContextMenuVisibility(_cmRowType);
-    }, 30);
+    setTimeout(function () { applyContextMenuVisibility(_cmRowType, _cmIsReleased); }, 30);
 
 }, true); // capture phase
 
-function applyContextMenuVisibility(type) {
+function applyContextMenuVisibility(type, isReleased) {
     if (!type) return;
 
-    var reportTexts  = ['Laser Parts Report', 'Iron Worker Report', 'Machine Shop Report', 'Bandsaw Report', 'Purchased Parts Report'];
-    var headerTexts  = ['Delete Batch', 'Delete Schedule'];
-    var productTexts = ['Delete Batch Item', 'Delete Order'];
+    // All item IDs we manage; anything else is left untouched.
+    var managed = {
+        'laser-report':    true,
+        'op-iron-worker':  true,
+        'op-machine-shop': true,
+        'op-bandsaw':      true,
+        'op-purchased':    true,
+        'sep-reports':     true,
+        'release-batch':   true,
+        'release-schedule':true,
+        'sep-release':     true,
+        'delete-batch':    true,
+        'delete-product':  true
+    };
 
-    // Find all visible context menu list items
     var items = document.querySelectorAll('.e-contextmenu-wrapper li, .e-contextmenu li');
-    if (!items.length) {
-        // Fallback selector
-        items = document.querySelectorAll('ul.e-ul li');
-    }
+    if (!items.length) items = document.querySelectorAll('ul.e-ul li');
 
     items.forEach(function (li) {
-        var text = li.textContent.trim();
-        var isSep     = li.classList.contains('e-separator');
-        var isReport  = reportTexts.some(function (t) { return text.indexOf(t) !== -1; });
-        var isHeader  = headerTexts.some(function (t) { return text.indexOf(t) !== -1; });
-        var isProduct = productTexts.some(function (t) { return text.indexOf(t) !== -1; });
+        var id = li.id || '';
+        if (!managed[id]) return;
 
-        if (!isSep && !isReport && !isHeader && !isProduct) return; // not our items
-
+        var show;
         if (type === 'header') {
-            // Batch/Schedule row: show reports + delete-all, hide delete-product
-            li.style.display = isProduct ? 'none' : '';
+            if (isReleased) {
+                // Already released: show reports only; hide release, separators, and delete items.
+                show = id === 'laser-report' || id === 'op-iron-worker' || id === 'op-machine-shop' ||
+                       id === 'op-bandsaw'   || id === 'op-purchased';
+            } else {
+                // Batch/schedule header, not yet released: show everything except delete-product.
+                show = id !== 'delete-product';
+            }
         } else {
-            // Product row: show only delete-product, hide reports + delete-all + separator
-            li.style.display = (isProduct) ? '' : 'none';
+            // Product/order row: show only the product-level delete item.
+            show = id === 'delete-product';
         }
+
+        li.style.display = show ? '' : 'none';
     });
 }

@@ -208,6 +208,8 @@
         new ContextMenuItemModel { Text = "Bandsaw Report",             Id = "op-bandsaw"     },
         new ContextMenuItemModel { Text = "Purchased Parts Report",     Id = "op-purchased"   },
         new ContextMenuItemModel { Separator = true,                    Id = "sep-reports"    },
+        new ContextMenuItemModel { Text = "Release to Production",      Id = "release-batch"  },
+        new ContextMenuItemModel { Separator = true,                    Id = "sep-release"    },
         new ContextMenuItemModel { Text = "Delete Batch",               Id = "delete-batch"   },
         new ContextMenuItemModel { Text = "Delete Batch Item",          Id = "delete-product" },
     };
@@ -409,12 +411,31 @@
         var row = args.RowInfo?.RowData;
         if (row is null || (!row.IsBatchRow && !row.IsProductRow))
             args.Cancel = true;
+        // Item visibility is handled by app.js based on row CSS classes (row-batch, row-product, row-released).
     }
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
     {
         var row = args.RowInfo?.RowData;
         if (row is null) return;
+
+        if (args.Item.Id == "release-batch" && row.IsBatchRow)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm",
+                $"Release batch '{row.BatchName}' to production? This cannot be undone and the batch will become read-only.");
+            if (!confirmed) return;
+            try
+            {
+                await BomService.ReleaseBatchToProductionAsync(row.TreeId);
+                _awaitingRestore = true;
+                if (_batchGrid is not null) await _batchGrid.RefreshAsync();
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", ex.Message);
+            }
+            return;
+        }
 
         if (args.Item.Id == "delete-batch" && row.IsBatchRow)
         {
@@ -502,7 +523,9 @@
     private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow)
-            args.Row.AddClass(new[] { "row-batch" });
+        {
+            args.Row.AddClass(new[] { args.Data.ReadyForProduction ? "row-released" : "row-batch" });
+        }
         else if (args.Data.IsProductRow)
             args.Row.AddClass(new[] { "row-product" });
         else
