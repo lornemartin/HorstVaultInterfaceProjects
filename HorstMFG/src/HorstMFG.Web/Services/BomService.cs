@@ -1068,22 +1068,9 @@ public class BomService : IBomService
 
         foreach (var product in batch.BatchProducts)
         {
-            foreach (var line in product.Parts.Where(p => p.Operations == "Laser"))
+            foreach (var line in product.Parts.Where(p => p.Operations == "Laser" && p.IsStock))
             {
-                var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
-                if (part is null)
-                {
-                    part = new Part
-                    {
-                        FileName    = line.PartNumber,
-                        Description = line.Description,
-                        Material    = line.Material,
-                        Thickness   = decimal.TryParse(line.Thickness, out var t) ? t : null
-                    };
-                    db.Parts.Add(part);
-                    await db.SaveChangesAsync(); // get part.Id
-                }
-
+                var part = await FindOrCreatePartAsync(db, line);
                 db.BatchItems.Add(new BatchItem
                 {
                     NestBatchId  = nestBatch.Id,
@@ -1124,22 +1111,9 @@ public class BomService : IBomService
             db.NestOrders.Add(nestOrder);
             await db.SaveChangesAsync(); // get nestOrder.Id
 
-            foreach (var line in order.Parts.Where(p => p.Operations == "Laser"))
+            foreach (var line in order.Parts.Where(p => p.Operations == "Laser" && !p.IsStock))
             {
-                var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
-                if (part is null)
-                {
-                    part = new Part
-                    {
-                        FileName    = line.PartNumber,
-                        Description = line.Description,
-                        Material    = line.Material,
-                        Thickness   = decimal.TryParse(line.Thickness, out var t) ? t : null
-                    };
-                    db.Parts.Add(part);
-                    await db.SaveChangesAsync(); // get part.Id
-                }
-
+                var part = await FindOrCreatePartAsync(db, line);
                 db.OrderItems.Add(new OrderItem
                 {
                     NestOrderId = nestOrder.Id,
@@ -1151,6 +1125,43 @@ public class BomService : IBomService
 
         await db.SaveChangesAsync();
         _log.LogInformation("Schedule '{Name}' (Id={Id}) released to production.", schedule.Name, schedule.Id);
+    }
+
+    private static decimal? ParseThickness(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        // Strip unit suffixes (e.g. "0.125 in" → "0.125")
+        var cleaned = raw.Trim()
+            .Replace(" in", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("in", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+        return decimal.TryParse(cleaned, System.Globalization.NumberStyles.Number,
+            System.Globalization.CultureInfo.InvariantCulture, out var t) ? t : null;
+    }
+
+    private async Task<Part> FindOrCreatePartAsync(ApplicationDbContext db, PartLineItem line)
+    {
+        var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
+        if (part is null)
+        {
+            part = new Part
+            {
+                FileName    = line.PartNumber,
+                Description = line.Description,
+                Material    = line.Material,
+                Thickness   = ParseThickness(line.Thickness),
+            };
+            db.Parts.Add(part);
+        }
+        else
+        {
+            // Refresh any fields that may have been missing on a previous release
+            if (part.Thickness is null)  part.Thickness   = ParseThickness(line.Thickness);
+            if (part.Material is null)   part.Material     = line.Material;
+            if (part.Description is null) part.Description = line.Description;
+        }
+        await db.SaveChangesAsync();
+        return part;
     }
 
     private void DeleteFolder(string? path)
