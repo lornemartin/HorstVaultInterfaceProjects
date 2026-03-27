@@ -510,15 +510,15 @@ public class BomService : IBomService
             // Parent is a Batch row — return BatchProduct children
             // Resolve batch name so we include all batches with the same name (matching grouping behavior)
             int batchId = parentTreeId;
-            var batchName = await _db.Batches
+            var parentBatch = await _db.Batches
                 .Where(b => b.Id == batchId)
-                .Select(b => b.Name)
+                .Select(b => new { b.Name, b.ReadyForProduction })
                 .FirstOrDefaultAsync();
 
-            if (batchName is null) return new List<ExportTreeItem>();
+            if (parentBatch is null) return new List<ExportTreeItem>();
 
             var products = await _db.Set<BatchProduct>()
-                .Where(bp => bp.Batch.Name == batchName)
+                .Where(bp => bp.Batch.Name == parentBatch.Name)
                 .OrderBy(bp => bp.ProductName)
                 .ToListAsync();
 
@@ -545,6 +545,7 @@ public class BomService : IBomService
                     ProductName = product.ProductName,
                     ParentQty = product.Qty,
                     ItemCount = count,
+                    ReadyForProduction = parentBatch.ReadyForProduction,
                 });
             }
             return result;
@@ -553,6 +554,11 @@ public class BomService : IBomService
         {
             // Parent is a BatchProduct row — return PartLineItem children
             int productId = parentTreeId - productOffset;
+            var batchReleased = await _db.Set<BatchProduct>()
+                .Where(bp => bp.Id == productId)
+                .Select(bp => bp.Batch.ReadyForProduction)
+                .FirstOrDefaultAsync();
+
             var parts = await _db.Set<PartLineItem>()
                 .Where(p => p.BatchProductId == productId && (includeProcessed || !p.IsProcessed))
                 .OrderBy(p => p.PartNumber)
@@ -576,6 +582,7 @@ public class BomService : IBomService
                 HasPdf = part.HasPdf,
                 Notes = part.Notes,
                 IsProcessed = part.IsProcessed,
+                ReadyForProduction = batchReleased,
             }).ToList();
         }
     }
@@ -713,6 +720,11 @@ public class BomService : IBomService
         {
             // Parent is a Schedule row — return ScheduleOrder children
             int scheduleId = parentTreeId;
+            var parentSchedule = await _db.Schedules
+                .Where(s => s.Id == scheduleId)
+                .Select(s => new { s.ReadyForProduction })
+                .FirstOrDefaultAsync();
+
             var orders = await _db.Set<ScheduleOrder>()
                 .Where(so => so.ScheduleId == scheduleId)
                 .OrderBy(so => so.OrderNumber)
@@ -742,6 +754,7 @@ public class BomService : IBomService
                     ProductName = order.OrderNumber,
                     ParentQty = order.Qty,
                     ItemCount = count,
+                    ReadyForProduction = parentSchedule?.ReadyForProduction ?? false,
                 });
             }
             return result;
@@ -750,6 +763,11 @@ public class BomService : IBomService
         {
             // Parent is a ScheduleOrder row — return PartLineItem children
             int orderId = parentTreeId - orderOffset;
+            var scheduleReleased = await _db.Set<ScheduleOrder>()
+                .Where(so => so.Id == orderId)
+                .Select(so => so.Schedule.ReadyForProduction)
+                .FirstOrDefaultAsync();
+
             var parts = await _db.Set<PartLineItem>()
                 .Where(p => p.ScheduleOrderId == orderId && (includeProcessed || !p.IsProcessed))
                 .OrderBy(p => p.PartNumber)
@@ -773,6 +791,7 @@ public class BomService : IBomService
                 HasPdf = part.HasPdf,
                 Notes = part.Notes,
                 IsProcessed = part.IsProcessed,
+                ReadyForProduction = scheduleReleased,
             }).ToList();
         }
     }

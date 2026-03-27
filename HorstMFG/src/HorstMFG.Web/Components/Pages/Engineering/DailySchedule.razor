@@ -411,7 +411,9 @@
         var row = args.RowInfo?.RowData;
         if (row is null || (!row.IsBatchRow && !row.IsProductRow))
             args.Cancel = true;
-        // Item visibility is handled by app.js based on row CSS classes (row-batch, row-product, row-released).
+        else if (row.IsProductRow && row.ReadyForProduction)
+            args.Cancel = true;
+        // Item visibility for batch/schedule rows handled by app.js (row-batch, row-product, row-released).
     }
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
@@ -523,12 +525,22 @@
     private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
     {
         if (args.Data.IsBatchRow)
-            args.Row.AddClass(new[] { args.Data.ReadyForProduction ? "row-released" : "row-batch" });
+        {
+            args.Row.AddClass(new[] { "row-batch" });
+            if (args.Data.ReadyForProduction)
+                args.Row.AddClass(new[] { "row-released" });
+        }
         else if (args.Data.IsProductRow)
+        {
             args.Row.AddClass(new[] { "row-product" });
+            if (args.Data.ReadyForProduction)
+                args.Row.AddClass(new[] { "row-released" });
+        }
         else
         {
-            if (args.Data.IsProcessed)
+            if (args.Data.ReadyForProduction)
+                args.Row.AddClass(new[] { "row-released" });
+            else if (args.Data.IsProcessed)
                 args.Row.AddClass(new[] { "row-processed" });
             if (!string.IsNullOrWhiteSpace(args.Data.Notes))
                 args.Row.AddClass(new[] { "row-has-notes" });

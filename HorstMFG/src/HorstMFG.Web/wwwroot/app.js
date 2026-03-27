@@ -1,16 +1,18 @@
 // Context menu item visibility for TreeGrid rows.
 // Fires in capture phase so we know the row type before Syncfusion processes the right-click.
 // requestAnimationFrame fires after Syncfusion shows the popup but before the browser paints.
+// NOTE: Syncfusion does not render ContextMenuItemModel.Id as an HTML id attribute on <li> elements,
+//       so visibility is controlled by matching item text content.
 
-var _cmRowType = null;
+var _cmRowType   = null;  // 'header' | 'product' | null
 var _cmIsReleased = false;
 
 document.addEventListener('contextmenu', function (e) {
     var row = e.target.closest('tr.e-row');
-    _cmRowType = null;
+    _cmRowType    = null;
     _cmIsReleased = false;
     if (row) {
-        if (row.classList.contains('row-batch'))        _cmRowType = 'header';
+        if      (row.classList.contains('row-batch'))   _cmRowType = 'header';
         else if (row.classList.contains('row-product')) _cmRowType = 'product';
         _cmIsReleased = row.classList.contains('row-released');
     }
@@ -18,50 +20,47 @@ document.addEventListener('contextmenu', function (e) {
     if (!_cmRowType) return;
 
     requestAnimationFrame(function () { applyContextMenuVisibility(_cmRowType, _cmIsReleased); });
-
-    // Belt-and-suspenders: also run after a short delay in case rAF fires too early
-    setTimeout(function () { applyContextMenuVisibility(_cmRowType, _cmIsReleased); }, 30);
+    setTimeout(function ()            { applyContextMenuVisibility(_cmRowType, _cmIsReleased); }, 30);
 
 }, true); // capture phase
 
 function applyContextMenuVisibility(type, isReleased) {
     if (!type) return;
 
-    // All item IDs we manage; anything else is left untouched.
-    var managed = {
-        'laser-report':    true,
-        'op-iron-worker':  true,
-        'op-machine-shop': true,
-        'op-bandsaw':      true,
-        'op-purchased':    true,
-        'sep-reports':     true,
-        'release-batch':   true,
-        'release-schedule':true,
-        'sep-release':     true,
-        'delete-batch':    true,
-        'delete-product':  true
-    };
+    var reportTexts  = ['Laser Parts Report', 'Iron Worker Report', 'Machine Shop Report',
+                        'Bandsaw Report', 'Purchased Parts Report'];
+    var headerDelTexts  = ['Delete Batch', 'Delete Schedule'];
+    var productDelTexts = ['Delete Batch Item', 'Delete Order'];
+    var releaseTexts    = ['Release to Production'];
 
     var items = document.querySelectorAll('.e-contextmenu-wrapper li, .e-contextmenu li');
     if (!items.length) items = document.querySelectorAll('ul.e-ul li');
 
     items.forEach(function (li) {
-        var id = li.id || '';
-        if (!managed[id]) return;
+        var text  = li.textContent.trim();
+        var isSep      = li.classList.contains('e-separator');
+        var isReport   = reportTexts.some(function (t)     { return text.indexOf(t) !== -1; });
+        var isHeaderDel= headerDelTexts.some(function (t)  { return text.indexOf(t) !== -1; });
+        var isProductDel= productDelTexts.some(function (t){ return text.indexOf(t) !== -1; });
+        var isRelease  = releaseTexts.some(function (t)    { return text.indexOf(t) !== -1; });
+
+        // Skip items we don't manage
+        if (!isSep && !isReport && !isHeaderDel && !isProductDel && !isRelease) return;
 
         var show;
         if (type === 'header') {
             if (isReleased) {
-                // Already released: show reports only; hide release, separators, and delete items.
-                show = id === 'laser-report' || id === 'op-iron-worker' || id === 'op-machine-shop' ||
-                       id === 'op-bandsaw'   || id === 'op-purchased';
+                // Already released: show reports only; hide release, delete items, and separators
+                show = isReport;
             } else {
-                // Batch/schedule header, not yet released: show everything except delete-product.
-                show = id !== 'delete-product';
+                // Unreleased header: show reports + release + delete-batch; hide delete-product + seps after delete section
+                show = isReport || isRelease || isHeaderDel;
+                if (isSep) show = isReport || isRelease; // keep sep between reports and release; hide sep between release and delete
             }
         } else {
-            // Product/order row: show only the product-level delete item.
-            show = id === 'delete-product';
+            // Product/order row: show only product-level delete
+            show = isProductDel;
+            if (isSep) show = false;
         }
 
         li.style.display = show ? '' : 'none';
