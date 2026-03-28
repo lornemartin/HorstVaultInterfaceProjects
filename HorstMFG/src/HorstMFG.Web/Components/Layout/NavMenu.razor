@@ -18,9 +18,11 @@
                     <Authorized Context="engContext">
                         <div class="nav-section">
                             <div class="nav-section-title">Engineering</div>
-                            <NavLink class="nav-link" href="/bom-import">
-                                BOM Import
-                            </NavLink>
+                            <AuthorizeView Policy="EngineeringOnly">
+                                <NavLink class="nav-link" href="/bom-import">
+                                    BOM Import
+                                </NavLink>
+                            </AuthorizeView>
                             <NavLink class="nav-link" href="/engineering/orders">
                                 Orders
                             </NavLink>
@@ -31,8 +33,8 @@
                     </Authorized>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="ShopFloor">
-                    <Authorized Context="sfContext">
+                <AuthorizeView Policy="Nesting">
+                    <Authorized Context="nestContext">
                         <div class="nav-section">
                             <div class="nav-section-title">Production</div>
                             <NavLink class="nav-link" href="/production/orders">

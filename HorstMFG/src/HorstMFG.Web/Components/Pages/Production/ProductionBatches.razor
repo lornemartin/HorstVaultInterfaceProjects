@@ -1,5 +1,5 @@
 @page "/production/batches"
-@attribute [Authorize(Policy = "ShopFloor")]
+@attribute [Authorize(Policy = "Nesting")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor

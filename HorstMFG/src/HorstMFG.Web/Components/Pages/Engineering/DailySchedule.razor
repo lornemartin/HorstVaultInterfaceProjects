@@ -258,6 +258,10 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+        var user = HttpContextAccessor.HttpContext?.User;
+        var canEdit = user?.HasClaim(ClaimTypes.Role, "Admin") == true
+                   || user?.HasClaim(ClaimTypes.Role, "Engineering") == true;
+        await JS.InvokeVoidAsync("setUserCanEdit", canEdit);
         _awaitingRestore = true;
         await LoadData();
         StateHasChanged();

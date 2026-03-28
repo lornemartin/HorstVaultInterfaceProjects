@@ -4,8 +4,11 @@
 // NOTE: Syncfusion does not render ContextMenuItemModel.Id as an HTML id attribute on <li> elements,
 //       so visibility is controlled by matching item text content.
 
-var _cmRowType   = null;  // 'header' | 'product' | null
+var _cmRowType    = null;  // 'header' | 'product' | null
 var _cmIsReleased = false;
+var _userCanEdit  = true;  // false for ShopFloor (read-only)
+
+window.setUserCanEdit = function (val) { _userCanEdit = val; };
 
 document.addEventListener('contextmenu', function (e) {
     var row = e.target.closest('tr.e-row');
@@ -48,7 +51,11 @@ function applyContextMenuVisibility(type, isReleased) {
         if (!isSep && !isReport && !isHeaderDel && !isProductDel && !isRelease) return;
 
         var show;
-        if (type === 'header') {
+        if (!_userCanEdit) {
+            // Read-only user (ShopFloor): only show report items on header rows
+            show = (type === 'header') && isReport;
+            if (isSep) show = false;
+        } else if (type === 'header') {
             if (isReleased) {
                 // Already released: show reports only; hide release, delete items, and separators
                 show = isReport;

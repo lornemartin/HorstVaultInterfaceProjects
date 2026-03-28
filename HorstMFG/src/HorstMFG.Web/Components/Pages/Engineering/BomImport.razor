@@ -1,5 +1,5 @@
 @page "/bom-import"
-@attribute [Authorize(Policy = "Engineering")]
+@attribute [Authorize(Policy = "EngineeringOnly")]
 @rendermode InteractiveServer
 @inject IBomService BomService
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
