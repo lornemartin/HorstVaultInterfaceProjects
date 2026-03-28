@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "HorstMFG.Bridge": {
+      "commandName": "Project",
+      "commandLineArgs": "--console",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
