@@ -1066,18 +1066,23 @@ public class BomService : IBomService
         db.NestBatches.Add(nestBatch);
         await db.SaveChangesAsync(); // get nestBatch.Id
 
-        foreach (var product in batch.BatchProducts)
+        // Aggregate qty across all products — same part number in multiple products becomes one BatchItem
+        var batchPartQtys = batch.BatchProducts
+            .SelectMany(bp => bp.Parts
+                .Where(p => p.Operations == "Laser" && p.IsStock)
+                .Select(p => (Line: p, TotalQty: p.Qty * bp.Qty)))
+            .GroupBy(x => x.Line.PartNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Sample: g.First().Line, TotalQty: g.Sum(x => x.TotalQty)));
+
+        foreach (var (sampleLine, totalQty) in batchPartQtys)
         {
-            foreach (var line in product.Parts.Where(p => p.Operations == "Laser" && p.IsStock))
+            var part = await FindOrCreatePartAsync(db, sampleLine);
+            db.BatchItems.Add(new BatchItem
             {
-                var part = await FindOrCreatePartAsync(db, line);
-                db.BatchItems.Add(new BatchItem
-                {
-                    NestBatchId  = nestBatch.Id,
-                    PartId       = part.Id,
-                    QtyRequired  = line.Qty * product.Qty
-                });
-            }
+                NestBatchId = nestBatch.Id,
+                PartId      = part.Id,
+                QtyRequired = totalQty
+            });
         }
 
         await db.SaveChangesAsync();
@@ -1111,14 +1116,20 @@ public class BomService : IBomService
             db.NestOrders.Add(nestOrder);
             await db.SaveChangesAsync(); // get nestOrder.Id
 
-            foreach (var line in order.Parts.Where(p => p.Operations == "Laser" && !p.IsStock))
+            // Aggregate qty within the order — same part number appearing multiple times becomes one OrderItem
+            var orderPartQtys = order.Parts
+                .Where(p => p.Operations == "Laser" && !p.IsStock)
+                .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
+                .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * order.Qty));
+
+            foreach (var (sampleLine, totalQty) in orderPartQtys)
             {
-                var part = await FindOrCreatePartAsync(db, line);
+                var part = await FindOrCreatePartAsync(db, sampleLine);
                 db.OrderItems.Add(new OrderItem
                 {
                     NestOrderId = nestOrder.Id,
                     PartId      = part.Id,
-                    QtyRequired = line.Qty * order.Qty
+                    QtyRequired = totalQty
                 });
             }
         }

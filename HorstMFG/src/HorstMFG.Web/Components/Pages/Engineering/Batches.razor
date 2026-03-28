@@ -16,6 +16,14 @@
 
 <PageTitle>Batches - HorstMFG</PageTitle>
 
+@if (_releasing)
+{
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span class="spinner-label">Releasing to production…</span>
+    </div>
+}
+
 <h3>Batches</h3>
 
 <div style="display: flex; gap: 2rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
@@ -193,6 +201,7 @@
     private int? _selectedPlantId;
     private bool _showProcessed;
     private bool _isAdmin;
+    private bool _releasing;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
 
@@ -426,6 +435,8 @@
             var confirmed = await JS.InvokeAsync<bool>("confirm",
                 $"Release batch '{row.BatchName}' to production? This cannot be undone and the batch will become read-only.");
             if (!confirmed) return;
+            _releasing = true;
+            StateHasChanged();
             try
             {
                 await BomService.ReleaseBatchToProductionAsync(row.TreeId);
@@ -435,6 +446,10 @@
             catch (Exception ex)
             {
                 await JS.InvokeVoidAsync("alert", ex.Message);
+            }
+            finally
+            {
+                _releasing = false;
             }
             return;
         }
