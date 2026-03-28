@@ -13,17 +13,19 @@
 
 <h3>Batches</h3>
 
-<SfGrid TValue="BatchItemRow" DataSource="_items" AllowSorting="true" AllowResizing="true"
-        AllowFiltering="true" Height="600">
+<SfGrid TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v1"
+        AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
+        AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
+        EnablePersistence="true" Height="600">
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
     <GridColumns>
-        <GridColumn Field="@nameof(BatchItemRow.BatchName)" HeaderText="Batch" Width="180" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.FileName)" HeaderText="File Name" Width="220" />
         <GridColumn Field="@nameof(BatchItemRow.Description)" HeaderText="Description" Width="220" />
         <GridColumn Field="@nameof(BatchItemRow.Material)" HeaderText="Material" Width="110" />
         <GridColumn Field="@nameof(BatchItemRow.Thickness)" HeaderText="Thickness" Width="90" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(BatchItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.BatchName)" HeaderText="Batch" Width="180" />
         <GridColumn Field="@nameof(BatchItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(BatchItemRow.IsComplete)" HeaderText="Complete" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(BatchItemRow.Notes)" HeaderText="Notes" Width="180" />
