@@ -39,9 +39,10 @@ try
 
     // Authorization policies
     builder.Services.AddAuthorizationBuilder()
-        .AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"))
+        .AddPolicy("Admin",       policy => policy.RequireClaim(ClaimTypes.Role, "Admin"))
         .AddPolicy("Engineering", policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Engineering"))
-        .AddPolicy("ShopFloor", policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "ShopFloor"));
+        .AddPolicy("ShopFloor",   policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "ShopFloor", "Nesting"))
+        .AddPolicy("Nesting",     policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Nesting"));
 
     // Services
     builder.Services.AddScoped<IBomService, BomService>();

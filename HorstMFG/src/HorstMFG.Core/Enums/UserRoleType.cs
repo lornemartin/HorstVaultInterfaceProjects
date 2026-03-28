@@ -4,5 +4,6 @@ public enum UserRoleType
 {
     Admin,
     Engineering,
-    ShopFloor
+    ShopFloor,
+    Nesting
 }
