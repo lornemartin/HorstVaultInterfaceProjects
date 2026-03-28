@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HorstMFG.Core.Interfaces;
 using HorstMFG.Infrastructure.Data;
 using HorstMFG.Web.Components;
+using HorstMFG.Web.Hubs;
 using HorstMFG.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,10 @@ try
     builder.Services.AddScoped<ScheduleTreeAdaptor>();
     builder.Services.AddScoped<BatchTreeFilterState>();
     builder.Services.AddScoped<BatchTreeAdaptor>();
+
+    // Bridge SignalR
+    builder.Services.AddSingleton<BridgeNotificationService>();
+    builder.Services.AddSignalR();
 
     // Syncfusion
     Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(
@@ -136,6 +141,8 @@ try
 
         return Results.File(path, "application/pdf");
     }).RequireAuthorization();
+
+    app.MapHub<BridgeHub>("/hubs/bridge");
 
     app.MapRazorComponents<App>()
         .AddInteractiveServerRenderMode();

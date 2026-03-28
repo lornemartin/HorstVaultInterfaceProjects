@@ -1,0 +1,220 @@
+@page "/admin/nesting-stations"
+@attribute [Authorize(Policy = "Admin")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+
+<PageTitle>Nesting Stations - HorstMFG</PageTitle>
+
+<h3>Nesting Stations</h3>
+
+<div style="margin-bottom: 1rem;">
+    <SfButton CssClass="e-primary" OnClick="OpenAddDialog">Add Station</SfButton>
+</div>
+
+<SfGrid TValue="StationRow" DataSource="_stations" AllowSorting="true" AllowResizing="true" Height="500">
+    <GridEvents TValue="StationRow" OnRecordDoubleClick="OnRowDoubleClick" />
+    <GridColumns>
+        <GridColumn Field="@nameof(StationRow.Name)"        HeaderText="Station Name" Width="200" />
+        <GridColumn Field="@nameof(StationRow.PlantName)"   HeaderText="Plant"        Width="160" />
+        <GridColumn Field="@nameof(StationRow.ProjectName)" HeaderText="Active Project" Width="180" />
+        <GridColumn Field="@nameof(StationRow.BridgeStatus)" HeaderText="Bridge"      Width="100" />
+        <GridColumn Field="@nameof(StationRow.BridgeLastSeen)" HeaderText="Last Seen" Width="180" Format="dd/MM/yyyy HH:mm:ss" Type="ColumnType.DateTime" />
+        <GridColumn Field="@nameof(StationRow.BridgeVersion)" HeaderText="Version"    Width="100" />
+    </GridColumns>
+</SfGrid>
+
+@if (_error is not null)
+{
+    <div style="color:red; margin-top:0.5rem;">@_error</div>
+}
+
+<SfDialog @ref="_dialog" Width="420px" IsModal="true" ShowCloseIcon="true"
+          Header="@(_editId is null ? "Add Station" : "Edit Station")"
+          Visible="false">
+    <DialogEvents Closed="ResetForm" />
+    <DialogTemplates>
+        <Content>
+            <div style="display:flex; flex-direction:column; gap:0.75rem; padding:0.5rem 0;">
+
+                <div>
+                    <label class="form-label">Station Name</label>
+                    <input class="form-control" @bind="_form.Name" />
+                </div>
+
+                <div>
+                    <label class="form-label">Plant</label>
+                    <SfDropDownList TValue="int" TItem="PlantOption" DataSource="_plants"
+                                    @bind-Value="_form.PlantId">
+                        <DropDownListFieldSettings Text="Name" Value="Id" />
+                    </SfDropDownList>
+                </div>
+
+                @if (_dialogError is not null)
+                {
+                    <div style="color:red; font-size:0.85rem;">@_dialogError</div>
+                }
+            </div>
+        </Content>
+        <FooterTemplate>
+            <SfButton CssClass="e-primary" OnClick="SaveStation">Save</SfButton>
+            @if (_editId is not null)
+            {
+                <SfButton CssClass="e-danger" OnClick="DeleteStation" style="margin-left: 8px;">Delete</SfButton>
+            }
+            <SfButton OnClick="@(() => _dialog!.HideAsync())" style="margin-left: 8px;">Cancel</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    private List<StationRow> _stations = new();
+    private List<PlantOption> _plants = new();
+    private string? _error;
+
+    private SfDialog? _dialog;
+    private int? _editId;
+    private StationForm _form = new();
+    private string? _dialogError;
+
+    private static readonly TimeSpan _offlineThreshold = TimeSpan.FromSeconds(90);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        _plants = await db.Plants
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Name)
+            .Select(p => new PlantOption(p.Id, p.Name))
+            .ToListAsync();
+        await LoadStationsAsync(db);
+    }
+
+    private async Task LoadStationsAsync(ApplicationDbContext db)
+    {
+        var now = DateTime.UtcNow;
+        var raw = await db.NestingStations
+            .Include(s => s.Plant)
+            .OrderBy(s => s.Plant.Name).ThenBy(s => s.Name)
+            .ToListAsync();
+
+        _stations = raw.Select(s => new StationRow
+        {
+            Id            = s.Id,
+            Name          = s.Name,
+            PlantName     = s.Plant.Name,
+            ProjectName   = s.ProjectName,
+            BridgeLastSeen = s.BridgeLastSeen?.ToLocalTime(),
+            BridgeVersion = s.BridgeVersion,
+            BridgeStatus  = s.BridgeLastSeen.HasValue && (now - s.BridgeLastSeen.Value) < _offlineThreshold
+                                ? "Online" : "Offline",
+        }).ToList();
+    }
+
+    private async Task OpenAddDialog()
+    {
+        _editId = null;
+        _form = new StationForm { PlantId = _plants.FirstOrDefault()?.Id ?? 0 };
+        _dialogError = null;
+        await _dialog!.ShowAsync();
+    }
+
+    private async Task OnRowDoubleClick(RecordDoubleClickEventArgs<StationRow> args)
+    {
+        var row = args.RowData;
+        _editId = row.Id;
+        _form = new StationForm { Name = row.Name, PlantId = _plants.First(p => p.Name == row.PlantName).Id };
+        _dialogError = null;
+        await _dialog!.ShowAsync();
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _form = new();
+        _dialogError = null;
+    }
+
+    private async Task SaveStation()
+    {
+        _dialogError = null;
+
+        if (string.IsNullOrWhiteSpace(_form.Name)) { _dialogError = "Station name is required."; return; }
+        if (_form.PlantId == 0)                    { _dialogError = "Plant is required."; return; }
+
+        try
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+
+            var duplicate = await db.NestingStations.AnyAsync(s =>
+                s.Name == _form.Name.Trim() && s.PlantId == _form.PlantId && s.Id != (_editId ?? -1));
+            if (duplicate) { _dialogError = "A station with that name already exists at this plant."; return; }
+
+            if (_editId is null)
+            {
+                db.NestingStations.Add(new NestingStation
+                {
+                    Name    = _form.Name.Trim(),
+                    PlantId = _form.PlantId,
+                });
+            }
+            else
+            {
+                var station = await db.NestingStations.FirstAsync(s => s.Id == _editId);
+                station.Name    = _form.Name.Trim();
+                station.PlantId = _form.PlantId;
+            }
+
+            await db.SaveChangesAsync();
+            await LoadStationsAsync(db);
+            await _dialog!.HideAsync();
+        }
+        catch (Exception ex)
+        {
+            _dialogError = ex.Message;
+        }
+    }
+
+    private async Task DeleteStation()
+    {
+        if (_editId is null) return;
+        try
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var station = await db.NestingStations.FirstAsync(s => s.Id == _editId);
+            db.NestingStations.Remove(station);
+            await db.SaveChangesAsync();
+            await LoadStationsAsync(db);
+            await _dialog!.HideAsync();
+        }
+        catch (Exception ex)
+        {
+            _dialogError = ex.Message;
+        }
+    }
+
+    private record StationRow
+    {
+        public int      Id            { get; init; }
+        public string   Name          { get; init; } = "";
+        public string   PlantName     { get; init; } = "";
+        public string?  ProjectName   { get; init; }
+        public string   BridgeStatus  { get; init; } = "Offline";
+        public DateTime? BridgeLastSeen { get; init; }
+        public string?  BridgeVersion { get; init; }
+    }
+
+    private record PlantOption(int Id, string Name);
+
+    private class StationForm
+    {
+        public string Name    { get; set; } = "";
+        public int    PlantId { get; set; }
+    }
+}
