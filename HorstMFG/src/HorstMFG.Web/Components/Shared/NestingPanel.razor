@@ -1,0 +1,524 @@
+@inject IHubContext<BridgeHub> HubContext
+@inject BridgeNotificationService BridgeEvents
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IJSRuntime JS
+@implements IDisposable
+
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Hubs
+@using HorstMFG.Web.Services
+@using Microsoft.AspNetCore.SignalR
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using System.Text.Json
+
+<div class="nesting-panel border rounded p-2 bg-light" style="margin-bottom:1.5rem;">
+
+    @* Row 1: Station selector + active project *@
+    <div style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:.6rem;">
+
+        <div style="min-width:200px;">
+            <label style="font-weight:600; display:block; margin-bottom:.2rem; font-size:.85em;">Nesting Station</label>
+            <SfDropDownList TValue="int?" TItem="StationOption"
+                            Value="_stationId" ValueChanged="OnStationChangedAsync"
+                            DataSource="_stations" Placeholder="Select station…">
+                <DropDownListFieldSettings Text="Label" Value="Id" />
+            </SfDropDownList>
+        </div>
+
+        <div style="flex:1; min-width:260px;">
+            <label style="font-weight:600; display:block; margin-bottom:.2rem; font-size:.85em;">Active Project</label>
+            <div style="display:flex; gap:.4rem;">
+                <input type="text" class="form-control form-control-sm" placeholder="Full path to .rpd file…"
+                       @bind="_projectPath" @bind:event="oninput"
+                       disabled="@(_stationId == null)" />
+                <SfButton OnClick="SetActiveProjectAsync"
+                          Disabled="@(_stationId == null || string.IsNullOrWhiteSpace(_projectPath))">
+                    Set
+                </SfButton>
+            </div>
+        </div>
+    </div>
+
+    @* Row 2: Command buttons *@
+    <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+
+        <SfButton CssClass="e-primary" OnClick="SendToNestingAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => !i.IsInRadanProject))">
+            Send to Nesting
+        </SfButton>
+
+        <SfButton OnClick="RetrieveFromNestingAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => i.RadanIdNumber != null))">
+            Retrieve from Nesting
+        </SfButton>
+
+        <SfButton OnClick="RetrieveFromVaultAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+            Retrieve from Vault
+        </SfButton>
+
+        <SfButton OnClick="UpdateThumbnailsAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+            Update Thumbnails
+        </SfButton>
+
+        <SfButton OnClick="SyncAsync"
+                  Disabled="@(_isBusy || _stationId == null)">
+            Sync
+        </SfButton>
+
+        <SfButton CssClass="e-danger" OnClick="FinalizeAsync"
+                  Disabled="@(_isBusy || _stationId == null)">
+            Finalize
+        </SfButton>
+    </div>
+
+    @if (_statusLines.Count > 0)
+    {
+        <div class="mt-2" style="background:#fff; border:1px solid #dee2e6; border-radius:4px;
+                                  padding:.4rem .6rem; font-size:.82em;
+                                  max-height:120px; overflow-y:auto;">
+            @foreach (var line in _statusLines)
+            {
+                <div class="@line.Css">@line.Text</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    // ── Parameters ────────────────────────────────────────────────────────────
+    [Parameter] public string ItemType { get; set; } = "Order";   // "Order" | "Batch"
+    [Parameter] public int PlantId { get; set; }
+    [Parameter] public IReadOnlyList<NestingSelectionItem> SelectedItems { get; set; }
+        = Array.Empty<NestingSelectionItem>();
+    [Parameter] public EventCallback OnCompleted { get; set; }
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    private List<StationOption> _stations = new();
+    private int? _stationId;
+    private string _projectPath = "";
+    private bool _isBusy;
+    private string? _pendingCommandId;
+    private string? _pendingCommandType;
+    private List<StatusLine> _statusLines = new();
+    private bool _eventsSubscribed;
+
+    private record StationOption(int Id, string Label);
+    private record StatusLine(string Text, string Css = "");
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync() => await LoadStationsAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_eventsSubscribed)
+        {
+            _eventsSubscribed             = true;
+            BridgeEvents.ProgressReceived += OnProgress;
+            BridgeEvents.CommandCompleted += OnCommandCompleted;
+        }
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        BridgeEvents.ProgressReceived -= OnProgress;
+        BridgeEvents.CommandCompleted -= OnCommandCompleted;
+    }
+
+    private async Task LoadStationsAsync()
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var raw = await db.NestingStations
+            .Where(s => s.PlantId == PlantId)
+            .Select(s => new { s.Id, s.Name, s.BridgeLastSeen })
+            .ToListAsync();
+
+        _stations = raw.Select(s =>
+        {
+            var online = s.BridgeLastSeen.HasValue &&
+                         (DateTime.UtcNow - s.BridgeLastSeen.Value).TotalSeconds < 90;
+            return new StationOption(s.Id, $"{s.Name}  {(online ? "●" : "○")}");
+        }).ToList();
+    }
+
+    // ── Station / project selection ───────────────────────────────────────────
+
+    private async Task OnStationChangedAsync(int? id)
+    {
+        _stationId   = id;
+        _projectPath = "";
+        if (id.HasValue)
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var station = await db.NestingStations.FindAsync(id.Value);
+            _projectPath = station?.ProjectPath ?? "";
+        }
+    }
+
+    private async Task SetActiveProjectAsync()
+    {
+        if (_stationId == null || string.IsNullOrWhiteSpace(_projectPath)) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var station = await db.NestingStations.FindAsync(_stationId.Value);
+        if (station == null) return;
+
+        station.ProjectPath = _projectPath.Trim();
+        station.ProjectName = System.IO.Path.GetFileNameWithoutExtension(_projectPath.Trim());
+        await db.SaveChangesAsync();
+
+        bool online = BridgeHub.TrySendSetActiveProject(HubContext, _stationId.Value, _projectPath.Trim());
+        Log(online
+            ? $"Active project set to: {station.ProjectName}"
+            : "Project saved. Station is offline — will apply on next connection.");
+        StateHasChanged();
+    }
+
+    // ── Commands ──────────────────────────────────────────────────────────────
+
+    private async Task SendToNestingAsync()
+    {
+        var toSend = SelectedItems.Where(i => !i.IsInRadanProject).ToList();
+        if (!toSend.Any()) return;
+
+        var noFile = toSend.Where(i => string.IsNullOrEmpty(i.FileName)).ToList();
+        if (noFile.Any())
+        {
+            bool ok = await JS.InvokeAsync<bool>("confirm",
+                $"{noFile.Count} item(s) have no file name (no .sym will be found). " +
+                $"They will still be added to the project. Continue?");
+            if (!ok) return;
+        }
+
+        var payload = JsonSerializer.Serialize(toSend.Select(i => new
+        {
+            ItemId      = i.ItemId,
+            ItemType    = ItemType,
+            FileName    = i.FileName ?? "",
+            QtyRequired = i.QtyRequired,
+            Material    = i.Material,
+            Thickness   = i.Thickness,
+            OrderNumber = i.GroupName,
+        }));
+
+        await SendCommandAsync("SendToNesting", payload);
+    }
+
+    private async Task RetrieveFromNestingAsync()
+    {
+        var toRetrieve = SelectedItems.Where(i => i.RadanIdNumber != null).ToList();
+        if (!toRetrieve.Any()) return;
+
+        var payload = JsonSerializer.Serialize(toRetrieve.Select(i => new
+        {
+            ItemId        = i.ItemId,
+            RadanIdNumber = i.RadanIdNumber!.Value,
+        }));
+
+        await SendCommandAsync("RetrieveFromNesting", payload);
+    }
+
+    private async Task RetrieveFromVaultAsync()
+    {
+        if (!SelectedItems.Any()) return;
+
+        var payload = JsonSerializer.Serialize(SelectedItems.Select(i => new
+        {
+            ItemId   = i.ItemId,
+            FileName = i.FileName ?? "",
+        }));
+
+        await SendCommandAsync("RetrieveFromVault", payload);
+    }
+
+    private async Task UpdateThumbnailsAsync()
+    {
+        if (!SelectedItems.Any()) return;
+
+        var payload = JsonSerializer.Serialize(SelectedItems.Select(i => new
+        {
+            PartId   = i.PartId,
+            FileName = i.FileName ?? "",
+        }));
+
+        await SendCommandAsync("UpdateThumbnail", payload);
+    }
+
+    private Task SyncAsync() => SendCommandAsync("Sync", "{}");
+
+    private async Task FinalizeAsync()
+    {
+        bool ok = await JS.InvokeAsync<bool>("confirm",
+            "This will sync the current project, mark completion, and create a new empty project. Continue?");
+        if (!ok) return;
+        await SendCommandAsync("Finalize", "{}");
+    }
+
+    private async Task SendCommandAsync(string commandType, string payload)
+    {
+        if (_stationId == null) return;
+
+        _isBusy             = true;
+        _pendingCommandId   = Guid.NewGuid().ToString();
+        _pendingCommandType = commandType;
+        _statusLines.Clear();
+        Log($"Sending {commandType}…");
+
+        bool sent = BridgeHub.TrySendCommand(HubContext, _stationId.Value,
+                                             _pendingCommandId, commandType, payload);
+        if (!sent)
+        {
+            Log("Station is not connected.", "text-danger");
+            _isBusy = false;
+        }
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    // ── Event handlers (called from non-Blazor threads) ───────────────────────
+
+    private void OnProgress(int stationId, string commandId, string message, int percent)
+    {
+        if (commandId != _pendingCommandId) return;
+        _ = InvokeAsync(() =>
+        {
+            Log($"[{percent}%] {message}");
+            StateHasChanged();
+        });
+    }
+
+    private void OnCommandCompleted(int stationId, string commandId, bool success, string payload)
+    {
+        if (commandId != _pendingCommandId) return;
+        _ = InvokeAsync(async () =>
+        {
+            _isBusy           = false;
+            _pendingCommandId = null;
+
+            if (!success)
+            {
+                Log($"Failed: {payload}", "text-danger");
+                StateHasChanged();
+                return;
+            }
+
+            try   { await ProcessResultAsync(payload); }
+            catch (Exception ex) { Log($"Error processing result: {ex.Message}", "text-danger"); }
+
+            StateHasChanged();
+            await OnCompleted.InvokeAsync();
+        });
+    }
+
+    // ── Result processing + DB updates ────────────────────────────────────────
+
+    private async Task ProcessResultAsync(string payload)
+    {
+        switch (_pendingCommandType)
+        {
+            case "SendToNesting":      await ProcessSendToNestingAsync(payload); break;
+            case "RetrieveFromNesting": await ProcessRetrieveFromNestingAsync(payload); break;
+            case "Sync":               await ProcessSyncAsync(payload); break;
+            case "Finalize":           await ProcessFinalizeAsync(payload); break;
+            case "RetrieveFromVault":  ProcessRetrieveFromVaultLog(payload); break;
+            case "UpdateThumbnail":    await ProcessUpdateThumbnailAsync(payload); break;
+        }
+    }
+
+    private async Task ProcessSendToNestingAsync(string payload)
+    {
+        var results = JsonSerializer.Deserialize<List<SendToNestingResultDto>>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (results == null) return;
+
+        int sent = 0, warned = 0;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        foreach (var r in results)
+        {
+            if (ItemType == "Order")
+            {
+                var item = await db.OrderItems.FindAsync(r.ItemId);
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; }
+            }
+            else
+            {
+                var item = await db.BatchItems.FindAsync(r.ItemId);
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; }
+            }
+            sent++;
+            if (r.MissingSymFile) warned++;
+        }
+
+        await db.SaveChangesAsync();
+        Log($"Sent {sent} item(s) to nesting project.");
+        if (warned > 0) Log($"Warning: {warned} item(s) had no .sym file and were added without geometry.", "text-warning");
+    }
+
+    private async Task ProcessRetrieveFromNestingAsync(string payload)
+    {
+        var result = JsonSerializer.Deserialize<RetrieveFromNestingResultDto>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (result == null) return;
+
+        await ApplySyncPayloadAsync(result.Sync);
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        foreach (var id in result.ClearedItemIds)
+        {
+            if (ItemType == "Order")
+            {
+                var item = await db.OrderItems.FindAsync(id);
+                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; }
+            }
+            else
+            {
+                var item = await db.BatchItems.FindAsync(id);
+                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; }
+            }
+        }
+        await db.SaveChangesAsync();
+        Log($"Retrieved {result.ClearedItemIds.Count} item(s) from nesting project.");
+    }
+
+    private async Task ProcessSyncAsync(string payload)
+    {
+        var sync = JsonSerializer.Deserialize<SyncPayloadDto>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (sync == null) return;
+
+        await ApplySyncPayloadAsync(sync);
+        Log($"Synced {sync.Parts.Count} part(s).");
+    }
+
+    private async Task ProcessFinalizeAsync(string payload)
+    {
+        var result = JsonSerializer.Deserialize<FinalizeResultDto>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (result == null) return;
+
+        await ApplySyncPayloadAsync(result.Sync);
+
+        // Clear all items that were in the project (new project is empty)
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        if (ItemType == "Order")
+        {
+            var items = await db.OrderItems
+                .Where(i => i.IsInRadanProject && i.NestOrder.PlantId == PlantId)
+                .ToListAsync();
+            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; }
+        }
+        else
+        {
+            var items = await db.BatchItems
+                .Where(i => i.IsInRadanProject && i.NestBatch.PlantId == PlantId)
+                .ToListAsync();
+            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; }
+        }
+
+        // Update station project info
+        if (_stationId.HasValue)
+        {
+            var station = await db.NestingStations.FindAsync(_stationId.Value);
+            if (station != null)
+            {
+                station.ProjectName = result.NewProjectName;
+                station.ProjectPath = result.NewProjectPath;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        Log($"Finalized. New project: {result.NewProjectName}");
+    }
+
+    private void ProcessRetrieveFromVaultLog(string payload)
+    {
+        var results = JsonSerializer.Deserialize<List<RetrieveFromVaultResultDto>>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (results == null) return;
+
+        int ok  = results.Count(r => r.Success);
+        int err = results.Count(r => !r.Success);
+        if (ok  > 0) Log($"{ok} file(s) retrieved from Vault.");
+        if (err > 0) Log($"{err} file(s) failed:", "text-danger");
+        foreach (var r in results.Where(r => !r.Success))
+            Log($"  Item {r.ItemId}: {r.Error}", "text-danger");
+    }
+
+    private async Task ProcessUpdateThumbnailAsync(string payload)
+    {
+        var results = JsonSerializer.Deserialize<List<UpdateThumbnailResultDto>>(payload,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (results == null) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        int updated = 0;
+        foreach (var r in results.Where(r => r.Success && r.ThumbnailBytes != null))
+        {
+            var part = await db.Parts.FindAsync(r.PartId);
+            if (part != null) { part.Thumbnail = r.ThumbnailBytes; updated++; }
+        }
+        await db.SaveChangesAsync();
+        Log($"Updated {updated} thumbnail(s).");
+    }
+
+    private async Task ApplySyncPayloadAsync(SyncPayloadDto sync)
+    {
+        if (sync.Parts.Count == 0) return;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        if (ItemType == "Order")
+        {
+            var items = await db.OrderItems
+                .Where(i => i.RadanIdNumber != null && i.NestOrder.PlantId == PlantId)
+                .ToListAsync();
+            foreach (var p in sync.Parts)
+            {
+                var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
+                if (item != null) item.QtyNested = p.QtyNested;
+            }
+        }
+        else
+        {
+            var items = await db.BatchItems
+                .Where(i => i.RadanIdNumber != null && i.NestBatch.PlantId == PlantId)
+                .ToListAsync();
+            foreach (var p in sync.Parts)
+            {
+                var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
+                if (item != null) item.QtyNested = p.QtyNested;
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private void Log(string text, string css = "") =>
+        _statusLines.Insert(0, new StatusLine(text, css));
+
+    // ── Private deserialization DTOs ──────────────────────────────────────────
+
+    private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile);
+    private record SyncPartDto(long RadanIdNumber, int QtyNested);
+    private class SyncPayloadDto { public List<SyncPartDto> Parts { get; set; } = new(); }
+    private class RetrieveFromNestingResultDto
+    {
+        public SyncPayloadDto Sync           { get; set; } = new();
+        public List<int>      ClearedItemIds { get; set; } = new();
+    }
+    private class FinalizeResultDto
+    {
+        public SyncPayloadDto Sync           { get; set; } = new();
+        public List<int>      ClearedItemIds { get; set; } = new();
+        public string         NewProjectName { get; set; } = "";
+        public string         NewProjectPath { get; set; } = "";
+    }
+    private record RetrieveFromVaultResultDto(int ItemId, bool Success, string? Error);
+    private record UpdateThumbnailResultDto(int PartId, byte[]? ThumbnailBytes, bool Success);
+}

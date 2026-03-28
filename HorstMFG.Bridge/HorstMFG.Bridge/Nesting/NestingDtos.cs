@@ -92,6 +92,12 @@ public class UpdateThumbnailResult
     public bool    Success        { get; set; }
 }
 
+public class RetrieveFromNestingResult
+{
+    public SyncPayload Sync           { get; set; } = new();
+    public List<int>   ClearedItemIds { get; set; } = new();
+}
+
 public class FinalizeResult
 {
     public SyncPayload  Sync           { get; set; } = new();

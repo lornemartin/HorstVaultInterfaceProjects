@@ -118,6 +118,18 @@ public class BridgeHub : Hub
     public static bool IsStationOnline(int stationId)
         => _stationToConn.ContainsKey(stationId);
 
+    /// <summary>
+    /// Tells the bridge for a given station to switch to a new active project.
+    /// Returns false if the station is not connected.
+    /// </summary>
+    public static bool TrySendSetActiveProject(IHubContext<BridgeHub> hubContext,
+                                               int stationId, string projectPath)
+    {
+        if (!_stationToConn.TryGetValue(stationId, out var connId)) return false;
+        _ = hubContext.Clients.Client(connId).SendAsync("SetActiveProject", projectPath);
+        return true;
+    }
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     public override Task OnDisconnectedAsync(Exception? exception)

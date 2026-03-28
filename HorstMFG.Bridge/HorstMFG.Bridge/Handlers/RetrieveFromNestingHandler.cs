@@ -17,7 +17,7 @@ public class RetrieveFromNestingHandler
         _log     = log;
     }
 
-    public (SyncPayload Sync, List<int> ClearedItemIds) Execute(
+    public RetrieveFromNestingResult Execute(
         string projectPath, List<RetrieveFromNestingItem> items)
     {
         var project = _nesting.LoadProject(projectPath);
@@ -31,6 +31,10 @@ public class RetrieveFromNestingHandler
 
         _log.LogInformation("Removed {Count} part(s) from nesting project", items.Count);
 
-        return (sync, items.Select(i => i.ItemId).ToList());
+        return new RetrieveFromNestingResult
+        {
+            Sync           = sync,
+            ClearedItemIds = items.Select(i => i.ItemId).ToList(),
+        };
     }
 }

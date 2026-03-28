@@ -5,6 +5,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Components.Shared
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
 @using System.Security.Claims
@@ -13,44 +14,63 @@
 
 <h3>Orders</h3>
 
-<SfGrid TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v1"
+<NestingPanel ItemType="Order"
+              PlantId="_plantId"
+              SelectedItems="_selectedForNesting"
+              OnCompleted="ReloadAsync" />
+
+<SfGrid @ref="_grid"
+        TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v2"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
         EnablePersistence="true" Height="600">
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
+    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
+    <GridEvents TValue="OrderItemRow"
+                RowSelected="OnRowSelected"
+                RowDeselected="OnRowDeselected" />
     <GridColumns>
-        <GridColumn Field="@nameof(OrderItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(OrderItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(OrderItemRow.FileName)" HeaderText="File Name" Width="220" />
-        <GridColumn Field="@nameof(OrderItemRow.Description)" HeaderText="Description" Width="220" />
-        <GridColumn Field="@nameof(OrderItemRow.Material)" HeaderText="Material" Width="110" />
-        <GridColumn Field="@nameof(OrderItemRow.Thickness)" HeaderText="Thickness" Width="90" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(OrderItemRow.OrderNumber)" HeaderText="Order #" Width="120" />
-        <GridColumn Field="@nameof(OrderItemRow.ScheduleName)" HeaderText="Schedule" Width="180" />
+        <GridColumn Type="ColumnType.CheckBox" Width="50" />
+        <GridColumn Field="@nameof(OrderItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.QtyNested)"      HeaderText="Nested"     Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.FileName)"       HeaderText="File Name"  Width="220" />
+        <GridColumn Field="@nameof(OrderItemRow.Description)"    HeaderText="Description" Width="220" />
+        <GridColumn Field="@nameof(OrderItemRow.Material)"       HeaderText="Material"   Width="110" />
+        <GridColumn Field="@nameof(OrderItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.OrderNumber)"    HeaderText="Order #"    Width="120" />
+        <GridColumn Field="@nameof(OrderItemRow.ScheduleName)"   HeaderText="Schedule"   Width="180" />
         <GridColumn Field="@nameof(OrderItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="@nameof(OrderItemRow.IsComplete)" HeaderText="Complete" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="@nameof(OrderItemRow.Notes)" HeaderText="Notes" Width="180" />
+        <GridColumn Field="@nameof(OrderItemRow.IsComplete)"     HeaderText="Complete"   Width="95"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(OrderItemRow.Notes)"          HeaderText="Notes"      Width="180" />
     </GridColumns>
 </SfGrid>
 
 @code {
+    private SfGrid<OrderItemRow>? _grid;
     private List<OrderItemRow> _items = new();
+    private List<NestingSelectionItem> _selectedForNesting = new();
+    private int _plantId;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
     {
+        var user    = HttpContextAccessor.HttpContext?.User;
+        var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
+        int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
+
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
-        var user = HttpContextAccessor.HttpContext?.User;
-        var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
-        int.TryParse(user?.FindFirst("PlantId")?.Value, out var pid);
-
         var query = db.OrderItems.AsQueryable();
-        if (!isAdmin && pid > 0)
-            query = query.Where(i => i.NestOrder.PlantId == pid);
+        if (!isAdmin && _plantId > 0)
+            query = query.Where(i => i.NestOrder.PlantId == _plantId);
 
         _items = await query
             .Select(i => new OrderItemRow
             {
+                Id               = i.Id,
+                PartId           = i.PartId,
+                RadanIdNumber    = i.RadanIdNumber,
                 OrderNumber      = i.NestOrder.ScheduleOrder.OrderNumber,
                 ScheduleName     = i.NestOrder.ScheduleOrder.Schedule.Name,
                 FileName         = i.Part.FileName,
@@ -61,24 +81,57 @@
                 QtyNested        = i.QtyNested,
                 IsInRadanProject = i.IsInRadanProject,
                 IsComplete       = i.IsComplete,
-                Notes            = i.Notes
+                Notes            = i.Notes,
             })
             .OrderBy(i => i.OrderNumber).ThenBy(i => i.FileName)
             .ToListAsync();
+
+        _selectedForNesting.Clear();
     }
 
-    private record OrderItemRow
+    private async Task ReloadAsync()
     {
-        public string? OrderNumber { get; init; }
-        public string? ScheduleName { get; init; }
-        public string? FileName { get; init; }
-        public string? Description { get; init; }
-        public string? Material { get; init; }
-        public decimal? Thickness { get; init; }
-        public int QtyRequired { get; init; }
-        public int QtyNested { get; init; }
-        public bool IsInRadanProject { get; init; }
-        public bool IsComplete { get; init; }
-        public string? Notes { get; init; }
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<OrderItemRow> args)
+    {
+        var row = args.Data;
+        if (_selectedForNesting.Any(x => x.ItemId == row.Id)) return;
+        _selectedForNesting.Add(new NestingSelectionItem(
+            ItemId:          row.Id,
+            PartId:          row.PartId,
+            FileName:        row.FileName,
+            QtyRequired:     row.QtyRequired,
+            Material:        row.Material,
+            Thickness:       row.Thickness ?? 0m,
+            GroupName:       row.OrderNumber,
+            RadanIdNumber:   row.RadanIdNumber,
+            IsInRadanProject: row.IsInRadanProject
+        ));
+    }
+
+    private void OnRowDeselected(RowDeselectEventArgs<OrderItemRow> args)
+    {
+        _selectedForNesting.RemoveAll(x => x.ItemId == args.Data.Id);
+    }
+
+    private class OrderItemRow
+    {
+        public int     Id               { get; set; }
+        public int     PartId           { get; set; }
+        public int?    RadanIdNumber    { get; set; }
+        public string? OrderNumber      { get; set; }
+        public string? ScheduleName     { get; set; }
+        public string? FileName         { get; set; }
+        public string? Description      { get; set; }
+        public string? Material         { get; set; }
+        public decimal? Thickness       { get; set; }
+        public int     QtyRequired      { get; set; }
+        public int     QtyNested        { get; set; }
+        public bool    IsInRadanProject { get; set; }
+        public bool    IsComplete       { get; set; }
+        public string? Notes            { get; set; }
     }
 }

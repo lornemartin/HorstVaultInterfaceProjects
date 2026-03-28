@@ -5,6 +5,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Components.Shared
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
 @using System.Security.Claims
@@ -13,43 +14,62 @@
 
 <h3>Batches</h3>
 
-<SfGrid TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v1"
+<NestingPanel ItemType="Batch"
+              PlantId="_plantId"
+              SelectedItems="_selectedForNesting"
+              OnCompleted="ReloadAsync" />
+
+<SfGrid @ref="_grid"
+        TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v2"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
         EnablePersistence="true" Height="600">
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
+    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
+    <GridEvents TValue="BatchItemRow"
+                RowSelected="OnRowSelected"
+                RowDeselected="OnRowDeselected" />
     <GridColumns>
-        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)" HeaderText="Req'd" Width="80" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(BatchItemRow.QtyNested)" HeaderText="Nested" Width="80" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(BatchItemRow.FileName)" HeaderText="File Name" Width="220" />
-        <GridColumn Field="@nameof(BatchItemRow.Description)" HeaderText="Description" Width="220" />
-        <GridColumn Field="@nameof(BatchItemRow.Material)" HeaderText="Material" Width="110" />
-        <GridColumn Field="@nameof(BatchItemRow.Thickness)" HeaderText="Thickness" Width="90" TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(BatchItemRow.BatchName)" HeaderText="Batch" Width="180" />
+        <GridColumn Type="ColumnType.CheckBox" Width="50" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyNested)"      HeaderText="Nested"     Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.FileName)"       HeaderText="File Name"  Width="220" />
+        <GridColumn Field="@nameof(BatchItemRow.Description)"    HeaderText="Description" Width="220" />
+        <GridColumn Field="@nameof(BatchItemRow.Material)"       HeaderText="Material"   Width="110" />
+        <GridColumn Field="@nameof(BatchItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.BatchName)"      HeaderText="Batch"      Width="180" />
         <GridColumn Field="@nameof(BatchItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="@nameof(BatchItemRow.IsComplete)" HeaderText="Complete" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="@nameof(BatchItemRow.Notes)" HeaderText="Notes" Width="180" />
+        <GridColumn Field="@nameof(BatchItemRow.IsComplete)"     HeaderText="Complete"   Width="95"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(BatchItemRow.Notes)"          HeaderText="Notes"      Width="180" />
     </GridColumns>
 </SfGrid>
 
 @code {
+    private SfGrid<BatchItemRow>? _grid;
     private List<BatchItemRow> _items = new();
+    private List<NestingSelectionItem> _selectedForNesting = new();
+    private int _plantId;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
     {
+        var user    = HttpContextAccessor.HttpContext?.User;
+        var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
+        int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
+
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
-        var user = HttpContextAccessor.HttpContext?.User;
-        var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
-        int.TryParse(user?.FindFirst("PlantId")?.Value, out var pid);
-
         var query = db.BatchItems.AsQueryable();
-        if (!isAdmin && pid > 0)
-            query = query.Where(i => i.NestBatch.PlantId == pid);
+        if (!isAdmin && _plantId > 0)
+            query = query.Where(i => i.NestBatch.PlantId == _plantId);
 
         _items = await query
             .Select(i => new BatchItemRow
             {
+                Id               = i.Id,
+                PartId           = i.PartId,
+                RadanIdNumber    = i.RadanIdNumber,
                 BatchName        = i.NestBatch.Batch.Name,
                 FileName         = i.Part.FileName,
                 Description      = i.Part.Description,
@@ -59,23 +79,56 @@
                 QtyNested        = i.QtyNested,
                 IsInRadanProject = i.IsInRadanProject,
                 IsComplete       = i.IsComplete,
-                Notes            = i.Notes
+                Notes            = i.Notes,
             })
             .OrderBy(i => i.BatchName).ThenBy(i => i.FileName)
             .ToListAsync();
+
+        _selectedForNesting.Clear();
     }
 
-    private record BatchItemRow
+    private async Task ReloadAsync()
     {
-        public string? BatchName { get; init; }
-        public string? FileName { get; init; }
-        public string? Description { get; init; }
-        public string? Material { get; init; }
-        public decimal? Thickness { get; init; }
-        public int QtyRequired { get; init; }
-        public int QtyNested { get; init; }
-        public bool IsInRadanProject { get; init; }
-        public bool IsComplete { get; init; }
-        public string? Notes { get; init; }
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<BatchItemRow> args)
+    {
+        var row = args.Data;
+        if (_selectedForNesting.Any(x => x.ItemId == row.Id)) return;
+        _selectedForNesting.Add(new NestingSelectionItem(
+            ItemId:          row.Id,
+            PartId:          row.PartId,
+            FileName:        row.FileName,
+            QtyRequired:     row.QtyRequired,
+            Material:        row.Material,
+            Thickness:       row.Thickness ?? 0m,
+            GroupName:       row.BatchName,
+            RadanIdNumber:   row.RadanIdNumber,
+            IsInRadanProject: row.IsInRadanProject
+        ));
+    }
+
+    private void OnRowDeselected(RowDeselectEventArgs<BatchItemRow> args)
+    {
+        _selectedForNesting.RemoveAll(x => x.ItemId == args.Data.Id);
+    }
+
+    private class BatchItemRow
+    {
+        public int     Id               { get; set; }
+        public int     PartId           { get; set; }
+        public int?    RadanIdNumber    { get; set; }
+        public string? BatchName        { get; set; }
+        public string? FileName         { get; set; }
+        public string? Description      { get; set; }
+        public string? Material         { get; set; }
+        public decimal? Thickness       { get; set; }
+        public int     QtyRequired      { get; set; }
+        public int     QtyNested        { get; set; }
+        public bool    IsInRadanProject { get; set; }
+        public bool    IsComplete       { get; set; }
+        public string? Notes            { get; set; }
     }
 }
