@@ -3,6 +3,7 @@ using System;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HorstMFG.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260328153401_DropRadanIdAssignment_AddRadanProjectState")]
+    partial class DropRadanIdAssignment_AddRadanProjectState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -304,40 +307,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("nested_parts", (string)null);
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.NestingStation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("BridgeLastSeen")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("BridgeVersion")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PlantId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ProjectName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProjectPath")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlantId");
-
-                    b.ToTable("nesting_stations", (string)null);
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.OrderItem", b =>
                 {
                     b.Property<int>("Id")
@@ -524,6 +493,37 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("plants", (string)null);
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanProjectState", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("BridgeLastSeen")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BridgeVersion")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PlantId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProjectName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProjectPath")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlantId")
+                        .IsUnique();
+
+                    b.ToTable("radan_project_states", (string)null);
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
@@ -779,17 +779,6 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("OrderItem");
                 });
 
-            modelBuilder.Entity("HorstMFG.Core.Entities.NestingStation", b =>
-                {
-                    b.HasOne("HorstMFG.Core.Entities.Plant", "Plant")
-                        .WithMany("NestingStations")
-                        .HasForeignKey("PlantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Plant");
-                });
-
             modelBuilder.Entity("HorstMFG.Core.Entities.OrderItem", b =>
                 {
                     b.HasOne("HorstMFG.Core.Entities.NestOrder", "NestOrder")
@@ -822,6 +811,17 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("BatchProduct");
 
                     b.Navigation("ScheduleOrder");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanProjectState", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.Plant", "Plant")
+                        .WithOne("RadanProjectState")
+                        .HasForeignKey("HorstMFG.Core.Entities.RadanProjectState", "PlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plant");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
@@ -918,9 +918,9 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
                     b.Navigation("NestOrders");
 
-                    b.Navigation("NestingStations");
-
                     b.Navigation("Nests");
+
+                    b.Navigation("RadanProjectState");
 
                     b.Navigation("Schedules");
 

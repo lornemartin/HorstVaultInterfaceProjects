@@ -22,7 +22,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<BatchItem> BatchItems => Set<BatchItem>();
     public DbSet<Nest> Nests => Set<Nest>();
     public DbSet<NestedPart> NestedParts => Set<NestedPart>();
-    public DbSet<RadanIdAssignment> RadanIdAssignments => Set<RadanIdAssignment>();
+    public DbSet<NestingStation> NestingStations => Set<NestingStation>();
     public DbSet<SystemConfiguration> SystemConfigurations => Set<SystemConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -190,15 +190,12 @@ public class ApplicationDbContext : DbContext
             e.HasOne(np => np.BatchItem).WithMany(bi => bi.NestedParts).HasForeignKey(np => np.BatchItemId).IsRequired(false);
         });
 
-        // RadanIdAssignment
-        modelBuilder.Entity<RadanIdAssignment>(e =>
+        // NestingStation
+        modelBuilder.Entity<NestingStation>(e =>
         {
-            e.ToTable("radan_id_assignments");
-            e.HasKey(r => r.Id);
-            e.HasOne(r => r.OrderItem).WithOne(oi => oi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.OrderItemId).IsRequired(false);
-            e.HasOne(r => r.BatchItem).WithOne(bi => bi.RadanIdAssignment).HasForeignKey<RadanIdAssignment>(r => r.BatchItemId).IsRequired(false);
-            e.HasOne(r => r.Plant).WithMany(p => p.RadanIdAssignments).HasForeignKey(r => r.PlantId);
-            e.HasIndex(r => new { r.RadanIdNumber, r.PlantId }).IsUnique();
+            e.ToTable("nesting_stations");
+            e.HasKey(n => n.Id);
+            e.HasOne(n => n.Plant).WithMany(p => p.NestingStations).HasForeignKey(n => n.PlantId);
         });
 
         // SystemConfiguration

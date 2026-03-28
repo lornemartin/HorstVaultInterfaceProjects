@@ -15,5 +15,4 @@ public class BatchItem
     public NestBatch NestBatch { get; set; } = null!;
     public Part Part { get; set; } = null!;
     public ICollection<NestedPart> NestedParts { get; set; } = new List<NestedPart>();
-    public RadanIdAssignment? RadanIdAssignment { get; set; }
 }
