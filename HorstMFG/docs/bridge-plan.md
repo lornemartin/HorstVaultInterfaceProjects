@@ -1,6 +1,7 @@
 # HorstMFG Nesting Bridge — Implementation Plan
 
 ## What it is
+
 A .NET Framework 4.8 Worker Service that runs on each Radan workstation as a Windows
 Service in production, or as a console app for debugging (`--console` launch argument).
 It acts as the intermediary between HorstMFG and the nesting software (currently Radan),
@@ -93,18 +94,22 @@ one config change, nothing else.
 ### SignalR hub — `BridgeHub.cs`
 
 **Bridge → HorstMFG (hub methods HorstMFG exposes):**
+
 - `Register(stationId)` — bridge calls on connect
 - `Progress(stationId, commandId, message, pctComplete)` — incremental progress
 - `CommandResult(stationId, commandId, success, payload)` — final result
 - `AutoSync(stationId, payload)` — bridge pushes file-watcher-triggered sync
 
 **HorstMFG → bridge (hub methods bridge exposes):**
+
 - `ExecuteCommand(commandId, commandType, payload)`
 
 ### New API key middleware
+
 Validates `ApiKey` header on hub connection.
 
 ### NestingStation fields updated by bridge
+
 - `BridgeLastSeen`, `BridgeVersion` — on Register
 - `ProjectName`, `ProjectPath` — on Finalize result
 
@@ -113,6 +118,7 @@ Validates `ApiKey` header on hub connection.
 ## Commands
 
 ### `SendToNesting`
+
 **Payload:** `[{ ItemId, ItemType (Order/Batch), FileName, QtyRequired, Material,
 Thickness, OrderNumber }]`
 
@@ -130,6 +136,7 @@ Thickness, OrderNumber }]`
 - HorstMFG sets `IsInRadanProject = true`, stores `RadanIdNumber`; flags missing-sym parts visually
 
 ### `RetrieveFromVault`
+
 **Payload:** `[{ ItemId, FileName }]`
 
 1. For each part: download `.ipt` from Vault via `IVaultService`
@@ -139,6 +146,7 @@ Thickness, OrderNumber }]`
 5. HorstMFG clears the missing-sym flag; user can then re-run SendToNesting for those parts
 
 ### `RetrieveFromNesting`
+
 **Payload:** `[{ ItemId, RadanIdNumber }]` — user selection
 
 1. Run Sync first to capture latest nest data
@@ -148,25 +156,28 @@ Thickness, OrderNumber }]`
    removes associated `NestedParts`
 
 ### `Sync`
+
 **No payload** — also triggered automatically by file watcher
 
 1. Read all `<Part>` entries: `{ ID, Made }`
 2. Read `<UsedInNests>` per part: `{ NestId, Made }`
 3. Read nest `.drg` file paths from `NestFolder`
 4. Returns:
-```json
-{
-  "Parts": [{ "RadanIdNumber": 72861, "QtyNested": 5 }],
-  "Nests": [{
+   
+   ```json
+   {
+   "Parts": [{ "RadanIdNumber": 72861, "QtyNested": 5 }],
+   "Nests": [{
     "NestName": "13",
     "NestPath": "C:\\...\\nests\\13.drg",
     "Parts": [{ "RadanIdNumber": 72861, "Qty": 5 }]
-  }]
-}
-```
+   }]
+   }
+   ```
 5. HorstMFG updates `QtyNested` per item, upserts `Nest` + `NestedPart` records
 
 ### `UpdateThumbnail`
+
 **Payload:** `[{ PartId, FileName }]` — user-triggered, selection or individual part
 
 1. For each part: locate `{FileName}.sym` on the network share
@@ -176,11 +187,13 @@ Thickness, OrderNumber }]`
 5. HorstMFG updates `Part.Thumbnail`
 
 **Future auto-population opportunities (deferred):**
+
 - After `RetrieveFromVault` completes — `.sym` was just created, thumbnail can be extracted immediately
 - When a batch or schedule is released to production — bridge could be asked to extract
   thumbnails for all newly released parts that have a `.sym` on the share
 
 ### `Finalize`
+
 **No payload**
 
 1. Full Sync
@@ -256,3 +269,9 @@ public interface IVaultService
 - **Finalize** — confirmation prompt; UI disabled until bridge responds
 - **Update Thumbnail** — per-part or batch, user-triggered
 - Progress panel showing live command status
+
+## To Generate API keys
+
+* ` -join ((1..32) | ForEach-Object { '{0:X2}' -f (Get-Random -Max 256) })`
+
+

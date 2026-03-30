@@ -136,13 +136,12 @@
         await using var db = await DbContextFactory.CreateDbContextAsync();
         var raw = await db.NestingStations
             .Where(s => s.PlantId == PlantId)
-            .Select(s => new { s.Id, s.Name, s.BridgeLastSeen })
+            .Select(s => new { s.Id, s.Name })
             .ToListAsync();
 
         _stations = raw.Select(s =>
         {
-            var online = s.BridgeLastSeen.HasValue &&
-                         (DateTime.UtcNow - s.BridgeLastSeen.Value).TotalSeconds < 90;
+            var online = BridgeHub.IsStationOnline(s.Id);
             return new StationOption(s.Id, $"{s.Name}  {(online ? "●" : "○")}");
         }).ToList();
     }
@@ -153,6 +152,7 @@
     {
         _stationId   = id;
         _projectPath = "";
+        await LoadStationsAsync();   // refresh ●/○ indicators
         if (id.HasValue)
         {
             await using var db = await DbContextFactory.CreateDbContextAsync();

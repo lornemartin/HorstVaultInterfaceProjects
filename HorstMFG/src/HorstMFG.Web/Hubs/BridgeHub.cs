@@ -21,6 +21,8 @@ public class BridgeHub : Hub
     private static readonly ConcurrentDictionary<string, int> _connToStation = new();
     // stationId → connectionId  (latest connection wins)
     private static readonly ConcurrentDictionary<int, string> _stationToConn = new();
+    // connections that passed API key validation
+    private static readonly ConcurrentDictionary<string, bool> _authorized = new();
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly BridgeNotificationService _notifications;
@@ -38,6 +40,31 @@ public class BridgeHub : Hub
         _log            = log;
     }
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    public override Task OnConnectedAsync()
+    {
+        var httpCtx = Context.GetHttpContext();
+        // Accept key from either custom header or SignalR's standard access_token query param
+        var apiKey = httpCtx?.Request.Headers["X-Api-Key"].FirstOrDefault()
+                  ?? httpCtx?.Request.Query["access_token"].FirstOrDefault()
+                  ?? "";
+
+        if (string.IsNullOrEmpty(_expectedApiKey) ||
+            string.Equals(apiKey, _expectedApiKey, StringComparison.Ordinal))
+        {
+            _authorized[Context.ConnectionId] = true;
+        }
+        else
+        {
+            _log.LogWarning("Bridge connection rejected — invalid API key (connId={ConnId})",
+                            Context.ConnectionId);
+            Context.Abort();
+        }
+
+        return base.OnConnectedAsync();
+    }
+
     // ── Bridge → Server ───────────────────────────────────────────────────────
 
     /// <summary>Called by the bridge on connect to identify itself.</summary>
@@ -45,15 +72,9 @@ public class BridgeHub : Hub
     {
         var connId = Context.ConnectionId;
 
-        // Validate API key passed in the query string or header
-        var httpCtx = Context.GetHttpContext();
-        var apiKey  = httpCtx?.Request.Headers["X-Api-Key"].ToString()
-                   ?? httpCtx?.Request.Query["access_token"].ToString()
-                   ?? "";
-
-        if (!string.Equals(apiKey, _expectedApiKey, StringComparison.Ordinal))
+        if (!_authorized.ContainsKey(connId))
         {
-            _log.LogWarning("Bridge registration rejected — invalid API key from {ConnId}", connId);
+            _log.LogWarning("Register called on unauthorized connection {ConnId}", connId);
             Context.Abort();
             return;
         }
@@ -130,11 +151,11 @@ public class BridgeHub : Hub
         return true;
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
-
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_connToStation.TryRemove(Context.ConnectionId, out var stationId))
+        var connId = Context.ConnectionId;
+        _authorized.TryRemove(connId, out _);
+        if (_connToStation.TryRemove(connId, out var stationId))
         {
             _stationToConn.TryRemove(stationId, out _);
             _log.LogInformation("Bridge station {StationId} disconnected", stationId);
