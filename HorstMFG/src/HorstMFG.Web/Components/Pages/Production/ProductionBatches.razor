@@ -12,6 +12,10 @@
 
 <PageTitle>Batches - HorstMFG</PageTitle>
 
+<style>
+    .row-in-project td { font-weight: 600; background-color: #e8f4e8 !important; }
+</style>
+
 <h3>Batches</h3>
 
 <NestingPanel ItemType="Batch"
@@ -28,7 +32,8 @@
     <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
     <GridEvents TValue="BatchItemRow"
                 RowSelected="OnRowSelected"
-                RowDeselected="OnRowDeselected" />
+                RowDeselected="OnRowDeselected"
+                RowDataBound="OnRowDataBound" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
         <GridColumn Field="@nameof(BatchItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
@@ -38,7 +43,6 @@
         <GridColumn Field="@nameof(BatchItemRow.Material)"       HeaderText="Material"   Width="110" />
         <GridColumn Field="@nameof(BatchItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.BatchName)"      HeaderText="Batch"      Width="180" />
-        <GridColumn Field="@nameof(BatchItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(BatchItemRow.IsComplete)"     HeaderText="Complete"   Width="95"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(BatchItemRow.Notes)"          HeaderText="Notes"      Width="180" />
     </GridColumns>
@@ -113,6 +117,12 @@
     private void OnRowDeselected(RowDeselectEventArgs<BatchItemRow> args)
     {
         _selectedForNesting.RemoveAll(x => x.ItemId == args.Data.Id);
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<BatchItemRow> args)
+    {
+        if (args.Data.IsInRadanProject)
+            args.Row.AddClass(new[] { "row-in-project" });
     }
 
     private class BatchItemRow

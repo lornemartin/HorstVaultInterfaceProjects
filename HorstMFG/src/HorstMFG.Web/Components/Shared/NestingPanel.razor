@@ -345,12 +345,12 @@
             if (ItemType == "Order")
             {
                 var item = await db.OrderItems.FindAsync(r.ItemId);
-                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; }
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; item.NestingStationId = _stationId; }
             }
             else
             {
                 var item = await db.BatchItems.FindAsync(r.ItemId);
-                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; }
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; item.NestingStationId = _stationId; }
             }
             sent++;
             if (r.MissingSymFile) warned++;
@@ -375,12 +375,12 @@
             if (ItemType == "Order")
             {
                 var item = await db.OrderItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; }
+                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
             }
             else
             {
                 var item = await db.BatchItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; }
+                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
             }
         }
         await db.SaveChangesAsync();
@@ -405,21 +405,21 @@
 
         await ApplySyncPayloadAsync(result.Sync);
 
-        // Clear all items that were in the project (new project is empty)
+        // Clear all items that were in this station's project (new project is empty)
         await using var db = await DbContextFactory.CreateDbContextAsync();
         if (ItemType == "Order")
         {
             var items = await db.OrderItems
-                .Where(i => i.IsInRadanProject && i.NestOrder.PlantId == PlantId)
+                .Where(i => i.NestingStationId == _stationId)
                 .ToListAsync();
-            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; }
+            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; i.NestingStationId = null; }
         }
         else
         {
             var items = await db.BatchItems
-                .Where(i => i.IsInRadanProject && i.NestBatch.PlantId == PlantId)
+                .Where(i => i.NestingStationId == _stationId)
                 .ToListAsync();
-            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; }
+            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; i.NestingStationId = null; }
         }
 
         // Update station project info
@@ -470,13 +470,13 @@
 
     private async Task ApplySyncPayloadAsync(SyncPayloadDto sync)
     {
-        if (sync.Parts.Count == 0) return;
+        if (sync.Parts.Count == 0 || _stationId == null) return;
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
         if (ItemType == "Order")
         {
             var items = await db.OrderItems
-                .Where(i => i.RadanIdNumber != null && i.NestOrder.PlantId == PlantId)
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
             foreach (var p in sync.Parts)
             {
@@ -487,7 +487,7 @@
         else
         {
             var items = await db.BatchItems
-                .Where(i => i.RadanIdNumber != null && i.NestBatch.PlantId == PlantId)
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
             foreach (var p in sync.Parts)
             {

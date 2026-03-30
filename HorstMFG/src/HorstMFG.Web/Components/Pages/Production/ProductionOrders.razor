@@ -12,6 +12,10 @@
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
+<style>
+    .row-in-project td { font-weight: 600; background-color: #e8f4e8 !important; }
+</style>
+
 <h3>Orders</h3>
 
 <NestingPanel ItemType="Order"
@@ -28,7 +32,8 @@
     <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
     <GridEvents TValue="OrderItemRow"
                 RowSelected="OnRowSelected"
-                RowDeselected="OnRowDeselected" />
+                RowDeselected="OnRowDeselected"
+                RowDataBound="OnRowDataBound" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
         <GridColumn Field="@nameof(OrderItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
@@ -39,7 +44,6 @@
         <GridColumn Field="@nameof(OrderItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(OrderItemRow.OrderNumber)"    HeaderText="Order #"    Width="120" />
         <GridColumn Field="@nameof(OrderItemRow.ScheduleName)"   HeaderText="Schedule"   Width="180" />
-        <GridColumn Field="@nameof(OrderItemRow.IsInRadanProject)" HeaderText="In Project" Width="95" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(OrderItemRow.IsComplete)"     HeaderText="Complete"   Width="95"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
         <GridColumn Field="@nameof(OrderItemRow.Notes)"          HeaderText="Notes"      Width="180" />
     </GridColumns>
@@ -115,6 +119,12 @@
     private void OnRowDeselected(RowDeselectEventArgs<OrderItemRow> args)
     {
         _selectedForNesting.RemoveAll(x => x.ItemId == args.Data.Id);
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<OrderItemRow> args)
+    {
+        if (args.Data.IsInRadanProject)
+            args.Row.AddClass(new[] { "row-in-project" });
     }
 
     private class OrderItemRow

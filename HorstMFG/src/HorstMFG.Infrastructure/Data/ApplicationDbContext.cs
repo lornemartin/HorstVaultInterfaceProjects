@@ -158,6 +158,7 @@ public class ApplicationDbContext : DbContext
             e.Property(i => i.Notes).HasMaxLength(1000);
             e.HasOne(i => i.NestOrder).WithMany(o => o.Items).HasForeignKey(i => i.NestOrderId);
             e.HasOne(i => i.Part).WithMany(p => p.OrderItems).HasForeignKey(i => i.PartId);
+            e.HasOne(i => i.NestingStation).WithMany().HasForeignKey(i => i.NestingStationId).IsRequired(false);
         });
 
         // BatchItem
@@ -168,6 +169,7 @@ public class ApplicationDbContext : DbContext
             e.Property(i => i.Notes).HasMaxLength(1000);
             e.HasOne(i => i.NestBatch).WithMany(nb => nb.Items).HasForeignKey(i => i.NestBatchId);
             e.HasOne(i => i.Part).WithMany().HasForeignKey(i => i.PartId);
+            e.HasOne(i => i.NestingStation).WithMany().HasForeignKey(i => i.NestingStationId).IsRequired(false);
         });
 
         // Nest
