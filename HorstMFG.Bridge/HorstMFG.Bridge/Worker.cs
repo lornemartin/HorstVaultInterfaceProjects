@@ -1,5 +1,6 @@
 using HorstMFG.Bridge.Handlers;
 using HorstMFG.Bridge.Nesting;
+using HorstMFG.Bridge.Vault;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ namespace HorstMFG.Bridge;
 public class Worker : BackgroundService
 {
     private readonly BridgeConfig _config;
+    private readonly IVaultService _vault;
     private readonly SendToNestingHandler _sendToNesting;
     private readonly RetrieveFromNestingHandler _retrieveFromNesting;
     private readonly RetrieveFromVaultHandler _retrieveFromVault;
@@ -27,6 +29,7 @@ public class Worker : BackgroundService
     private string? _activeProjectPath;
 
     public Worker(IOptions<BridgeConfig> config,
+                  IVaultService vault,
                   SendToNestingHandler sendToNesting,
                   RetrieveFromNestingHandler retrieveFromNesting,
                   RetrieveFromVaultHandler retrieveFromVault,
@@ -37,6 +40,7 @@ public class Worker : BackgroundService
                   ILogger<Worker> log)
     {
         _config              = config.Value;
+        _vault               = vault;
         _sendToNesting       = sendToNesting;
         _retrieveFromNesting = retrieveFromNesting;
         _retrieveFromVault   = retrieveFromVault;
@@ -49,6 +53,9 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Connect to Vault once at startup (VaultService will reconnect on demand if needed)
+        await Task.Run(() => _vault.Connect(), stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try

@@ -115,6 +115,16 @@ public class BridgeHub : Hub
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Called by the FileWatcher when the RPD file changes on disk.
+    /// Treated as a spontaneous Sync result so the UI updates automatically.
+    /// </summary>
+    public Task AutoSync(int stationId, string syncPayloadJson)
+    {
+        _notifications.OnAutoSync(stationId, syncPayloadJson);
+        return Task.CompletedTask;
+    }
+
     // ── Server → Bridge (called via IHubContext from Blazor pages) ────────────
 
     /// <summary>

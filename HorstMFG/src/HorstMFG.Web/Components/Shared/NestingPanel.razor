@@ -118,9 +118,10 @@
     {
         if (firstRender && !_eventsSubscribed)
         {
-            _eventsSubscribed             = true;
-            BridgeEvents.ProgressReceived += OnProgress;
-            BridgeEvents.CommandCompleted += OnCommandCompleted;
+            _eventsSubscribed              = true;
+            BridgeEvents.ProgressReceived  += OnProgress;
+            BridgeEvents.CommandCompleted  += OnCommandCompleted;
+            BridgeEvents.AutoSyncReceived  += OnAutoSync;
         }
         return Task.CompletedTask;
     }
@@ -129,6 +130,7 @@
     {
         BridgeEvents.ProgressReceived -= OnProgress;
         BridgeEvents.CommandCompleted -= OnCommandCompleted;
+        BridgeEvents.AutoSyncReceived -= OnAutoSync;
     }
 
     private async Task LoadStationsAsync()
@@ -311,6 +313,27 @@
             try   { await ProcessResultAsync(payload); }
             catch (Exception ex) { Log($"Error processing result: {ex.Message}", "text-danger"); }
 
+            StateHasChanged();
+            await OnCompleted.InvokeAsync();
+        });
+    }
+
+    private void OnAutoSync(int stationId, string syncPayloadJson)
+    {
+        if (stationId != _stationId) return;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                var sync = JsonSerializer.Deserialize<SyncPayloadDto>(syncPayloadJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (sync != null)
+                {
+                    await ApplySyncPayloadAsync(sync);
+                    Log("Auto-synced from file change.");
+                }
+            }
+            catch (Exception ex) { Log($"Auto-sync error: {ex.Message}", "text-danger"); }
             StateHasChanged();
             await OnCompleted.InvokeAsync();
         });
