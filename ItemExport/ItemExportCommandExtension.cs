@@ -35,7 +35,7 @@ using System.Collections;
 [assembly: Autodesk.Connectivity.Extensibility.Framework.ExtensionId("E7E8E0D2-EEBE-44A8-98B5-0D487A087FA4")]                                                                   
 
 // This number gets incremented for each Vault release.
-[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("18.0")]
+[assembly: Autodesk.Connectivity.Extensibility.Framework.ApiVersion("19.0")]
 
 
 namespace ItemExport
@@ -1159,6 +1159,11 @@ namespace ItemExport
 
             settings.LocalPath = new VDF.Currency.FolderPathAbsolute(folderPath);
             connection.FileManager.AcquireFiles(settings);
+        }
+
+        public IEnumerable<DockPanel> DockPanels()
+        {
+            throw new NotImplementedException();
         }
     }
 

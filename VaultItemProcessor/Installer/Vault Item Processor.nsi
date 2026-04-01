@@ -4,13 +4,13 @@
 #              by Vlasis K. Barkas aka Red Wine red_wine@freemail.gr Sep 2006               
 ############################################################################################
 
-!define APP_NAME "Vault Item Processor 2025.0"
+!define APP_NAME "Vault Item Processor 2026.0"
 !define COMP_NAME "Horst Welding"
-!define VERSION "2025.00.00.00"
-!define COPYRIGHT "Lorne Martin  © 2025"
+!define VERSION "2026.00.00.00"
+!define COPYRIGHT "Lorne Martin  © 2026"
 !define DESCRIPTION ""
-!define INSTALLER_NAME "M:\Installers\2025\Custom Code 2025 Deployment Files\Vault Item Processor\Vault Item Processor Setup 2025.0.exe"
-!define MAIN_APP_EXE "Vault Item Processor 2025.0.exe"
+!define INSTALLER_NAME "M:\Installers\2026\Custom Code 2026 Deployment Files\Vault Item Processor\Vault Item Processor Setup 2026.0.exe"
+!define MAIN_APP_EXE "Vault Item Processor 2026.0.exe"
 !define INSTALL_TYPE "SetShellVarContext all"
 !define REG_ROOT "HKLM"
 !define REG_APP_PATH "Software\Microsoft\Windows\CurrentVersion\App Paths\${MAIN_APP_EXE}"
@@ -36,7 +36,7 @@ OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
-InstallDir "$PROGRAMFILES\Vault Item Processor 2025.0"
+InstallDir "$PROGRAMFILES\Vault Item Processor 2026.0"
 
 ######################################################################
 
@@ -53,7 +53,7 @@ InstallDir "$PROGRAMFILES\Vault Item Processor 2025.0"
 
 !ifdef REG_START_MENU
 !define MUI_STARTMENUPAGE_NODISABLE
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "Vault Item Processor 2025.0"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "Vault Item Processor 2026.0"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "${REG_ROOT}"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "${UNINSTALL_PATH}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${REG_START_MENU}"
@@ -107,13 +107,13 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 
-StrCpy $INSTDIR "$PROGRAMFILES\Vault Item Processor 2025.0"
+StrCpy $INSTDIR "$PROGRAMFILES\Vault Item Processor 2026.0"
 SetOutPath "$INSTDIR"
 
 File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultItemProcessor\VaultItemProcessor\bin\x64\Release\*.*"
-File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2025 SDK Binaries\AdskLicensingSDK_7.dll"
+File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2026 SDK Binaries\AdskLicensingSDK_9.dll"
 
-SetOutPath "$APPDATA\Autodesk\Vault 2025\Extensions\ItemExport"
+SetOutPath "$APPDATA\Autodesk\Vault 2026\Extensions\ItemExport"
 File "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\ItemExport\bin\x64\Release\*.*"
 
 SectionEnd
@@ -143,13 +143,13 @@ CreateShortCut "$SMPROGRAMS\$SM_Folder\${APP_NAME} Website.lnk" "$INSTDIR\${APP_
 !endif
 
 !ifndef REG_START_MENU
-CreateDirectory "$SMPROGRAMS\Vault Item Processor 2025.0"
-CreateShortCut "$SMPROGRAMS\Vault Item Processor 2025.0\${APP_NAME}.lnk" "$INSTDIR\${MAIN_APP_EXE}"
-CreateShortCut "$SMPROGRAMS\Vault Item Processor 2025.0\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+CreateDirectory "$SMPROGRAMS\Vault Item Processor 2026.0"
+CreateShortCut "$SMPROGRAMS\Vault Item Processor 2026.0\${APP_NAME}.lnk" "$INSTDIR\${MAIN_APP_EXE}"
+CreateShortCut "$SMPROGRAMS\Vault Item Processor 2026.0\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
 
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
-CreateShortCut "$SMPROGRAMS\Vault Item Processor 2025.0\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
+CreateShortCut "$SMPROGRAMS\Vault Item Processor 2026.0\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
 !endif
 !endif
 
@@ -198,12 +198,12 @@ RmDir "$SMPROGRAMS\$SM_Folder"
 !endif
 
 !ifndef REG_START_MENU
-Delete "$SMPROGRAMS\Vault Item Processor 2025.0\${APP_NAME}.lnk"
-Delete "$SMPROGRAMS\Vault Item Processor 2025.0\Uninstall ${APP_NAME}.lnk"
+Delete "$SMPROGRAMS\Vault Item Processor 2026.0\${APP_NAME}.lnk"
+Delete "$SMPROGRAMS\Vault Item Processor 2026.0\Uninstall ${APP_NAME}.lnk"
 !ifdef WEB_SITE
-Delete "$SMPROGRAMS\Vault Item Processor 2025\${APP_NAME} Website.lnk"
+Delete "$SMPROGRAMS\Vault Item Processor 2026\${APP_NAME} Website.lnk"
 !endif
-RmDir "$SMPROGRAMS\Vault Item Processor 2025.0"
+RmDir "$SMPROGRAMS\Vault Item Processor 2026.0"
 !endif
 
 DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"

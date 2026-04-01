@@ -31,12 +31,29 @@ namespace RadanInterface2
 
         private static Radraft.Interop.Application rApp;
 
+        [DllImport("ole32.dll")]
+        private static extern int CLSIDFromProgIDEx(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpszProgID,
+            out Guid lpclsid);
+
+        [DllImport("oleaut32.dll")]
+        private static extern int GetActiveObject(
+            ref Guid rclsid,
+            IntPtr pvReserved,
+            [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
+
+        private static object GetActiveComObject(string progId)
+        {
+            CLSIDFromProgIDEx(progId, out Guid clsid);
+            GetActiveObject(ref clsid, IntPtr.Zero, out object obj);
+            return obj;
+        }
+
         public Boolean Initialize()
         {
             try
             {
-                Object obj = null;
-                obj = Marshal.GetActiveObject("Radraft.Application");
+                object obj = GetActiveComObject("Radraft.Application");
                 rApp = (Radraft.Interop.Application)obj;
                 return true;
             }
