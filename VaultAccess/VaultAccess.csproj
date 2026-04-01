@@ -290,8 +290,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Debug\AdskLicensingSDK_6.dll"
-copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2023 SDK Binaries\AdskLicensingSDK_6.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Release\AdskLicensingSDK_6.dll"
+    <PostBuildEvent>copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2026 SDK Binaries\AdskLicensingSDK_9.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Debug\AdskLicensingSDK_9.dll"
+copy "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Vault 2026 SDK Binaries\AdskLicensingSDK_9.dll" "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\bin\x64\Release\AdskLicensingSDK_9.dll"
 </PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\VaultItemProcessor\packages\Serilog.4.3.1\build\Serilog.targets" Condition="Exists('..\VaultItemProcessor\packages\Serilog.4.3.1\build\Serilog.targets')" />
