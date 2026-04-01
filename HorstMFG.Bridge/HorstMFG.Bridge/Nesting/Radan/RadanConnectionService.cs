@@ -32,26 +32,21 @@ public class RadanConnectionService : BackgroundService
         {
             try
             {
+                // Always call Initialize() — Marshal.GetActiveObject queries the Windows ROT,
+                // so it picks up a freshly restarted Radan automatically. IsActive() only checks
+                // for a non-null reference and cannot detect a stale COM object after restart.
                 var ri = new RadanInterface();
-                if (!ri.IsActive())
+                bool ok = ri.Initialize();
+
+                if (ok && !_wasConnected)
                 {
-                    bool ok = ri.Initialize();
-                    if (ok)
-                    {
-                        _log.LogInformation("Connected to Radan");
-                        _wasConnected = true;
-                    }
-                    else if (_wasConnected)
-                    {
-                        _log.LogWarning("Radan disconnected — will retry");
-                        _wasConnected = false;
-                    }
-                }
-                else if (!_wasConnected)
-                {
-                    // Was already active when we first checked (e.g. reconnect after app restart)
                     _log.LogInformation("Connected to Radan");
                     _wasConnected = true;
+                }
+                else if (!ok && _wasConnected)
+                {
+                    _log.LogWarning("Radan disconnected — will retry every 5s");
+                    _wasConnected = false;
                 }
             }
             catch (Exception ex)
