@@ -38,6 +38,7 @@
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
         <GridColumn Field="@nameof(OrderItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(OrderItemRow.QtyNested)"      HeaderText="Nested"     Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(OrderItemRow.Remaining)"      HeaderText="Remaining"  Width="95"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(OrderItemRow.FileName)"       HeaderText="File Name"  Width="220" />
         <GridColumn Field="@nameof(OrderItemRow.Description)"    HeaderText="Description" Width="220" />
         <GridColumn Field="@nameof(OrderItemRow.Material)"       HeaderText="Material"   Width="110" />
@@ -145,6 +146,7 @@
         public decimal? Thickness       { get; set; }
         public int     QtyRequired      { get; set; }
         public int     QtyNested        { get; set; }
+        public int     Remaining        => QtyRequired - QtyNested;
         public bool    IsInRadanProject { get; set; }
         public bool    HasBends         { get; set; }
         public bool    IsComplete       { get; set; }
