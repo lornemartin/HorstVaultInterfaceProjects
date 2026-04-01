@@ -69,6 +69,7 @@ public class SendToNestingHandler
         }
 
         _nesting.SaveProject(project, projectPath);
+        _nesting.NotifyProjectChanged(projectPath);
         return results;
     }
 }

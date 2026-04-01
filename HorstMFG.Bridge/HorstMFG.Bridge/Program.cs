@@ -45,7 +45,10 @@ try
             // Nesting software implementation (swap here to support future CAM software)
             var software = ctx.Configuration["Bridge:NestingSoftware"] ?? "Radan";
             if (software.Equals("Radan", StringComparison.OrdinalIgnoreCase))
+            {
                 services.AddSingleton<INestingProjectService, RadanProjectService>();
+                services.AddHostedService<RadanConnectionService>();
+            }
             else
                 throw new NotSupportedException($"Unsupported nesting software: {software}");
 

@@ -44,9 +44,9 @@ public class RetrieveFromVaultHandler
                 var iptPath = _vault.DownloadPart(item.FileName, tempDir);
 
                 // Unfold via RadanInterface2 and save as .sym to network share
-                var ri       = new RadanInterface();
-                if (!ri.Initialize())
-                    throw new InvalidOperationException("Radan is not running or could not be reached.");
+                var ri = new RadanInterface();
+                if (!ri.IsActive())
+                    throw new InvalidOperationException("Radan is not running. The bridge will reconnect automatically when Radan starts.");
 
                 var errMsg     = "";
                 var partName   = "";

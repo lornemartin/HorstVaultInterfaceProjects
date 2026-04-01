@@ -40,6 +40,25 @@ public class RadanProjectService : INestingProjectService
         return RpdService.BuildSyncPayload(prj, nestFolder);
     }
 
+    public void NotifyProjectChanged(string path)
+    {
+        try
+        {
+            var ri    = new RadanInterface();
+            var errMsg = "";
+
+            // Save the open nest first so quantities update immediately
+            ri.SaveNest(ref errMsg);
+
+            // Reload the project in Radan so new/removed parts become visible
+            ri.LoadProject(path);
+        }
+        catch
+        {
+            // Radan may not be running — not fatal, the RPD file is already saved correctly
+        }
+    }
+
     public string CreateNewProject(string currentPath, DateTime date)
         => RpdService.CreateNewProject(currentPath, date);
 

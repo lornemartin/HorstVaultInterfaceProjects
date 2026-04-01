@@ -28,6 +28,7 @@ public class RetrieveFromNestingHandler
         var nestingIds = items.Select(i => i.RadanIdNumber).ToArray();
         _nesting.RemoveParts(project, nestingIds);
         _nesting.SaveProject(project, projectPath);
+        _nesting.NotifyProjectChanged(projectPath);
 
         _log.LogInformation("Removed {Count} part(s) from nesting project", items.Count);
 
