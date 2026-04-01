@@ -23,12 +23,15 @@ public class VaultService : IVaultService
         try
         {
             _va = new VaultAccess.VaultAccess();
-            bool ok = _va.Login(_config.Username, _config.Password, _config.Server, _config.Vault);
-            if (ok)
+            var error = _va.LoginHeadless(_config.Username, _config.Password, _config.Server, _config.Vault);
+            if (string.IsNullOrEmpty(error))
                 _log.LogInformation("Vault connection established ({Server}/{Vault})",
                                     _config.Server, _config.Vault);
             else
-                _log.LogWarning("Vault login returned false — check credentials");
+            {
+                _log.LogWarning("Vault login failed: {Error}", error);
+                _va = null;
+            }
         }
         catch (Exception ex)
         {

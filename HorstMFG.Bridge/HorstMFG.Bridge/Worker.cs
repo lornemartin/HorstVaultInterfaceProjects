@@ -54,7 +54,7 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Connect to Vault once at startup (VaultService will reconnect on demand if needed)
-        await Task.Run(() => _vault.Connect(), stoppingToken);
+        _vault.Connect();
 
         while (!stoppingToken.IsCancellationRequested)
         {

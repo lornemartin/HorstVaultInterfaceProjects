@@ -23,14 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Radan\RadanProject\RadanProject.csproj" />
     <ProjectReference Include="..\..\Radan\RadanInterface2\RadanInterface2.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- VaultAccess built separately via MSBuild/Visual Studio (old-style project with resources) -->
-    <Reference Include="VaultAccess">
-      <HintPath>..\..\VaultAccess\bin\Debug\VaultAccess.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <ProjectReference Include="..\..\VaultAccess\VaultAccess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -142,6 +142,33 @@ namespace VaultAccess
             }
         }
 
+        /// <summary>
+        /// Connects without calling Vault.Forms.Library.Initialize(), which requires an STA
+        /// message-pump thread and will deadlock in headless service contexts.
+        /// Use this method from background services and console applications.
+        /// </summary>
+        public string LoginHeadless(string vaultUserName, string vaultPassword, string vaultServer, string vault)
+        {
+            try
+            {
+                Vault.Results.LogInResult results = Vault.Library.ConnectionManager.LogIn(
+                    vaultServer, vault, vaultUserName, vaultPassword,
+                    Vault.Currency.Connections.AuthenticationFlags.ReadOnly, null);
+
+                if (results.Success)
+                {
+                    m_conn = results.Connection;
+                    return "";
+                }
+
+                return results.Exception?.Message ?? "Login failed";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
         public bool LoginForItems(string vaultUserName, string vaultPassword, string vaultServer, string vault)
         {
             try
