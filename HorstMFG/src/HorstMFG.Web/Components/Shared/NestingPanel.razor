@@ -200,13 +200,17 @@
 
         var payload = JsonSerializer.Serialize(toSend.Select(i => new
         {
-            ItemId      = i.ItemId,
-            ItemType    = ItemType,
-            FileName    = i.FileName ?? "",
-            QtyRequired = i.QtyRequired,
-            Material    = i.Material,
-            Thickness   = i.Thickness,
-            OrderNumber = i.GroupName,
+            ItemId       = i.ItemId,
+            ItemType     = ItemType,
+            FileName     = i.FileName ?? "",
+            QtyRequired  = i.QtyRequired,
+            Material     = i.Material,
+            Thickness    = i.Thickness,
+            OrderNumber  = i.GroupName,
+            Description  = i.Description,
+            ScheduleName = i.ScheduleName,
+            BatchName    = i.BatchName,
+            HasBends     = i.HasBends,
         }));
 
         await SendCommandAsync("SendToNesting", payload);

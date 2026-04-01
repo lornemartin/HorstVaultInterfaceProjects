@@ -14,5 +14,9 @@ public record NestingSelectionItem(
     /// <summary>Order number for Order items; Batch name for Batch items. Used as the Symbols sub-folder.</summary>
     string? GroupName,
     long?   RadanIdNumber,
-    bool    IsInRadanProject
+    bool    IsInRadanProject,
+    string? Description,
+    string? ScheduleName,
+    string? BatchName,
+    bool    HasBends
 );

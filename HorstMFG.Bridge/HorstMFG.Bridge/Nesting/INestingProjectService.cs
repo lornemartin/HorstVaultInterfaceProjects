@@ -14,5 +14,12 @@ public interface INestingProjectService
     void               RemoveParts(NestingProjectData project, long[] nestingIds);
     SyncPayload        ReadSyncData(NestingProjectData project);
     string             CreateNewProject(string currentPath, DateTime date);
+    /// <summary>
+    /// Writes Radan attributes (material, thickness, description, order/batch context) into the .sym file.
+    /// Must be called after the sym file exists on disk.
+    /// </summary>
+    void               SetPartAttributes(string symPath, string? material, decimal thickness,
+                                         string? description, string? orderNumber,
+                                         string? scheduleName, string? batchName, bool hasBends);
     byte[]?            ExtractThumbnail(string symPath);
 }

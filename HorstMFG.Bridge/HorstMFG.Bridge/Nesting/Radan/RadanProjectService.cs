@@ -59,6 +59,25 @@ public class RadanProjectService : INestingProjectService
         }
     }
 
+    public void SetPartAttributes(string symPath, string? material, decimal thickness,
+                                  string? description, string? orderNumber,
+                                  string? scheduleName, string? batchName, bool hasBends)
+    {
+        var ri      = new RadanInterface();
+        var errMsg  = "";
+        ri.InsertAdditionalAttributes(
+            symPath,
+            material     ?? "",
+            thickness.ToString(),
+            "in",
+            description  ?? "",
+            orderNumber  ?? "",
+            scheduleName ?? "",
+            batchName    ?? "",
+            hasBends,
+            ref errMsg);
+    }
+
     public string CreateNewProject(string currentPath, DateTime date)
         => RpdService.CreateNewProject(currentPath, date);
 

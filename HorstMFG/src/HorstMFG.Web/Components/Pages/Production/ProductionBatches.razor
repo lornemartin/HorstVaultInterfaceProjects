@@ -81,6 +81,7 @@
                 Thickness        = i.Part.Thickness,
                 QtyRequired      = i.QtyRequired,
                 QtyNested        = i.QtyNested,
+                HasBends         = i.Part.HasBends,
                 IsInRadanProject = i.IsInRadanProject,
                 IsComplete       = i.IsComplete,
                 Notes            = i.Notes,
@@ -108,9 +109,13 @@
             QtyRequired:     row.QtyRequired,
             Material:        row.Material,
             Thickness:       row.Thickness ?? 0m,
-            GroupName:       row.BatchName,
-            RadanIdNumber:   row.RadanIdNumber,
-            IsInRadanProject: row.IsInRadanProject
+            GroupName:        row.BatchName,
+            RadanIdNumber:    row.RadanIdNumber,
+            IsInRadanProject: row.IsInRadanProject,
+            Description:      row.Description,
+            ScheduleName:     null,
+            BatchName:        row.BatchName,
+            HasBends:         row.HasBends
         ));
     }
 
@@ -138,6 +143,7 @@
         public int     QtyRequired      { get; set; }
         public int     QtyNested        { get; set; }
         public bool    IsInRadanProject { get; set; }
+        public bool    HasBends         { get; set; }
         public bool    IsComplete       { get; set; }
         public string? Notes            { get; set; }
     }

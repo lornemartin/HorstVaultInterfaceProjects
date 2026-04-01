@@ -66,6 +66,10 @@ public class RetrieveFromVaultHandler
                 if (!ri.SavePart(topPattern, symPath, ref errMsg))
                     throw new InvalidOperationException($"SavePart failed: {errMsg}");
 
+                ri.InsertAttributes(symPath, material, thickness, "in", "", ref errMsg);
+                if (!string.IsNullOrEmpty(errMsg))
+                    _log.LogWarning("InsertAttributes warning for {FileName}: {Msg}", item.FileName, errMsg);
+
                 _log.LogInformation("Retrieved and converted {FileName} to sym", item.FileName);
                 results.Add(new RetrieveFromVaultResult { ItemId = item.ItemId, Success = true });
             }

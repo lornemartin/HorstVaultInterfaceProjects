@@ -42,13 +42,17 @@ public class NestEntry
 
 public class SendToNestingItem
 {
-    public int     ItemId      { get; set; }
-    public string  ItemType    { get; set; } = "";  // "Order" | "Batch"
-    public string  FileName    { get; set; } = "";
-    public int     QtyRequired { get; set; }
-    public string? Material    { get; set; }
-    public decimal Thickness   { get; set; }
-    public string? OrderNumber { get; set; }
+    public int     ItemId       { get; set; }
+    public string  ItemType     { get; set; } = "";  // "Order" | "Batch"
+    public string  FileName     { get; set; } = "";
+    public int     QtyRequired  { get; set; }
+    public string? Material     { get; set; }
+    public decimal Thickness    { get; set; }
+    public string? OrderNumber  { get; set; }
+    public string? Description  { get; set; }
+    public string? ScheduleName { get; set; }
+    public string? BatchName    { get; set; }
+    public bool    HasBends     { get; set; }
 }
 
 public class RetrieveFromNestingItem

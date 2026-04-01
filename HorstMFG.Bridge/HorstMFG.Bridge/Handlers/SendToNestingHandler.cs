@@ -50,6 +50,9 @@ public class SendToNestingHandler
             {
                 Directory.CreateDirectory(destDir);
                 File.Copy(symSharePath, destSym, overwrite: true);
+                var orderNumber = item.ItemType == "Order" ? item.OrderNumber : null;
+                _nesting.SetPartAttributes(destSym, item.Material, item.Thickness,
+                    item.Description, orderNumber, item.ScheduleName, item.BatchName, item.HasBends);
                 _log.LogInformation("Copied {Sym} to project", item.FileName);
             }
             else
