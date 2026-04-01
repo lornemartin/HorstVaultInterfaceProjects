@@ -81,6 +81,7 @@ public class ApplicationDbContext : DbContext
             e.Property(b => b.LocalPdfFolder).HasMaxLength(500);
             e.HasOne(b => b.Plant).WithMany(p => p.Batches).HasForeignKey(b => b.PlantId);
             e.HasOne(b => b.ImportedByUser).WithMany().HasForeignKey(b => b.ImportedByUserId);
+            e.HasIndex(b => b.Name);
         });
 
         // BatchProduct
@@ -102,6 +103,7 @@ public class ApplicationDbContext : DbContext
             e.Property(s => s.LocalPdfFolder).HasMaxLength(500);
             e.HasOne(s => s.Plant).WithMany(p => p.Schedules).HasForeignKey(s => s.PlantId);
             e.HasOne(s => s.ImportedByUser).WithMany().HasForeignKey(s => s.ImportedByUserId);
+            e.HasIndex(s => s.Name);
         });
 
         // ScheduleOrder

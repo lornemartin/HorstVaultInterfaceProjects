@@ -215,10 +215,22 @@ public class BomService : IBomService
             }
         }
 
-        // Check PDF existence and set sort order (<top> items pinned first)
+        // Check PDF existence — one directory scan instead of one File.Exists per part
+        HashSet<string> shareFiles = new(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            if (Directory.Exists(_pdfSharePath))
+                foreach (var f in Directory.GetFiles(_pdfSharePath, "*.pdf"))
+                    shareFiles.Add(Path.GetFileNameWithoutExtension(f));
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Could not enumerate PDF share for HasPdf check: {Path}", _pdfSharePath);
+        }
+
         foreach (var line in deduped)
         {
-            line.HasPdf = PdfExistsOnShare(line.Number);
+            line.HasPdf = shareFiles.Contains(line.Number);
             line.SortOrder = line.Parent == "<top>" ? 0 : 1;
         }
 
