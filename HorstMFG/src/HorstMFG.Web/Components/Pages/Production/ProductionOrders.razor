@@ -14,6 +14,9 @@
 
 <style>
     .row-in-project td { font-weight: 600; background-color: #e8f4e8 !important; }
+    td.remaining-partial  { background-color: #fff3cd !important; }
+    td.remaining-complete { background-color: #00b050 !important; }
+    td.remaining-over     { background-color: #f8d7da !important; }
 </style>
 
 <h3>Orders</h3>
@@ -33,7 +36,8 @@
     <GridEvents TValue="OrderItemRow"
                 RowSelected="OnRowSelected"
                 RowDeselected="OnRowDeselected"
-                RowDataBound="OnRowDataBound" />
+                RowDataBound="OnRowDataBound"
+                QueryCellInfo="OnQueryCellInfo" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
         <GridColumn Field="@nameof(OrderItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
@@ -131,6 +135,17 @@
     {
         if (args.Data.IsInRadanProject)
             args.Row.AddClass(new[] { "row-in-project" });
+    }
+
+    private void OnQueryCellInfo(QueryCellInfoEventArgs<OrderItemRow> args)
+    {
+        if (args.Column.Field != nameof(OrderItemRow.Remaining)) return;
+        var row = args.Data;
+        if (row.QtyNested == 0) return;
+        var css = row.QtyNested > row.QtyRequired ? "remaining-over"
+                : row.QtyNested == row.QtyRequired ? "remaining-complete"
+                : "remaining-partial";
+        args.Cell.AddClass(new[] { css });
     }
 
     private class OrderItemRow
