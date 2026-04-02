@@ -50,8 +50,10 @@ public class BomService : IBomService
 
     public List<BomExportLine> ParseExportFile(Stream fileStream, BomType bomType)
     {
-        var allLines = new List<BomExportLine>();
         var deduped = new List<BomExportLine>();
+        var dedupedByNumber = new Dictionary<string, BomExportLine>(StringComparer.Ordinal);
+        var parentChildSeen = new HashSet<(string Number, string Parent)>();
+        var parentChildCount = new Dictionary<(string Number, string Parent), int>();
         var parentDict = new Dictionary<string, string>();
 
         using var reader = new StreamReader(fileStream);
@@ -183,56 +185,43 @@ public class BomService : IBomService
             line.Qty = GetCalculatedQty(line, deduped);
 
             // Deduplicate: same number+parent already seen?
-            int dupIndex = allLines.FindIndex(x =>
-                x.Number == number && x.Parent == parent);
+            var key = (number, parent);
+            bool isDuplicate = parentChildSeen.Contains(key);
+            parentChildSeen.Add(key);
+            parentChildCount[key] = parentChildCount.GetValueOrDefault(key) + 1;
 
-            if (dupIndex < 0)
+            if (!isDuplicate)
             {
-                // Not a duplicate parent/child combo
-                int existingIndex = deduped.FindIndex(x => x.Number == number);
-                if (existingIndex >= 0)
+                // First time seeing this (number, parent) combo
+                if (dedupedByNumber.TryGetValue(number, out var existing))
                 {
-                    // Part already in deduped list — add quantity
-                    allLines.Add(line);
-                    deduped[existingIndex].Qty += line.Qty;
+                    // Part already in deduped list under a different parent — add quantity
+                    existing.Qty += line.Qty;
                 }
                 else
                 {
-                    allLines.Add(line);
                     deduped.Add(line);
+                    dedupedByNumber[number] = line;
                 }
             }
             else
             {
                 // Duplicate parent/child — adjust for multiple instances
-                allLines.Add(line);
-                int relationCount = allLines.Count(x => x.Number == number && x.Parent == parent);
-                int existingIndex = deduped.FindIndex(x => x.Number == number);
-                if (existingIndex >= 0)
+                int relationCount = parentChildCount[key];
+                if (dedupedByNumber.TryGetValue(number, out var existing))
                 {
-                    deduped[existingIndex].Qty += line.Qty / relationCount;
+                    existing.Qty += line.Qty / relationCount;
                 }
             }
         }
 
-        // Check PDF existence — one directory scan instead of one File.Exists per part
-        HashSet<string> shareFiles = new(StringComparer.OrdinalIgnoreCase);
-        try
+        // Check PDF existence in parallel — avoids both sequential round-trips and a full
+        // directory enumeration (which is expensive at 78k+ files on a network share)
+        Parallel.ForEach(deduped, new ParallelOptions { MaxDegreeOfParallelism = 4 }, line =>
         {
-            if (Directory.Exists(_pdfSharePath))
-                foreach (var f in Directory.GetFiles(_pdfSharePath, "*.pdf"))
-                    shareFiles.Add(Path.GetFileNameWithoutExtension(f));
-        }
-        catch (Exception ex)
-        {
-            _log.LogWarning(ex, "Could not enumerate PDF share for HasPdf check: {Path}", _pdfSharePath);
-        }
-
-        foreach (var line in deduped)
-        {
-            line.HasPdf = shareFiles.Contains(line.Number);
+            line.HasPdf = File.Exists(Path.Combine(_pdfSharePath, line.Number + ".pdf"));
             line.SortOrder = line.Parent == "<top>" ? 0 : 1;
-        }
+        });
 
         _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",
             deduped.Count, deduped.Count(l => !l.HasPdf));
@@ -330,12 +319,11 @@ public class BomService : IBomService
 
         // Copy PDFs to local folder
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var copyResults = CopyPdfsToLocalFolder(partNumbers, localFolder);
-        int copied = copyResults.Count(r => r.HasPdf);
+        var (copied, total) = await CopyPdfsToLocalFolderAsync(partNumbers, localFolder);
 
         _log.LogInformation(
             "Imported batch '{Name}' with {GroupCount} products. Copied {Copied}/{Total} PDFs to {Folder}",
-            name, lines.GroupBy(l => GetLevel1Prefix(l.Level)).Count(), copied, partNumbers.Count, localFolder);
+            name, lines.GroupBy(l => GetLevel1Prefix(l.Level)).Count(), copied, total, localFolder);
 
         return batch;
     }
@@ -397,19 +385,19 @@ public class BomService : IBomService
         await _db.SaveChangesAsync();
 
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var copyResults = CopyPdfsToLocalFolder(partNumbers, localFolder);
-        int copied = copyResults.Count(r => r.HasPdf);
+        var (copied, total) = await CopyPdfsToLocalFolderAsync(partNumbers, localFolder);
 
         _log.LogInformation(
             "Imported schedule '{Name}' (order {OrderNumber}) with {Count} items. Copied {Copied}/{Total} PDFs to {Folder}",
-            name, orderNumber, lines.Count, copied, partNumbers.Count, localFolder);
+            name, orderNumber, lines.Count, copied, total, localFolder);
 
         return schedule;
     }
 
-    private List<(string PartNumber, bool HasPdf)> CopyPdfsToLocalFolder(IEnumerable<string> partNumbers, string destinationFolder)
+    private async Task<(int Copied, int Total)> CopyPdfsToLocalFolderAsync(IEnumerable<string> partNumbers, string destinationFolder)
     {
-        var results = new List<(string, bool)>();
+        var partList = partNumbers.ToList();
+
         try
         {
             Directory.CreateDirectory(destinationFolder);
@@ -417,32 +405,29 @@ public class BomService : IBomService
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Could not create local PDF folder: {Folder}", destinationFolder);
-            return results;
+            return (0, partList.Count);
         }
 
-        foreach (var partNumber in partNumbers)
-        {
-            var sourcePath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
-            var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
-            bool hasPdf = false;
-
-            if (File.Exists(sourcePath))
+        int copied = 0;
+        await Parallel.ForEachAsync(partList,
+            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            async (partNumber, ct) =>
             {
+                var sourcePath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
+                var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
                 try
                 {
-                    File.Copy(sourcePath, destPath, overwrite: true);
-                    hasPdf = true;
+                    if (!await Task.Run(() => File.Exists(sourcePath), ct)) return;
+                    await Task.Run(() => File.Copy(sourcePath, destPath, overwrite: true), ct);
+                    Interlocked.Increment(ref copied);
                 }
                 catch (Exception ex)
                 {
                     _log.LogWarning(ex, "Failed to copy PDF for {PartNumber}", partNumber);
                 }
-            }
+            });
 
-            results.Add((partNumber, hasPdf));
-        }
-
-        return results;
+        return (copied, partList.Count);
     }
 
     public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
