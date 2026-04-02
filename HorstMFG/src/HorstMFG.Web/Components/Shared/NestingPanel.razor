@@ -500,6 +500,14 @@
         if (sync.Parts.Count == 0 || _stationId == null) return;
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
+        // Resolve plant ID from the station so admin users (PlantId==0) work correctly.
+        var nestPlantId = PlantId > 0
+            ? PlantId
+            : (await db.NestingStations.AsNoTracking()
+                   .Where(s => s.Id == _stationId)
+                   .Select(s => s.PlantId)
+                   .FirstOrDefaultAsync());
+
         if (ItemType == "Order")
         {
             var items = await db.OrderItems
@@ -509,6 +517,35 @@
             {
                 var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
                 if (item != null) item.QtyNested = p.QtyNested;
+            }
+
+            foreach (var syncNest in sync.Nests)
+            {
+                var nest = await db.Nests
+                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
+                if (nest == null)
+                {
+                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, PlantId = nestPlantId };
+                    db.Nests.Add(nest);
+                    await db.SaveChangesAsync();
+                }
+                else if (syncNest.NestPath != null)
+                {
+                    nest.NestPath = syncNest.NestPath;
+                }
+
+                foreach (var entry in syncNest.Parts)
+                {
+                    var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)entry.RadanIdNumber);
+                    if (item == null) continue;
+
+                    var np = await db.NestedParts
+                        .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
+                    if (np == null)
+                        db.NestedParts.Add(new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = entry.Qty });
+                    else
+                        np.Qty = entry.Qty;
+                }
             }
         }
         else
@@ -520,6 +557,35 @@
             {
                 var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
                 if (item != null) item.QtyNested = p.QtyNested;
+            }
+
+            foreach (var syncNest in sync.Nests)
+            {
+                var nest = await db.Nests
+                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
+                if (nest == null)
+                {
+                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, PlantId = nestPlantId };
+                    db.Nests.Add(nest);
+                    await db.SaveChangesAsync();
+                }
+                else if (syncNest.NestPath != null)
+                {
+                    nest.NestPath = syncNest.NestPath;
+                }
+
+                foreach (var entry in syncNest.Parts)
+                {
+                    var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)entry.RadanIdNumber);
+                    if (item == null) continue;
+
+                    var np = await db.NestedParts
+                        .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
+                    if (np == null)
+                        db.NestedParts.Add(new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = entry.Qty });
+                    else
+                        np.Qty = entry.Qty;
+                }
             }
         }
 
@@ -533,7 +599,9 @@
 
     private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile);
     private record SyncPartDto(long RadanIdNumber, int QtyNested);
-    private class SyncPayloadDto { public List<SyncPartDto> Parts { get; set; } = new(); }
+    private class NestEntryDto { public long RadanIdNumber { get; set; } public int Qty { get; set; } }
+    private class SyncNestDto  { public string NestName { get; set; } = ""; public string? NestPath { get; set; } public List<NestEntryDto> Parts { get; set; } = new(); }
+    private class SyncPayloadDto { public List<SyncPartDto> Parts { get; set; } = new(); public List<SyncNestDto> Nests { get; set; } = new(); }
     private class RetrieveFromNestingResultDto
     {
         public SyncPayloadDto Sync           { get; set; } = new();
