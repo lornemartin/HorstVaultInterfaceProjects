@@ -17,6 +17,8 @@
     td.remaining-partial  { background-color: #fff3cd !important; }
     td.remaining-complete { background-color: #00b050 !important; }
     td.remaining-over     { background-color: #f8d7da !important; }
+    .qty-input { width: 55px; text-align: right; border: 1px solid transparent; border-radius: 3px; padding: 1px 3px; background: transparent; }
+    .qty-input:hover, .qty-input:focus { border-color: #ced4da; background: #fff; outline: none; }
 </style>
 
 <h3>Batches</h3>
@@ -40,7 +42,13 @@
                 QueryCellInfo="OnQueryCellInfo" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
-        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right" />
+        <GridColumn Field="@nameof(BatchItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right">
+            <Template>
+                @{ var row = (context as BatchItemRow)!; }
+                <input type="number" class="qty-input" value="@row.QtyRequired" min="0"
+                       @onchange="@(async e => await OnQtyRequiredChangedAsync(row, e.Value?.ToString()))" />
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(BatchItemRow.QtyNested)"      HeaderText="Nested"     Width="80"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.Remaining)"      HeaderText="Remaining"  Width="95"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.FileName)"       HeaderText="File Name"  Width="220" />
@@ -101,6 +109,17 @@
     {
         await LoadAsync();
         StateHasChanged();
+    }
+
+    private async Task OnQtyRequiredChangedAsync(BatchItemRow row, string? value)
+    {
+        if (!int.TryParse(value, out var qty) || qty < 0) return;
+        row.QtyRequired = qty;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var item = await db.BatchItems.FindAsync(row.Id);
+        if (item == null) return;
+        item.QtyRequired = qty;
+        await db.SaveChangesAsync();
     }
 
     private void OnRowSelected(RowSelectEventArgs<BatchItemRow> args)
