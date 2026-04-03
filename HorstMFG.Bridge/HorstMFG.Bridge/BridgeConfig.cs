@@ -8,6 +8,7 @@ public class BridgeConfig
     public string ApiKey                { get; set; } = "";
     public string RadanProjectsRootPath { get; set; } = "";
     public string SymNetworkSharePath   { get; set; } = "";
+    public string BomExportFilePath     { get; set; } = "";
 }
 
 public class VaultConfig

@@ -5,7 +5,10 @@
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
+@inject BridgeNotificationService BridgeEvents
+@implements IDisposable
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Services
 @using Microsoft.EntityFrameworkCore
 
 <PageTitle>BOM Import - HorstMFG</PageTitle>
@@ -240,11 +243,23 @@ else
         _batchName = DateTime.Now.ToString("yyyy-MM-dd");
     }
 
+    public void Dispose()
+    {
+        BridgeEvents.BomExportReceived -= OnBomExportReceived;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             _jsReady = true;
+            BridgeEvents.BomExportReceived += OnBomExportReceived;
+
+            // Pre-populate if the user navigated here after clicking the banner.
+            // Must be here (not OnInitializedAsync) to avoid SSR pre-render consuming
+            // and clearing PendingBomExport before the interactive phase runs.
+            if (!string.IsNullOrEmpty(BridgeEvents.PendingBomExport))
+                await LoadPendingBomExportAsync();
 
             var savedBomType = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_bomType");
             if (savedBomType == "Batch" || savedBomType == "Order")
@@ -268,6 +283,43 @@ else
         await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_bomType", SelectedBomTypeStr);
         await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_plantId", _selectedPlantId.ToString());
         await JS.InvokeVoidAsync("localStorage.setItem", "bomImport_batchName", _batchName);
+    }
+
+    private void OnBomExportReceived(int stationId, string fileContents)
+    {
+        _ = InvokeAsync(async () => await LoadPendingBomExportAsync());
+    }
+
+    private async Task LoadPendingBomExportAsync()
+    {
+        var contents = BridgeEvents.PendingBomExport;
+        if (string.IsNullOrEmpty(contents)) return;
+
+        _parsing = true;
+        _message = null;
+        _parsedLines.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(contents);
+            using var ms = new MemoryStream(bytes);
+            _parsedLines     = BomService.ParseExportFile(ms, SelectedBomType);
+            _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+            _message = $"BOM auto-loaded from Vault export — {_parsedLines.Count} item(s). Select import type and fill in name/qty, then click Import.";
+            _isError = false;
+            BridgeEvents.ClearPendingBomExport();
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error parsing auto-loaded BOM: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _parsing = false;
+            StateHasChanged();
+        }
     }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)

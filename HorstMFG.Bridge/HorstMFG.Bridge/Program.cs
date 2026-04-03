@@ -62,6 +62,7 @@ try
             services.AddSingleton<FinalizeHandler>();
             services.AddSingleton<UpdateThumbnailHandler>();
             services.AddSingleton<FileWatcher>();
+            services.AddSingleton<BomExportWatcher>();
 
             services.AddHostedService<Worker>();
         });

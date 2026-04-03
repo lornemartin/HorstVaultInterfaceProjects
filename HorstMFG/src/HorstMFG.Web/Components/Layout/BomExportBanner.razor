@@ -1,0 +1,64 @@
+@rendermode InteractiveServer
+@inject BridgeNotificationService BridgeEvents
+@inject NavigationManager Nav
+@implements IDisposable
+@using HorstMFG.Web.Services
+
+@if (_showBanner)
+{
+    <div style="background:#d1fae5; border:1px solid #6ee7b7; border-radius:6px;
+                padding:.6rem 1rem; margin-bottom:1rem;
+                display:flex; justify-content:space-between; align-items:center;">
+        <span>
+            New BOM export detected from Vault.
+            <a href="/bom-import" style="font-weight:600; text-decoration:underline; cursor:pointer;"
+               @onclick="NavigateToBomImport" @onclick:preventDefault="true">
+                Click here to go to BOM Import.
+            </a>
+        </span>
+        <button @onclick="DismissBanner"
+                style="background:none; border:none; cursor:pointer; font-size:1.1rem;
+                       padding:0 .4rem; line-height:1; color:#065f46;"
+                title="Dismiss">&#x2715;</button>
+    </div>
+}
+
+@code {
+    private bool _showBanner;
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            BridgeEvents.BomExportReceived += OnBomExportReceived;
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        BridgeEvents.BomExportReceived -= OnBomExportReceived;
+    }
+
+    private void OnBomExportReceived(int stationId, string fileContents)
+    {
+        var path = new Uri(Nav.Uri).AbsolutePath;
+        if (path.Equals("/bom-import", StringComparison.OrdinalIgnoreCase)) return;
+
+        _ = InvokeAsync(() =>
+        {
+            _showBanner = true;
+            StateHasChanged();
+        });
+    }
+
+    private void NavigateToBomImport()
+    {
+        _showBanner = false;
+        Nav.NavigateTo("/bom-import");
+    }
+
+    private void DismissBanner()
+    {
+        _showBanner = false;
+        BridgeEvents.ClearPendingBomExport();
+    }
+}

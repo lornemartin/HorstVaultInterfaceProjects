@@ -125,6 +125,17 @@ public class BridgeHub : Hub
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Called by the BomExportWatcher when ItemExport writes a new export file.
+    /// Forwards the raw file contents to any open BOM Import pages for pre-population.
+    /// </summary>
+    public Task BomExportDetected(int stationId, string fileContents)
+    {
+        _log.LogInformation("BOM export detected from station {StationId}", stationId);
+        _notifications.OnBomExportDetected(stationId, fileContents);
+        return Task.CompletedTask;
+    }
+
     // ── Server → Bridge (called via IHubContext from Blazor pages) ────────────
 
     /// <summary>

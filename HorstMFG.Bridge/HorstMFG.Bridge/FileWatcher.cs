@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace HorstMFG.Bridge;
 
@@ -73,6 +74,13 @@ public class FileWatcher : IDisposable
     private void TriggerSync()
     {
         if (_hub == null || _projectPath == null) return;
+
+        if (_hub.State != HubConnectionState.Connected)
+        {
+            _log.LogWarning("FileWatcher: hub not connected (state={State}) — skipping auto-sync", _hub.State);
+            return;
+        }
+
         try
         {
             _log.LogInformation("FileWatcher: RPD changed — auto-syncing");

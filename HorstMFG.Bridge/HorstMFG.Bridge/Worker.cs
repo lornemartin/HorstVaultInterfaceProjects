@@ -23,6 +23,7 @@ public class Worker : BackgroundService
     private readonly FinalizeHandler _finalize;
     private readonly UpdateThumbnailHandler _updateThumbnail;
     private readonly FileWatcher _fileWatcher;
+    private readonly BomExportWatcher _bomExportWatcher;
     private readonly ILogger<Worker> _log;
 
     private HubConnection? _hub;
@@ -37,6 +38,7 @@ public class Worker : BackgroundService
                   FinalizeHandler finalize,
                   UpdateThumbnailHandler updateThumbnail,
                   FileWatcher fileWatcher,
+                  BomExportWatcher bomExportWatcher,
                   ILogger<Worker> log)
     {
         _config              = config.Value;
@@ -48,6 +50,7 @@ public class Worker : BackgroundService
         _finalize            = finalize;
         _updateThumbnail     = updateThumbnail;
         _fileWatcher         = fileWatcher;
+        _bomExportWatcher    = bomExportWatcher;
         _log                 = log;
     }
 
@@ -72,6 +75,7 @@ public class Worker : BackgroundService
         }
 
         _fileWatcher.Detach();
+        _bomExportWatcher.Detach();
         if (_hub != null) await _hub.DisposeAsync();
     }
 
@@ -108,6 +112,10 @@ public class Worker : BackgroundService
 
         await _hub.StartAsync(ct);
         await RegisterAsync();
+
+        if (!string.IsNullOrWhiteSpace(_config.BomExportFilePath))
+            _bomExportWatcher.Attach(_hub, _config.StationId, _config.BomExportFilePath);
+
         _log.LogInformation("Connected to HorstMFG as station {Id}", _config.StationId);
     }
 
