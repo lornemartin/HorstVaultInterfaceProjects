@@ -295,6 +295,9 @@ else
         var contents = BridgeEvents.PendingBomExport;
         if (string.IsNullOrEmpty(contents)) return;
 
+        if (_importComplete)
+            Reset();
+
         _parsing = true;
         _message = null;
         _parsedLines.Clear();
