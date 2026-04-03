@@ -145,6 +145,29 @@ try
         return Results.File(path, "application/pdf");
     }).RequireAuthorization();
 
+    // Minimal API: thumbnails
+    app.MapGet("/api/thumbnails/part/{partId:int}", async (int partId, IDbContextFactory<ApplicationDbContext> db) =>
+    {
+        await using var ctx = await db.CreateDbContextAsync();
+        var bytes = await ctx.Parts.Where(p => p.Id == partId).Select(p => p.Thumbnail).FirstOrDefaultAsync();
+        if (bytes is null) return Results.NotFound();
+        var mime = bytes.Length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D ? "image/bmp"
+                 : bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8 ? "image/jpeg"
+                 : "image/png";
+        return Results.File(bytes, mime);
+    }).RequireAuthorization();
+
+    app.MapGet("/api/thumbnails/nest/{nestId:int}", async (int nestId, IDbContextFactory<ApplicationDbContext> db) =>
+    {
+        await using var ctx = await db.CreateDbContextAsync();
+        var bytes = await ctx.Nests.Where(n => n.Id == nestId).Select(n => n.Thumbnail).FirstOrDefaultAsync();
+        if (bytes is null) return Results.NotFound();
+        var mime = bytes.Length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D ? "image/bmp"
+                 : bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8 ? "image/jpeg"
+                 : "image/png";
+        return Results.File(bytes, mime);
+    }).RequireAuthorization();
+
     app.MapHub<BridgeHub>("/hubs/bridge");
 
     app.MapRazorComponents<App>()

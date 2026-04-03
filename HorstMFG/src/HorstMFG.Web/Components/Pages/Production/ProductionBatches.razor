@@ -33,6 +33,44 @@
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
         EnablePersistence="true" Height="600">
+    <GridTemplates>
+        <DetailTemplate>
+            @{
+                var row = (context as BatchItemRow)!;
+            }
+            <div style="display:flex; gap:1.5rem; padding:.75rem; align-items:flex-start;">
+                <img src="/api/thumbnails/part/@row.PartId" loading="lazy"
+                     style="height:140px; object-fit:contain; border:1px solid #dee2e6; border-radius:4px; background:#fafafa; flex-shrink:0;"
+                     onerror="this.style.display='none'" />
+                @if (row.Nests.Any())
+                {
+                    <table class="table table-sm table-bordered mb-0" style="width:auto;">
+                        <thead>
+                            <tr><th>Nest</th><th class="text-end">Qty</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var nest in row.Nests)
+                            {
+                                <tr>
+                                    <td>@nest.NestName</td>
+                                    <td class="text-end">@nest.Qty</td>
+                                    <td>
+                                        <img src="/api/thumbnails/nest/@nest.NestId" loading="lazy"
+                                             style="height:64px; object-fit:contain;"
+                                             onerror="this.style.display='none'" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <span style="color:#9ca3af; font-size:.85em; align-self:center;">No nests yet.</span>
+                }
+            </div>
+        </DetailTemplate>
+    </GridTemplates>
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
     <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
     <GridEvents TValue="BatchItemRow"
@@ -42,6 +80,14 @@
                 QueryCellInfo="OnQueryCellInfo" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
+        <GridColumn HeaderText="" Width="68" AllowSorting="false" AllowFiltering="false" AllowGrouping="false" AllowReordering="false">
+            <Template>
+                @{ var row = (context as BatchItemRow)!; }
+                <img src="/api/thumbnails/part/@row.PartId" loading="lazy"
+                     style="height:42px; object-fit:contain; display:block; margin:auto;"
+                     onerror="this.style.display='none'" />
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(BatchItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right">
             <Template>
                 @{ var row = (context as BatchItemRow)!; }
@@ -101,6 +147,34 @@
             })
             .OrderBy(i => i.BatchName).ThenBy(i => i.FileName)
             .ToListAsync();
+
+        // Load nest associations for all visible items
+        var itemIds = _items.Select(i => i.Id).ToList();
+        if (itemIds.Any())
+        {
+            var nestData = await db.NestedParts
+                .Where(np => np.BatchItemId.HasValue && itemIds.Contains(np.BatchItemId.Value))
+                .Select(np => new {
+                    BatchItemId = np.BatchItemId!.Value,
+                    NestId      = np.NestId,
+                    NestName    = np.Nest.NestName,
+                    Qty         = np.Qty,
+                })
+                .ToListAsync();
+
+            var lookup = nestData
+                .GroupBy(n => n.BatchItemId)
+                .ToDictionary(g => g.Key, g => g.Select(n => new NestInfoRow
+                {
+                    NestId   = n.NestId,
+                    NestName = n.NestName,
+                    Qty      = n.Qty,
+                }).ToList());
+
+            foreach (var item in _items)
+                if (lookup.TryGetValue(item.Id, out var nests))
+                    item.Nests = nests;
+        }
 
         _selectedForNesting.Clear();
     }
@@ -182,5 +256,13 @@
         public bool    HasBends         { get; set; }
         public bool    IsComplete       { get; set; }
         public string? Notes            { get; set; }
+        public List<NestInfoRow> Nests  { get; set; } = new();
+    }
+
+    private class NestInfoRow
+    {
+        public int    NestId   { get; set; }
+        public string NestName { get; set; } = "";
+        public int    Qty      { get; set; }
     }
 }
