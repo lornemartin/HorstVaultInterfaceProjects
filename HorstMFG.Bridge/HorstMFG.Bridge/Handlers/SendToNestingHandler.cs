@@ -60,13 +60,24 @@ public class SendToNestingHandler
                 _log.LogWarning("Symbol file not found for {FileName} — adding to project without sym", item.FileName);
             }
 
-            var nextId = _nesting.GetNextId(project);
-            _nesting.AddPart(project, destSym, nextId, item.QtyRequired, item.Material, item.Thickness);
+            long partId;
+            if (item.RadanIdNumber.HasValue)
+            {
+                // Part already exists in the project (re-send of a partially-nested item) — update qty only
+                _nesting.UpdatePartQty(project, item.RadanIdNumber.Value, item.QtyRequired);
+                partId = item.RadanIdNumber.Value;
+                _log.LogInformation("Updated qty for existing part {Id} to {Qty}", partId, item.QtyRequired);
+            }
+            else
+            {
+                partId = _nesting.GetNextId(project);
+                _nesting.AddPart(project, destSym, partId, item.QtyRequired, item.Material, item.Thickness);
+            }
 
             results.Add(new SendToNestingResult
             {
                 ItemId         = item.ItemId,
-                RadanIdNumber  = nextId,
+                RadanIdNumber  = partId,
                 MissingSymFile = missingSymFile,
             });
         }

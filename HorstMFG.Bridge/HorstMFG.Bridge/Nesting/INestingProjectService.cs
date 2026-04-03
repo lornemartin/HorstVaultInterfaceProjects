@@ -12,6 +12,10 @@ public interface INestingProjectService
     void               AddPart(NestingProjectData project, string symPath, long nestingId,
                                int qty, string? material, decimal thickness);
     void               RemoveParts(NestingProjectData project, long[] nestingIds);
+    /// <summary>Sets each matching part's required quantity to its already-nested quantity.</summary>
+    void               AdjustPartsQtyToMade(NestingProjectData project, long[] nestingIds);
+    /// <summary>Updates the required quantity of an existing part in the project.</summary>
+    void               UpdatePartQty(NestingProjectData project, long nestingId, int qty);
     SyncPayload        ReadSyncData(NestingProjectData project);
     string             CreateNewProject(string currentPath, DateTime date);
     /// <summary>

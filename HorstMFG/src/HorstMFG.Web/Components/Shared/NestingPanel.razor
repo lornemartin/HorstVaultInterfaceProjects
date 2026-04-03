@@ -200,17 +200,18 @@
 
         var payload = JsonSerializer.Serialize(toSend.Select(i => new
         {
-            ItemId       = i.ItemId,
-            ItemType     = ItemType,
-            FileName     = i.FileName ?? "",
-            QtyRequired  = i.QtyRequired,
-            Material     = i.Material,
-            Thickness    = i.Thickness,
-            OrderNumber  = i.GroupName,
-            Description  = i.Description,
-            ScheduleName = i.ScheduleName,
-            BatchName    = i.BatchName,
-            HasBends     = i.HasBends,
+            ItemId        = i.ItemId,
+            ItemType      = ItemType,
+            FileName      = i.FileName ?? "",
+            QtyRequired   = i.QtyRequired,
+            Material      = i.Material,
+            Thickness     = i.Thickness,
+            OrderNumber   = i.GroupName,
+            Description   = i.Description,
+            ScheduleName  = i.ScheduleName,
+            BatchName     = i.BatchName,
+            HasBends      = i.HasBends,
+            RadanIdNumber = i.RadanIdNumber,  // non-null when re-sending a partially-nested item
         }));
 
         await SendCommandAsync("SendToNesting", payload);
@@ -397,6 +398,8 @@
         await ApplySyncPayloadAsync(result.Sync);
 
         await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        // Un-nested items: clear everything including RadanIdNumber
         foreach (var id in result.ClearedItemIds)
         {
             if (ItemType == "Order")
@@ -410,8 +413,25 @@
                 if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
             }
         }
+
+        // Partially/fully nested items: clear project status but keep RadanIdNumber so
+        // re-sending updates the existing Radan part instead of creating a duplicate.
+        foreach (var id in result.AdjustedItemIds)
+        {
+            if (ItemType == "Order")
+            {
+                var item = await db.OrderItems.FindAsync(id);
+                if (item != null) { item.IsInRadanProject = false; item.NestingStationId = null; }
+            }
+            else
+            {
+                var item = await db.BatchItems.FindAsync(id);
+                if (item != null) { item.IsInRadanProject = false; item.NestingStationId = null; }
+            }
+        }
+
         await db.SaveChangesAsync();
-        Log($"Retrieved {result.ClearedItemIds.Count} item(s) from nesting project.");
+        Log($"Retrieved {result.ClearedItemIds.Count + result.AdjustedItemIds.Count} item(s) from nesting project.");
     }
 
     private async Task ProcessSyncAsync(string payload)
@@ -547,6 +567,31 @@
                         np.Qty = entry.Qty;
                 }
             }
+
+            // Remove NestedParts for this station's items that belong to nests no longer in the sync
+            var syncNestNamesOrder = sync.Nests.Select(n => n.NestName).ToHashSet();
+            var itemIdsOrder = items.Select(i => i.Id).ToList();
+            var staleOrder = await db.NestedParts
+                .Where(np => np.OrderItemId.HasValue
+                          && itemIdsOrder.Contains(np.OrderItemId.Value)
+                          && !syncNestNamesOrder.Contains(np.Nest.NestName))
+                .ToListAsync();
+            if (staleOrder.Count > 0)
+            {
+                var staleIds     = staleOrder.Select(np => np.Id).ToHashSet();
+                var staleNestIds = staleOrder.Select(np => np.NestId).Distinct().ToList();
+                db.NestedParts.RemoveRange(staleOrder);
+                foreach (var nestId in staleNestIds)
+                {
+                    var hasOtherParts = await db.NestedParts
+                        .AnyAsync(np => np.NestId == nestId && !staleIds.Contains(np.Id));
+                    if (!hasOtherParts)
+                    {
+                        var nest = await db.Nests.FindAsync(nestId);
+                        if (nest != null) db.Nests.Remove(nest);
+                    }
+                }
+            }
         }
         else
         {
@@ -587,6 +632,31 @@
                         np.Qty = entry.Qty;
                 }
             }
+
+            // Remove NestedParts for this station's items that belong to nests no longer in the sync
+            var syncNestNamesBatch = sync.Nests.Select(n => n.NestName).ToHashSet();
+            var itemIdsBatch = items.Select(i => i.Id).ToList();
+            var staleBatch = await db.NestedParts
+                .Where(np => np.BatchItemId.HasValue
+                          && itemIdsBatch.Contains(np.BatchItemId.Value)
+                          && !syncNestNamesBatch.Contains(np.Nest.NestName))
+                .ToListAsync();
+            if (staleBatch.Count > 0)
+            {
+                var staleIds     = staleBatch.Select(np => np.Id).ToHashSet();
+                var staleNestIds = staleBatch.Select(np => np.NestId).Distinct().ToList();
+                db.NestedParts.RemoveRange(staleBatch);
+                foreach (var nestId in staleNestIds)
+                {
+                    var hasOtherParts = await db.NestedParts
+                        .AnyAsync(np => np.NestId == nestId && !staleIds.Contains(np.Id));
+                    if (!hasOtherParts)
+                    {
+                        var nest = await db.Nests.FindAsync(nestId);
+                        if (nest != null) db.Nests.Remove(nest);
+                    }
+                }
+            }
         }
 
         await db.SaveChangesAsync();
@@ -604,8 +674,9 @@
     private class SyncPayloadDto { public List<SyncPartDto> Parts { get; set; } = new(); public List<SyncNestDto> Nests { get; set; } = new(); }
     private class RetrieveFromNestingResultDto
     {
-        public SyncPayloadDto Sync           { get; set; } = new();
-        public List<int>      ClearedItemIds { get; set; } = new();
+        public SyncPayloadDto Sync            { get; set; } = new();
+        public List<int>      ClearedItemIds  { get; set; } = new();
+        public List<int>      AdjustedItemIds { get; set; } = new();
     }
     private class FinalizeResultDto
     {

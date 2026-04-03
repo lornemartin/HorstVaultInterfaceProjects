@@ -44,6 +44,18 @@ internal static class RpdService
             project.Parts.Part.Remove(p);
     }
 
+    public static void AdjustPartQtyToMade(RadanProject project, long[] nestingIds)
+    {
+        foreach (var part in project.Parts.Part.Where(p => nestingIds.Contains(p.ID)))
+            part.Number = part.Made;
+    }
+
+    public static void UpdatePartQty(RadanProject project, long nestingId, int qty)
+    {
+        var part = project.Parts.Part.FirstOrDefault(p => p.ID == nestingId);
+        if (part != null) part.Number = qty;
+    }
+
     public static SyncPayload BuildSyncPayload(RadanProject project, string nestFolder)
     {
         var payload = new SyncPayload();

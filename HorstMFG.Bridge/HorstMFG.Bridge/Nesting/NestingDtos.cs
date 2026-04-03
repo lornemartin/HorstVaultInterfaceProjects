@@ -42,17 +42,19 @@ public class NestEntry
 
 public class SendToNestingItem
 {
-    public int     ItemId       { get; set; }
-    public string  ItemType     { get; set; } = "";  // "Order" | "Batch"
-    public string  FileName     { get; set; } = "";
-    public int     QtyRequired  { get; set; }
-    public string? Material     { get; set; }
-    public decimal Thickness    { get; set; }
-    public string? OrderNumber  { get; set; }
-    public string? Description  { get; set; }
-    public string? ScheduleName { get; set; }
-    public string? BatchName    { get; set; }
-    public bool    HasBends     { get; set; }
+    public int     ItemId        { get; set; }
+    public string  ItemType      { get; set; } = "";  // "Order" | "Batch"
+    public string  FileName      { get; set; } = "";
+    public int     QtyRequired   { get; set; }
+    public string? Material      { get; set; }
+    public decimal Thickness     { get; set; }
+    public string? OrderNumber   { get; set; }
+    public string? Description   { get; set; }
+    public string? ScheduleName  { get; set; }
+    public string? BatchName     { get; set; }
+    public bool    HasBends      { get; set; }
+    /// <summary>Set when re-sending a partially-nested part that already exists in the Radan project.</summary>
+    public long?   RadanIdNumber { get; set; }
 }
 
 public class RetrieveFromNestingItem
@@ -98,8 +100,10 @@ public class UpdateThumbnailResult
 
 public class RetrieveFromNestingResult
 {
-    public SyncPayload Sync           { get; set; } = new();
-    public List<int>   ClearedItemIds { get; set; } = new();
+    public SyncPayload Sync            { get; set; } = new();
+    public List<int>   ClearedItemIds  { get; set; } = new();
+    /// <summary>Items still in the project but whose required qty was adjusted to match QtyNested.</summary>
+    public List<int>   AdjustedItemIds { get; set; } = new();
 }
 
 public class FinalizeResult

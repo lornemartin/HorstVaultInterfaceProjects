@@ -33,6 +33,12 @@ public class RadanProjectService : INestingProjectService
     public void RemoveParts(NestingProjectData project, long[] nestingIds)
         => RpdService.RemoveParts(Native(project), nestingIds);
 
+    public void AdjustPartsQtyToMade(NestingProjectData project, long[] nestingIds)
+        => RpdService.AdjustPartQtyToMade(Native(project), nestingIds);
+
+    public void UpdatePartQty(NestingProjectData project, long nestingId, int qty)
+        => RpdService.UpdatePartQty(Native(project), nestingId, qty);
+
     public SyncPayload ReadSyncData(NestingProjectData project)
     {
         var prj        = Native(project);
