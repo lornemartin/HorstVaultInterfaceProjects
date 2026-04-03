@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace HorstMFG.Bridge.Handlers;
 
@@ -49,6 +50,8 @@ public class UpdateThumbnailHandler
             }
         }
 
+        _log.LogInformation("UpdateThumbnail complete: {Success}/{Total} part(s) had thumbnail data",
+            results.Count(r => r.Success), results.Count);
         return results;
     }
 }

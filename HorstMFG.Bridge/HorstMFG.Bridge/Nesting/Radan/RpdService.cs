@@ -2,6 +2,7 @@ using RadProject;
 using System;
 using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace HorstMFG.Bridge.Nesting.Radan;
 
@@ -76,10 +77,12 @@ internal static class RpdService
                 var nest = payload.Nests.FirstOrDefault(n => n.NestName == usedIn.ID.ToString());
                 if (nest == null)
                 {
+                    var nestPath = ResolveNestPath(nestFolder, usedIn.ID);
                     nest = new SyncNest
                     {
-                        NestName = usedIn.ID.ToString(),
-                        NestPath = ResolveNestPath(nestFolder, usedIn.ID),
+                        NestName       = usedIn.ID.ToString(),
+                        NestPath       = nestPath,
+                        ThumbnailBytes = ExtractNestThumbnail(nestPath),
                     };
                     payload.Nests.Add(nest);
                 }
@@ -130,6 +133,23 @@ internal static class RpdService
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static byte[]? ExtractNestThumbnail(string? drgPath)
+    {
+        if (string.IsNullOrEmpty(drgPath) || !File.Exists(drgPath)) return null;
+        try
+        {
+            var doc = new XmlDocument();
+            doc.Load(drgPath);
+            foreach (XmlNode node in doc.DocumentElement!)
+            {
+                if (node.OuterXml.Contains("Thumbnail") && !string.IsNullOrEmpty(node.InnerText))
+                    return Convert.FromBase64String(node.InnerText);
+            }
+        }
+        catch { /* non-fatal — thumbnail is optional */ }
+        return null;
+    }
 
     private static string? ResolveNestPath(string nestFolder, long nestId)
     {

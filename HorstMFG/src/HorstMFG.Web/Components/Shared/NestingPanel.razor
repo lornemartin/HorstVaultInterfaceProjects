@@ -545,13 +545,14 @@
                     .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
                 if (nest == null)
                 {
-                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, PlantId = nestPlantId };
+                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
                     db.Nests.Add(nest);
                     await db.SaveChangesAsync();
                 }
-                else if (syncNest.NestPath != null)
+                else
                 {
-                    nest.NestPath = syncNest.NestPath;
+                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
+                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
                 }
 
                 foreach (var entry in syncNest.Parts)
@@ -610,13 +611,14 @@
                     .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
                 if (nest == null)
                 {
-                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, PlantId = nestPlantId };
+                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
                     db.Nests.Add(nest);
                     await db.SaveChangesAsync();
                 }
-                else if (syncNest.NestPath != null)
+                else
                 {
-                    nest.NestPath = syncNest.NestPath;
+                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
+                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
                 }
 
                 foreach (var entry in syncNest.Parts)
@@ -670,7 +672,7 @@
     private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile);
     private record SyncPartDto(long RadanIdNumber, int QtyNested);
     private class NestEntryDto { public long RadanIdNumber { get; set; } public int Qty { get; set; } }
-    private class SyncNestDto  { public string NestName { get; set; } = ""; public string? NestPath { get; set; } public List<NestEntryDto> Parts { get; set; } = new(); }
+    private class SyncNestDto  { public string NestName { get; set; } = ""; public string? NestPath { get; set; } public byte[]? ThumbnailBytes { get; set; } public List<NestEntryDto> Parts { get; set; } = new(); }
     private class SyncPayloadDto { public List<SyncPartDto> Parts { get; set; } = new(); public List<SyncNestDto> Nests { get; set; } = new(); }
     private class RetrieveFromNestingResultDto
     {

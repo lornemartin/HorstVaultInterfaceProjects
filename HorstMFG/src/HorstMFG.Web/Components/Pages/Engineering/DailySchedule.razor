@@ -6,8 +6,11 @@
 @inject IJSRuntime JS
 @inject IBomService BomService
 @inject HorstMFG.Web.Services.ScheduleTreeFilterState ScheduleFilterState
+@inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Hubs
 @using Microsoft.EntityFrameworkCore
+@using System.Text.Json
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.TreeGrid
 @using Syncfusion.Blazor.Calendars
@@ -439,11 +442,38 @@
             var confirmed = await JS.InvokeAsync<bool>("confirm",
                 $"Release schedule '{row.BatchName}' to production? This cannot be undone and the schedule will become read-only.");
             if (!confirmed) return;
+
+            var stationId = BridgeHub.GetAnyOnlineStationId();
+            if (stationId == null)
+            {
+                await JS.InvokeVoidAsync("alert",
+                    "No bridge connection is active. A bridge must be connected to release to production.");
+                return;
+            }
+
             _releasing = true;
             StateHasChanged();
             try
             {
                 await BomService.ReleaseScheduleToProductionAsync(row.TreeId);
+
+                // Send thumbnail extraction to the bridge for parts that don't have one yet
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                var thumbItems = await db.OrderItems
+                    .Where(i => i.NestOrder.ScheduleOrder.ScheduleId == row.TreeId
+                             && i.Part.Thumbnail == null
+                             && i.Part.FileName != null)
+                    .Select(i => new { i.PartId, i.Part.FileName })
+                    .Distinct()
+                    .ToListAsync();
+                if (thumbItems.Any())
+                {
+                    var payload = JsonSerializer.Serialize(
+                        thumbItems.Select(t => new { PartId = t.PartId, FileName = t.FileName }));
+                    BridgeHub.TrySendCommand(HubContext, stationId.Value,
+                        Guid.NewGuid().ToString(), "UpdateThumbnail", payload);
+                }
+
                 _awaitingRestore = true;
                 if (_schedGrid is not null) await _schedGrid.RefreshAsync();
             }

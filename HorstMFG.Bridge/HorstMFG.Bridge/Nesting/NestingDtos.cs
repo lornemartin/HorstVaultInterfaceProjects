@@ -27,9 +27,10 @@ public class SyncPart
 
 public class SyncNest
 {
-    public string          NestName { get; set; } = "";
-    public string?         NestPath { get; set; }
-    public List<NestEntry> Parts    { get; set; } = new();
+    public string          NestName       { get; set; } = "";
+    public string?         NestPath       { get; set; }
+    public byte[]?         ThumbnailBytes { get; set; }
+    public List<NestEntry> Parts          { get; set; } = new();
 }
 
 public class NestEntry

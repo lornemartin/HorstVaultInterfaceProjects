@@ -58,7 +58,7 @@ try
     builder.Services.AddSingleton<BridgeNotificationService>();
     builder.Services.AddSignalR(options =>
     {
-        options.MaximumReceiveMessageSize = 512 * 1024; // 512 KB — accommodates large BOM export files
+        options.MaximumReceiveMessageSize = 16 * 1024 * 1024; // 16 MB — accommodates large thumbnail batches from Bridge
     });
 
     // Syncfusion

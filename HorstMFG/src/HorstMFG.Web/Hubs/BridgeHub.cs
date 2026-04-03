@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace HorstMFG.Web.Hubs;
@@ -23,6 +26,8 @@ public class BridgeHub : Hub
     private static readonly ConcurrentDictionary<int, string> _stationToConn = new();
     // connections that passed API key validation
     private static readonly ConcurrentDictionary<string, bool> _authorized = new();
+    // commandId → commandType — populated on send, removed on result
+    private static readonly ConcurrentDictionary<string, string> _commandTypes = new();
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly BridgeNotificationService _notifications;
@@ -100,13 +105,39 @@ public class BridgeHub : Hub
     }
 
     /// <summary>Called by the bridge when a command finishes.</summary>
-    public Task CommandResult(int stationId, string commandId, bool success, string payload)
+    public async Task CommandResult(int stationId, string commandId, bool success, string payload)
     {
         _log.LogDebug("CommandResult station={StationId} cmd={CommandId} ok={Success}",
                       stationId, commandId, success);
+        _commandTypes.TryRemove(commandId, out var commandType);
+        if (commandType == "UpdateThumbnail" && success)
+            await HandleThumbnailResultAsync(payload);
         _notifications.OnCommandCompleted(stationId, commandId, success, payload);
-        return Task.CompletedTask;
     }
+
+    private async Task HandleThumbnailResultAsync(string payload)
+    {
+        try
+        {
+            var results = JsonSerializer.Deserialize<List<ThumbnailResultDto>>(payload,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (results == null) return;
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            foreach (var r in results.Where(r => r.Success && r.ThumbnailBytes != null))
+            {
+                var part = await db.Parts.FindAsync(r.PartId);
+                if (part != null) part.Thumbnail = r.ThumbnailBytes;
+            }
+            await db.SaveChangesAsync();
+            _log.LogInformation("Stored thumbnails for {Count} part(s)", results.Count(r => r.Success));
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to store thumbnail results");
+        }
+    }
+
+    private record ThumbnailResultDto(int PartId, byte[]? ThumbnailBytes, bool Success);
 
     /// <summary>Called by the bridge to report command progress.</summary>
     public Task Progress(int stationId, string commandId, string message, int percent)
@@ -151,6 +182,7 @@ public class BridgeHub : Hub
         if (!_stationToConn.TryGetValue(stationId, out var connId))
             return false;
 
+        _commandTypes[commandId] = commandType;
         _ = hubContext.Clients.Client(connId)
                       .SendAsync("ExecuteCommand", commandId, commandType, payload);
         return true;
@@ -159,6 +191,10 @@ public class BridgeHub : Hub
     /// <summary>Returns true if a bridge for this station is currently connected.</summary>
     public static bool IsStationOnline(int stationId)
         => _stationToConn.ContainsKey(stationId);
+
+    /// <summary>Returns any connected station ID, or null if no bridge is online.</summary>
+    public static int? GetAnyOnlineStationId()
+        => _stationToConn.IsEmpty ? null : _stationToConn.Keys.First();
 
     /// <summary>
     /// Tells the bridge for a given station to switch to a new active project.
