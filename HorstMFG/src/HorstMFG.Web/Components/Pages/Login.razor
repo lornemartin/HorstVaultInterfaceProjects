@@ -87,8 +87,11 @@
             new(ClaimTypes.Name, user.FullName),
             new("UserName", user.UserName),
             new("PlantId", user.PlantId.ToString()),
-            new("PlantName", user.Plant.Name)
+            new("PlantName", user.Plant.Name),
         };
+
+        if (user.StationId.HasValue)
+            claims.Add(new("StationId", user.StationId.Value.ToString()));
 
         foreach (var role in user.Roles)
         {

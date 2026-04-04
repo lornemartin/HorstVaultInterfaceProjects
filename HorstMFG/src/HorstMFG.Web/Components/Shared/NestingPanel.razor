@@ -21,11 +21,21 @@
 
         <div style="min-width:200px;">
             <label style="font-weight:600; display:block; margin-bottom:.2rem; font-size:.85em;">Nesting Station</label>
-            <SfDropDownList TValue="int?" TItem="StationOption"
-                            Value="_stationId" ValueChanged="OnStationChangedAsync"
-                            DataSource="_stations" Placeholder="Select station…">
-                <DropDownListFieldSettings Text="Label" Value="Id" />
-            </SfDropDownList>
+            @if (StationId.HasValue)
+            {
+                @* Station is fixed by the user's account — show as read-only label *@
+                var label = _stations.FirstOrDefault(s => s.Id == StationId)?.Label ?? $"Station {StationId}";
+                <div style="padding:.35rem .5rem; background:#fff; border:1px solid #dee2e6; border-radius:4px; font-size:.9em;">@label</div>
+            }
+            else
+            {
+                @* Admin or unassigned user — show dropdown *@
+                <SfDropDownList TValue="int?" TItem="StationOption"
+                                Value="_stationId" ValueChanged="OnStationChangedAsync"
+                                DataSource="_stations" Placeholder="Select station…">
+                    <DropDownListFieldSettings Text="Label" Value="Id" />
+                </SfDropDownList>
+            }
         </div>
 
         <div style="flex:1; min-width:260px;">
@@ -96,8 +106,9 @@
 
 @code {
     // ── Parameters ────────────────────────────────────────────────────────────
-    [Parameter] public string ItemType { get; set; } = "Order";   // "Order" | "Batch"
-    [Parameter] public int PlantId { get; set; }
+    [Parameter] public string  ItemType  { get; set; } = "Order";   // "Order" | "Batch"
+    [Parameter] public int     PlantId   { get; set; }
+    [Parameter] public int?    StationId { get; set; }   // from user's StationId claim; null = admin/unassigned
     [Parameter] public IReadOnlyList<NestingSelectionItem> SelectedItems { get; set; }
         = Array.Empty<NestingSelectionItem>();
     [Parameter] public EventCallback OnCompleted { get; set; }
@@ -151,6 +162,15 @@
             var online = BridgeHub.IsStationOnline(s.Id);
             return new StationOption(s.Id, $"{s.Name}  {(online ? "●" : "○")}");
         }).ToList();
+
+        // Only auto-set _stationId from the user's assigned station claim.
+        // Admins without an assignment must select manually from the dropdown.
+        if (_stationId == null && StationId.HasValue)
+        {
+            _stationId = StationId;
+            var station = await db.NestingStations.FindAsync(StationId.Value);
+            _projectPath = station?.ProjectPath ?? "";
+        }
     }
 
     // ── Station / project selection ───────────────────────────────────────────

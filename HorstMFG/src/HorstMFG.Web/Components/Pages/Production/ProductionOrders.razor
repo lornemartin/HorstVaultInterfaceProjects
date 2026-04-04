@@ -26,6 +26,7 @@
 
 <NestingPanel ItemType="Order"
               PlantId="_plantId"
+              StationId="_stationId"
               SelectedItems="_selectedForNesting"
               OnCompleted="ReloadAsync" />
 
@@ -112,7 +113,8 @@
     private SfGrid<OrderItemRow>? _grid;
     private List<OrderItemRow> _items = new();
     private List<NestingSelectionItem> _selectedForNesting = new();
-    private int _plantId;
+    private int  _plantId;
+    private int? _stationId;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -121,6 +123,7 @@
         var user    = HttpContextAccessor.HttpContext?.User;
         var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
         int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
+        if (int.TryParse(user?.FindFirst("StationId")?.Value, out var sid)) _stationId = sid;
 
         await using var db = await DbContextFactory.CreateDbContextAsync();
 

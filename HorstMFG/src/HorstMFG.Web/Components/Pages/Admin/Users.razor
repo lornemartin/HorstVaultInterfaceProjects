@@ -22,11 +22,12 @@
 <SfGrid TValue="UserRow" DataSource="_users" AllowSorting="true" AllowResizing="true" Height="500">
     <GridEvents TValue="UserRow" OnRecordDoubleClick="OnRowDoubleClick" />
     <GridColumns>
-        <GridColumn Field="@nameof(UserRow.FullName)"  HeaderText="Full Name"  Width="200" />
-        <GridColumn Field="@nameof(UserRow.UserName)"  HeaderText="Username"   Width="160" />
-        <GridColumn Field="@nameof(UserRow.PlantName)" HeaderText="Plant"      Width="140" />
-        <GridColumn Field="@nameof(UserRow.RoleNames)" HeaderText="Roles"      Width="220" />
-        <GridColumn Field="@nameof(UserRow.IsActive)"  HeaderText="Active"     Width="90"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(UserRow.FullName)"    HeaderText="Full Name"  Width="200" />
+        <GridColumn Field="@nameof(UserRow.UserName)"    HeaderText="Username"   Width="160" />
+        <GridColumn Field="@nameof(UserRow.PlantName)"   HeaderText="Plant"      Width="140" />
+        <GridColumn Field="@nameof(UserRow.StationName)" HeaderText="Station"    Width="160" />
+        <GridColumn Field="@nameof(UserRow.RoleNames)"   HeaderText="Roles"      Width="220" />
+        <GridColumn Field="@nameof(UserRow.IsActive)"    HeaderText="Active"     Width="90"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
     </GridColumns>
 </SfGrid>
 
@@ -68,6 +69,14 @@
                 </div>
 
                 <div>
+                    <label class="form-label">Nesting Station <span style="font-weight:400; color:#6b7280;">(optional)</span></label>
+                    <SfDropDownList TValue="int?" TItem="StationOption" DataSource="_stations"
+                                    @bind-Value="_form.StationId" Placeholder="None">
+                        <DropDownListFieldSettings Text="Name" Value="Id" />
+                    </SfDropDownList>
+                </div>
+
+                <div>
                     <label class="form-label">Roles</label>
                     <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.25rem;">
                         @foreach (var role in _allRoles)
@@ -98,8 +107,9 @@
 @code {
     // ── Data ─────────────────────────────────────────────────────────────────
 
-    private List<UserRow> _users = new();
-    private List<PlantOption> _plants = new();
+    private List<UserRow>     _users    = new();
+    private List<PlantOption>   _plants   = new();
+    private List<StationOption> _stations = new();
     private string? _error;
 
     private static readonly UserRoleType[] _allRoles =
@@ -121,6 +131,10 @@
             .OrderBy(p => p.Name)
             .Select(p => new PlantOption(p.Id, p.Name))
             .ToListAsync();
+        _stations = await db.NestingStations
+            .OrderBy(s => s.Name)
+            .Select(s => new StationOption(s.Id, s.Name))
+            .ToListAsync();
         await LoadUsersAsync(db);
     }
 
@@ -132,14 +146,16 @@
             .OrderBy(u => u.FullName)
             .ToListAsync();
 
+        var stationNames = _stations.ToDictionary(s => s.Id, s => s.Name);
         _users = raw.Select(u => new UserRow
         {
-            Id        = u.Id,
-            FullName  = u.FullName,
-            UserName  = u.UserName,
-            PlantName = u.Plant.Name,
-            RoleNames = string.Join(", ", u.Roles.OrderBy(r => r.RoleName).Select(r => r.RoleName.ToString())),
-            IsActive  = u.IsActive,
+            Id          = u.Id,
+            FullName    = u.FullName,
+            UserName    = u.UserName,
+            PlantName   = u.Plant.Name,
+            StationName = u.StationId.HasValue && stationNames.TryGetValue(u.StationId.Value, out var sn) ? sn : "",
+            RoleNames   = string.Join(", ", u.Roles.OrderBy(r => r.RoleName).Select(r => r.RoleName.ToString())),
+            IsActive    = u.IsActive,
         }).ToList();
     }
 
@@ -169,11 +185,12 @@
         _editId = userId;
         _form = new UserForm
         {
-            FullName = user.FullName,
-            UserName = user.UserName,
-            PlantId  = user.PlantId,
-            IsActive = user.IsActive,
-            Roles    = user.Roles.Select(r => r.RoleName).ToHashSet(),
+            FullName  = user.FullName,
+            UserName  = user.UserName,
+            PlantId   = user.PlantId,
+            StationId = user.StationId,
+            IsActive  = user.IsActive,
+            Roles     = user.Roles.Select(r => r.RoleName).ToHashSet(),
         };
         _dialogError = null;
         await _dialog!.ShowAsync();
@@ -219,6 +236,7 @@
                     UserName     = _form.UserName.Trim(),
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(_form.Password),
                     PlantId      = _form.PlantId,
+                    StationId    = _form.StationId,
                     IsActive     = _form.IsActive,
                 };
                 db.Users.Add(user);
@@ -230,10 +248,11 @@
             {
                 // Edit
                 var user = await db.Users.Include(u => u.Roles).FirstAsync(u => u.Id == _editId);
-                user.FullName = _form.FullName.Trim();
-                user.UserName = _form.UserName.Trim();
-                user.PlantId  = _form.PlantId;
-                user.IsActive = _form.IsActive;
+                user.FullName  = _form.FullName.Trim();
+                user.UserName  = _form.UserName.Trim();
+                user.PlantId   = _form.PlantId;
+                user.StationId = _form.StationId;
+                user.IsActive  = _form.IsActive;
                 if (!string.IsNullOrWhiteSpace(_form.Password))
                     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(_form.Password);
 
@@ -257,23 +276,26 @@
 
     private record UserRow
     {
-        public int Id { get; init; }
-        public string FullName  { get; init; } = "";
-        public string UserName  { get; init; } = "";
-        public string PlantName { get; init; } = "";
-        public string RoleNames { get; init; } = "";
-        public bool   IsActive  { get; init; }
+        public int    Id          { get; init; }
+        public string FullName    { get; init; } = "";
+        public string UserName    { get; init; } = "";
+        public string PlantName   { get; init; } = "";
+        public string StationName { get; init; } = "";
+        public string RoleNames   { get; init; } = "";
+        public bool   IsActive    { get; init; }
     }
 
     private record PlantOption(int Id, string Name);
+    private record StationOption(int Id, string Name);
 
     private class UserForm
     {
-        public string FullName { get; set; } = "";
-        public string UserName { get; set; } = "";
-        public string Password { get; set; } = "";
-        public int    PlantId  { get; set; }
-        public bool   IsActive { get; set; } = true;
+        public string FullName  { get; set; } = "";
+        public string UserName  { get; set; } = "";
+        public string Password  { get; set; } = "";
+        public int    PlantId   { get; set; }
+        public int?   StationId { get; set; }
+        public bool   IsActive  { get; set; } = true;
         public HashSet<UserRoleType> Roles { get; set; } = new();
     }
 }
