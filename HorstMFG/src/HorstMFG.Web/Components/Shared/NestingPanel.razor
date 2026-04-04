@@ -55,19 +55,19 @@
     </div>
 
     @* Row 2: Command buttons *@
-    <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:.6rem;">
 
-        <SfButton CssClass="e-primary" OnClick="SendToNestingAsync"
+        <SfButton CssClass="e-primary" IconCss="e-icons e-upload-1" OnClick="SendToNestingAsync"
                   Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => !i.IsInRadanProject))">
             Send to Nesting
         </SfButton>
 
-        <SfButton OnClick="RetrieveFromNestingAsync"
+        <SfButton IconCss="e-icons e-import" OnClick="RetrieveFromNestingAsync"
                   Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => i.RadanIdNumber != null))">
             Retrieve Selection
         </SfButton>
 
-        <SfButton OnClick="RetrieveAllFromNestingAsync"
+        <SfButton IconCss="e-icons e-import-1" OnClick="RetrieveAllFromNestingAsync"
                   Disabled="@(_isBusy || _stationId == null)">
             Retrieve All
         </SfButton>
@@ -82,12 +82,12 @@
             Update Thumbnails
         </SfButton>
 
-        <SfButton OnClick="SyncAsync"
+        <SfButton IconCss="e-icons e-refresh" OnClick="SyncAsync"
                   Disabled="@(_isBusy || _stationId == null)">
             Sync
         </SfButton>
 
-        <SfButton CssClass="e-danger" OnClick="FinalizeAsync"
+        <SfButton CssClass="e-danger" IconCss="e-icons e-check" OnClick="FinalizeAsync"
                   Disabled="@(_isBusy || _stationId == null)">
             Finalize
         </SfButton>
@@ -95,7 +95,7 @@
 
     @if (_statusLines.Count > 0)
     {
-        <div class="mt-2" style="background:#fff; border:1px solid #dee2e6; border-radius:4px;
+        <div style="background:#fff; border:1px solid #dee2e6; border-radius:4px;
                                   padding:.4rem .6rem; font-size:.82em;
                                   max-height:120px; overflow-y:auto;">
             @foreach (var line in _statusLines)
