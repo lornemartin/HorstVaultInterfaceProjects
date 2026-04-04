@@ -13,6 +13,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.SplitButtons
 @using System.Text.Json
 
 <div class="nesting-panel border rounded p-2 bg-light" style="margin-bottom:1.5rem;">
@@ -72,16 +73,6 @@
             Retrieve All
         </SfButton>
 
-        <SfButton OnClick="RetrieveFromVaultAsync"
-                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
-            Retrieve from Vault
-        </SfButton>
-
-        <SfButton OnClick="UpdateThumbnailsAsync"
-                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
-            Update Thumbnails
-        </SfButton>
-
         <SfButton IconCss="e-icons e-refresh" OnClick="SyncAsync"
                   Disabled="@(_isBusy || _stationId == null)">
             Sync
@@ -91,6 +82,17 @@
                   Disabled="@(_isBusy || _stationId == null)">
             Finalize
         </SfButton>
+
+        <span style="border-left:1px solid #ced4da; height:28px; align-self:center;"></span>
+
+        <SfDropDownButton IconCss="e-icons e-more-horizontal-1" Content="More"
+                          Disabled="@(_isBusy || _stationId == null)"
+                          ItemSelected="OnMoreItemSelectedAsync">
+            <DropDownMenuItems>
+                <DropDownMenuItem Id="vault"     Text="Retrieve from Vault"  IconCss="e-icons e-lock"      Disabled="@(!SelectedItems.Any())" />
+                <DropDownMenuItem Id="thumbnail" Text="Update Thumbnails"    IconCss="e-icons e-thumbnail" Disabled="@(!SelectedItems.Any())" />
+            </DropDownMenuItems>
+        </SfDropDownButton>
     </div>
 
     @if (_statusLines.Count > 0)
@@ -322,6 +324,15 @@
     }
 
     private Task SyncAsync() => SendCommandAsync("Sync", "{}");
+
+    private async Task OnMoreItemSelectedAsync(MenuEventArgs args)
+    {
+        switch (args.Item.Id)
+        {
+            case "vault":     await RetrieveFromVaultAsync();  break;
+            case "thumbnail": await UpdateThumbnailsAsync();   break;
+        }
+    }
 
     private async Task FinalizeAsync()
     {
