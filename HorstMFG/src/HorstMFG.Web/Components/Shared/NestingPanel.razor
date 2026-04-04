@@ -52,7 +52,12 @@
 
         <SfButton OnClick="RetrieveFromNestingAsync"
                   Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => i.RadanIdNumber != null))">
-            Retrieve from Nesting
+            Retrieve Selection
+        </SfButton>
+
+        <SfButton OnClick="RetrieveAllFromNestingAsync"
+                  Disabled="@(_isBusy || _stationId == null)">
+            Retrieve All
         </SfButton>
 
         <SfButton OnClick="RetrieveFromVaultAsync"
@@ -227,6 +232,43 @@
             ItemId        = i.ItemId,
             RadanIdNumber = i.RadanIdNumber!.Value,
         }));
+
+        await SendCommandAsync("RetrieveFromNesting", payload);
+    }
+
+    private async Task RetrieveAllFromNestingAsync()
+    {
+        if (_stationId == null) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        string payload;
+        if (ItemType == "Order")
+        {
+            var items = await db.OrderItems
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
+                .Select(i => new { i.Id, i.RadanIdNumber })
+                .ToListAsync();
+            if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
+            payload = JsonSerializer.Serialize(items.Select(i => new
+            {
+                ItemId        = i.Id,
+                RadanIdNumber = i.RadanIdNumber!.Value,
+            }));
+        }
+        else
+        {
+            var items = await db.BatchItems
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
+                .Select(i => new { i.Id, i.RadanIdNumber })
+                .ToListAsync();
+            if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
+            payload = JsonSerializer.Serialize(items.Select(i => new
+            {
+                ItemId        = i.Id,
+                RadanIdNumber = i.RadanIdNumber!.Value,
+            }));
+        }
 
         await SendCommandAsync("RetrieveFromNesting", payload);
     }
