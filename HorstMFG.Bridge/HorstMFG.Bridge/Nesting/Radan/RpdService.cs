@@ -123,9 +123,9 @@ internal static class RpdService
         if (project.RadanSchedule?.Length > 0 && project.RadanSchedule[0].JobDetails?.Length > 0)
         {
             var jd = project.RadanSchedule[0].JobDetails[0];
-            jd.NestFolder         = Path.Combine(newDir, "nests");
-            jd.RemnantSaveFolder  = Path.Combine(newDir, "remnants");
-            jd.NextNestNum        = 1;
+            jd.NestFolder        = Path.Combine(newDir, "nests");
+            jd.RemnantSaveFolder = Path.Combine(newDir, "remnants");
+            // Preserve NextNestNum so the sequence continues from the old project
         }
 
         Save(project, newRpdPath);

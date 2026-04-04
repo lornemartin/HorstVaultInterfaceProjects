@@ -1,6 +1,7 @@
 @inject IHubContext<BridgeHub> HubContext
 @inject BridgeNotificationService BridgeEvents
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IConfiguration Configuration
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -41,8 +42,9 @@
         <div style="flex:1; min-width:260px;">
             <label style="font-weight:600; display:block; margin-bottom:.2rem; font-size:.85em;">Active Project</label>
             <div style="display:flex; gap:.4rem;">
-                <input type="text" class="form-control form-control-sm" placeholder="Full path to .rpd file…"
-                       @bind="_projectPath" @bind:event="oninput"
+                <input type="text" class="form-control form-control-sm" placeholder="Path to .rpd file…"
+                       value="@StripProjectRoot(_projectPath)"
+                       @onchange="@(e => _projectPath = ExpandProjectRoot(e.Value?.ToString() ?? ""))"
                        disabled="@(_stationId == null)" />
                 <SfButton OnClick="SetActiveProjectAsync"
                           Disabled="@(_stationId == null || string.IsNullOrWhiteSpace(_projectPath))">
@@ -514,24 +516,39 @@
 
         await ApplySyncPayloadAsync(result.Sync);
 
-        // Clear all items that were in this station's project (new project is empty)
         await using var db = await DbContextFactory.CreateDbContextAsync();
-        if (ItemType == "Order")
+
+        // Build QtyNested lookup by RadanIdNumber from the sync payload
+        var nestedQty = result.Sync.Parts
+            .ToDictionary(p => (int)p.RadanIdNumber, p => p.QtyNested);
+
+        // Process ALL order items at this station regardless of ItemType
+        var orderItems = await db.OrderItems
+            .Where(i => i.NestingStationId == _stationId)
+            .ToListAsync();
+        foreach (var item in orderItems)
         {
-            var items = await db.OrderItems
-                .Where(i => i.NestingStationId == _stationId)
-                .ToListAsync();
-            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; i.NestingStationId = null; }
-        }
-        else
-        {
-            var items = await db.BatchItems
-                .Where(i => i.NestingStationId == _stationId)
-                .ToListAsync();
-            foreach (var i in items) { i.IsInRadanProject = false; i.RadanIdNumber = null; i.NestingStationId = null; }
+            var qty = item.RadanIdNumber.HasValue
+                   && nestedQty.TryGetValue(item.RadanIdNumber.Value, out var q) ? q : 0;
+            item.IsInRadanProject = false;
+            item.NestingStationId = null;
+            if (qty == 0) item.RadanIdNumber = null;
         }
 
-        // Update station project info
+        // Process ALL batch items at this station regardless of ItemType
+        var batchItems = await db.BatchItems
+            .Where(i => i.NestingStationId == _stationId)
+            .ToListAsync();
+        foreach (var item in batchItems)
+        {
+            var qty = item.RadanIdNumber.HasValue
+                   && nestedQty.TryGetValue(item.RadanIdNumber.Value, out var q) ? q : 0;
+            item.IsInRadanProject = false;
+            item.NestingStationId = null;
+            if (qty == 0) item.RadanIdNumber = null;
+        }
+
+        // Update station project info and sync the textbox
         if (_stationId.HasValue)
         {
             var station = await db.NestingStations.FindAsync(_stationId.Value);
@@ -540,6 +557,7 @@
                 station.ProjectName = result.NewProjectName;
                 station.ProjectPath = result.NewProjectPath;
             }
+            _projectPath = result.NewProjectPath;
         }
 
         await db.SaveChangesAsync();
@@ -744,10 +762,31 @@
     }
     private class FinalizeResultDto
     {
-        public SyncPayloadDto Sync           { get; set; } = new();
-        public List<int>      ClearedItemIds { get; set; } = new();
-        public string         NewProjectName { get; set; } = "";
-        public string         NewProjectPath { get; set; } = "";
+        public SyncPayloadDto Sync            { get; set; } = new();
+        public List<int>      ClearedItemIds  { get; set; } = new();
+        public List<int>      AdjustedItemIds { get; set; } = new();
+        public string         NewProjectName  { get; set; } = "";
+        public string         NewProjectPath  { get; set; } = "";
+    }
+
+    private string _projectsRoot => Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
+
+    private string StripProjectRoot(string path)
+    {
+        var root = _projectsRoot;
+        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(root)) return path;
+        if (path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            return path[root.Length..].TrimStart('\\', '/');
+        return path;
+    }
+
+    private string ExpandProjectRoot(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return input;
+        // If user typed a relative path (doesn't start with a drive letter or UNC), prepend the root
+        if (!System.IO.Path.IsPathRooted(input))
+            return System.IO.Path.Combine(_projectsRoot, input);
+        return input;
     }
     private record RetrieveFromVaultResultDto(int ItemId, bool Success, string? Error);
     private record UpdateThumbnailResultDto(int PartId, byte[]? ThumbnailBytes, bool Success);
