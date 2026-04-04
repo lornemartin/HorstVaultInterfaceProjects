@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Components.Shared
@@ -44,25 +45,24 @@
                      onerror="this.style.display='none'" />
                 @if (row.Nests.Any())
                 {
-                    <table class="table table-sm table-bordered mb-0" style="width:auto;">
-                        <thead>
-                            <tr><th>Nest</th><th class="text-end">Qty</th><th></th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var nest in row.Nests)
-                            {
-                                <tr>
-                                    <td>@nest.NestName</td>
-                                    <td class="text-end">@nest.Qty</td>
-                                    <td>
-                                        <img src="/api/thumbnails/nest/@nest.NestId" loading="lazy"
-                                             style="height:64px; object-fit:contain;"
-                                             onerror="this.style.display='none'" />
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:.6rem;">
+                        @foreach (var nest in row.Nests)
+                        {
+                            <div style="border:1px solid #dee2e6; border-radius:4px; padding:.5rem; display:flex; gap:.6rem; align-items:flex-start; background:#fff;">
+                                <img src="/api/thumbnails/nest/@nest.NestId" loading="lazy"
+                                     style="height:80px; object-fit:contain; flex-shrink:0;"
+                                     onerror="this.style.display='none'" />
+                                <div>
+                                    <div style="font-weight:600; font-size:.9em;">@nest.NestName</div>
+                                    @if (!string.IsNullOrEmpty(nest.NestPath))
+                                    {
+                                        <div style="font-size:.75em; color:#6b7280; word-break:break-all;">@nest.NestPath</div>
+                                    }
+                                    <div style="font-size:.85em; margin-top:.2rem;">Qty: <strong>@nest.Qty</strong></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 }
                 else
                 {
@@ -160,16 +160,19 @@
                     OrderItemId = np.OrderItemId!.Value,
                     NestId      = np.NestId,
                     NestName    = np.Nest.NestName,
+                    NestPath    = np.Nest.NestPath,
                     Qty         = np.Qty,
                 })
                 .ToListAsync();
 
+            var nestRoot = Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
             var lookup = nestData
                 .GroupBy(n => n.OrderItemId)
                 .ToDictionary(g => g.Key, g => g.Select(n => new NestInfoRow
                 {
                     NestId   = n.NestId,
                     NestName = n.NestName,
+                    NestPath = StripRoot(n.NestPath, nestRoot),
                     Qty      = n.Qty,
                 }).ToList());
 
@@ -262,10 +265,19 @@
         public List<NestInfoRow> Nests  { get; set; } = new();
     }
 
+    private static string? StripRoot(string? path, string root)
+    {
+        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(root)) return path;
+        if (path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            return path[root.Length..].TrimStart('\\', '/');
+        return path;
+    }
+
     private class NestInfoRow
     {
-        public int    NestId   { get; set; }
-        public string NestName { get; set; } = "";
-        public int    Qty      { get; set; }
+        public int     NestId   { get; set; }
+        public string  NestName { get; set; } = "";
+        public string? NestPath { get; set; }
+        public int     Qty      { get; set; }
     }
 }
