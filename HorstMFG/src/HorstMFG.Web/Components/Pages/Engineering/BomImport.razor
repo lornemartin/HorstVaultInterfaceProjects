@@ -10,6 +10,7 @@
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Services
 @using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Layouts
 
 <PageTitle>BOM Import - HorstMFG</PageTitle>
 
@@ -105,76 +106,82 @@ else
             <span style="color: @(_missingPdfCount > 0 ? "#b91c1c" : "#166534");">Missing PDFs: @_missingPdfCount</span>
         </div>
 
-        <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="450"
-                AllowSelection="true" TValue="BomExportLine">
-            <GridEditSettings AllowEditing="true" Mode="Syncfusion.Blazor.Grids.EditMode.Batch" />
-            <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" />
-            <GridEvents RowSelected="OnRowSelected" RowDataBound="OnRowDataBound" TValue="BomExportLine" />
-            <GridSortSettings>
-                <GridSortColumns>
-                    <GridSortColumn Field="@nameof(BomExportLine.SortOrder)" Direction="SortDirection.Ascending" />
-                    <GridSortColumn Field="@nameof(BomExportLine.Category)" Direction="SortDirection.Ascending" />
-                    <GridSortColumn Field="@nameof(BomExportLine.Operations)" Direction="SortDirection.Ascending" />
-                    <GridSortColumn Field="@nameof(BomExportLine.Thickness)" Direction="SortDirection.Ascending" />
-                    <GridSortColumn Field="@nameof(BomExportLine.Material)" Direction="SortDirection.Ascending" />
-                </GridSortColumns>
-            </GridSortSettings>
-            <GridColumns>
-                <GridColumn Field="@nameof(BomExportLine.SortOrder)" HeaderText="Sort" Width="0" Visible="false" />
-                <GridColumn Field="@nameof(BomExportLine.HasPdf)" HeaderText="PDF" Width="70" TextAlign="TextAlign.Center"
-                            DisplayAsCheckBox="true" AllowEditing="false" />
-                <GridColumn Field="@nameof(BomExportLine.Number)" HeaderText="Number" Width="150" />
-                <GridColumn Field="@nameof(BomExportLine.Title)" HeaderText="Title" Width="180" />
-                <GridColumn Field="@nameof(BomExportLine.Category)" HeaderText="Category" Width="100" />
-                <GridColumn Field="@nameof(BomExportLine.Material)" HeaderText="Material" Width="120" />
-                <GridColumn Field="@nameof(BomExportLine.Thickness)" HeaderText="Thickness" Width="90" />
-                <GridColumn Field="@nameof(BomExportLine.Operations)" HeaderText="Operations" Width="110" />
-                <GridColumn Field="@nameof(BomExportLine.Qty)" HeaderText="Qty" Width="60" TextAlign="TextAlign.Right" />
-                <GridColumn Field="@nameof(BomExportLine.IsStock)" HeaderText="Stock" Width="70" TextAlign="TextAlign.Center"
-                            DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
-                <GridColumn Field="@nameof(BomExportLine.StructCode)" HeaderText="Struct Code" Width="180" />
-                <GridColumn Field="@nameof(BomExportLine.Parent)" HeaderText="Parent" Width="140" />
-                <GridColumn Field="@nameof(BomExportLine.Notes)" HeaderText="Notes" Width="150" />
-            </GridColumns>
-        </SfGrid>
+        <SfSplitter Height="660px" Width="100%">
+            <SplitterPanes>
+                <SplitterPane Size="75%" Min="30%">
+                    <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="628px"
+                            AllowSelection="true" TValue="BomExportLine">
+                        <GridEditSettings AllowEditing="true" Mode="Syncfusion.Blazor.Grids.EditMode.Batch" />
+                        <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" />
+                        <GridEvents RowSelected="OnRowSelected" RowDataBound="OnRowDataBound" TValue="BomExportLine" />
+                        <GridSortSettings>
+                            <GridSortColumns>
+                                <GridSortColumn Field="@nameof(BomExportLine.SortOrder)" Direction="SortDirection.Ascending" />
+                                <GridSortColumn Field="@nameof(BomExportLine.Category)" Direction="SortDirection.Ascending" />
+                                <GridSortColumn Field="@nameof(BomExportLine.Operations)" Direction="SortDirection.Ascending" />
+                                <GridSortColumn Field="@nameof(BomExportLine.Thickness)" Direction="SortDirection.Ascending" />
+                                <GridSortColumn Field="@nameof(BomExportLine.Material)" Direction="SortDirection.Ascending" />
+                            </GridSortColumns>
+                        </GridSortSettings>
+                        <GridColumns>
+                            <GridColumn Field="@nameof(BomExportLine.SortOrder)"   HeaderText="Sort"        Width="0"   Visible="false" />
+                            <GridColumn Field="@nameof(BomExportLine.HasPdf)"      HeaderText="PDF"         Width="60"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" AllowEditing="false" />
+                            <GridColumn Field="@nameof(BomExportLine.Number)"      HeaderText="Number"      Width="130" />
+                            <GridColumn Field="@nameof(BomExportLine.Title)"       HeaderText="Title"       Width="160" />
+                            <GridColumn Field="@nameof(BomExportLine.Category)"    HeaderText="Category"    Width="95"  />
+                            <GridColumn Field="@nameof(BomExportLine.Material)"    HeaderText="Material"    Width="110" />
+                            <GridColumn Field="@nameof(BomExportLine.Thickness)"   HeaderText="Thickness"   Width="85"  />
+                            <GridColumn Field="@nameof(BomExportLine.Operations)"  HeaderText="Operations"  Width="100" />
+                            <GridColumn Field="@nameof(BomExportLine.Qty)"         HeaderText="Qty"         Width="55"  TextAlign="TextAlign.Right" />
+                            <GridColumn Field="@nameof(BomExportLine.IsStock)"     HeaderText="Stock"       Width="65"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
+                            <GridColumn Field="@nameof(BomExportLine.StructCode)"  HeaderText="Struct Code" Width="160" />
+                            <GridColumn Field="@nameof(BomExportLine.Parent)"      HeaderText="Parent"      Width="130" />
+                            <GridColumn Field="@nameof(BomExportLine.Notes)"       HeaderText="Notes"       Width="140" />
+                        </GridColumns>
+                    </SfGrid>
+                </SplitterPane>
 
-        @if (_selectedLine is not null)
-        {
-            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: #f9fafb;">
-                <h4 style="margin: 0 0 0.75rem 0;">@_selectedLine.Number — @_selectedLine.Title</h4>
-
-                @if (_selectedLine.HasPdf)
-                {
-                    <iframe src="/api/pdf/@(Uri.EscapeDataString(_selectedLine.Number))"
-                            style="width: 100%; height: 600px; border: 1px solid #e5e7eb; border-radius: 0.25rem;"
-                            title="PDF Preview" />
-                }
-                else
-                {
-                    <div style="padding: 0.75rem; background: #fef3c7; color: #92400e; border-radius: 0.25rem; margin-bottom: 0.75rem;">
-                        No PDF found on share for this item. (State: @_selectedLine.LifecycleState)
-                    </div>
-                    <SfButton CssClass="e-primary" OnClick="GeneratePdf" Disabled="@_generatingPdf">
-                        @if (_generatingPdf)
+                <SplitterPane Size="25%" Min="15%">
+                    <div style="height:660px; display:flex; flex-direction:column; padding:.5rem;">
+                        @if (_selectedLine is null)
                         {
-                            <span>Generating PDF...</span>
+                            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:.9em;">
+                                Select a row to view its PDF
+                            </div>
                         }
                         else
                         {
-                            <span>Generate PDF</span>
+                            <div style="font-weight:600; font-size:.9em; margin-bottom:.4rem; color:#374151;">
+                                @_selectedLine.Number — @_selectedLine.Title
+                            </div>
+                            @if (_selectedLine.HasPdf)
+                            {
+                                <iframe src="/api/pdf/@(Uri.EscapeDataString(_selectedLine.Number))"
+                                        style="flex:1; width:100%; border:1px solid #e5e7eb; border-radius:.25rem;"
+                                        title="PDF Preview" />
+                            }
+                            else
+                            {
+                                <div style="padding:.6rem; background:#fef3c7; color:#92400e; border-radius:.25rem; margin-bottom:.5rem; font-size:.85em;">
+                                    No PDF found on share for this item. (State: @_selectedLine.LifecycleState)
+                                </div>
+                                <SfButton CssClass="e-primary" OnClick="GeneratePdf" Disabled="@_generatingPdf">
+                                    @(_generatingPdf ? "Generating PDF..." : "Generate PDF")
+                                </SfButton>
+                                @if (_generateResult is not null)
+                                {
+                                    <div style="margin-top:.5rem; padding:.5rem; border-radius:.25rem; font-size:.85em;
+                                                background:@(_generateSuccess ? "#dcfce7" : "#fee2e2");
+                                                color:@(_generateSuccess ? "#166534" : "#991b1b");">
+                                        @_generateResult
+                                    </div>
+                                }
+                            }
                         }
-                    </SfButton>
-                    @if (_generateResult is not null)
-                    {
-                        <div style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 0.25rem;
-                                    background: @(_generateSuccess ? "#dcfce7" : "#fee2e2");
-                                    color: @(_generateSuccess ? "#166534" : "#991b1b");">
-                            @_generateResult
-                        </div>
-                    }
-                }
-            </div>
-        }
+                    </div>
+                </SplitterPane>
+            </SplitterPanes>
+        </SfSplitter>
 
         <div style="margin-top: 1rem;">
             <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">

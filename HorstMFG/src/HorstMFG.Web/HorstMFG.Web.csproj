@@ -15,6 +15,7 @@
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Syncfusion.Blazor.Buttons" Version="32.2.4" />
+    <PackageReference Include="Syncfusion.Blazor.Layouts" Version="32.2.4" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="32.2.4" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="32.2.4" />
     <PackageReference Include="Syncfusion.Blazor.Inputs" Version="32.2.4" />
