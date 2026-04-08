@@ -10,7 +10,6 @@
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Services
 @using Microsoft.EntityFrameworkCore
-@using Syncfusion.Blazor.Layouts
 
 <PageTitle>BOM Import - HorstMFG</PageTitle>
 
@@ -106,82 +105,64 @@ else
             <span style="color: @(_missingPdfCount > 0 ? "#b91c1c" : "#166534");">Missing PDFs: @_missingPdfCount</span>
         </div>
 
-        <SfSplitter Height="660px" Width="100%">
-            <SplitterPanes>
-                <SplitterPane Size="75%" Min="30%">
-                    <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="628px"
-                            AllowSelection="true" TValue="BomExportLine">
-                        <GridEditSettings AllowEditing="true" Mode="Syncfusion.Blazor.Grids.EditMode.Batch" />
-                        <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" />
-                        <GridEvents RowSelected="OnRowSelected" RowDataBound="OnRowDataBound" TValue="BomExportLine" />
-                        <GridSortSettings>
-                            <GridSortColumns>
-                                <GridSortColumn Field="@nameof(BomExportLine.SortOrder)" Direction="SortDirection.Ascending" />
-                                <GridSortColumn Field="@nameof(BomExportLine.Category)" Direction="SortDirection.Ascending" />
-                                <GridSortColumn Field="@nameof(BomExportLine.Operations)" Direction="SortDirection.Ascending" />
-                                <GridSortColumn Field="@nameof(BomExportLine.Thickness)" Direction="SortDirection.Ascending" />
-                                <GridSortColumn Field="@nameof(BomExportLine.Material)" Direction="SortDirection.Ascending" />
-                            </GridSortColumns>
-                        </GridSortSettings>
-                        <GridColumns>
-                            <GridColumn Field="@nameof(BomExportLine.SortOrder)"   HeaderText="Sort"        Width="0"   Visible="false" />
-                            <GridColumn Field="@nameof(BomExportLine.HasPdf)"      HeaderText="PDF"         Width="60"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" AllowEditing="false" />
-                            <GridColumn Field="@nameof(BomExportLine.Number)"      HeaderText="Number"      Width="130" />
-                            <GridColumn Field="@nameof(BomExportLine.Title)"       HeaderText="Title"       Width="160" />
-                            <GridColumn Field="@nameof(BomExportLine.Category)"    HeaderText="Category"    Width="95"  />
-                            <GridColumn Field="@nameof(BomExportLine.Material)"    HeaderText="Material"    Width="110" />
-                            <GridColumn Field="@nameof(BomExportLine.Thickness)"   HeaderText="Thickness"   Width="85"  />
-                            <GridColumn Field="@nameof(BomExportLine.Operations)"  HeaderText="Operations"  Width="100" />
-                            <GridColumn Field="@nameof(BomExportLine.Qty)"         HeaderText="Qty"         Width="55"  TextAlign="TextAlign.Right" />
-                            <GridColumn Field="@nameof(BomExportLine.IsStock)"     HeaderText="Stock"       Width="65"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
-                            <GridColumn Field="@nameof(BomExportLine.StructCode)"  HeaderText="Struct Code" Width="160" />
-                            <GridColumn Field="@nameof(BomExportLine.Parent)"      HeaderText="Parent"      Width="130" />
-                            <GridColumn Field="@nameof(BomExportLine.Notes)"       HeaderText="Notes"       Width="140" />
-                        </GridColumns>
-                    </SfGrid>
-                </SplitterPane>
-
-                <SplitterPane Size="25%" Min="15%">
-                    <div style="height:660px; display:flex; flex-direction:column; padding:.5rem;">
-                        @if (_selectedLine is null)
-                        {
-                            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:.9em;">
-                                Select a row to view its PDF
-                            </div>
-                        }
-                        else
-                        {
-                            <div style="font-weight:600; font-size:.9em; margin-bottom:.4rem; color:#374151;">
-                                @_selectedLine.Number — @_selectedLine.Title
-                            </div>
-                            @if (_selectedLine.HasPdf)
+        <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="660px"
+                TValue="BomExportLine" ContextMenuItems="_contextMenuItems">
+            <GridEditSettings AllowEditing="true" Mode="Syncfusion.Blazor.Grids.EditMode.Batch" />
+            <GridEvents RowDataBound="OnRowDataBound" TValue="BomExportLine"
+                        ContextMenuOpen="OnContextMenuOpen"
+                        ContextMenuItemClicked="OnContextMenuClicked" />
+            <GridSortSettings>
+                <GridSortColumns>
+                    <GridSortColumn Field="@nameof(BomExportLine.SortOrder)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Category)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Operations)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Thickness)" Direction="SortDirection.Ascending" />
+                    <GridSortColumn Field="@nameof(BomExportLine.Material)" Direction="SortDirection.Ascending" />
+                </GridSortColumns>
+            </GridSortSettings>
+            <GridColumns>
+                <GridColumn Field="@nameof(BomExportLine.SortOrder)"   HeaderText="Sort"        Width="0"   Visible="false" />
+                <GridColumn Field="@nameof(BomExportLine.HasPdf)"      HeaderText="PDF"         Width="60"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" AllowEditing="false" />
+                <GridColumn Field="@nameof(BomExportLine.Number)"      HeaderText="Number"      Width="130" AllowEditing="false">
+                    <Template>
+                        @{
+                            var line = context as BomExportLine;
+                            @if (line!.HasPdf)
                             {
-                                <iframe src="/api/pdf/@(Uri.EscapeDataString(_selectedLine.Number))"
-                                        style="flex:1; width:100%; border:1px solid #e5e7eb; border-radius:.25rem;"
-                                        title="PDF Preview" />
+                                <span @onmouseenter="@(e => OnThumbEnter(line.Number, e))"
+                                      @onmouseleave="OnThumbLeave"
+                                      style="cursor:default;">@line.Number</span>
                             }
                             else
                             {
-                                <div style="padding:.6rem; background:#fef3c7; color:#92400e; border-radius:.25rem; margin-bottom:.5rem; font-size:.85em;">
-                                    No PDF found on share for this item. (State: @_selectedLine.LifecycleState)
-                                </div>
-                                <SfButton CssClass="e-primary" OnClick="GeneratePdf" Disabled="@_generatingPdf">
-                                    @(_generatingPdf ? "Generating PDF..." : "Generate PDF")
-                                </SfButton>
-                                @if (_generateResult is not null)
-                                {
-                                    <div style="margin-top:.5rem; padding:.5rem; border-radius:.25rem; font-size:.85em;
-                                                background:@(_generateSuccess ? "#dcfce7" : "#fee2e2");
-                                                color:@(_generateSuccess ? "#166534" : "#991b1b");">
-                                        @_generateResult
-                                    </div>
-                                }
+                                <span>@line.Number</span>
                             }
                         }
-                    </div>
-                </SplitterPane>
-            </SplitterPanes>
-        </SfSplitter>
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(BomExportLine.Title)"       HeaderText="Title"       Width="160" />
+                <GridColumn Field="@nameof(BomExportLine.Category)"    HeaderText="Category"    Width="95"  />
+                <GridColumn Field="@nameof(BomExportLine.Material)"    HeaderText="Material"    Width="110" />
+                <GridColumn Field="@nameof(BomExportLine.Thickness)"   HeaderText="Thickness"   Width="85"  />
+                <GridColumn Field="@nameof(BomExportLine.Operations)"  HeaderText="Operations"  Width="100" />
+                <GridColumn Field="@nameof(BomExportLine.Qty)"         HeaderText="Qty"         Width="55"  TextAlign="TextAlign.Right" />
+                <GridColumn Field="@nameof(BomExportLine.IsStock)"     HeaderText="Stock"       Width="65"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
+                <GridColumn Field="@nameof(BomExportLine.StructCode)"  HeaderText="Struct Code" Width="160" />
+                <GridColumn Field="@nameof(BomExportLine.Parent)"      HeaderText="Parent"      Width="130" />
+                <GridColumn Field="@nameof(BomExportLine.Notes)"       HeaderText="Notes"       Width="140" />
+            </GridColumns>
+        </SfGrid>
+
+        @if (_thumbNumber is not null)
+        {
+            <div style="position:fixed; left:@(_thumbX)px; top:@(_thumbY)px; z-index:9999;
+                        background:#fff; border:1px solid #dee2e6; border-radius:4px;
+                        box-shadow:0 4px 16px rgba(0,0,0,.18); padding:4px; pointer-events:none;">
+                <img src="/api/pdf-thumbnail-share/@Uri.EscapeDataString(_thumbNumber)" loading="lazy"
+                     style="display:block; width:220px; height:auto;"
+                     onerror="this.parentElement.style.display='none'" />
+            </div>
+        }
 
         <div style="margin-top: 1rem;">
             <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">
@@ -220,13 +201,18 @@ else
     private int _userId;
     private string? _message;
     private bool _isError;
-    private BomExportLine? _selectedLine;
-    private bool _generatingPdf;
-    private string? _generateResult;
-    private bool _generateSuccess;
     private int _missingPdfCount;
     private bool _jsReady;
     private int? _pdfsCopied;
+
+    // PDF thumbnail hover
+    private string? _thumbNumber;
+    private double  _thumbX, _thumbY;
+
+    private readonly List<object> _contextMenuItems = new()
+    {
+        new ContextMenuItemModel { Text = "View PDF", Id = "view-pdf" },
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -419,46 +405,29 @@ else
             args.Row.AddClass(new[] { "row-no-pdf" });
         if (!string.IsNullOrWhiteSpace(args.Data.Notes))
             args.Row.AddClass(new[] { "row-has-notes" });
+        if (args.Data.HasPdf)
+            args.Row.AddClass(new[] { "row-leaf-pdf" });
     }
 
-    private void OnRowSelected(RowSelectEventArgs<BomExportLine> args)
+    private void OnThumbEnter(string number, Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
     {
-        _selectedLine = args.Data;
-        _generateResult = null;
+        _thumbNumber = number;
+        _thumbX = e.ClientX + 18;
+        _thumbY = e.ClientY - 10;
     }
 
-    private async Task GeneratePdf()
+    private void OnThumbLeave() => _thumbNumber = null;
+
+    private void OnContextMenuOpen(ContextMenuOpenEventArgs<BomExportLine> args)
     {
-        if (_selectedLine is null) return;
+        if (args.RowInfo?.RowData?.HasPdf != true)
+            args.Cancel = true;
+    }
 
-        _generatingPdf = true;
-        _generateResult = null;
-        StateHasChanged();
-
-        try
-        {
-            var success = await BomService.GeneratePdfAsync(_selectedLine.Number);
-            _generateSuccess = success;
-            if (success)
-            {
-                _selectedLine.HasPdf = true;
-                _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
-                _generateResult = $"PDF generated successfully for {_selectedLine.Number}.";
-            }
-            else
-            {
-                _generateResult = $"PDF generation failed for {_selectedLine.Number}. Check logs for details.";
-            }
-        }
-        catch (Exception ex)
-        {
-            _generateSuccess = false;
-            _generateResult = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            _generatingPdf = false;
-        }
+    private async Task OnContextMenuClicked(ContextMenuClickEventArgs<BomExportLine> args)
+    {
+        if (args.Item.Id == "view-pdf" && args.RowInfo?.RowData?.Number is string number)
+            await JS.InvokeVoidAsync("window.open", $"/api/pdf/{Uri.EscapeDataString(number)}", "_blank");
     }
 
     private void Reset()
@@ -470,8 +439,6 @@ else
         _orderQty = 1;
         _message = null;
         _isError = false;
-        _selectedLine = null;
-        _generateResult = null;
         _missingPdfCount = 0;
         _pdfsCopied = null;
     }
