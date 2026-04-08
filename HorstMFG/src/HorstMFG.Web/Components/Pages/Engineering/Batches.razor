@@ -246,6 +246,8 @@
 
     private readonly List<object> _contextMenuItems = new()
     {
+        new ContextMenuItemModel { Text = "View PDF",                   Id = "view-pdf"       },
+        new ContextMenuItemModel { Separator = true,                    Id = "sep-pdf"        },
         new ContextMenuItemModel { Text = "Laser Parts Report",         Id = "laser-report"   },
         new ContextMenuItemModel { Text = "Iron Worker Report",         Id = "op-iron-worker" },
         new ContextMenuItemModel { Text = "Machine Shop Report",        Id = "op-machine-shop"},
@@ -257,6 +259,7 @@
         new ContextMenuItemModel { Text = "Delete Batch",               Id = "delete-batch"   },
         new ContextMenuItemModel { Text = "Delete Batch Item",          Id = "delete-product" },
     };
+
 
     private static readonly Dictionary<string, string> _opMenuItems = new()
     {
@@ -457,11 +460,17 @@
     private void OnContextMenuOpen(ContextMenuOpenEventArgs<ExportTreeItem> args)
     {
         var row = args.RowInfo?.RowData;
-        if (row is null || (!row.IsBatchRow && !row.IsProductRow))
-            args.Cancel = true;
-        else if (row.IsProductRow && row.ReadyForProduction)
-            args.Cancel = true;
-        // Item visibility for batch/schedule rows handled by app.js (row-batch, row-product, row-released).
+        if (row is null) { args.Cancel = true; return; }
+
+        if (!row.IsBatchRow && !row.IsProductRow)
+        {
+            // Leaf row — only allow menu if part has a PDF; app.js hides batch-level items
+            if (!row.HasPdf) args.Cancel = true;
+            return;
+        }
+
+        if (row.IsProductRow && row.ReadyForProduction) { args.Cancel = true; return; }
+        // Batch/product row visibility handled by app.js (row-batch, row-product, row-released).
     }
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
@@ -551,6 +560,13 @@
             return;
         }
 
+        if (args.Item.Id == "view-pdf" && row.Number is not null)
+        {
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/pdf-local/{Uri.EscapeDataString(row.Number)}", "_blank");
+            return;
+        }
+
         if (row.BatchName is not string name) return;
         if (args.Item.Id == "laser-report")
             await JS.InvokeVoidAsync("window.open",
@@ -637,6 +653,8 @@
                 args.Row.AddClass(new[] { "row-has-notes" });
             if (!args.Data.IsStock)
                 args.Row.AddClass(new[] { "row-dimmed" });
+            if (args.Data.HasPdf)
+                args.Row.AddClass(new[] { "row-leaf-pdf" });
         }
     }
 }

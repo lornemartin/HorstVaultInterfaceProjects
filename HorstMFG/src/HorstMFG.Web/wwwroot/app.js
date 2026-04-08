@@ -4,7 +4,7 @@
 // NOTE: Syncfusion does not render ContextMenuItemModel.Id as an HTML id attribute on <li> elements,
 //       so visibility is controlled by matching item text content.
 
-var _cmRowType    = null;  // 'header' | 'product' | null
+var _cmRowType    = null;  // 'header' | 'product' | 'leaf-pdf' | null
 var _cmIsReleased = false;
 var _userCanEdit  = true;  // false for ShopFloor (read-only)
 
@@ -15,8 +15,9 @@ document.addEventListener('contextmenu', function (e) {
     _cmRowType    = null;
     _cmIsReleased = false;
     if (row) {
-        if      (row.classList.contains('row-batch'))   _cmRowType = 'header';
-        else if (row.classList.contains('row-product')) _cmRowType = 'product';
+        if      (row.classList.contains('row-batch'))    _cmRowType = 'header';
+        else if (row.classList.contains('row-product'))  _cmRowType = 'product';
+        else if (row.classList.contains('row-leaf-pdf')) _cmRowType = 'leaf-pdf';
         _cmIsReleased = row.classList.contains('row-released');
     }
 
@@ -30,28 +31,34 @@ document.addEventListener('contextmenu', function (e) {
 function applyContextMenuVisibility(type, isReleased) {
     if (!type) return;
 
-    var reportTexts  = ['Laser Parts Report', 'Iron Worker Report', 'Machine Shop Report',
-                        'Bandsaw Report', 'Purchased Parts Report'];
+    var reportTexts     = ['Laser Parts Report', 'Iron Worker Report', 'Machine Shop Report',
+                           'Bandsaw Report', 'Purchased Parts Report'];
     var headerDelTexts  = ['Delete Batch', 'Delete Schedule'];
     var productDelTexts = ['Delete Batch Item', 'Delete Order'];
     var releaseTexts    = ['Release to Production'];
+    var pdfTexts        = ['View PDF'];
 
     var items = document.querySelectorAll('.e-contextmenu-wrapper li, .e-contextmenu li');
     if (!items.length) items = document.querySelectorAll('ul.e-ul li');
 
     items.forEach(function (li) {
         var text  = li.textContent.trim();
-        var isSep      = li.classList.contains('e-separator');
-        var isReport   = reportTexts.some(function (t)     { return text.indexOf(t) !== -1; });
-        var isHeaderDel= headerDelTexts.some(function (t)  { return text.indexOf(t) !== -1; });
-        var isProductDel= productDelTexts.some(function (t){ return text.indexOf(t) !== -1; });
-        var isRelease  = releaseTexts.some(function (t)    { return text.indexOf(t) !== -1; });
+        var isSep       = li.classList.contains('e-separator');
+        var isReport    = reportTexts.some(function (t)      { return text.indexOf(t) !== -1; });
+        var isHeaderDel = headerDelTexts.some(function (t)   { return text.indexOf(t) !== -1; });
+        var isProductDel= productDelTexts.some(function (t)  { return text.indexOf(t) !== -1; });
+        var isRelease   = releaseTexts.some(function (t)     { return text.indexOf(t) !== -1; });
+        var isPdf       = pdfTexts.some(function (t)         { return text.indexOf(t) !== -1; });
 
         // Skip items we don't manage
-        if (!isSep && !isReport && !isHeaderDel && !isProductDel && !isRelease) return;
+        if (!isSep && !isReport && !isHeaderDel && !isProductDel && !isRelease && !isPdf) return;
 
         var show;
-        if (!_userCanEdit) {
+        if (type === 'leaf-pdf') {
+            // Part row with PDF: show only View PDF; hide everything else
+            show = isPdf;
+            if (isSep) show = false;
+        } else if (!_userCanEdit) {
             // Read-only user (ShopFloor): only show report items on header rows
             show = (type === 'header') && isReport;
             if (isSep) show = false;
