@@ -100,6 +100,12 @@
                     {
                         <span style="font-style: italic;">@item.ProductName</span>
                     }
+                    else if (item.HasPdf)
+                    {
+                        <span @onmouseenter="@(e => OnThumbEnter(item.Number!, e))"
+                              @onmouseleave="OnThumbLeave"
+                              style="cursor:default;">@item.Number</span>
+                    }
                     else
                     {
                         <span>@item.Number</span>
@@ -180,6 +186,17 @@
     </TreeGridColumns>
 </SfTreeGrid>
 
+@if (_thumbNumber is not null)
+{
+    <div style="position:fixed; left:@(_thumbX)px; top:@(_thumbY)px; z-index:9999;
+                background:#fff; border:1px solid #dee2e6; border-radius:4px;
+                box-shadow:0 4px 16px rgba(0,0,0,.18); padding:4px; pointer-events:none;">
+        <img src="/api/pdf-thumbnail/@Uri.EscapeDataString(_thumbNumber)" loading="lazy"
+             style="display:block; width:220px; height:auto;"
+             onerror="this.parentElement.style.display='none'" />
+    </div>
+}
+
 <SfDialog @bind-Visible="_showStockDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
           Header="Update Stock Flag" AllowDragging="true">
     <DialogTemplates>
@@ -209,6 +226,19 @@
     private bool _releasing;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
+
+    // PDF thumbnail hover
+    private string? _thumbNumber;
+    private double  _thumbX, _thumbY;
+
+    private void OnThumbEnter(string number, Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
+    {
+        _thumbNumber = number;
+        _thumbX = e.ClientX + 18;
+        _thumbY = e.ClientY - 10;
+    }
+
+    private void OnThumbLeave() => _thumbNumber = null;
 
     private SfTreeGrid<ExportTreeItem>? _batchGrid;
 
