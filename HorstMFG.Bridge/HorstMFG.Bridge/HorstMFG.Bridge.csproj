@@ -14,16 +14,21 @@
     <PackageReference Include="Microsoft.Extensions.Hosting"                Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"          Version="6.0.28" />
-    <PackageReference Include="Serilog"                                      Version="3.1.1" />
-    <PackageReference Include="Serilog.Extensions.Hosting"                  Version="7.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console"                       Version="5.0.1" />
-    <PackageReference Include="Serilog.Sinks.File"                          Version="5.0.0" />
+    <PackageReference Include="Serilog"                                      Version="4.3.1" />
+    <PackageReference Include="Serilog.Extensions.Hosting"                  Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console"                       Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File"                          Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Radan\RadanProject\RadanProject.csproj" />
     <ProjectReference Include="..\..\Radan\RadanInterface2\RadanInterface2.csproj" />
     <ProjectReference Include="..\..\VaultAccess\VaultAccess.csproj" />
+    <!-- HorstPdfPrinter.exe is spawned as a subprocess for PDF generation (COM STA isolation).
+         ReferenceOutputAssembly=false ensures it is built but not linked into Bridge. -->
+    <ProjectReference Include="..\HorstPdfPrinter\HorstPdfPrinter.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +44,12 @@
     <None Include="..\..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll">  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.Vault.dll</Link></None>
     <None Include="..\..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll">       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.Forms.dll</Link></None>
     <None Include="..\..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll"> <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</Link></None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

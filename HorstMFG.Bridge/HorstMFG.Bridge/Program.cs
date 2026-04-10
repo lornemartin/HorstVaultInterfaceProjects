@@ -61,6 +61,7 @@ try
             services.AddSingleton<SyncHandler>();
             services.AddSingleton<FinalizeHandler>();
             services.AddSingleton<UpdateThumbnailHandler>();
+            services.AddSingleton<GeneratePdfHandler>();
             services.AddSingleton<FileWatcher>();
             services.AddSingleton<BomExportWatcher>();
 

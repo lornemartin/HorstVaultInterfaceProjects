@@ -76,6 +76,13 @@ public class UpdateThumbnailItem
     public string FileName { get; set; } = "";
 }
 
+public class GeneratePdfItem
+{
+    public string Number   { get; set; } = "";
+    /// <summary>"Part", "Assembly", or "Product" — determines the Vault file extension (.ipt or .iam).</summary>
+    public string Category { get; set; } = "Part";
+}
+
 // ── Command result payloads (bridge sends to HorstMFG) ───────────────────────
 
 public class SendToNestingResult
@@ -97,6 +104,13 @@ public class UpdateThumbnailResult
     public int     PartId         { get; set; }
     public byte[]? ThumbnailBytes { get; set; }
     public bool    Success        { get; set; }
+}
+
+public class GeneratePdfResult
+{
+    public string  Number  { get; set; } = "";
+    public bool    Success { get; set; }
+    public string? Error   { get; set; }
 }
 
 public class RetrieveFromNestingResult

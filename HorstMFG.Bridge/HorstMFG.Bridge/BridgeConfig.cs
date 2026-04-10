@@ -9,6 +9,11 @@ public class BridgeConfig
     public string RadanProjectsRootPath { get; set; } = "";
     public string SymNetworkSharePath   { get; set; } = "";
     public string BomExportFilePath     { get; set; } = "";
+
+    // PDF generation
+    public string PdfSharePath                { get; set; } = "";
+    public string PdfPrinterName              { get; set; } = "";
+    public string GhostscriptPath { get; set; } = "";
 }
 
 public class VaultConfig

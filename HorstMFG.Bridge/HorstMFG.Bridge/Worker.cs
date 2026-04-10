@@ -22,6 +22,7 @@ public class Worker : BackgroundService
     private readonly SyncHandler _sync;
     private readonly FinalizeHandler _finalize;
     private readonly UpdateThumbnailHandler _updateThumbnail;
+    private readonly GeneratePdfHandler _generatePdf;
     private readonly FileWatcher _fileWatcher;
     private readonly BomExportWatcher _bomExportWatcher;
     private readonly ILogger<Worker> _log;
@@ -37,6 +38,7 @@ public class Worker : BackgroundService
                   SyncHandler sync,
                   FinalizeHandler finalize,
                   UpdateThumbnailHandler updateThumbnail,
+                  GeneratePdfHandler generatePdf,
                   FileWatcher fileWatcher,
                   BomExportWatcher bomExportWatcher,
                   ILogger<Worker> log)
@@ -49,6 +51,7 @@ public class Worker : BackgroundService
         _sync                = sync;
         _finalize            = finalize;
         _updateThumbnail     = updateThumbnail;
+        _generatePdf         = generatePdf;
         _fileWatcher         = fileWatcher;
         _bomExportWatcher    = bomExportWatcher;
         _log                 = log;
@@ -129,7 +132,7 @@ public class Worker : BackgroundService
     private async Task ExecuteCommandAsync(string commandId, string commandType, string payload)
     {
         if (string.IsNullOrWhiteSpace(_activeProjectPath) &&
-            commandType is not "RetrieveFromVault" and not "UpdateThumbnail")
+            commandType is not "RetrieveFromVault" and not "UpdateThumbnail" and not "GeneratePdf")
         {
             await SendResultAsync(commandId, false, "No active project configured.");
             return;
@@ -162,6 +165,10 @@ public class Worker : BackgroundService
 
                 "UpdateThumbnail" => _updateThumbnail.Execute(
                     JsonSerializer.Deserialize<System.Collections.Generic.List<UpdateThumbnailItem>>(payload)!,
+                    Progress),
+
+                "GeneratePdf" => _generatePdf.Execute(
+                    JsonSerializer.Deserialize<System.Collections.Generic.List<GeneratePdfItem>>(payload)!,
                     Progress),
 
                 _ => throw new NotSupportedException($"Unknown command: {commandType}"),

@@ -4,7 +4,7 @@
 // NOTE: Syncfusion does not render ContextMenuItemModel.Id as an HTML id attribute on <li> elements,
 //       so visibility is controlled by matching item text content.
 
-var _cmRowType    = null;  // 'header' | 'product' | 'leaf-pdf' | null
+var _cmRowType    = null;  // 'header' | 'product' | 'leaf-pdf' | 'leaf-nopdf' | null
 var _cmIsReleased = false;
 var _userCanEdit  = true;  // false for ShopFloor (read-only)
 
@@ -15,9 +15,10 @@ document.addEventListener('contextmenu', function (e) {
     _cmRowType    = null;
     _cmIsReleased = false;
     if (row) {
-        if      (row.classList.contains('row-batch'))    _cmRowType = 'header';
-        else if (row.classList.contains('row-product'))  _cmRowType = 'product';
-        else if (row.classList.contains('row-leaf-pdf')) _cmRowType = 'leaf-pdf';
+        if      (row.classList.contains('row-batch'))     _cmRowType = 'header';
+        else if (row.classList.contains('row-product'))   _cmRowType = 'product';
+        else if (row.classList.contains('row-leaf-pdf'))  _cmRowType = 'leaf-pdf';
+        else if (row.classList.contains('row-leaf-nopdf'))_cmRowType = 'leaf-nopdf';
         _cmIsReleased = row.classList.contains('row-released');
     }
 
@@ -37,6 +38,7 @@ function applyContextMenuVisibility(type, isReleased) {
     var productDelTexts = ['Delete Batch Item', 'Delete Order'];
     var releaseTexts    = ['Release to Production'];
     var pdfTexts        = ['View PDF'];
+    var genPdfTexts     = ['Generate PDF'];
 
     var items = document.querySelectorAll('.e-contextmenu-wrapper li, .e-contextmenu li');
     if (!items.length) items = document.querySelectorAll('ul.e-ul li');
@@ -49,14 +51,23 @@ function applyContextMenuVisibility(type, isReleased) {
         var isProductDel= productDelTexts.some(function (t)  { return text.indexOf(t) !== -1; });
         var isRelease   = releaseTexts.some(function (t)     { return text.indexOf(t) !== -1; });
         var isPdf       = pdfTexts.some(function (t)         { return text.indexOf(t) !== -1; });
+        var isGenPdf    = genPdfTexts.some(function (t)      { return text.indexOf(t) !== -1; });
+
+        // Generate PDF is always available for all rows
+        if (isGenPdf) {
+            li.style.display = '';
+            return;
+        }
 
         // Skip items we don't manage
         if (!isSep && !isReport && !isHeaderDel && !isProductDel && !isRelease && !isPdf) return;
 
         var show;
         if (type === 'leaf-pdf') {
-            // Part row with PDF: show only View PDF; hide everything else
             show = isPdf;
+            if (isSep) show = false;
+        } else if (type === 'leaf-nopdf') {
+            show = false; // no View PDF for rows without a PDF
             if (isSep) show = false;
         } else if (!_userCanEdit) {
             // Read-only user (ShopFloor): only show report items on header rows

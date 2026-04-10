@@ -1462,7 +1462,7 @@ namespace VaultAccess
             return true;
         }
 
-        public Dictionary<long, string> GetIDWsAssociatedWithModelByVaultID(long vaultID)
+        public Dictionary<long, string> GetIDWsAssociatedWithModelByVaultID(long vaultID, Action<string> progress = null)
         {
             List<ACW.File> idwList = new List<ACW.File>();
             List<long> sortedIDList = new List<long>();
@@ -1472,12 +1472,14 @@ namespace VaultAccess
             using (Autodesk.Connectivity.WebServicesTools.WebServiceManager serviceManager = new Autodesk.Connectivity.WebServicesTools.WebServiceManager(m_conn.WebServiceManager.WebServiceCredentials))
             {
                 // get all parent and child information for the file
+                progress?.Invoke("Vault: GetFileAssociationLitesByIds — querying parent associations…");
                 ACW.FileAssocLite[] associationArray = m_conn.WebServiceManager.DocumentService.GetFileAssociationLitesByIds(
                     new long[] { vaultID },
                     ACW.FileAssocAlg.LatestTip,
                     ACW.FileAssociationTypeEnum.Attachment, true,        // parent associations
                     ACW.FileAssociationTypeEnum.None, true,   // child associations
                     true, true, false);
+                progress?.Invoke($"Vault: GetFileAssociationLitesByIds returned {associationArray?.Length ?? 0} association(s)");
 
                 if (associationArray != null && associationArray.Length > 0)
                 {
@@ -1486,7 +1488,9 @@ namespace VaultAccess
                     {
                         IDList.Add(fileAssoc.ParFileId);
                     }
+                    progress?.Invoke($"Vault: FindFilesByIds — resolving {IDList.Count} parent file(s)…");
                     ACW.File[] allAssociationsArray = serviceManager.DocumentService.FindFilesByIds(IDList.ToArray());
+                    progress?.Invoke($"Vault: FindFilesByIds returned {allAssociationsArray?.Length ?? 0} file(s)");
 
                     foreach (ACW.File f in allAssociationsArray)
                     {
@@ -1509,10 +1513,11 @@ namespace VaultAccess
             return idwDict;
         }
 
-        public Dictionary<long, string> GetIDWsAssociatedWithModelByVaultName(string fileName)
+        public Dictionary<long, string> GetIDWsAssociatedWithModelByVaultName(string fileName, Action<string> progress = null)
         {
             try
             {
+                progress?.Invoke("Vault: GetPropertyDefinitionsByEntityClassId — loading FILE property definitions…");
                 PropDef[] filePropDefs =
                                     m_conn.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
                 PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
@@ -1526,16 +1531,15 @@ namespace VaultAccess
                     SrchTxt = fileName
                 };
 
-
+                progress?.Invoke($"Vault: FindFilesBySearchConditions — searching for '{fileName}'…");
                 string bookmark = string.Empty;
                 SrchStatus status = null;
                 Autodesk.Connectivity.WebServices.File[] searchResults =
                     m_conn.WebServiceManager.DocumentService.FindFilesBySearchConditions(
                     new SrchCond[] { vaultName },
                     null, null, false, true, ref bookmark, out status);
+                progress?.Invoke($"Vault: FindFilesBySearchConditions returned {searchResults?.Length ?? 0} result(s)");
 
-
-                // this needs to be completed yet...
                 Dictionary<long, string> idwFileList = new Dictionary<long, string>();
                 if (searchResults != null)
                 {
@@ -1543,7 +1547,7 @@ namespace VaultAccess
                     {
                         VDF.Vault.Currency.Entities.FileIteration f = new Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.FileIteration(m_conn, searchResults[0]);
 
-                        idwFileList = GetIDWsAssociatedWithModelByVaultID(f.EntityIterationId);
+                        idwFileList = GetIDWsAssociatedWithModelByVaultID(f.EntityIterationId, progress);
 
                         return idwFileList;
                     }
@@ -1562,6 +1566,48 @@ namespace VaultAccess
                 return null;
             }
 
+        }
+
+        /// <summary>
+        /// Finds the IDW files in Vault that contain drawing sheets for the given model file,
+        /// downloads the first one to <paramref name="targetFolder"/>, and returns the local path.
+        /// Throws <see cref="System.IO.FileNotFoundException"/> if no associated IDW is found.
+        /// </summary>
+        public string DownloadIDWForModel(string modelFileName, string targetFolder, Action<string> progress = null)
+        {
+            Dictionary<long, string> idwDict = GetIDWsAssociatedWithModelByVaultName(modelFileName, progress);
+            if (idwDict == null || idwDict.Count == 0)
+                throw new System.IO.FileNotFoundException(
+                    "No IDW found in Vault for model " + modelFileName);
+
+            // Multiple IDWs may exist for a model (identical representations in different drawing packages).
+            // Pick the first; all are expected to produce the same PDF output.
+            long idwVaultId = System.Linq.Enumerable.First(idwDict).Key;
+            string idwName  = idwDict[idwVaultId];
+
+            using (var serviceManager = new Autodesk.Connectivity.WebServicesTools.WebServiceManager(
+                       m_conn.WebServiceManager.WebServiceCredentials))
+            {
+                progress?.Invoke($"Vault: FindFilesByIds — resolving IDW '{idwName}'…");
+                ACW.File[] files = serviceManager.DocumentService.FindFilesByIds(new long[] { idwVaultId });
+                VDF.Vault.Currency.Entities.FileIteration fIter =
+                    new Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.FileIteration(m_conn, files[0]);
+
+                progress?.Invoke($"Vault: AcquireFiles — downloading '{idwName}' to temp folder…");
+                VDF.Vault.Settings.AcquireFilesSettings downloadSettings =
+                    new VDF.Vault.Settings.AcquireFilesSettings(m_conn)
+                    {
+                        LocalPath = new VDF.Currency.FolderPathAbsolute(targetFolder),
+                    };
+                downloadSettings.OptionsResolution.OverwriteOption =
+                    VDF.Vault.Settings.AcquireFilesSettings.AcquireFileResolutionOptions.OverwriteOptions.ForceOverwriteAll;
+                downloadSettings.AddFileToAcquire(fIter,
+                    VDF.Vault.Settings.AcquireFilesSettings.AcquisitionOption.Download);
+                m_conn.FileManager.AcquireFiles(downloadSettings);
+                progress?.Invoke($"Vault: AcquireFiles complete — '{idwName}' downloaded");
+
+                return System.IO.Path.Combine(targetFolder, fIter.ToString());
+            }
         }
 
         public bool CheckIDWsForDrawingOfModel(long modelID, List<long> vaultIDsOfIDWsList, out Dictionary<long, bool> resultDict)

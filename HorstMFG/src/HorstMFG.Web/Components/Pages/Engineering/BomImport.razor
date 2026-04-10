@@ -6,10 +6,13 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject BridgeNotificationService BridgeEvents
+@inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
 @implements IDisposable
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Services
+@using HorstMFG.Web.Hubs
 @using Microsoft.EntityFrameworkCore
+@using System.Text.Json
 
 <PageTitle>BOM Import - HorstMFG</PageTitle>
 
@@ -103,6 +106,10 @@ else
             <strong>@_parsedLines.Count items parsed</strong>
             <span>|</span>
             <span style="color: @(_missingPdfCount > 0 ? "#b91c1c" : "#166534");">Missing PDFs: @_missingPdfCount</span>
+            @if (_pdfStatusMessage is not null)
+            {
+                <span style="color: #6b7280; font-style: italic;">@_pdfStatusMessage</span>
+            }
         </div>
 
         <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="660px"
@@ -127,7 +134,11 @@ else
                     <Template>
                         @{
                             var line = context as BomExportLine;
-                            @if (line!.HasPdf)
+                            @if (_generatingNumbers.Contains(line!.Number))
+                            {
+                                <span style="color:#6b7280; font-style:italic;">⏳ @line.Number</span>
+                            }
+                            else if (line.HasPdf)
                             {
                                 <span @onmouseenter="@(e => OnThumbEnter(line.Number, e))"
                                       @onmouseleave="OnThumbLeave"
@@ -211,8 +222,14 @@ else
 
     private readonly List<object> _contextMenuItems = new()
     {
-        new ContextMenuItemModel { Text = "View PDF", Id = "view-pdf" },
+        new ContextMenuItemModel { Text = "View PDF",      Id = "view-pdf"      },
+        new ContextMenuItemModel { Text = "Generate PDF",  Id = "generate-pdf"  },
     };
+
+    // Tracks part numbers currently being generated so the row can show a pending indicator
+    private readonly HashSet<string> _generatingNumbers = new(StringComparer.OrdinalIgnoreCase);
+    private string? _pendingCommandId;
+    private string? _pdfStatusMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -239,6 +256,8 @@ else
     public void Dispose()
     {
         BridgeEvents.BomExportReceived -= OnBomExportReceived;
+        BridgeEvents.CommandCompleted  -= OnPdfGenerationCompleted;
+        BridgeEvents.ProgressReceived  -= OnPdfProgress;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -247,6 +266,8 @@ else
         {
             _jsReady = true;
             BridgeEvents.BomExportReceived += OnBomExportReceived;
+            BridgeEvents.CommandCompleted  += OnPdfGenerationCompleted;
+            BridgeEvents.ProgressReceived  += OnPdfProgress;
 
             // Pre-populate if the user navigated here after clicking the banner.
             // Must be here (not OnInitializedAsync) to avoid SSR pre-render consuming
@@ -401,12 +422,12 @@ else
 
     private void OnRowDataBound(RowDataBoundEventArgs<BomExportLine> args)
     {
-        if (!args.Data.HasPdf)
-            args.Row.AddClass(new[] { "row-no-pdf" });
-        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
-            args.Row.AddClass(new[] { "row-has-notes" });
         if (args.Data.HasPdf)
             args.Row.AddClass(new[] { "row-leaf-pdf" });
+        else
+            args.Row.AddClass(new[] { "row-no-pdf", "row-leaf-nopdf" });
+        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+            args.Row.AddClass(new[] { "row-has-notes" });
     }
 
     private void OnThumbEnter(string number, Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
@@ -420,15 +441,82 @@ else
 
     private void OnContextMenuOpen(ContextMenuOpenEventArgs<BomExportLine> args)
     {
-        if (args.RowInfo?.RowData?.HasPdf != true)
+        // Allow menu for both pdf and non-pdf rows; app.js hides the irrelevant item
+        if (args.RowInfo?.RowData is null)
             args.Cancel = true;
     }
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<BomExportLine> args)
     {
-        if (args.Item.Id == "view-pdf" && args.RowInfo?.RowData?.Number is string number)
-            await JS.InvokeVoidAsync("window.open", $"/api/pdf/{Uri.EscapeDataString(number)}", "_blank");
+        var row = args.RowInfo?.RowData;
+        if (row is null) return;
+
+        if (args.Item.Id == "view-pdf" && row.Number is not null)
+        {
+            await JS.InvokeVoidAsync("window.open",
+                $"/api/pdf/{Uri.EscapeDataString(row.Number)}", "_blank");
+            return;
+        }
+
+        if (args.Item.Id == "generate-pdf" && row.Number is not null)
+        {
+            var stationId = BridgeHub.GetAnyOnlineStationId();
+            if (stationId is null)
+            {
+                await JS.InvokeVoidAsync("alert",
+                    "No bridge connection is active. A bridge must be connected to generate PDFs.");
+                return;
+            }
+
+            _pendingCommandId = Guid.NewGuid().ToString();
+            _generatingNumbers.Add(row.Number);
+            StateHasChanged();
+
+            var payload = JsonSerializer.Serialize(
+                new[] { new { Number = row.Number, Category = row.Category } });
+            BridgeHub.TrySendCommand(HubContext, stationId.Value,
+                _pendingCommandId, "GeneratePdf", payload);
+        }
     }
+
+    private void OnPdfProgress(int stationId, string commandId, string message, int percent)
+    {
+        if (commandId != _pendingCommandId) return;
+        _pdfStatusMessage = message;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnPdfGenerationCompleted(int stationId, string commandId, bool success, string payload)
+    {
+        if (commandId != _pendingCommandId) return;
+        _pendingCommandId = null;
+        _pdfStatusMessage = null;
+
+        try
+        {
+            var results = JsonSerializer.Deserialize<List<GeneratePdfResultDto>>(payload,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (results is null) return;
+
+            foreach (var r in results)
+            {
+                _generatingNumbers.Remove(r.Number);
+                if (r.Success)
+                {
+                    var line = _parsedLines.FirstOrDefault(l =>
+                        string.Equals(l.Number, r.Number, StringComparison.OrdinalIgnoreCase));
+                    if (line is not null)
+                        line.HasPdf = true;
+                }
+            }
+            _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+        }
+        catch { _generatingNumbers.Clear(); }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private record GeneratePdfResultDto(string Number, bool Success, string? Error);
 
     private void Reset()
     {

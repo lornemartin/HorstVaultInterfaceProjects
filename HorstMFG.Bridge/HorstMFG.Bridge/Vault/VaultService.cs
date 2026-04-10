@@ -58,6 +58,19 @@ public class VaultService : IVaultService
         return localPath;
     }
 
+    public string DownloadIDWForModel(string modelFileName, string targetFolder,
+                                      Action<string>? progress = null)
+    {
+        EnsureConnected();
+
+        _log.LogInformation("Finding IDW for model {Model} in Vault", modelFileName);
+        return _va!.DownloadIDWForModel(modelFileName, targetFolder, msg =>
+        {
+            _log.LogDebug("{VaultStep}", msg);
+            progress?.Invoke(msg);
+        });
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void EnsureConnected()
