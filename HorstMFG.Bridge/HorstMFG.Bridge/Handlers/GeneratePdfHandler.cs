@@ -58,10 +58,7 @@ public class GeneratePdfHandler
                     idwPath = _vault.DownloadIDWForModel(modelFileName, tempDir,
                         vaultMsg => reportProgress(vaultMsg, pct));
 
-                    // Trailing backslash before a closing quote is interpreted as an escaped quote
-                    // by the Windows command-line parser, corrupting the argument. Strip it.
-                    var gsPath = (_config.GhostscriptPath ?? "").TrimEnd('\\', '/');
-                    var args = $"\"{idwPath}\" \"{outDir.TrimEnd(Path.DirectorySeparatorChar)}\" \"{printer}\" \"{gsPath}\"";
+                    var args = $"\"{idwPath}\" \"{outDir.TrimEnd(Path.DirectorySeparatorChar)}\" \"{printer}\"";
                     _log.LogDebug("Launching HorstPdfPrinter: {Args}", args);
 
                     var psi = new ProcessStartInfo(printerExe, args)

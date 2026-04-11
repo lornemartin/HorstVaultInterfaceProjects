@@ -161,9 +161,6 @@ try
     }).RequireAuthorization();
 
     // Minimal API: PDF first-page thumbnail from network share — no cache, always fresh
-    var ghostscriptPath = builder.Configuration["FileSystemPaths:GhostscriptPath"]
-                       ?? @"C:\Program Files\gs\gs9.21\bin\gswin64c.exe";
-
     app.MapGet("/api/pdf-thumbnail-share/{number}", async (string number) =>
     {
         if (number.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
@@ -176,17 +173,14 @@ try
         var tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".jpg");
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName               = ghostscriptPath,
-                Arguments              = $"-dNOPAUSE -dBATCH -dSAFER -sDEVICE=jpeg -dFirstPage=1 -dLastPage=1 -r72 -dJPEGQ=80 \"-sOutputFile={tempPath}\" \"{pdfPath}\"",
-                UseShellExecute        = false,
-                CreateNoWindow         = true,
-                RedirectStandardError  = true,
-            };
-            using var proc = System.Diagnostics.Process.Start(psi);
-            if (proc is null) return Results.Problem("Could not start Ghostscript");
-            await proc.WaitForExitAsync();
+            GhostscriptRunner.Run(new[] {
+                "gs",
+                "-dNOPAUSE", "-dBATCH", "-dSAFER",
+                "-sDEVICE=jpeg", "-dFirstPage=1", "-dLastPage=1",
+                "-r72", "-dJPEGQ=80",
+                $"-sOutputFile={tempPath}",
+                pdfPath
+            });
 
             if (!File.Exists(tempPath)) return Results.NotFound();
             var bytes = await File.ReadAllBytesAsync(tempPath);
@@ -217,18 +211,14 @@ try
         if (File.Exists(thumbPath) && File.GetLastWriteTimeUtc(thumbPath) >= File.GetLastWriteTimeUtc(pdfPath))
             return Results.File(thumbPath, "image/jpeg");
 
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName               = ghostscriptPath,
-            Arguments              = $"-dNOPAUSE -dBATCH -dSAFER -sDEVICE=jpeg -dFirstPage=1 -dLastPage=1 -r72 -dJPEGQ=80 \"-sOutputFile={thumbPath}\" \"{pdfPath}\"",
-            UseShellExecute        = false,
-            CreateNoWindow         = true,
-            RedirectStandardError  = true,
-        };
-
-        using var proc = System.Diagnostics.Process.Start(psi);
-        if (proc is null) return Results.Problem("Could not start Ghostscript");
-        await proc.WaitForExitAsync();
+        GhostscriptRunner.Run(new[] {
+            "gs",
+            "-dNOPAUSE", "-dBATCH", "-dSAFER",
+            "-sDEVICE=jpeg", "-dFirstPage=1", "-dLastPage=1",
+            "-r72", "-dJPEGQ=80",
+            $"-sOutputFile={thumbPath}",
+            pdfPath
+        });
 
         return File.Exists(thumbPath)
             ? Results.File(thumbPath, "image/jpeg")

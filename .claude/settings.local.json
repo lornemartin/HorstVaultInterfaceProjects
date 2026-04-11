@@ -17,7 +17,9 @@
       "WebFetch(domain:support.syncfusion.com)",
       "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects/HorstMFG -name *.dll -path *Syncfusion*Grids*)",
       "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects -type d -name HorstMFG*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(dotnet \"C:/Program Files/dotnet/sdk/8.0.418/MSBuild.dll\" PrintPDF.csproj /p:Configuration=Debug /p:Platform=x64 /t:Build /v:minimal)",
+      "Bash(MSYS_NO_PATHCONV=1 dotnet \"C:/Program Files/dotnet/sdk/8.0.418/MSBuild.dll\" PrintPDF.csproj /p:Configuration=Debug /p:Platform=x64 /t:Build /v:minimal)"
     ]
   }
 }

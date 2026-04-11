@@ -41,14 +41,6 @@ namespace PrintPDF
             {
                 try
                 {
-                    // Get Ghostscript path for PS to PDF conversion
-                    string ghostScriptPath = "";
-                    try
-                    {
-                        ghostScriptPath = AppSettings.Get("GhostScriptWorkingFolder").ToString();
-                    }
-                    catch { }
-
                     LoggingLevelSwitch levelSwitch = new LoggingLevelSwitch();
                     levelSwitch.MinimumLevel = LogEventLevel.Verbose;
                     string logFileLocation = outputFolder + "PDFPrint2.log";
@@ -220,39 +212,29 @@ namespace PrintPDF
                                 }
 
                                 // Bullzip produces PostScript, not PDF. Convert PS to PDF using Ghostscript.
-                                if (!string.IsNullOrEmpty(ghostScriptPath))
                                 {
                                     string psFileName = pdfFileName + ".ps";
+                                    if (System.IO.File.Exists(psFileName))
+                                        System.IO.File.Delete(psFileName);
                                     System.IO.File.Move(pdfFileName, psFileName);
                                     logMessage += "Converting PS to PDF: " + psFileName + "\r\n";
 
-                                    string gsExe = System.IO.Path.Combine(ghostScriptPath, "gswin64c.exe");
-                                    string gsArgs = "-dBATCH -dNOPAUSE -dQUIET -sDEVICE=pdfwrite -sOutputFile=\"" + pdfFileName + "\" \"" + psFileName + "\"";
-
-                                    Process gsProcess = new Process();
-                                    gsProcess.StartInfo.FileName = gsExe;
-                                    gsProcess.StartInfo.Arguments = gsArgs;
-                                    gsProcess.StartInfo.UseShellExecute = false;
-                                    gsProcess.StartInfo.RedirectStandardError = true;
-                                    gsProcess.StartInfo.CreateNoWindow = true;
-                                    gsProcess.Start();
-                                    string gsError = gsProcess.StandardError.ReadToEnd();
-                                    gsProcess.WaitForExit();
-
-                                    if (gsProcess.ExitCode != 0)
+                                    try
                                     {
-                                        logMessage += "Ghostscript conversion failed (exit code " + gsProcess.ExitCode + "): " + gsError + "\r\n";
-                                        Log.Error("Ghostscript conversion failed: " + gsError);
+                                        GhostscriptRunner.PsToPdf(psFileName, pdfFileName);
+                                    }
+                                    catch (Exception gsEx)
+                                    {
+                                        logMessage += "Ghostscript conversion failed: " + gsEx.Message + "\r\n";
+                                        Log.Error("Ghostscript conversion failed: " + gsEx.Message);
                                         actualSheetIndex++;
                                         modifiedSheetIndex++;
                                         continue;
                                     }
 
-                                    // Clean up the PostScript file
                                     if (System.IO.File.Exists(psFileName))
-                                    {
                                         System.IO.File.Delete(psFileName);
-                                    }
+
                                     logMessage += "PS to PDF conversion successful: " + pdfFileName + "\r\n";
                                 }
 

@@ -91,7 +91,7 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\Vault 2025 SDK Binaries\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="itextsharp, Version=5.5.1.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+<Reference Include="itextsharp, Version=5.5.1.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\itextsharp-dll-core-wo_Drawing\itextsharp.dll</HintPath>
       <Private>True</Private>
@@ -197,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppSettings.cs" />
+    <Compile Include="GhostscriptRunner.cs" />
     <Compile Include="PrintObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

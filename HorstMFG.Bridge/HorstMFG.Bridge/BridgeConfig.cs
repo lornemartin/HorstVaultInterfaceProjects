@@ -11,9 +11,8 @@ public class BridgeConfig
     public string BomExportFilePath     { get; set; } = "";
 
     // PDF generation
-    public string PdfSharePath                { get; set; } = "";
-    public string PdfPrinterName              { get; set; } = "";
-    public string GhostscriptPath { get; set; } = "";
+    public string PdfSharePath   { get; set; } = "";
+    public string PdfPrinterName { get; set; } = "";
 }
 
 public class VaultConfig
