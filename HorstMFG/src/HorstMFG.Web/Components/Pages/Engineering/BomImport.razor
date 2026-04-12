@@ -492,24 +492,44 @@ else
         _pendingCommandId = null;
         _pdfStatusMessage = null;
 
+        if (!success)
+        {
+            _message = $"PDF generation failed: {payload}";
+            _isError = true;
+            _generatingNumbers.Clear();
+            _ = InvokeAsync(StateHasChanged);
+            return;
+        }
+
         try
         {
             var results = JsonSerializer.Deserialize<List<GeneratePdfResultDto>>(payload,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (results is null) return;
 
+            var failures = results.Where(r => !r.Success).ToList();
+            var succeeded = results.Where(r => r.Success).ToList();
+
             foreach (var r in results)
-            {
                 _generatingNumbers.Remove(r.Number);
-                if (r.Success)
-                {
-                    var line = _parsedLines.FirstOrDefault(l =>
-                        string.Equals(l.Number, r.Number, StringComparison.OrdinalIgnoreCase));
-                    if (line is not null)
-                        line.HasPdf = true;
-                }
+
+            foreach (var r in succeeded)
+            {
+                var line = _parsedLines.FirstOrDefault(l =>
+                    string.Equals(l.Number, r.Number, StringComparison.OrdinalIgnoreCase));
+                if (line is not null)
+                    line.HasPdf = true;
             }
+
             _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+
+            if (failures.Count > 0)
+            {
+                var msgs = string.Join("; ", failures.Select(r =>
+                    string.IsNullOrWhiteSpace(r.Error) ? r.Number : $"{r.Number}: {r.Error}"));
+                _message = $"PDF generation failed for {failures.Count} item(s) — {msgs}";
+                _isError = true;
+            }
         }
         catch { _generatingNumbers.Clear(); }
 
