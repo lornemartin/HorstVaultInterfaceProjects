@@ -47,7 +47,8 @@ namespace PrintPDF
                     Log.Logger = new LoggerConfiguration()
                                     // add a rolling file for all logs
                                     .WriteTo.File(logFileLocation,
-                                         shared: true, fileSizeLimitBytes: 5000000)
+                                         shared: true, fileSizeLimitBytes: 5000000,
+                                         rollOnFileSizeLimit: true)
                                     .WriteTo.Console()
                                     // set default minimum level
                                     .MinimumLevel.ControlledBy(levelSwitch)
@@ -55,6 +56,11 @@ namespace PrintPDF
 
                     ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
                     ApprenticeServerDrawingDocument drgDoc;
+                    // Access Document before Open — required to initialize ApprenticeServerComponent's
+                    // internal COM state.  Both CheckIDWsForDrawingOfModel and PrintPDFCommandLine
+                    // follow this pattern; skipping it causes Open() to return E_FAIL.
+                    drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
+
                     oApprentice.Open(idw);
                     drgDoc = (ApprenticeServerDrawingDocument)oApprentice.Document;
                     int pageCount = 1;

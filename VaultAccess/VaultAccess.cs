@@ -1580,18 +1580,38 @@ namespace VaultAccess
                 throw new System.IO.FileNotFoundException(
                     "No IDW found in Vault for model " + modelFileName);
 
-            // Multiple IDWs may exist for a model (identical representations in different drawing packages).
-            // Pick the first; all are expected to produce the same PDF output.
-            long idwVaultId = System.Linq.Enumerable.First(idwDict).Key;
-            string idwName  = idwDict[idwVaultId];
-
+            // Multiple IDWs may exist for a model. Fetch lifecycle state for all of them at once
+            // and use the first one that is Released; skip any that are still In Review / WIP.
             using (var serviceManager = new Autodesk.Connectivity.WebServicesTools.WebServiceManager(
                        m_conn.WebServiceManager.WebServiceCredentials))
             {
-                progress?.Invoke($"Vault: FindFilesByIds — resolving IDW '{idwName}'…");
-                ACW.File[] files = serviceManager.DocumentService.FindFilesByIds(new long[] { idwVaultId });
+                progress?.Invoke($"Vault: FindFilesByIds — resolving {idwDict.Count} IDW candidate(s)…");
+                long[] allIds = idwDict.Keys.ToArray();
+                ACW.File[] allFiles = serviceManager.DocumentService.FindFilesByIds(allIds);
+
+                ACW.File idwFile = null;
+                foreach (var f in allFiles)
+                {
+                    var state = f.FileLfCyc?.LfCycStateName;
+                    if (state == "Released")
+                    {
+                        idwFile = f;
+                        break;
+                    }
+                    progress?.Invoke($"Vault: skipping '{f.Name}' — lifecycle state is '{state ?? "Unknown"}'");
+                }
+
+                if (idwFile == null)
+                {
+                    var states = string.Join(", ", allFiles.Select(f =>
+                        $"'{f.Name}'={f.FileLfCyc?.LfCycStateName ?? "Unknown"}"));
+                    throw new InvalidOperationException(
+                        $"No released IDW found for '{modelFileName}' — candidate state(s): {states}");
+                }
+
+                string idwName = idwFile.Name;
                 VDF.Vault.Currency.Entities.FileIteration fIter =
-                    new Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.FileIteration(m_conn, files[0]);
+                    new Autodesk.DataManagement.Client.Framework.Vault.Currency.Entities.FileIteration(m_conn, idwFile);
 
                 progress?.Invoke($"Vault: AcquireFiles — downloading '{idwName}' to temp folder…");
                 VDF.Vault.Settings.AcquireFilesSettings downloadSettings =
