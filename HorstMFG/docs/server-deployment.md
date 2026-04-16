@@ -20,12 +20,12 @@
 
 The app pool identity (domain service account) needs:
 
-| Path | Access | Why |
-|------|--------|-----|
-| `C:\HorstMFG\PDFs\` | Read/Write | Local PDF copy on import |
-| `\\hwvsse01\Manufacturing\PDF Drawing Files\` | Read | PDF share for inline viewing and BOM import |
-| App folder (e.g. `C:\inetpub\horstmfg\`) | Read | Run the app |
-| `logs\` subfolder of app folder | Read/Write | Serilog file sink |
+| Path                                          | Access     | Why                                         |
+| --------------------------------------------- | ---------- | ------------------------------------------- |
+| `C:\HorstMFG\PDFs\`                           | Read/Write | Local PDF copy on import                    |
+| `\\hwvsse01\Manufacturing\PDF Drawing Files\` | Read       | PDF share for inline viewing and BOM import |
+| App folder (e.g. `C:\inetpub\horstmfg\`)      | Read       | Run the app                                 |
+| `logs\` subfolder of app folder               | Read/Write | Serilog file sink                           |
 
 > **Note:** IIS `ApplicationPoolIdentity` (the default) cannot authenticate to network shares.
 > You must use a domain service account as the app pool identity.
@@ -48,6 +48,7 @@ domain (hwvsse01, HWVMWK02) using Kerberos or NTLM, the same way a logged-in use
 ### Creating the Account (AD task — done by sysadmin)
 
 1. In **Active Directory Users and Computers**, create a new user in an appropriate OU (e.g. `Service Accounts`):
+   
    - Username: something like `svc-horstmfg` or `svc_horstmfg`
    - Set a strong password
    - Check **"Password never expires"** — service accounts should not have expiring passwords, as expiry causes silent failures at 3am
@@ -55,6 +56,7 @@ domain (hwvsse01, HWVMWK02) using Kerberos or NTLM, the same way a logged-in use
    - The account does **not** need to be a member of any privileged groups (Domain Admins, etc.) — it should be a plain domain user with only the specific permissions granted below
 
 2. Grant the account the **"Log on as a service"** right on the web server:
+   
    - On the web server, open **Local Security Policy** → Security Settings → Local Policies → User Rights Assignment
    - Add `svc-horstmfg` to **"Log on as a service"**
    - Alternatively this is granted automatically when you set the app pool identity in IIS
@@ -64,11 +66,13 @@ domain (hwvsse01, HWVMWK02) using Kerberos or NTLM, the same way a logged-in use
 Network share permissions have two independent layers that both must allow access:
 
 **Share-level permissions** (set on the sharing server — hwvsse01 / HWVMWK02):
+
 - Right-click the shared folder → Properties → Sharing → Advanced Sharing → Permissions
 - Add `DOMAIN\svc-horstmfg`
 - For `PDF Drawing Files`: grant **Read**
 
 **NTFS permissions** (also set on the sharing server — hwvsse01):
+
 - Right-click the folder → Properties → Security → Edit
 - Add `DOMAIN\svc-horstmfg`
 - For `PDF Drawing Files`: grant **Read & Execute**, **List folder contents**, **Read**
@@ -96,6 +100,7 @@ The service account also needs permissions on the web server itself:
   but the service account must be able to write to it
 
 A convenient way to grant local folder permissions from PowerShell (run as admin on the server):
+
 ```powershell
 $account = "DOMAIN\svc-horstmfg"
 icacls "C:\inetpub\horstmfg"   /grant "${account}:(OI)(CI)RX" /T
@@ -113,6 +118,7 @@ runas /user:DOMAIN\svc-horstmfg cmd.exe
 ```
 
 Then in the new window:
+
 ```cmd
 dir "\\hwvsse01\Manufacturing\PDF Drawing Files\"
 ```
@@ -178,6 +184,7 @@ You have three options, in order of preference for an internal shop floor app:
 
 **Option 1: Certificate from your domain's Active Directory Certificate Services (ADCS)**
 This is the best option if your domain already has an internal CA (many corporate domains do).
+
 - The cert is trusted automatically by all domain-joined machines — no manual installation needed on shop floor PCs
 - Ask your sysadmin whether an ADCS root CA exists in the domain
 - If yes, request a certificate for the server's hostname (e.g. `horstmfg.horst.local` or whatever DNS name you'll use)
@@ -185,13 +192,18 @@ This is the best option if your domain already has an internal CA (many corporat
 
 **Option 2: Self-signed certificate**
 Straightforward to create but requires manual trust installation on every client machine.
+
 - Create via IIS Manager → Server Certificates → Create Self-Signed Certificate, or via PowerShell:
+  
   ```powershell
   New-SelfSignedCertificate -DnsName "horstmfg.horst.local" -CertStoreLocation "cert:\LocalMachine\My"
   ```
+
 - Export the certificate's public key (no private key) as a `.cer` file
+
 - Deploy it to the **Trusted Root Certification Authorities** store on each client machine,
   either manually or via Group Policy (Computer Configuration → Windows Settings → Security Settings → Public Key Policies → Trusted Root Certification Authorities)
+
 - Without this step, browsers will show a security warning on every machine
 
 **Option 3: Public CA certificate (e.g. Let's Encrypt)**
@@ -207,11 +219,13 @@ Not recommended for an internal manufacturing app.
 5. Select the certificate from the dropdown → OK
 
 Also ensure an **http** binding exists on port 80 (for the redirect to work):
+
 - Type: **http**, Port: **80**, leave hostname blank or match the https hostname
 
 ### DNS
 
 Shop floor machines need to reach the server by name, not just IP. Either:
+
 - Add an **A record** in your internal DNS server pointing the hostname to the server's IP, or
 - Add entries to `hosts` files on each client machine (not recommended — hard to maintain)
 
@@ -249,6 +263,7 @@ time. The local copy is what the app serves to users for inline viewing and repo
 The network share itself is not modified by the app.
 
 This folder **replaces** the following folders currently on the Manufacturing (S:) drive:
+
 - `S:\Shop Schedule Drawings\`
 - `S:\Plant 2 Shop Schedule Drawings\`
 
@@ -256,19 +271,19 @@ Those folders will no longer need to be maintained once the app is in production
 
 ### Measured Baseline (1 Year Simulated Data)
 
-| Subfolder | Files | Size |
-|-----------|-------|------|
-| `Batches\` | 7,767 | ~1.7 GB |
-| `Schedules\` | 229,084 | ~51.8 GB |
-| **Total** | **236,851** | **~52 GB** |
+| Subfolder    | Files       | Size       |
+| ------------ | ----------- | ---------- |
+| `Batches\`   | 7,767       | ~1.7 GB    |
+| `Schedules\` | 229,084     | ~51.8 GB   |
+| **Total**    | **236,851** | **~52 GB** |
 
 ### Capacity Planning
 
-| Window | Estimated Size |
-|--------|---------------|
-| 1 year (measured) | ~52 GB |
-| 2 years | ~104 GB |
-| 3 years (target) | ~156 GB |
+| Window            | Estimated Size |
+| ----------------- | -------------- |
+| 1 year (measured) | ~52 GB         |
+| 2 years           | ~104 GB        |
+| 3 years (target)  | ~156 GB        |
 
 **Recommended allocation: 250 GB minimum** — this covers the 3-year target with ~60% headroom
 for growth above the simulated baseline.
@@ -289,6 +304,7 @@ be noticeably slower under load.
 ## Firewall
 
 Open inbound on the server:
+
 - Port 80 (HTTP — redirects to HTTPS)
 - Port 443 (HTTPS)
 
@@ -304,12 +320,15 @@ On first deploy, ensure the DB user has DDL rights. After initial schema creatio
 ## Deployment Workflow (Developer PC → Server)
 
 1. Clone the repo on the server
+
 2. Create a deploy script on the server:
+   
    ```powershell
    git pull
    dotnet publish src/HorstMFG.Web/HorstMFG.Web.csproj -c Release -o C:\inetpub\horstmfg
    Restart-WebAppPool -Name "HorstMFG"
    ```
+
 3. Push changes from your dev PC, then run the script on the server (via RDP or remote PowerShell)
 
 ---
@@ -330,4 +349,3 @@ On first deploy, ensure the DB user has DDL rights. After initial schema creatio
 [ ] Bind SSL certificate to IIS site
 [ ] First deploy: app will auto-run DB migrations on startup
 ```
-

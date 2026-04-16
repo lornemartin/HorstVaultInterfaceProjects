@@ -78,7 +78,8 @@ else
             </div>
             <div style="min-width: 200px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Number <span style="color: #b91c1c;">*</span></label>
-                <SfTextBox @bind-Value="_orderNumber" Placeholder="e.g. 12345" />
+                <SfTextBox @bind-Value="_orderNumber" Placeholder="e.g. 12345"
+                           Input="@(args => _orderNumber = args.Value)" />
             </div>
             <div style="min-width: 100px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Qty</label>
@@ -89,7 +90,24 @@ else
 
     <div style="margin-bottom: 1.5rem;">
         <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Upload Vault Export File</label>
-        <InputFile OnChange="OnFileSelected" accept=".txt,.tsv" />
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <InputFile OnChange="OnFileSelected" accept=".txt,.tsv" />
+            <SfButton CssClass="e-primary" OnClick="ImportBatch"
+                      Disabled="@(_importing || _parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">
+                @if (_importing)
+                {
+                    <span>Importing...</span>
+                }
+                else
+                {
+                    <span>Import to Database</span>
+                }
+            </SfButton>
+            @if (OrderNumberMissing)
+            {
+                <span style="color: #b91c1c; font-size: 0.875rem;">Order Number is required for Order imports.</span>
+            }
+        </div>
     </div>
 
     @if (_parsing)
@@ -164,22 +182,6 @@ else
             </div>
         }
 
-        <div style="margin-top: 1rem;">
-            <SfButton CssClass="e-primary" OnClick="ImportBatch" Disabled="@(_importing || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">
-                @if (_importing)
-                {
-                    <span>Importing...</span>
-                }
-                else
-                {
-                    <span>Import to Database</span>
-                }
-            </SfButton>
-            @if (OrderNumberMissing)
-            {
-                <span style="margin-left: 1rem; color: #b91c1c; font-size: 0.875rem;">Order Number is required for Order imports.</span>
-            }
-        </div>
     }
 }
 
