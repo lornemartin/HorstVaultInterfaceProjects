@@ -163,7 +163,8 @@
                     {
                         <input type="checkbox" checked="@item.IsStock"
                                @onchange="@(async e => await OnIsStockChanged(item, (bool)e.Value!))"
-                               style="cursor: pointer; width: 16px; height: 16px;" />
+                               disabled="@item.ReadyForProduction"
+                               style="cursor: @(item.ReadyForProduction ? "default" : "pointer"); width: 16px; height: 16px;" />
                     }
                 }
             </Template>
@@ -593,6 +594,7 @@
             _stockDialogNewValue = newValue;
             _stockDialogSiblingCount = count;
             _showStockDialog = true;
+            StateHasChanged();
             return;
         }
         await BomService.UpdatePartIsStockAsync(partId, newValue);
