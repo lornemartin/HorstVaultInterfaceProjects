@@ -83,7 +83,7 @@ else
             </div>
             <div style="min-width: 100px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Order Qty</label>
-                <SfNumericTextBox TValue="int" @bind-Value="_orderQty" Min="1" Max="9999" />
+                <SfNumericTextBox TValue="int" @bind-Value="_orderQty" Min="0" Max="9999" />
             </div>
         }
     </div>
@@ -93,7 +93,7 @@ else
         <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
             <InputFile OnChange="OnFileSelected" accept=".txt,.tsv" />
             <SfButton CssClass="e-primary" OnClick="ImportBatch"
-                      Disabled="@(_importing || _parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing)">
+                      Disabled="@(_importing || _parsedLines.Count == 0 || string.IsNullOrWhiteSpace(_batchName) || OrderNumberMissing || OrderQtyMissing)">
                 @if (_importing)
                 {
                     <span>Importing...</span>
@@ -191,11 +191,12 @@ else
     private string SelectedBomTypeStr = "Batch";
     private BomType SelectedBomType => SelectedBomTypeStr == "Order" ? BomType.MakeToStock : BomType.MakeToOrder;
     private bool OrderNumberMissing => SelectedBomTypeStr == "Order" && string.IsNullOrWhiteSpace(_orderNumber);
+    private bool OrderQtyMissing    => SelectedBomTypeStr == "Order" && _orderQty == 0;
     private int _selectedPlantId;
     private string _batchName = "";
     private string _orderNumber = "";
     private int _batchQty = 1;
-    private int _orderQty = 1;
+    private int _orderQty = 0;
     private bool _parsing;
     private bool _importing;
     private bool _importComplete;
@@ -438,7 +439,7 @@ else
         _importComplete = false;
         _orderNumber = "";
         _batchQty = 1;
-        _orderQty = 1;
+        _orderQty = 0;
         _message = null;
         _isError = false;
         _missingPdfCount = 0;
