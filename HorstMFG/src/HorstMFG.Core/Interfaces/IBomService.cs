@@ -48,6 +48,16 @@ public interface IBomService
     Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
 
     /// <summary>
+    /// Update the Qty on a BatchProduct (product row in the Batches grid).
+    /// </summary>
+    Task UpdateBatchProductQtyAsync(int batchProductId, int qty);
+
+    /// <summary>
+    /// Update the Qty on a ScheduleOrder (order row in the Orders grid).
+    /// </summary>
+    Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty);
+
+    /// <summary>
     /// Update the IsStock flag on a PartLineItem.
     /// </summary>
     Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);

@@ -861,6 +861,22 @@ public class BomService : IBomService
         _          => int.MaxValue,
     };
 
+    public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.Id == batchProductId)
+            .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.Qty, qty));
+    }
+
+    public async Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.Id == scheduleOrderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(so => so.Qty, qty));
+    }
+
     public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

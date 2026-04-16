@@ -145,7 +145,17 @@
                     }
                     else if (item.IsProductRow)
                     {
-                        <strong>@item.ParentQty</strong>
+                        @if (item.ReadyForProduction)
+                        {
+                            <strong>@item.ParentQty</strong>
+                        }
+                        else
+                        {
+                            <input type="number" value="@item.ParentQty"
+                                   @onchange="@(async e => await OnBatchProductQtyChanged(item, e.Value?.ToString() ?? ""))"
+                                   min="1" max="9999"
+                                   style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
+                        }
                     }
                     else
                     {
@@ -575,6 +585,15 @@
         else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
             await JS.InvokeVoidAsync("window.open",
                 $"/api/reports/batch-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
+    }
+
+    // ── Qty editing ──────────────────────────────────────────────────────────
+    private async Task OnBatchProductQtyChanged(ExportTreeItem item, string rawValue)
+    {
+        if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
+        const int productOffset = 1_000_000;
+        await BomService.UpdateBatchProductQtyAsync(item.TreeId - productOffset, qty);
+        item.ParentQty = qty;
     }
 
     // ── IsStock editing ───────────────────────────────────────────────────────
