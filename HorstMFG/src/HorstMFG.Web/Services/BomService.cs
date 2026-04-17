@@ -714,7 +714,7 @@ public class BomService : IBomService
 
             var orders = await _db.Set<ScheduleOrder>()
                 .Where(so => so.ScheduleId == scheduleId)
-                .OrderBy(so => so.OrderNumber)
+                .OrderBy(so => so.Id)
                 .ToListAsync();
 
             if (orders.Count == 0) return new List<ExportTreeItem>();
