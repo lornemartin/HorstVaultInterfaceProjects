@@ -49,10 +49,6 @@ try
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
     builder.Services.AddScoped<ReportService>();
-    builder.Services.AddScoped<ScheduleTreeFilterState>();
-    builder.Services.AddScoped<ScheduleTreeAdaptor>();
-    builder.Services.AddScoped<BatchTreeFilterState>();
-    builder.Services.AddScoped<BatchTreeAdaptor>();
 
     // Bridge SignalR
     builder.Services.AddSingleton<BridgeNotificationService>();

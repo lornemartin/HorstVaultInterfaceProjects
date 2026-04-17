@@ -423,440 +423,109 @@ public class BomService : IBomService
         return (copied, partList.Count);
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+    public async Task<List<FlatSchedulePartRow>> GetFlatSchedulePartsAsync(
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
-        // Load header rows only — children fetched on-demand via GetBatchChildrenByParentTreeIdAsync
-        var query = _db.Batches
-            .Include(b => b.Plant)
-            .Include(b => b.ImportedByUser)
-            .AsQueryable();
-
-        if (plantId.HasValue)
-            query = query.Where(b => b.PlantId == plantId.Value);
-        if (fromDate.HasValue)
-            query = query.Where(b => b.ImportDate >= fromDate.Value.ToUniversalTime());
-        if (toDate.HasValue)
-            query = query.Where(b => b.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            var term = searchTerm.Trim();
-            query = query.Where(b =>
-                EF.Functions.ILike(b.Name, $"%{term}%") ||
-                b.BatchProducts.Any(bp =>
-                    bp.Parts.Any(p =>
-                        EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
-                        (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))));
-        }
-
-        var batches = await query.OrderByDescending(b => b.ImportDate).ToListAsync();
-        _log.LogInformation("GetBatchTreeItemsAsync: found {Count} batches (plantId={PlantId}, from={From}, to={To})",
-            batches.Count, plantId, fromDate, toDate);
-
-        // Fast part count per batch name
-        var batchNames = batches.Select(b => b.Name).Distinct().ToList();
-        var partCounts = batchNames.Count > 0
-            ? await _db.Set<PartLineItem>()
-                .Where(p => p.BatchProductId.HasValue)
-                .Where(p => batchNames.Contains(p.BatchProduct!.Batch.Name))
-                .GroupBy(p => p.BatchProduct!.Batch.Name)
-                .Select(g => new { Name = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.Name, x => x.Count)
-            : new Dictionary<string, int>();
-
-        var result = new List<ExportTreeItem>();
-
-        foreach (var group in batches.GroupBy(b => b.Name).OrderByDescending(g => g.Max(b => b.ImportDate)))
-        {
-            var latest = group.OrderByDescending(b => b.ImportDate).First();
-            result.Add(new ExportTreeItem
-            {
-                TreeId = latest.Id,  // DB id — stable, used by CustomAdaptor load-on-demand
-                TreeParentId = null,
-                IsBatchRow = true,
-                IsExpanded = false,
-                HasChildren = true,
-                BatchName = group.Key,
-                ImportDate = latest.ImportDate,
-                PlantName = latest.Plant?.Name,
-                ImportedBy = latest.ImportedByUser?.FullName,
-                ReadyForProduction = latest.ReadyForProduction,
-                ItemCount = partCounts.GetValueOrDefault(group.Key, 0),
-            });
-        }
-
-        return result;
-    }
-
-    public async Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId)
-    {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
-        const int productOffset = 1_000_000;
-        const int partOffset = 100_000_000;
-
-        if (parentTreeId < productOffset)
-        {
-            // Parent is a Batch row — return BatchProduct children
-            // Resolve batch name so we include all batches with the same name (matching grouping behavior)
-            int batchId = parentTreeId;
-            var parentBatch = await _db.Batches
-                .Where(b => b.Id == batchId)
-                .Select(b => new { b.Name, b.ReadyForProduction })
-                .FirstOrDefaultAsync();
-
-            if (parentBatch is null) return new List<ExportTreeItem>();
-
-            var products = await _db.Set<BatchProduct>()
-                .Where(bp => bp.Batch.Name == parentBatch.Name)
-                .OrderBy(bp => bp.ProductName)
-                .ToListAsync();
-
-            if (products.Count == 0) return new List<ExportTreeItem>();
-
-            var productIds = products.Select(p => p.Id).ToList();
-            var partCounts = await _db.Set<PartLineItem>()
-                .Where(p => productIds.Contains(p.BatchProductId!.Value))
-                .GroupBy(p => p.BatchProductId!.Value)
-                .Select(g => new { ProductId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.ProductId, x => x.Count);
-
-            var result = new List<ExportTreeItem>();
-            foreach (var product in products)
-            {
-                int count = partCounts.GetValueOrDefault(product.Id, 0);
-                if (count == 0) continue;
-                result.Add(new ExportTreeItem
-                {
-                    TreeId = productOffset + product.Id,
-                    TreeParentId = batchId,
-                    IsProductRow = true,
-                    HasChildren = count > 0,
-                    ProductName = product.ProductName,
-                    ParentQty = product.Qty,
-                    ItemCount = count,
-                    ReadyForProduction = parentBatch.ReadyForProduction,
-                });
-            }
-            return result;
-        }
-        else
-        {
-            // Parent is a BatchProduct row — return PartLineItem children
-            int productId = parentTreeId - productOffset;
-            var batchReleased = await _db.Set<BatchProduct>()
-                .Where(bp => bp.Id == productId)
-                .Select(bp => bp.Batch.ReadyForProduction)
-                .FirstOrDefaultAsync();
-
-            var parts = await _db.Set<PartLineItem>()
-                .Where(p => p.BatchProductId == productId)
-                .OrderBy(p => p.PartNumber)
-                .ToListAsync();
-
-            return parts.Select(part => new ExportTreeItem
-            {
-                TreeId = partOffset + part.Id,
-                TreeParentId = parentTreeId,
-                HasChildren = false,
-                Number = part.PartNumber,
-                Title = part.Title,
-                Description = part.Description,
-                Category = part.Category,
-                CategoryOrder = CategoryOrder(part.Category),
-                Material = part.Material,
-                Thickness = part.Thickness,
-                Operations = part.Operations,
-                Qty = part.Qty,
-                IsStock = part.IsStock,
-                HasPdf = part.HasPdf,
-                Notes = part.Notes,
-                ReadyForProduction = batchReleased,
-            }).ToList();
-        }
-    }
-
-    public async Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId)
-    {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
-        var products = await _db.Set<BatchProduct>()
-            .Include(bp => bp.Parts)
-            .Where(bp => bp.Batch.Name == batchName)
-            .OrderBy(bp => bp.ProductName)
+        var parts = await db.Set<PartLineItem>()
+            .Include(p => p.ScheduleOrder)
+                .ThenInclude(so => so!.Schedule)
+            .Where(p => p.ScheduleOrderId != null)
+            .Where(p => !plantId.HasValue || p.ScheduleOrder!.Schedule.PlantId == plantId.Value)
+            .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(p => !toDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(p => term == null ||
+                EF.Functions.ILike(p.ScheduleOrder!.Schedule.Name, $"%{term}%") ||
+                EF.Functions.ILike(p.ScheduleOrder!.OrderNumber, $"%{term}%") ||
+                EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
+                (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))
+            .OrderByDescending(p => p.ScheduleOrder!.Schedule.ImportDate)
+            .ThenBy(p => p.ScheduleOrder!.Id)
+            .ThenBy(p => p.Id)
             .ToListAsync();
 
-        var result = new List<ExportTreeItem>();
-        int treeId = nextTreeId;
+        // Find the top-level "Product" category part per order (already in results — no extra query)
+        var productLookup = parts
+            .Where(p => p.Category.Equals("product", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(p => p.ScheduleOrderId!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
 
-        foreach (var product in products)
+        return parts.Select(p =>
         {
-            var productParts = product.Parts
-                .OrderBy(p => p.PartNumber)
-                .ToList();
-
-            if (productParts.Count == 0) continue;
-
-            int productTreeId = treeId++;
-            result.Add(new ExportTreeItem
+            productLookup.TryGetValue(p.ScheduleOrderId!.Value, out var prod);
+            return new FlatSchedulePartRow
             {
-                TreeId = productTreeId,
-                TreeParentId = parentTreeId,
-                IsProductRow = true,
-                ProductName = product.ProductName,
-                ParentQty = product.Qty,
-                ItemCount = productParts.Count,
-            });
-
-            foreach (var part in productParts)
-            {
-                result.Add(new ExportTreeItem
-                {
-                    TreeId = treeId++,
-                    TreeParentId = productTreeId,
-                    Number = part.PartNumber,
-                    Title = part.Title,
-                    Description = part.Description,
-                    Category = part.Category,
-                    CategoryOrder = CategoryOrder(part.Category),
-                    Material = part.Material,
-                    Thickness = part.Thickness,
-                    Operations = part.Operations,
-                    Qty = part.Qty,
-                    IsStock = part.IsStock,
-                    HasPdf = part.HasPdf,
-                    Notes = part.Notes,
-                });
-            }
-        }
-
-        return result;
+                ScheduleId = p.ScheduleOrder!.ScheduleId,
+                ScheduleName = p.ScheduleOrder.Schedule.Name,
+                ScheduleImportDate = p.ScheduleOrder.Schedule.ImportDate,
+                ScheduleReleased = p.ScheduleOrder.Schedule.ReadyForProduction,
+                ScheduleOrderId = p.ScheduleOrderId!.Value,
+                OrderNumber = p.ScheduleOrder.OrderNumber,
+                OrderQty = p.ScheduleOrder.Qty,
+                ProductNumber = prod?.PartNumber,
+                ProductDescription = prod?.Description,
+                PartLineItemId = p.Id,
+                PartNumber = p.PartNumber,
+                Description = p.Description,
+                Category = p.Category,
+                Material = p.Material,
+                Thickness = p.Thickness,
+                Operations = p.Operations,
+                Qty = p.Qty,
+                IsStock = p.IsStock,
+                HasPdf = p.HasPdf,
+                Notes = p.Notes,
+            };
+        }).ToList();
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+    public async Task<List<FlatBatchPartRow>> GetFlatBatchPartsAsync(
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
-        // Load header rows only — children fetched on-demand via GetScheduleChildrenAsync
-        var query = _db.Schedules
-            .Include(s => s.Plant)
-            .Include(s => s.ImportedByUser)
-            .AsQueryable();
-
-        if (plantId.HasValue)
-            query = query.Where(s => s.PlantId == plantId.Value);
-        if (fromDate.HasValue)
-            query = query.Where(s => s.ImportDate >= fromDate.Value.ToUniversalTime());
-        if (toDate.HasValue)
-            query = query.Where(s => s.ImportDate < toDate.Value.ToUniversalTime().AddDays(1));
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            var term = searchTerm.Trim();
-            query = query.Where(s =>
-                EF.Functions.ILike(s.Name, $"%{term}%") ||
-                s.ScheduleOrders.Any(so =>
-                    EF.Functions.ILike(so.OrderNumber, $"%{term}%") ||
-                    so.Parts.Any(p =>
-                        EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
-                        (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))));
-        }
-
-        var schedules = await query.OrderByDescending(s => s.ImportDate).ToListAsync();
-
-        // Fast part count per schedule for ItemCount display
-        var scheduleNames = schedules.Select(s => s.Name).Distinct().ToList();
-        var partCounts = scheduleNames.Count > 0
-            ? await _db.Set<PartLineItem>()
-                .Where(p => p.ScheduleOrderId.HasValue)
-                .Where(p => scheduleNames.Contains(p.ScheduleOrder!.Schedule.Name))
-                .GroupBy(p => p.ScheduleOrder!.Schedule.Name)
-                .Select(g => new { Name = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.Name, x => x.Count)
-            : new Dictionary<string, int>();
-
-        var result = new List<ExportTreeItem>();
-
-        foreach (var group in schedules.GroupBy(s => s.Name).OrderByDescending(g => g.Max(s => s.ImportDate)))
-        {
-            var latest = group.OrderByDescending(s => s.ImportDate).First();
-            result.Add(new ExportTreeItem
-            {
-                TreeId = latest.Id,  // DB id — stable, used by Web API load-on-demand
-                TreeParentId = null,
-                IsBatchRow = true,
-                IsExpanded = false,
-                HasChildren = true,
-                BatchName = group.Key,
-                ImportDate = latest.ImportDate,
-                PlantName = latest.Plant?.Name,
-                ImportedBy = latest.ImportedByUser?.FullName,
-                ReadyForProduction = latest.ReadyForProduction,
-                ItemCount = partCounts.GetValueOrDefault(group.Key, 0),
-            });
-        }
-
-        return result;
-    }
-
-    public async Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId)
-    {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
-        const int orderOffset = 1_000_000;
-        const int partOffset = 100_000_000;
-
-        if (parentTreeId < orderOffset)
-        {
-            // Parent is a Schedule row — return ScheduleOrder children
-            int scheduleId = parentTreeId;
-            var parentSchedule = await _db.Schedules
-                .Where(s => s.Id == scheduleId)
-                .Select(s => new { s.ReadyForProduction })
-                .FirstOrDefaultAsync();
-
-            var orders = await _db.Set<ScheduleOrder>()
-                .Where(so => so.ScheduleId == scheduleId)
-                .OrderBy(so => so.Id)
-                .ToListAsync();
-
-            if (orders.Count == 0) return new List<ExportTreeItem>();
-
-            var orderIds = orders.Select(o => o.Id).ToList();
-            var partCounts = await _db.Set<PartLineItem>()
-                .Where(p => orderIds.Contains(p.ScheduleOrderId!.Value))
-                .GroupBy(p => p.ScheduleOrderId!.Value)
-                .Select(g => new { OrderId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.OrderId, x => x.Count);
-
-            // For each order, find the top-level product part (Category = "Product")
-            var topItems = await _db.Set<PartLineItem>()
-                .Where(p => orderIds.Contains(p.ScheduleOrderId!.Value) &&
-                            p.Category.ToLower() == "product")
-                .Select(p => new { p.ScheduleOrderId, p.PartNumber, p.Description })
-                .ToDictionaryAsync(p => p.ScheduleOrderId!.Value);
-
-            var result = new List<ExportTreeItem>();
-            foreach (var order in orders)
-            {
-                int count = partCounts.GetValueOrDefault(order.Id, 0);
-                if (count == 0) continue;
-                topItems.TryGetValue(order.Id, out var topItem);
-                result.Add(new ExportTreeItem
-                {
-                    TreeId = orderOffset + order.Id,
-                    TreeParentId = scheduleId,
-                    IsProductRow = true,
-                    HasChildren = count > 0,
-                    OrderNumber = order.OrderNumber,
-                    ProductName = order.OrderNumber,
-                    ParentQty = order.Qty,
-                    ItemCount = count,
-                    ReadyForProduction = parentSchedule?.ReadyForProduction ?? false,
-                    Number = topItem?.PartNumber,
-                    Description = topItem?.Description,
-                });
-            }
-            return result;
-        }
-        else
-        {
-            // Parent is a ScheduleOrder row — return PartLineItem children
-            int orderId = parentTreeId - orderOffset;
-            var scheduleReleased = await _db.Set<ScheduleOrder>()
-                .Where(so => so.Id == orderId)
-                .Select(so => so.Schedule.ReadyForProduction)
-                .FirstOrDefaultAsync();
-
-            var parts = await _db.Set<PartLineItem>()
-                .Where(p => p.ScheduleOrderId == orderId)
-                .OrderBy(p => p.PartNumber)
-                .ToListAsync();
-
-            return parts.Select(part => new ExportTreeItem
-            {
-                TreeId = partOffset + part.Id,
-                TreeParentId = parentTreeId,
-                HasChildren = false,
-                Number = part.PartNumber,
-                Title = part.Title,
-                Description = part.Description,
-                Category = part.Category,
-                CategoryOrder = CategoryOrder(part.Category),
-                Material = part.Material,
-                Thickness = part.Thickness,
-                Operations = part.Operations,
-                Qty = part.Qty,
-                IsStock = part.IsStock,
-                HasPdf = part.HasPdf,
-                Notes = part.Notes,
-                ReadyForProduction = scheduleReleased,
-            }).ToList();
-        }
-    }
-
-    public async Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId)
-    {
-        await using var _db = await _dbFactory.CreateDbContextAsync();
-        var orders = await _db.Set<ScheduleOrder>()
-            .Include(so => so.Parts)
-            .AsSplitQuery()
-            .Where(so => so.Schedule.Name == scheduleName)
-            .OrderBy(so => so.OrderNumber)
+        var parts = await db.Set<PartLineItem>()
+            .Include(p => p.BatchProduct)
+                .ThenInclude(bp => bp!.Batch)
+            .Where(p => p.BatchProductId != null)
+            .Where(p => !plantId.HasValue || p.BatchProduct!.Batch.PlantId == plantId.Value)
+            .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(p => !toDate.HasValue || p.BatchProduct!.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(p => term == null ||
+                EF.Functions.ILike(p.BatchProduct!.Batch.Name, $"%{term}%") ||
+                EF.Functions.ILike(p.BatchProduct!.ProductName, $"%{term}%") ||
+                EF.Functions.ILike(p.PartNumber, $"%{term}%") ||
+                (p.Description != null && EF.Functions.ILike(p.Description, $"%{term}%")))
+            .OrderByDescending(p => p.BatchProduct!.Batch.ImportDate)
+            .ThenBy(p => p.BatchProduct!.Id)
+            .ThenBy(p => p.Id)
             .ToListAsync();
 
-        var result = new List<ExportTreeItem>();
-        int treeId = nextTreeId;
-
-        foreach (var order in orders)
+        return parts.Select(p => new FlatBatchPartRow
         {
-            var orderParts = order.Parts
-                .OrderBy(p => p.PartNumber)
-                .ToList();
-
-            if (orderParts.Count == 0) continue;
-
-            int orderTreeId = treeId++;
-            result.Add(new ExportTreeItem
-            {
-                TreeId = orderTreeId,
-                TreeParentId = parentTreeId,
-                IsProductRow = true,
-                OrderNumber = order.OrderNumber,
-                ProductName = order.OrderNumber,
-                ParentQty = order.Qty,
-                ItemCount = orderParts.Count,
-            });
-
-            foreach (var part in orderParts)
-            {
-                result.Add(new ExportTreeItem
-                {
-                    TreeId = treeId++,
-                    TreeParentId = orderTreeId,
-                    Number = part.PartNumber,
-                    Title = part.Title,
-                    Description = part.Description,
-                    Category = part.Category,
-                    CategoryOrder = CategoryOrder(part.Category),
-                    Material = part.Material,
-                    Thickness = part.Thickness,
-                    Operations = part.Operations,
-                    Qty = part.Qty,
-                    IsStock = part.IsStock,
-                    HasPdf = part.HasPdf,
-                    Notes = part.Notes,
-                });
-            }
-        }
-
-        return result;
+            BatchId = p.BatchProduct!.BatchId,
+            BatchName = p.BatchProduct.Batch.Name,
+            BatchImportDate = p.BatchProduct.Batch.ImportDate,
+            BatchReleased = p.BatchProduct.Batch.ReadyForProduction,
+            BatchProductId = p.BatchProductId!.Value,
+            ProductName = p.BatchProduct.ProductName,
+            ProductQty = p.BatchProduct.Qty,
+            PartLineItemId = p.Id,
+            PartNumber = p.PartNumber,
+            Description = p.Description,
+            Category = p.Category,
+            Material = p.Material,
+            Thickness = p.Thickness,
+            Operations = p.Operations,
+            Qty = p.Qty,
+            IsStock = p.IsStock,
+            HasPdf = p.HasPdf,
+            Notes = p.Notes,
+        }).ToList();
     }
-
-    private static int CategoryOrder(string? category) => category?.ToLowerInvariant() switch
-    {
-        "product"  => 0,
-        "assembly" => 1,
-        "part"     => 2,
-        _          => int.MaxValue,
-    };
 
     public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)
     {

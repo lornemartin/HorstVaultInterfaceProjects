@@ -200,7 +200,6 @@ async Task<int> SeedAsync(string ds, int numBatches, int numSchedules, int days)
                     IsStock        = template.IsStock,
                     RequiresPdf    = template.RequiresPdf,
                     HasPdf         = hasPdf,
-                    IsProcessed    = false,
                 });
             }
             await db.SaveChangesAsync();
@@ -270,7 +269,6 @@ async Task<int> SeedAsync(string ds, int numBatches, int numSchedules, int days)
                     IsStock         = template.IsStock,
                     RequiresPdf     = template.RequiresPdf,
                     HasPdf          = hasPdf,
-                    IsProcessed     = false,
                 });
             }
             await db.SaveChangesAsync();

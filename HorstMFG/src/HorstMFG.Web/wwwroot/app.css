@@ -203,19 +203,14 @@ h1:focus {
     font-weight: 700;
 }
 
-/* Orders tree grid row styles */
-.e-treegrid .e-row.row-batch td {
-    background-color: #f1f5f9 !important;
-    font-weight: 600;
-}
-
-.e-treegrid .e-row.row-released td {
+/* Engineering grid row styles */
+.e-grid .e-row.row-released td {
     background-color: #dcfce7 !important;
     font-weight: 600;
     color: #166534 !important;
 }
 
-.e-treegrid .e-row.row-dimmed td {
+.e-grid .e-row.row-dimmed td {
     color: #c4c9d4 !important;
     font-style: italic;
 }

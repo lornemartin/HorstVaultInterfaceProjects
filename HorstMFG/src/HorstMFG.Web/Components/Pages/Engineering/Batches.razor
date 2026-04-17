@@ -5,8 +5,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject IBomService BomService
-@inject HorstMFG.Web.Services.BatchTreeFilterState BatchFilterState
 @inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
+@using HorstMFG.Core.DTOs
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.Extensions.Logging
 @inject ILogger<Batches> Logger
@@ -14,9 +14,7 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
 @using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.TreeGrid
 @using Syncfusion.Blazor.Calendars
-@using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Popups
 
 <PageTitle>Batches - HorstMFG</PageTitle>
@@ -26,6 +24,14 @@
     <div class="loading-overlay">
         <div class="spinner"></div>
         <span class="spinner-label">Releasing to production…</span>
+    </div>
+}
+
+@if (_loading)
+{
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span class="spinner-label">Loading…</span>
     </div>
 }
 
@@ -70,128 +76,123 @@
     </div>
 </div>
 
-<SfTreeGrid TValue="ExportTreeItem" @ref="_batchGrid" ID="BatchesGrid_v5" IdMapping="TreeId" ParentIdMapping="TreeParentId"
-            HasChildMapping="HasChildren" LoadChildOnDemand="true" EnablePersistence="true"
-            TreeColumnIndex="0" AllowSorting="true" AllowMultiSorting="true" Height="600" AllowResizing="true"
-            ContextMenuItems="@_contextMenuItems">
-    <SfDataManager AdaptorInstance="typeof(HorstMFG.Web.Services.BatchTreeAdaptor)" Adaptor="Adaptors.CustomAdaptor" />
-    <TreeGridEvents TValue="ExportTreeItem"
-                    DataBound="OnBatchDataBound"
-                    OnActionBegin="OnBatchActionBegin"
-                    Expanded="OnBatchExpanded"
-                    Collapsed="OnBatchCollapsed"
-                    RowDataBound="OnRowDataBound"
-                    ContextMenuOpen="OnContextMenuOpen"
-                    ContextMenuItemClicked="OnContextMenuClicked" />
-    <TreeGridColumns>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Number)" HeaderText="Number" Width="300">
+<SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="BatchesGrid_v6"
+        DataSource="_rows" AllowGrouping="true" AllowSorting="true"
+        AllowResizing="true" Height="600">
+    <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false"
+                       Columns="@(new[] { "BatchId", "BatchProductId" })">
+        <CaptionTemplate>
+            @{
+                var ctx = context as CaptionTemplateContext;
+                var key = Convert.ToInt32(ctx!.Key);
+            }
+            @if (ctx.Field == "BatchId" && _batchMeta.TryGetValue(key, out var batch))
+            {
+                <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
+                <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
+                    @batch.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
+                </span>
+                <span style="margin-left: 0.75rem; color: #6b7280; font-size: 0.8rem;">
+                    (@ctx.Count part@(ctx.Count != 1 ? "s" : ""))
+                </span>
+                <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
+                    @if (!batch.IsReleased)
+                    {
+                        <button @onclick="@(async () => await OnReleaseBatch(batch))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("e-primary")">Release to Production</button>
+                        <button @onclick="@(async () => await OnDeleteBatch(batch))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("danger")">Delete</button>
+                        <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
+                    }
+                    <button @onclick="@(async () => await OpenReport("batch-laser", batch.Name))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")">Laser</button>
+                    <button @onclick="@(async () => await OpenReport("batch-op/Iron Worker", batch.Name))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")">Iron Worker</button>
+                    <button @onclick="@(async () => await OpenReport("batch-op/Machine Shop", batch.Name))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")">Machine Shop</button>
+                    <button @onclick="@(async () => await OpenReport("batch-op/Bandsaw", batch.Name))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")">Bandsaw</button>
+                    <button @onclick="@(async () => await OpenReport("batch-op/Purchased", batch.Name))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")">Purchased</button>
+                </span>
+            }
+            else if (ctx.Field == "BatchProductId" && _productMeta.TryGetValue(key, out var product))
+            {
+                <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
+                <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
+                    <span style="font-size: 0.8rem; color: #6b7280;">Qty:</span>
+                    @if (product.IsReleased)
+                    {
+                        <strong>@product.Qty</strong>
+                    }
+                    else
+                    {
+                        <input type="number" value="@product.Qty"
+                               @onchange="@(async e => await OnBatchProductQtyChanged(product.Id, e.Value?.ToString() ?? ""))"
+                               @onclick:stopPropagation="true"
+                               min="1" max="9999"
+                               style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
+                        <button @onclick="@(async () => await OnDeleteBatchProduct(product))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("danger")">Delete</button>
+                    }
+                </span>
+            }
+        </CaptionTemplate>
+    </GridGroupSettings>
+    <GridSortSettings>
+        <GridSortColumns>
+            <GridSortColumn Field="PartLineItemId" Direction="SortDirection.Ascending" />
+        </GridSortColumns>
+    </GridSortSettings>
+    <GridEvents TValue="FlatBatchPartRow" RowDataBound="OnRowDataBound" />
+    <GridColumns>
+        <GridColumn Field="BatchId" Visible="false" Width="0" />
+        <GridColumn Field="BatchProductId" Visible="false" Width="0" />
+        <GridColumn Field="PartLineItemId" IsPrimaryKey="true" Visible="false" Width="0" />
+        <GridColumn Field="PartNumber" HeaderText="Number" Width="300">
             <Template>
                 @{
-                    var item = context as ExportTreeItem;
-                    @if (item!.IsBatchRow)
+                    var row = context as FlatBatchPartRow;
+                    if (row!.HasPdf)
                     {
-                        <strong>@item.BatchName</strong>
-                    }
-                    else if (item.IsProductRow)
-                    {
-                        <span style="font-style: italic;">@item.ProductName</span>
-                    }
-                    else if (item.HasPdf)
-                    {
-                        <span @onmouseenter="@(e => OnThumbEnter(item.Number!, e))"
+                        <span @onmouseenter="@(e => OnThumbEnter(row.PartNumber, e))"
                               @onmouseleave="OnThumbLeave"
-                              style="cursor:default;">@item.Number</span>
+                              style="cursor: default;">
+                            @row.PartNumber
+                        </span>
+                        <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
+                           @onclick:stopPropagation="true"
+                           style="margin-left: 0.4rem; color: #3b82f6; font-size: 0.75rem; text-decoration: none;"
+                           title="View PDF">&#x1F4C4;</a>
                     }
                     else
                     {
-                        <span>@item.Number</span>
+                        <span>@row.PartNumber</span>
                     }
                 }
             </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Description)" HeaderText="Description" Width="220">
+        </GridColumn>
+        <GridColumn Field="Description" HeaderText="Description" Width="220" />
+        <GridColumn Field="Category" HeaderText="Category" Width="100" />
+        <GridColumn Field="Material" HeaderText="Material" Width="120" />
+        <GridColumn Field="Thickness" HeaderText="Thickness" Width="90" />
+        <GridColumn Field="Operations" HeaderText="Operations" Width="110" />
+        <GridColumn Field="Qty" HeaderText="Qty" Width="70" TextAlign="TextAlign.Right" />
+        <GridColumn Field="IsStock" HeaderText="Stock" Width="70" TextAlign="TextAlign.Center">
             <Template>
                 @{
-                    var item = context as ExportTreeItem;
-                    @if (!item!.IsBatchRow && !item.IsProductRow)
-                    {
-                        <span>@item.Description</span>
-                    }
+                    var row = context as FlatBatchPartRow;
+                    <input type="checkbox" checked="@row!.IsStock"
+                           @onchange="@(async e => await OnIsStockChanged(row, (bool)e.Value!))"
+                           disabled="@row.BatchReleased"
+                           style="cursor: @(row.BatchReleased ? "default" : "pointer"); width: 16px; height: 16px;" />
                 }
             </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.CategoryOrder)" HeaderText="Category" Width="100">
-            <Template>
-                @{
-                    var item = context as ExportTreeItem;
-                    <span>@item!.Category</span>
-                }
-            </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Material)" HeaderText="Material" Width="120" />
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Thickness)" HeaderText="Thickness" Width="90" />
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Operations)" HeaderText="Operations" Width="110" />
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Qty)" HeaderText="Qty" Width="70" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right">
-            <Template>
-                @{
-                    var item = context as ExportTreeItem;
-                    @if (item!.IsBatchRow)
-                    {
-                        <span style="color: #6b7280;">@item.ItemCount items</span>
-                    }
-                    else if (item.IsProductRow)
-                    {
-                        @if (item.ReadyForProduction)
-                        {
-                            <strong>@item.ParentQty</strong>
-                        }
-                        else
-                        {
-                            <input type="number" value="@item.ParentQty"
-                                   @onchange="@(async e => await OnBatchProductQtyChanged(item, e.Value?.ToString() ?? ""))"
-                                   min="1" max="9999"
-                                   style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
-                        }
-                    }
-                    else
-                    {
-                        @item.Qty
-                    }
-                }
-            </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.IsStock)" HeaderText="Stock" Width="70"
-                        TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center">
-            <Template>
-                @{
-                    var item = context as ExportTreeItem;
-                    if (!item!.IsBatchRow && !item.IsProductRow)
-                    {
-                        <input type="checkbox" checked="@item.IsStock"
-                               @onchange="@(async e => await OnIsStockChanged(item, (bool)e.Value!))"
-                               disabled="@item.ReadyForProduction"
-                               style="cursor: @(item.ReadyForProduction ? "default" : "pointer"); width: 16px; height: 16px;" />
-                    }
-                }
-            </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="@nameof(ExportTreeItem.HasPdf)" HeaderText="PDF" Width="70"
-                        DisplayAsCheckBox="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />
-        <TreeGridColumn Field="@nameof(ExportTreeItem.Notes)" HeaderText="Notes" Width="150" />
-        <TreeGridColumn Field="@nameof(ExportTreeItem.ImportDate)" HeaderText="Imported" Width="140">
-            <Template>
-                @{
-                    var item = context as ExportTreeItem;
-                    @if (item!.IsBatchRow && item.ImportDate.HasValue)
-                    {
-                        @item.ImportDate.Value.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
-                    }
-                }
-            </Template>
-        </TreeGridColumn>
-        <TreeGridColumn Field="TreeId" IsPrimaryKey="true" Visible="false" Width="0" />
-    </TreeGridColumns>
-</SfTreeGrid>
+        </GridColumn>
+        <GridColumn Field="HasPdf" HeaderText="PDF" Width="60" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="Notes" HeaderText="Notes" Width="150" />
+    </GridColumns>
+</SfGrid>
 
 @if (_thumbNumber is not null)
 {
@@ -208,9 +209,9 @@
           Header="Update Stock Flag" AllowDragging="true">
     <DialogTemplates>
         <Content>
-            @if (_stockDialogItem is not null)
+            @if (_stockDialogRow is not null)
             {
-                <p>Part <strong>@_stockDialogItem.Number</strong> appears <strong>@_stockDialogSiblingCount</strong>
+                <p>Part <strong>@_stockDialogRow.PartNumber</strong> appears <strong>@_stockDialogSiblingCount</strong>
                    time@(_stockDialogSiblingCount != 1 ? "s" : "") in this batch.</p>
                 <p>Update all instances or just this one?</p>
             }
@@ -226,55 +227,47 @@
 </SfDialog>
 
 @code {
+    // ── Data ─────────────────────────────────────────────────────────────────
+    private List<FlatBatchPartRow> _rows = new();
+    private Dictionary<int, BatchCaption> _batchMeta = new();
+    private Dictionary<int, ProductCaption> _productMeta = new();
+
+    private sealed record BatchCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
+    private sealed record ProductCaption(int Id, int BatchId, string? ProductName, int Qty, bool IsReleased);
+
+    // ── UI state ─────────────────────────────────────────────────────────────
+    private SfGrid<FlatBatchPartRow>? _batchGrid;
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
     private bool _isAdmin;
     private bool _releasing;
+    private bool _loading;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
+    private string _searchTerm = "";
+    private CancellationTokenSource? _searchCts;
 
     // PDF thumbnail hover
     private string? _thumbNumber;
-    private double  _thumbX, _thumbY;
+    private double _thumbX, _thumbY;
 
-    private void OnThumbEnter(string number, Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
-    {
-        _thumbNumber = number;
-        _thumbX = e.ClientX + 18;
-        _thumbY = e.ClientY - 10;
-    }
-
-    private void OnThumbLeave() => _thumbNumber = null;
-
-    private SfTreeGrid<ExportTreeItem>? _batchGrid;
+    // Stock dialog
+    private bool _showStockDialog;
+    private FlatBatchPartRow? _stockDialogRow;
+    private bool _stockDialogNewValue;
+    private int _stockDialogSiblingCount;
 
     private record PlantOption(int? Id, string Name);
 
-    private readonly List<object> _contextMenuItems = new()
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    private static string BtnStyle(string variant) => variant switch
     {
-        new ContextMenuItemModel { Text = "View PDF",                   Id = "view-pdf"       },
-        new ContextMenuItemModel { Separator = true,                    Id = "sep-pdf"        },
-        new ContextMenuItemModel { Text = "Laser Parts Report",         Id = "laser-report"   },
-        new ContextMenuItemModel { Text = "Iron Worker Report",         Id = "op-iron-worker" },
-        new ContextMenuItemModel { Text = "Machine Shop Report",        Id = "op-machine-shop"},
-        new ContextMenuItemModel { Text = "Bandsaw Report",             Id = "op-bandsaw"     },
-        new ContextMenuItemModel { Text = "Purchased Parts Report",     Id = "op-purchased"   },
-        new ContextMenuItemModel { Separator = true,                    Id = "sep-reports"    },
-        new ContextMenuItemModel { Text = "Release to Production",      Id = "release-batch"  },
-        new ContextMenuItemModel { Separator = true,                    Id = "sep-release"    },
-        new ContextMenuItemModel { Text = "Delete Batch",               Id = "delete-batch"   },
-        new ContextMenuItemModel { Text = "Delete Batch Item",          Id = "delete-product" },
+        "e-primary" => "padding: 2px 8px; font-size: 0.75rem; border-radius: 3px; border: 1px solid #3b82f6; background: #3b82f6; color: white; cursor: pointer;",
+        "danger"    => "padding: 2px 8px; font-size: 0.75rem; border-radius: 3px; border: 1px solid #ef4444; background: white; color: #ef4444; cursor: pointer;",
+        _           => "padding: 2px 8px; font-size: 0.75rem; border-radius: 3px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer;",
     };
 
-
-    private static readonly Dictionary<string, string> _opMenuItems = new()
-    {
-        ["op-iron-worker"]  = "Iron Worker",
-        ["op-machine-shop"] = "Machine Shop",
-        ["op-bandsaw"]      = "Bandsaw",
-        ["op-purchased"]    = "Purchased",
-    };
-
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
         await using var db = await DbContextFactory.CreateDbContextAsync();
@@ -293,11 +286,7 @@
                     _selectedPlantId = pid;
             }
         }
-
-        SyncFilterState();
     }
-
-    private bool _isFirstLoad = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -306,14 +295,42 @@
         var canEdit = user?.HasClaim(ClaimTypes.Role, "Admin") == true
                    || user?.HasClaim(ClaimTypes.Role, "Engineering") == true;
         await JS.InvokeVoidAsync("setUserCanEdit", canEdit);
-        _awaitingRestore = true;
         await LoadData();
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────────────
+    private async Task LoadData()
+    {
+        _loading = true;
+        StateHasChanged();
+        var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
+        _rows = await BomService.GetFlatBatchPartsAsync(_selectedPlantId, _fromDate, _toDate, term);
+        BuildMeta();
+        _loading = false;
         StateHasChanged();
     }
 
-    private string _searchTerm = "";
-    private CancellationTokenSource? _searchCts;
+    private void BuildMeta()
+    {
+        _batchMeta = _rows
+            .GroupBy(r => r.BatchId)
+            .ToDictionary(g => g.Key, g => new BatchCaption(
+                g.Key,
+                g.First().BatchName,
+                g.First().BatchImportDate,
+                g.First().BatchReleased));
 
+        _productMeta = _rows
+            .GroupBy(r => r.BatchProductId)
+            .ToDictionary(g => g.Key, g => new ProductCaption(
+                g.Key,
+                g.First().BatchId,
+                g.First().ProductName,
+                g.First().ProductQty,
+                g.First().BatchReleased));
+    }
+
+    // ── Filter handlers ───────────────────────────────────────────────────────
     private async Task OnSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
         _searchTerm = e.Value?.ToString() ?? "";
@@ -328,47 +345,22 @@
         catch (TaskCanceledException) { }
     }
 
-    private void SyncFilterState()
-    {
-        BatchFilterState.PlantId = _selectedPlantId;
-        BatchFilterState.FromDate = _fromDate;
-        BatchFilterState.ToDate = _toDate;
-        BatchFilterState.SearchTerm = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
-    }
-
-    private async Task LoadData()
-    {
-        SyncFilterState();
-        if (_isFirstLoad)
-        {
-            _isFirstLoad = false;
-        }
-        else
-        {
-            _awaitingRestore = true;
-            if (_batchGrid is not null) await _batchGrid.RefreshAsync();
-        }
-    }
-
     private async Task OnPlantChanged(int? value)
     {
         _selectedPlantId = value;
         await LoadData();
-        StateHasChanged();
     }
 
     private async Task OnFromDateChanged(DateTime? value)
     {
         _fromDate = value;
         await LoadData();
-        StateHasChanged();
     }
 
     private async Task OnToDateChanged(DateTime? value)
     {
         _toDate = value;
         await LoadData();
-        StateHasChanged();
     }
 
     private async Task SetDateRange(int? days)
@@ -376,292 +368,158 @@
         _fromDate = days.HasValue ? DateTime.Today.AddDays(-days.Value) : null;
         _toDate = days.HasValue ? DateTime.Today : null;
         await LoadData();
+    }
+
+    // ── Row styling ───────────────────────────────────────────────────────────
+    private void OnRowDataBound(RowDataBoundEventArgs<FlatBatchPartRow> args)
+    {
+        if (args.Data.BatchReleased)
+            args.Row.AddClass(new[] { "row-released" });
+        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+            args.Row.AddClass(new[] { "row-has-notes" });
+        if (!args.Data.IsStock)
+            args.Row.AddClass(new[] { "row-dimmed" });
+    }
+
+    // ── PDF thumbnail ─────────────────────────────────────────────────────────
+    private void OnThumbEnter(string number, Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
+    {
+        _thumbNumber = number;
+        _thumbX = e.ClientX + 18;
+        _thumbY = e.ClientY - 10;
+    }
+
+    private void OnThumbLeave() => _thumbNumber = null;
+
+    // ── Batch actions ─────────────────────────────────────────────────────────
+    private async Task OnReleaseBatch(BatchCaption batch)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Release batch '{batch.Name}' to production? This cannot be undone and the batch will become read-only.");
+        if (!confirmed) return;
+
+        var stationId = BridgeHub.GetAnyOnlineStationId();
+        if (stationId == null)
+        {
+            await JS.InvokeVoidAsync("alert",
+                "No bridge connection is active. A bridge must be connected to release to production.");
+            return;
+        }
+
+        _releasing = true;
         StateHasChanged();
-    }
-
-    // ── Expansion state persistence ───────────────────────────────────────────
-    private const string ExpandKey = "hfmg-batch-expanded";
-    private bool _awaitingRestore;
-    private bool _restoringExpansion;
-
-    private async Task OnBatchDataBound(object _)
-    {
-        if (!_awaitingRestore || _restoringExpansion) return;
-        _awaitingRestore = false;
-        _restoringExpansion = true;
-        try { await RestoreExpansionAsync(); }
-        finally { _restoringExpansion = false; }
-    }
-
-    private void OnBatchActionBegin(ActionEventArgs<ExportTreeItem> args)
-    {
-        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Sorting && !_restoringExpansion)
-            _awaitingRestore = true;
-    }
-
-    private async Task OnBatchExpanded(RowExpandedEventArgs<ExportTreeItem> args)
-    {
-        if (_restoringExpansion || (!args.Data.IsBatchRow && !args.Data.IsProductRow)) return;
-        await UpdateExpandedStorageAsync(args.Data.TreeId, add: true);
-    }
-
-    private async Task OnBatchCollapsed(RowCollapsedEventArgs<ExportTreeItem> args)
-    {
-        if (_restoringExpansion || (!args.Data.IsBatchRow && !args.Data.IsProductRow)) return;
-        await UpdateExpandedStorageAsync(args.Data.TreeId, add: false);
-    }
-
-    private async Task RestoreExpansionAsync()
-    {
-        if (_batchGrid is null) return;
         try
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", ExpandKey);
-            if (string.IsNullOrEmpty(json)) return;
-            var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(json);
-            if (ids is null || ids.Count == 0) return;
+            await BomService.ReleaseBatchToProductionAsync(batch.Id);
 
-            // Pass 1: expand root rows (batch) — loads their product children
-            foreach (var id in ids.Where(id => id < 1_000_000))
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var thumbItems = await db.BatchItems
+                .Where(i => i.NestBatch.BatchId == batch.Id
+                         && i.Part.Thumbnail == null
+                         && i.Part.FileName != null)
+                .Select(i => new { i.PartId, i.Part.FileName })
+                .Distinct()
+                .ToListAsync();
+            if (thumbItems.Any())
             {
-                try { await _batchGrid.ExpandByKeyAsync(id); }
-                catch (ArgumentOutOfRangeException) { }
+                Logger.LogInformation("Batch {Id} release: sending UpdateThumbnail for {Count} part(s)",
+                    batch.Id, thumbItems.Count);
+                var payload = JsonSerializer.Serialize(
+                    thumbItems.Select(t => new { PartId = t.PartId, FileName = t.FileName }));
+                var sent = BridgeHub.TrySendCommand(HubContext, stationId.Value,
+                    Guid.NewGuid().ToString(), "UpdateThumbnail", payload);
+                if (!sent)
+                    Logger.LogWarning("Batch {Id} release: TrySendCommand returned false", batch.Id);
+            }
+            else
+            {
+                Logger.LogInformation("Batch {Id} release: no parts needing thumbnails", batch.Id);
             }
 
-            // Pass 2: expand product rows — now visible after their parents expanded above
-            foreach (var id in ids.Where(id => id >= 1_000_000))
-            {
-                try { await _batchGrid.ExpandByKeyAsync(id); }
-                catch (ArgumentOutOfRangeException) { }  // parent not expanded, skip
-            }
+            await LoadData();
         }
-        catch (JSDisconnectedException) { }
-    }
-
-    private async Task UpdateExpandedStorageAsync(int treeId, bool add)
-    {
-        try
+        catch (Exception ex)
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", ExpandKey);
-            var ids = string.IsNullOrEmpty(json)
-                ? new HashSet<int>()
-                : new HashSet<int>(System.Text.Json.JsonSerializer.Deserialize<List<int>>(json) ?? new List<int>());
-            if (add) ids.Add(treeId); else ids.Remove(treeId);
-            await JS.InvokeVoidAsync("localStorage.setItem", ExpandKey,
-                System.Text.Json.JsonSerializer.Serialize(ids));
+            await JS.InvokeVoidAsync("alert", ex.Message);
         }
-        catch (JSDisconnectedException) { }
-    }
-
-    // ── Context menu ──────────────────────────────────────────────────────────
-
-    private void OnContextMenuOpen(ContextMenuOpenEventArgs<ExportTreeItem> args)
-    {
-        var row = args.RowInfo?.RowData;
-        if (row is null) { args.Cancel = true; return; }
-
-        if (!row.IsBatchRow && !row.IsProductRow)
+        finally
         {
-            // Leaf row — only allow menu if part has a PDF; app.js hides batch-level items
-            if (!row.HasPdf) args.Cancel = true;
-            return;
-        }
-
-        if (row.IsProductRow && row.ReadyForProduction) { args.Cancel = true; return; }
-        // Batch/product row visibility handled by app.js (row-batch, row-product, row-released).
-    }
-
-    private async Task OnContextMenuClicked(ContextMenuClickEventArgs<ExportTreeItem> args)
-    {
-        var row = args.RowInfo?.RowData;
-        if (row is null) return;
-
-        if (args.Item.Id == "release-batch" && row.IsBatchRow)
-        {
-            var confirmed = await JS.InvokeAsync<bool>("confirm",
-                $"Release batch '{row.BatchName}' to production? This cannot be undone and the batch will become read-only.");
-            if (!confirmed) return;
-
-            var stationId = BridgeHub.GetAnyOnlineStationId();
-            if (stationId == null)
-            {
-                await JS.InvokeVoidAsync("alert",
-                    "No bridge connection is active. A bridge must be connected to release to production.");
-                return;
-            }
-
-            _releasing = true;
+            _releasing = false;
             StateHasChanged();
-            try
-            {
-                await BomService.ReleaseBatchToProductionAsync(row.TreeId);
-
-                // Send thumbnail extraction to the bridge for parts that don't have one yet
-                await using var db = await DbContextFactory.CreateDbContextAsync();
-                var thumbItems = await db.BatchItems
-                    .Where(i => i.NestBatch.BatchId == row.TreeId
-                             && i.Part.Thumbnail == null
-                             && i.Part.FileName != null)
-                    .Select(i => new { i.PartId, i.Part.FileName })
-                    .Distinct()
-                    .ToListAsync();
-                if (thumbItems.Any())
-                {
-                    Logger.LogInformation("Batch {Id} release: sending UpdateThumbnail for {Count} part(s)",
-                        row.TreeId, thumbItems.Count);
-                    var payload = JsonSerializer.Serialize(
-                        thumbItems.Select(t => new { PartId = t.PartId, FileName = t.FileName }));
-                    var sent = BridgeHub.TrySendCommand(HubContext, stationId.Value,
-                        Guid.NewGuid().ToString(), "UpdateThumbnail", payload);
-                    if (!sent)
-                        Logger.LogWarning("Batch {Id} release: TrySendCommand returned false — station {StationId} disconnected?",
-                            row.TreeId, stationId.Value);
-                }
-                else
-                {
-                    Logger.LogInformation("Batch {Id} release: no parts needing thumbnails (0 BatchItems or all already have thumbnails)",
-                        row.TreeId);
-                }
-
-                _awaitingRestore = true;
-                if (_batchGrid is not null) await _batchGrid.RefreshAsync();
-            }
-            catch (Exception ex)
-            {
-                await JS.InvokeVoidAsync("alert", ex.Message);
-            }
-            finally
-            {
-                _releasing = false;
-            }
-            return;
         }
-
-        if (args.Item.Id == "delete-batch" && row.IsBatchRow)
-        {
-            var confirmed = await JS.InvokeAsync<bool>("confirm",
-                $"Delete entire batch '{row.BatchName}'? This will remove all batch items and parts and cannot be undone.");
-            if (!confirmed) return;
-            await BomService.DeleteBatchAsync(row.TreeId);
-            if (_batchGrid is not null) await _batchGrid.RefreshAsync();
-            return;
-        }
-
-        if (args.Item.Id == "delete-product" && row.IsProductRow)
-        {
-            var confirmed = await JS.InvokeAsync<bool>("confirm",
-                $"Delete batch item '{row.ProductName}' and all its parts? This cannot be undone.");
-            if (!confirmed) return;
-            await BomService.DeleteBatchProductAsync(row.TreeId - 1_000_000);
-            _awaitingRestore = true;
-            if (_batchGrid is not null) await _batchGrid.RefreshAsync();
-            return;
-        }
-
-        if (args.Item.Id == "view-pdf" && row.Number is not null)
-        {
-            await JS.InvokeVoidAsync("window.open",
-                $"/api/pdf-local/{Uri.EscapeDataString(row.Number)}", "_blank");
-            return;
-        }
-
-        if (row.BatchName is not string name) return;
-        if (args.Item.Id == "laser-report")
-            await JS.InvokeVoidAsync("window.open",
-                $"/api/reports/batch-laser/{Uri.EscapeDataString(name)}", "_blank");
-        else if (_opMenuItems.TryGetValue(args.Item.Id, out var op))
-            await JS.InvokeVoidAsync("window.open",
-                $"/api/reports/batch-op/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(op)}", "_blank");
     }
 
-    // ── Qty editing ──────────────────────────────────────────────────────────
-    private async Task OnBatchProductQtyChanged(ExportTreeItem item, string rawValue)
+    private async Task OnDeleteBatch(BatchCaption batch)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Delete entire batch '{batch.Name}'? This will remove all batch items and parts and cannot be undone.");
+        if (!confirmed) return;
+        await BomService.DeleteBatchAsync(batch.Id);
+        await LoadData();
+    }
+
+    // ── BatchProduct actions ──────────────────────────────────────────────────
+    private async Task OnDeleteBatchProduct(ProductCaption product)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Delete batch item '{product.ProductName}' and all its parts? This cannot be undone.");
+        if (!confirmed) return;
+        await BomService.DeleteBatchProductAsync(product.Id);
+        await LoadData();
+    }
+
+    private async Task OnBatchProductQtyChanged(int productId, string rawValue)
     {
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
-        const int productOffset = 1_000_000;
-        await BomService.UpdateBatchProductQtyAsync(item.TreeId - productOffset, qty);
-        item.ParentQty = qty;
+        await BomService.UpdateBatchProductQtyAsync(productId, qty);
+        await LoadData();
     }
 
-    // ── IsStock editing ───────────────────────────────────────────────────────
-    private bool _showStockDialog;
-    private ExportTreeItem? _stockDialogItem;
-    private bool _stockDialogNewValue;
-    private int _stockDialogSiblingCount;
-
-    private async Task OnIsStockChanged(ExportTreeItem item, bool newValue)
+    // ── Reports ───────────────────────────────────────────────────────────────
+    private async Task OpenReport(string route, string name)
     {
-        const int partOffset = 100_000_000;
-        var partId = item.TreeId - partOffset;
-        var count = await BomService.CountSiblingsByPartNumberAsync(partId);
+        await JS.InvokeVoidAsync("window.open",
+            $"/api/reports/{route}/{Uri.EscapeDataString(name)}", "_blank");
+    }
+
+    // ── Stock checkbox ────────────────────────────────────────────────────────
+    private async Task OnIsStockChanged(FlatBatchPartRow row, bool newValue)
+    {
+        var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {
-            _stockDialogItem = item;
+            _stockDialogRow = row;
             _stockDialogNewValue = newValue;
             _stockDialogSiblingCount = count;
             _showStockDialog = true;
             StateHasChanged();
             return;
         }
-        await BomService.UpdatePartIsStockAsync(partId, newValue);
-        _awaitingRestore = true;
-        if (_batchGrid is not null) await _batchGrid.RefreshAsync();
+        await BomService.UpdatePartIsStockAsync(row.PartLineItemId, newValue);
+        await LoadData();
     }
 
     private async Task OnStockDialogThisOnly()
     {
         _showStockDialog = false;
-        if (_stockDialogItem is null) return;
-        const int partOffset = 100_000_000;
-        await BomService.UpdatePartIsStockAsync(_stockDialogItem.TreeId - partOffset, _stockDialogNewValue);
-        _stockDialogItem = null;
-        _awaitingRestore = true;
-        if (_batchGrid is not null) await _batchGrid.RefreshAsync();
+        if (_stockDialogRow is null) return;
+        await BomService.UpdatePartIsStockAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
+        _stockDialogRow = null;
+        await LoadData();
     }
 
     private async Task OnStockDialogAll()
     {
         _showStockDialog = false;
-        if (_stockDialogItem is null) return;
-        const int partOffset = 100_000_000;
-        await BomService.UpdatePartIsStockForAllSiblingsAsync(_stockDialogItem.TreeId - partOffset, _stockDialogNewValue);
-        _stockDialogItem = null;
-        _awaitingRestore = true;
-        if (_batchGrid is not null) await _batchGrid.RefreshAsync();
+        if (_stockDialogRow is null) return;
+        await BomService.UpdatePartIsStockForAllSiblingsAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
+        _stockDialogRow = null;
+        await LoadData();
     }
 
     private void OnStockDialogCancel()
     {
         _showStockDialog = false;
-        _stockDialogItem = null;
-    }
-
-    // Non-stock items are dimmed — they belong on the Orders page
-    private void OnRowDataBound(RowDataBoundEventArgs<ExportTreeItem> args)
-    {
-        if (args.Data.IsBatchRow)
-        {
-            args.Row.AddClass(new[] { "row-batch" });
-            if (args.Data.ReadyForProduction)
-                args.Row.AddClass(new[] { "row-released" });
-        }
-        else if (args.Data.IsProductRow)
-        {
-            args.Row.AddClass(new[] { "row-product" });
-            if (args.Data.ReadyForProduction)
-                args.Row.AddClass(new[] { "row-released" });
-        }
-        else
-        {
-            if (args.Data.ReadyForProduction)
-                args.Row.AddClass(new[] { "row-released" });
-
-            if (!string.IsNullOrWhiteSpace(args.Data.Notes))
-                args.Row.AddClass(new[] { "row-has-notes" });
-            if (!args.Data.IsStock)
-                args.Row.AddClass(new[] { "row-dimmed" });
-            if (args.Data.HasPdf)
-                args.Row.AddClass(new[] { "row-leaf-pdf" });
-        }
+        _stockDialogRow = null;
     }
 }

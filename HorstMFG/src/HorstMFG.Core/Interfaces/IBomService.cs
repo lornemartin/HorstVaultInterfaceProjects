@@ -24,28 +24,18 @@ public interface IBomService
     Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int orderQty, int plantId, int userId, List<BomExportLine> lines);
 
     /// <summary>
-    /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.
+    /// Get a flat list of all PartLineItems (with denormalized Schedule/Order context) for the
+    /// Orders page SfGrid grouped by ScheduleId → ScheduleOrderId.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
-    Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId);
+    Task<List<FlatSchedulePartRow>> GetFlatSchedulePartsAsync(
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
 
     /// <summary>
-    /// Get children for a batch tree row by parent TreeId (used by CustomAdaptor load-on-demand).
-    /// TreeId scheme: Batch = batch.Id, BatchProduct = product.Id + 1_000_000, Part = part.Id + 100_000_000.
+    /// Get a flat list of all PartLineItems (with denormalized Batch/Product context) for the
+    /// Batches page SfGrid grouped by BatchId → BatchProductId.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId);
-
-    /// <summary>
-    /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
-    /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
-    Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId);
-
-    /// <summary>
-    /// Get children for a schedule tree row by parent TreeId (used by Web API load-on-demand).
-    /// TreeId scheme: Schedule = schedule.Id, Order = order.Id + 1_000_000, Part = part.Id + 100_000_000.
-    /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId);
+    Task<List<FlatBatchPartRow>> GetFlatBatchPartsAsync(
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
 
     /// <summary>
     /// Update the Qty on a BatchProduct (product row in the Batches grid).
