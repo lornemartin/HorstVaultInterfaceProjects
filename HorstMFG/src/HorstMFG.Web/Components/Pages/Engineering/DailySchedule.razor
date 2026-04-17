@@ -97,6 +97,10 @@
                     else if (item.IsProductRow)
                     {
                         <span style="font-style: italic;">@item.ProductName</span>
+                        @if (item.Number is not null)
+                        {
+                            <span style="margin-left: 1rem; font-style: normal; font-weight: 600;">@item.Number</span>
+                        }
                     }
                     else if (item.HasPdf)
                     {
@@ -115,7 +119,7 @@
             <Template>
                 @{
                     var item = context as ExportTreeItem;
-                    @if (!item!.IsBatchRow && !item.IsProductRow)
+                    @if (!item!.IsBatchRow)
                     {
                         <span>@item.Description</span>
                     }

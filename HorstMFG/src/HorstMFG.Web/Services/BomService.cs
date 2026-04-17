@@ -736,11 +736,19 @@ public class BomService : IBomService
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.OrderId, x => x.Count);
 
+            // For each order, find the top-level product part (Category = "Product")
+            var topItems = await _db.Set<PartLineItem>()
+                .Where(p => orderIds.Contains(p.ScheduleOrderId!.Value) &&
+                            p.Category.ToLower() == "product")
+                .Select(p => new { p.ScheduleOrderId, p.PartNumber, p.Description })
+                .ToDictionaryAsync(p => p.ScheduleOrderId!.Value);
+
             var result = new List<ExportTreeItem>();
             foreach (var order in orders)
             {
                 int count = partCounts.GetValueOrDefault(order.Id, 0);
                 if (count == 0 && !includeProcessed) continue;
+                topItems.TryGetValue(order.Id, out var topItem);
                 result.Add(new ExportTreeItem
                 {
                     TreeId = orderOffset + order.Id,
@@ -752,6 +760,8 @@ public class BomService : IBomService
                     ParentQty = order.Qty,
                     ItemCount = count,
                     ReadyForProduction = parentSchedule?.ReadyForProduction ?? false,
+                    Number = topItem?.PartNumber,
+                    Description = topItem?.Description,
                 });
             }
             return result;
