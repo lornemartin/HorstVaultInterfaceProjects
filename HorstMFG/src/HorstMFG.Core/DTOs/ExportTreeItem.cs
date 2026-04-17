@@ -42,5 +42,4 @@ public class ExportTreeItem
     public bool IsStock { get; set; }
     public bool HasPdf { get; set; }
     public string? Notes { get; set; }
-    public bool IsProcessed { get; set; }
 }

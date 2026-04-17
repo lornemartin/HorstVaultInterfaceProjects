@@ -7,7 +7,6 @@ namespace HorstMFG.Web.Services;
 public class ScheduleTreeFilterState
 {
     public int? PlantId { get; set; }
-    public bool IncludeProcessed { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
     public string? SearchTerm { get; set; }

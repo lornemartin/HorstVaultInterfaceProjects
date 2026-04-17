@@ -60,10 +60,6 @@
         </div>
     </div>
 
-    <div style="display: flex; align-items: center; padding-bottom: 0.25rem;">
-        <SfCheckBox Label="Show Processed Items" @bind-Checked="_showProcessed" ValueChange="OnShowProcessedChanged" TChecked="bool" />
-    </div>
-
     <div style="min-width: 240px;">
         <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Search</label>
         <input type="text" value="@_searchTerm" @oninput="OnSearchInput"
@@ -234,7 +230,6 @@
 @code {
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
-    private bool _showProcessed;
     private bool _isAdmin;
     private bool _releasing;
 
@@ -338,7 +333,6 @@
     private void SyncFilterState()
     {
         ScheduleFilterState.PlantId = _selectedPlantId;
-        ScheduleFilterState.IncludeProcessed = _showProcessed;
         ScheduleFilterState.FromDate = _fromDate;
         ScheduleFilterState.ToDate = _toDate;
         ScheduleFilterState.SearchTerm = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
@@ -361,13 +355,6 @@
     private async Task OnPlantChanged(int? value)
     {
         _selectedPlantId = value;
-        await LoadData();
-        StateHasChanged();
-    }
-
-    private async Task OnShowProcessedChanged(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
-    {
-        _showProcessed = args.Checked;
         await LoadData();
         StateHasChanged();
     }
@@ -660,8 +647,7 @@
         {
             if (args.Data.ReadyForProduction)
                 args.Row.AddClass(new[] { "row-released" });
-            else if (args.Data.IsProcessed)
-                args.Row.AddClass(new[] { "row-processed" });
+
             if (!string.IsNullOrWhiteSpace(args.Data.Notes))
                 args.Row.AddClass(new[] { "row-has-notes" });
             if (args.Data.IsStock)

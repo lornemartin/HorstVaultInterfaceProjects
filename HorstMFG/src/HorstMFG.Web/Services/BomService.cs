@@ -147,10 +147,6 @@ public class BomService : IBomService
                     thickness = derivedThickness;
             }
 
-            // All items are imported regardless of stock status.
-            // Display graying (stock vs non-stock) is handled per-tab on the Orders page.
-            bool isProcessed = false;
-
             var line = new BomExportLine
             {
                 Level = level,
@@ -174,7 +170,6 @@ public class BomService : IBomService
                 Keywords = keywords,
                 Notes = notes,
                 Revision = revision,
-                IsProcessed = isProcessed,
             };
 
             // Skip purchased items
@@ -309,7 +304,6 @@ public class BomService : IBomService
                     RequiresPdf = line.RequiresPdf,
                     Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                     HasPdf = line.HasPdf,
-                    IsProcessed = line.IsProcessed,
                 };
                 _db.PartLineItems.Add(item);
             }
@@ -377,7 +371,6 @@ public class BomService : IBomService
                 RequiresPdf = line.RequiresPdf,
                 Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                 HasPdf = line.HasPdf,
-                IsProcessed = line.IsProcessed,
             };
             _db.PartLineItems.Add(item);
         }
@@ -430,7 +423,7 @@ public class BomService : IBomService
         return (copied, partList.Count);
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+    public async Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
 
@@ -465,7 +458,7 @@ public class BomService : IBomService
         var batchNames = batches.Select(b => b.Name).Distinct().ToList();
         var partCounts = batchNames.Count > 0
             ? await _db.Set<PartLineItem>()
-                .Where(p => p.BatchProductId.HasValue && (includeProcessed || !p.IsProcessed))
+                .Where(p => p.BatchProductId.HasValue)
                 .Where(p => batchNames.Contains(p.BatchProduct!.Batch.Name))
                 .GroupBy(p => p.BatchProduct!.Batch.Name)
                 .Select(g => new { Name = g.Key, Count = g.Count() })
@@ -496,7 +489,7 @@ public class BomService : IBomService
         return result;
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
         const int productOffset = 1_000_000;
@@ -523,7 +516,7 @@ public class BomService : IBomService
 
             var productIds = products.Select(p => p.Id).ToList();
             var partCounts = await _db.Set<PartLineItem>()
-                .Where(p => productIds.Contains(p.BatchProductId!.Value) && (includeProcessed || !p.IsProcessed))
+                .Where(p => productIds.Contains(p.BatchProductId!.Value))
                 .GroupBy(p => p.BatchProductId!.Value)
                 .Select(g => new { ProductId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ProductId, x => x.Count);
@@ -532,7 +525,7 @@ public class BomService : IBomService
             foreach (var product in products)
             {
                 int count = partCounts.GetValueOrDefault(product.Id, 0);
-                if (count == 0 && !includeProcessed) continue;
+                if (count == 0) continue;
                 result.Add(new ExportTreeItem
                 {
                     TreeId = productOffset + product.Id,
@@ -557,7 +550,7 @@ public class BomService : IBomService
                 .FirstOrDefaultAsync();
 
             var parts = await _db.Set<PartLineItem>()
-                .Where(p => p.BatchProductId == productId && (includeProcessed || !p.IsProcessed))
+                .Where(p => p.BatchProductId == productId)
                 .OrderBy(p => p.PartNumber)
                 .ToListAsync();
 
@@ -578,13 +571,12 @@ public class BomService : IBomService
                 IsStock = part.IsStock,
                 HasPdf = part.HasPdf,
                 Notes = part.Notes,
-                IsProcessed = part.IsProcessed,
                 ReadyForProduction = batchReleased,
             }).ToList();
         }
     }
 
-    public async Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
         var products = await _db.Set<BatchProduct>()
@@ -599,11 +591,10 @@ public class BomService : IBomService
         foreach (var product in products)
         {
             var productParts = product.Parts
-                .Where(p => includeProcessed || !p.IsProcessed)
                 .OrderBy(p => p.PartNumber)
                 .ToList();
 
-            if (productParts.Count == 0 && !includeProcessed) continue;
+            if (productParts.Count == 0) continue;
 
             int productTreeId = treeId++;
             result.Add(new ExportTreeItem
@@ -634,7 +625,6 @@ public class BomService : IBomService
                     IsStock = part.IsStock,
                     HasPdf = part.HasPdf,
                     Notes = part.Notes,
-                    IsProcessed = part.IsProcessed,
                 });
             }
         }
@@ -642,7 +632,7 @@ public class BomService : IBomService
         return result;
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+    public async Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
 
@@ -676,7 +666,7 @@ public class BomService : IBomService
         var scheduleNames = schedules.Select(s => s.Name).Distinct().ToList();
         var partCounts = scheduleNames.Count > 0
             ? await _db.Set<PartLineItem>()
-                .Where(p => p.ScheduleOrderId.HasValue && (includeProcessed || !p.IsProcessed))
+                .Where(p => p.ScheduleOrderId.HasValue)
                 .Where(p => scheduleNames.Contains(p.ScheduleOrder!.Schedule.Name))
                 .GroupBy(p => p.ScheduleOrder!.Schedule.Name)
                 .Select(g => new { Name = g.Key, Count = g.Count() })
@@ -707,7 +697,7 @@ public class BomService : IBomService
         return result;
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
         const int orderOffset = 1_000_000;
@@ -731,7 +721,7 @@ public class BomService : IBomService
 
             var orderIds = orders.Select(o => o.Id).ToList();
             var partCounts = await _db.Set<PartLineItem>()
-                .Where(p => orderIds.Contains(p.ScheduleOrderId!.Value) && (includeProcessed || !p.IsProcessed))
+                .Where(p => orderIds.Contains(p.ScheduleOrderId!.Value))
                 .GroupBy(p => p.ScheduleOrderId!.Value)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.OrderId, x => x.Count);
@@ -747,7 +737,7 @@ public class BomService : IBomService
             foreach (var order in orders)
             {
                 int count = partCounts.GetValueOrDefault(order.Id, 0);
-                if (count == 0 && !includeProcessed) continue;
+                if (count == 0) continue;
                 topItems.TryGetValue(order.Id, out var topItem);
                 result.Add(new ExportTreeItem
                 {
@@ -776,7 +766,7 @@ public class BomService : IBomService
                 .FirstOrDefaultAsync();
 
             var parts = await _db.Set<PartLineItem>()
-                .Where(p => p.ScheduleOrderId == orderId && (includeProcessed || !p.IsProcessed))
+                .Where(p => p.ScheduleOrderId == orderId)
                 .OrderBy(p => p.PartNumber)
                 .ToListAsync();
 
@@ -797,13 +787,12 @@ public class BomService : IBomService
                 IsStock = part.IsStock,
                 HasPdf = part.HasPdf,
                 Notes = part.Notes,
-                IsProcessed = part.IsProcessed,
                 ReadyForProduction = scheduleReleased,
             }).ToList();
         }
     }
 
-    public async Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId, bool includeProcessed = false)
+    public async Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
         var orders = await _db.Set<ScheduleOrder>()
@@ -819,11 +808,10 @@ public class BomService : IBomService
         foreach (var order in orders)
         {
             var orderParts = order.Parts
-                .Where(p => includeProcessed || !p.IsProcessed)
                 .OrderBy(p => p.PartNumber)
                 .ToList();
 
-            if (orderParts.Count == 0 && !includeProcessed) continue;
+            if (orderParts.Count == 0) continue;
 
             int orderTreeId = treeId++;
             result.Add(new ExportTreeItem
@@ -855,7 +843,6 @@ public class BomService : IBomService
                     IsStock = part.IsStock,
                     HasPdf = part.HasPdf,
                     Notes = part.Notes,
-                    IsProcessed = part.IsProcessed,
                 });
             }
         }

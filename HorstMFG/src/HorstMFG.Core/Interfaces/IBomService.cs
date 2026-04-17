@@ -26,26 +26,26 @@ public interface IBomService
     /// <summary>
     /// Get Batch/BatchProduct/PartLineItem tree data for the Daily Schedule tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
-    Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetBatchTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
+    Task<List<ExportTreeItem>> GetBatchChildrenAsync(string batchName, int parentTreeId, int nextTreeId);
 
     /// <summary>
     /// Get children for a batch tree row by parent TreeId (used by CustomAdaptor load-on-demand).
     /// TreeId scheme: Batch = batch.Id, BatchProduct = product.Id + 1_000_000, Part = part.Id + 100_000_000.
     /// </summary>
-    Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetBatchChildrenByParentTreeIdAsync(int parentTreeId);
 
     /// <summary>
     /// Get Schedule/ScheduleOrder/PartLineItem tree data for the Batches tab.
     /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, bool includeProcessed = false, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
-    Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetScheduleTreeItemsAsync(int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
+    Task<List<ExportTreeItem>> GetScheduleChildrenAsync(string scheduleName, int parentTreeId, int nextTreeId);
 
     /// <summary>
     /// Get children for a schedule tree row by parent TreeId (used by Web API load-on-demand).
     /// TreeId scheme: Schedule = schedule.Id, Order = order.Id + 1_000_000, Part = part.Id + 100_000_000.
     /// </summary>
-    Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId, bool includeProcessed = false);
+    Task<List<ExportTreeItem>> GetScheduleChildrenByParentTreeIdAsync(int parentTreeId);
 
     /// <summary>
     /// Update the Qty on a BatchProduct (product row in the Batches grid).

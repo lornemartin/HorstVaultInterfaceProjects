@@ -16,7 +16,6 @@ public class PartLineItem
     public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }
     public bool HasPdf { get; set; }
-    public bool IsProcessed { get; set; }
 
     public int? BatchProductId { get; set; }
     public int? ScheduleOrderId { get; set; }
