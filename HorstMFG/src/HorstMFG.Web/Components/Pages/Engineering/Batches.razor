@@ -6,6 +6,7 @@
 @inject IJSRuntime JS
 @inject IBomService BomService
 @inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
+@inject HorstMFG.Web.Services.LocalStorageService LocalStorage
 @using HorstMFG.Core.DTOs
 @using HorstMFG.Infrastructure.Data
 @using Microsoft.Extensions.Logging
@@ -16,6 +17,7 @@
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Popups
+@implements IAsyncDisposable
 
 <PageTitle>Batches - HorstMFG</PageTitle>
 
@@ -68,14 +70,14 @@
 
     <div style="display: flex; flex-direction: column; gap: 0.4rem; padding-bottom: 0.25rem;">
         <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
-            <input type="checkbox" @bind="_hideReleased" @bind:after="ApplyGridFilters" />
+            <input type="checkbox" @bind="_hideReleased" @bind:after="OnHideReleasedChanged" />
             Hide released
         </label>
     </div>
 </div>
 
 <SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="BatchesGrid_v6"
-        DataSource="_rows" AllowGrouping="true" AllowSorting="true" AllowFiltering="true"
+        DataSource="_rows" AllowGrouping="true" AllowSorting="true" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" Height="600">
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "BatchId", "BatchProductId" })">
@@ -86,6 +88,7 @@
             }
             @if (ctx.Field == "BatchId" && _batchMeta.TryGetValue(key, out var batch))
             {
+                <span data-group-key="@batch.Id" data-group-level="1" style="display:none;"></span>
                 <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
                 <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
                     @batch.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
@@ -116,6 +119,7 @@
             }
             else if (ctx.Field == "BatchProductId" && _productMeta.TryGetValue(key, out var product))
             {
+                <span data-group-key="@product.Id" data-group-level="2" style="display:none;"></span>
                 <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
                     <span style="font-size: 0.8rem; color: #6b7280;">Qty:</span>
@@ -241,6 +245,16 @@
     private sealed record BatchCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
     private sealed record ProductCaption(int Id, int BatchId, string? ProductName, int Qty, bool IsReleased);
 
+    // ── Persisted state ───────────────────────────────────────────────────────
+    private sealed class BatchesGridState
+    {
+        public int?      DateRangeDays    { get; set; } = 30;
+        public bool      HideReleased     { get; set; } = false;
+        public List<int> ExpandedBatchIds   { get; set; } = new();
+        public List<int> ExpandedProductIds { get; set; } = new();
+    }
+    private const string StateKey = "horstmfg.batches.grid.state";
+
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatBatchPartRow>? _batchGrid;
     private List<PlantOption> _plantOptions = new();
@@ -248,11 +262,16 @@
     private bool _isAdmin;
     private bool _releasing;
     private bool _loading;
+    private int?      _dateRangeDays = 30;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
     private string _searchTerm = "";
     private bool _hideReleased = false;
+    private HashSet<int> _expandedBatchIds   = new();
+    private HashSet<int> _expandedProductIds = new();
     private CancellationTokenSource? _searchCts;
+    private CancellationTokenSource? _saveCts;
+    private DotNetObjectReference<Batches>? _dotNetRef;
 
     // PDF thumbnail hover
     private string? _thumbNumber;
@@ -302,6 +321,10 @@
         var canEdit = user?.HasClaim(ClaimTypes.Role, "Admin") == true
                    || user?.HasClaim(ClaimTypes.Role, "Engineering") == true;
         await JS.InvokeVoidAsync("setUserCanEdit", canEdit);
+        _dotNetRef = DotNetObjectReference.Create(this);
+        try { await JS.InvokeVoidAsync("horstGrid.watchExpansion", "BatchesGrid_v6", _dotNetRef); }
+        catch (JSException) { /* app.js not yet available (stale cache); expansion tracking inactive */ }
+        await LoadStateAsync();
         await LoadData();
     }
 
@@ -316,6 +339,7 @@
         _loading = false;
         StateHasChanged();
         await ApplyGridFilters();
+        await RestoreExpansionAsync();
     }
 
     private void BuildMeta()
@@ -361,9 +385,18 @@
 
     private async Task SetDateRange(int? days)
     {
+        _dateRangeDays = days;
         _fromDate = days.HasValue ? DateTime.Today.AddDays(-days.Value) : null;
         _toDate = days.HasValue ? DateTime.Today : null;
         await LoadData();
+        await SaveStateAsync();
+    }
+
+    private async Task OnHideReleasedChanged()
+    {
+        await ApplyGridFilters();
+        await RestoreExpansionAsync();
+        await SaveStateAsync();
     }
 
     private async Task ApplyGridFilters()
@@ -393,6 +426,75 @@
         {
             _managingSort = false;
         }
+    }
+
+    // ── State persistence ─────────────────────────────────────────────────────
+    private async Task LoadStateAsync()
+    {
+        var state = await LocalStorage.GetAsync<BatchesGridState>(StateKey);
+        if (state is null) return;
+        _dateRangeDays = state.DateRangeDays;
+        _fromDate      = _dateRangeDays.HasValue ? DateTime.Today.AddDays(-_dateRangeDays.Value) : null;
+        _toDate        = _dateRangeDays.HasValue ? DateTime.Today : null;
+        _hideReleased  = state.HideReleased;
+        _expandedBatchIds   = state.ExpandedBatchIds.ToHashSet();
+        _expandedProductIds = state.ExpandedProductIds.ToHashSet();
+    }
+
+    private async Task SaveStateAsync()
+    {
+        await LocalStorage.SetAsync(StateKey, new BatchesGridState
+        {
+            DateRangeDays     = _dateRangeDays,
+            HideReleased      = _hideReleased,
+            ExpandedBatchIds   = _expandedBatchIds.ToList(),
+            ExpandedProductIds = _expandedProductIds.ToList(),
+        });
+    }
+
+    private void DebounceSaveState()
+    {
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        _ = SaveAfterDelayAsync(_saveCts.Token);
+    }
+
+    private async Task SaveAfterDelayAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(400, token);
+            await SaveStateAsync();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception) { }
+    }
+
+    // ── Group expansion tracking ──────────────────────────────────────────────
+    // Called from JS after user expands/collapses a group row.
+    [JSInvokable]
+    public void UpdateExpansionState(List<int> level1, List<int> level2)
+    {
+        _expandedBatchIds   = level1.ToHashSet();
+        _expandedProductIds = level2.ToHashSet();
+        DebounceSaveState();
+    }
+
+    private record ExpandedGroupResult(List<int> Level1, List<int> Level2);
+
+    // Re-expands saved groups after any operation that collapses them.
+    // Delegates entirely to JS so row-index arithmetic stays correct as
+    // Syncfusion adds rows to the DOM after each expansion.
+    private async Task RestoreExpansionAsync()
+    {
+        if (_batchGrid is null || (_expandedBatchIds.Count == 0 && _expandedProductIds.Count == 0))
+            return;
+        try
+        {
+            await JS.InvokeVoidAsync("horstGrid.restoreExpansion", "BatchesGrid_v6",
+                _expandedBatchIds.ToList(), _expandedProductIds.ToList());
+        }
+        catch (JSException) { }
     }
 
     // ── Row styling ───────────────────────────────────────────────────────────
@@ -546,5 +648,14 @@
     {
         _showStockDialog = false;
         _stockDialogRow = null;
+    }
+
+    // ── Cleanup ───────────────────────────────────────────────────────────────
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        _saveCts?.Cancel();
+        _searchCts?.Cancel();
+        await ValueTask.CompletedTask;
     }
 }

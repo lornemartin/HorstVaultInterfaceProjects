@@ -49,6 +49,7 @@ try
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
     builder.Services.AddScoped<ReportService>();
+    builder.Services.AddScoped<LocalStorageService>();
 
     // Bridge SignalR
     builder.Services.AddSingleton<BridgeNotificationService>();

@@ -1,3 +1,95 @@
+// ── Grid group-expansion helpers ──────────────────────────────────────────
+// Flag set during programmatic restore so the watchExpansion listener
+// does not attempt to snapshot partial state mid-restore.
+var _horstGridRestoring = false;
+
+window.horstGrid = {
+
+    // Read which groups are currently expanded.
+    // Queries .e-recordplusexpand icons directly — no dependency on ej.
+    getExpandedGroupKeys: function (gridId) {
+        var el = document.getElementById(gridId);
+        if (!el) { console.log('[horstGrid] getExpandedGroupKeys: element not found', gridId); return { level1: [], level2: [] }; }
+        var level1 = [], level2 = [];
+        el.querySelectorAll('.e-recordplusexpand').forEach(function (icon) {
+            var row = icon.closest('tr');
+            if (!row) return;
+            var keyEl = row.querySelector('[data-group-key]');
+            if (!keyEl) {
+                console.log('[horstGrid] expanded row has no data-group-key — HTML:', row.innerHTML.substring(0, 400));
+                return;
+            }
+            var key   = parseInt(keyEl.dataset.groupKey,  10);
+            var level = parseInt(keyEl.dataset.groupLevel, 10);
+            if (isNaN(key)) return;
+            if (level === 1) level1.push(key);
+            else if (level === 2) level2.push(key);
+        });
+        console.log('[horstGrid] getExpandedGroupKeys:', { level1: level1, level2: level2 });
+        return { level1: level1, level2: level2 };
+    },
+
+    // Restore expansion state by programmatically clicking the collapse icons.
+    // No dependency on ej — Syncfusion's own click handler does the expansion,
+    // just as if the user had clicked the icon manually.
+    restoreExpansion: function (gridId, level1Keys, level2Keys) {
+        var el = document.getElementById(gridId);
+        if (!el) { console.log('[horstGrid] restoreExpansion: element not found', gridId); return; }
+
+        console.log('[horstGrid] restoreExpansion: keys to restore', { level1Keys: level1Keys, level2Keys: level2Keys });
+
+        function tryExpand() {
+            var collapseIcons = el.querySelectorAll('.e-recordpluscollapse');
+            console.log('[horstGrid] restoreExpansion: scanning', collapseIcons.length, 'collapsed icons');
+            for (var i = 0; i < collapseIcons.length; i++) {
+                var icon = collapseIcons[i];
+                var row  = icon.closest('tr');
+                if (!row) continue;
+                var keyEl = row.querySelector('[data-group-key]');
+                if (!keyEl) {
+                    console.log('[horstGrid] collapsed row has no data-group-key — HTML:', row.innerHTML.substring(0, 400));
+                    continue;
+                }
+                var key   = parseInt(keyEl.dataset.groupKey,   10);
+                var level = parseInt(keyEl.dataset.groupLevel, 10);
+                var want  = (level === 1 && level1Keys.indexOf(key) !== -1) ||
+                            (level === 2 && level2Keys.indexOf(key) !== -1);
+                if (want) {
+                    console.log('[horstGrid] clicking to expand level', level, 'key', key);
+                    _horstGridRestoring = true;
+                    icon.click(); // Syncfusion's own handler expands the group
+                    setTimeout(function () {
+                        _horstGridRestoring = false;
+                        tryExpand(); // re-scan: child rows are now in the DOM
+                    }, 100);
+                    return;
+                }
+            }
+            console.log('[horstGrid] restoreExpansion: done');
+        }
+
+        // Small delay so the grid has painted its initial collapsed state
+        setTimeout(tryExpand, 150);
+    },
+
+    // Attach a click listener so we're notified when the user expands/collapses
+    // a group row. Uses capture phase so it fires even if Syncfusion calls
+    // stopPropagation. Skipped during programmatic restore.
+    watchExpansion: function (gridId, dotNetRef) {
+        var el = document.getElementById(gridId);
+        if (!el) { console.log('[horstGrid] watchExpansion: element not found', gridId); return; }
+        el.addEventListener('click', function (e) {
+            if (_horstGridRestoring) return;
+            if (!e.target.closest('.e-recordpluscollapse, .e-recordplusexpand')) return;
+            console.log('[horstGrid] expand/collapse clicked in', gridId);
+            setTimeout(function () {
+                var keys = window.horstGrid.getExpandedGroupKeys(gridId);
+                dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2);
+            }, 150);
+        }, true);
+    }
+};
+
 // Context menu item visibility for TreeGrid rows.
 // Fires in capture phase so we know the row type before Syncfusion processes the right-click.
 // requestAnimationFrame fires after Syncfusion shows the popup but before the browser paints.
