@@ -203,6 +203,10 @@ h1:focus {
     font-weight: 700;
 }
 
+/* Hide the filter input bar on grids that use programmatic filtering only */
+#OrdersGrid_v6 .e-filterbar,
+#BatchesGrid_v6 .e-filterbar { display: none !important; }
+
 /* Engineering grid row styles */
 .e-grid .e-row.row-released td {
     background-color: #dcfce7 !important;

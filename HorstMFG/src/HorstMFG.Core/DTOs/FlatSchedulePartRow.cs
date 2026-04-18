@@ -33,4 +33,31 @@ public class FlatSchedulePartRow
     public bool IsStock { get; set; }
     public bool HasPdf { get; set; }
     public string? Notes { get; set; }
+
+    // ── Sort helpers ─────────────────────────────────────────────────────────
+    public int CategoryOrder => Category.ToLowerInvariant() switch
+    {
+        "product"  => 0,
+        "assembly" => 1,
+        "part"     => 2,
+        _          => 3,
+    };
+
+    public double ThicknessOrder
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Thickness)) return double.MaxValue;
+            if (double.TryParse(Thickness, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var d))
+                return d;
+            var slash = Thickness.IndexOf('/');
+            if (slash > 0
+                && double.TryParse(Thickness.AsSpan(0, slash).Trim(), out var num)
+                && double.TryParse(Thickness.AsSpan(slash + 1).Trim(), out var den)
+                && den != 0)
+                return num / den;
+            return double.MaxValue;
+        }
+    }
 }

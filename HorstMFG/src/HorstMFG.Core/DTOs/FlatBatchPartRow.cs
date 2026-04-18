@@ -31,4 +31,13 @@ public class FlatBatchPartRow
     public bool IsStock { get; set; }
     public bool HasPdf { get; set; }
     public string? Notes { get; set; }
+
+    // ── Sort helpers ─────────────────────────────────────────────────────────
+    public int CategoryOrder => Category.ToLowerInvariant() switch
+    {
+        "product"  => 0,
+        "assembly" => 1,
+        "part"     => 2,
+        _          => 3,
+    };
 }
