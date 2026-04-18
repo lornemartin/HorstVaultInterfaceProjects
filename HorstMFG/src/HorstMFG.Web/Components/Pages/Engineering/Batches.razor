@@ -79,7 +79,7 @@
 <SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="BatchesGrid_v6"
         DataSource="_rows" AllowGrouping="true" AllowSorting="true"
         AllowResizing="true" Height="600">
-    <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false"
+    <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "BatchId", "BatchProductId" })">
         <CaptionTemplate>
             @{

@@ -429,9 +429,8 @@ public class BomService : IBomService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
-        var parts = await db.Set<PartLineItem>()
-            .Include(p => p.ScheduleOrder)
-                .ThenInclude(so => so!.Schedule)
+        // Direct projection: single SQL JOIN, no tracked entities, no in-memory mapping
+        var rows = await db.Set<PartLineItem>()
             .Where(p => p.ScheduleOrderId != null)
             .Where(p => !plantId.HasValue || p.ScheduleOrder!.Schedule.PlantId == plantId.Value)
             .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
@@ -444,28 +443,15 @@ public class BomService : IBomService
             .OrderByDescending(p => p.ScheduleOrder!.Schedule.ImportDate)
             .ThenBy(p => p.ScheduleOrder!.Id)
             .ThenBy(p => p.Id)
-            .ToListAsync();
-
-        // Find the top-level "Product" category part per order (already in results — no extra query)
-        var productLookup = parts
-            .Where(p => p.Category.Equals("product", StringComparison.OrdinalIgnoreCase))
-            .GroupBy(p => p.ScheduleOrderId!.Value)
-            .ToDictionary(g => g.Key, g => g.First());
-
-        return parts.Select(p =>
-        {
-            productLookup.TryGetValue(p.ScheduleOrderId!.Value, out var prod);
-            return new FlatSchedulePartRow
+            .Select(p => new FlatSchedulePartRow
             {
                 ScheduleId = p.ScheduleOrder!.ScheduleId,
-                ScheduleName = p.ScheduleOrder.Schedule.Name,
-                ScheduleImportDate = p.ScheduleOrder.Schedule.ImportDate,
-                ScheduleReleased = p.ScheduleOrder.Schedule.ReadyForProduction,
+                ScheduleName = p.ScheduleOrder!.Schedule.Name,
+                ScheduleImportDate = p.ScheduleOrder!.Schedule.ImportDate,
+                ScheduleReleased = p.ScheduleOrder!.Schedule.ReadyForProduction,
                 ScheduleOrderId = p.ScheduleOrderId!.Value,
-                OrderNumber = p.ScheduleOrder.OrderNumber,
-                OrderQty = p.ScheduleOrder.Qty,
-                ProductNumber = prod?.PartNumber,
-                ProductDescription = prod?.Description,
+                OrderNumber = p.ScheduleOrder!.OrderNumber,
+                OrderQty = p.ScheduleOrder!.Qty,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
                 Description = p.Description,
@@ -477,8 +463,26 @@ public class BomService : IBomService
                 IsStock = p.IsStock,
                 HasPdf = p.HasPdf,
                 Notes = p.Notes,
-            };
-        }).ToList();
+            })
+            .ToListAsync();
+
+        // Resolve ProductNumber/ProductDescription per order from the "Product" category rows
+        // already present in results — no additional DB round-trip needed
+        var productLookup = rows
+            .Where(r => r.Category.Equals("product", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(r => r.ScheduleOrderId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        foreach (var row in rows)
+        {
+            if (productLookup.TryGetValue(row.ScheduleOrderId, out var prod))
+            {
+                row.ProductNumber = prod.PartNumber;
+                row.ProductDescription = prod.Description;
+            }
+        }
+
+        return rows;
     }
 
     public async Task<List<FlatBatchPartRow>> GetFlatBatchPartsAsync(
@@ -487,9 +491,8 @@ public class BomService : IBomService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
-        var parts = await db.Set<PartLineItem>()
-            .Include(p => p.BatchProduct)
-                .ThenInclude(bp => bp!.Batch)
+        // Direct projection: single SQL JOIN, no tracked entities, no in-memory mapping
+        return await db.Set<PartLineItem>()
             .Where(p => p.BatchProductId != null)
             .Where(p => !plantId.HasValue || p.BatchProduct!.Batch.PlantId == plantId.Value)
             .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
@@ -502,29 +505,28 @@ public class BomService : IBomService
             .OrderByDescending(p => p.BatchProduct!.Batch.ImportDate)
             .ThenBy(p => p.BatchProduct!.Id)
             .ThenBy(p => p.Id)
+            .Select(p => new FlatBatchPartRow
+            {
+                BatchId = p.BatchProduct!.BatchId,
+                BatchName = p.BatchProduct!.Batch.Name,
+                BatchImportDate = p.BatchProduct!.Batch.ImportDate,
+                BatchReleased = p.BatchProduct!.Batch.ReadyForProduction,
+                BatchProductId = p.BatchProductId!.Value,
+                ProductName = p.BatchProduct!.ProductName,
+                ProductQty = p.BatchProduct!.Qty,
+                PartLineItemId = p.Id,
+                PartNumber = p.PartNumber,
+                Description = p.Description,
+                Category = p.Category,
+                Material = p.Material,
+                Thickness = p.Thickness,
+                Operations = p.Operations,
+                Qty = p.Qty,
+                IsStock = p.IsStock,
+                HasPdf = p.HasPdf,
+                Notes = p.Notes,
+            })
             .ToListAsync();
-
-        return parts.Select(p => new FlatBatchPartRow
-        {
-            BatchId = p.BatchProduct!.BatchId,
-            BatchName = p.BatchProduct.Batch.Name,
-            BatchImportDate = p.BatchProduct.Batch.ImportDate,
-            BatchReleased = p.BatchProduct.Batch.ReadyForProduction,
-            BatchProductId = p.BatchProductId!.Value,
-            ProductName = p.BatchProduct.ProductName,
-            ProductQty = p.BatchProduct.Qty,
-            PartLineItemId = p.Id,
-            PartNumber = p.PartNumber,
-            Description = p.Description,
-            Category = p.Category,
-            Material = p.Material,
-            Thickness = p.Thickness,
-            Operations = p.Operations,
-            Qty = p.Qty,
-            IsStock = p.IsStock,
-            HasPdf = p.HasPdf,
-            Notes = p.Notes,
-        }).ToList();
     }
 
     public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)
