@@ -89,24 +89,6 @@ try
     app.UseAntiforgery();
 
     // Minimal API: reports
-    app.MapGet("/api/reports/schedule-laser/{name}", async (string name, ReportService reports, HttpResponse response) =>
-    {
-        var bytes = await reports.GenerateScheduleLaserReportAsync(Uri.UnescapeDataString(name));
-        if (bytes is null) return Results.NotFound();
-        var fileName = $"Laser-Schedule-{Uri.UnescapeDataString(name)}.pdf";
-        response.Headers.ContentDisposition = $"inline; filename=\"{fileName}\"";
-        return Results.File(bytes, "application/pdf");
-    }).RequireAuthorization();
-
-    app.MapGet("/api/reports/batch-laser/{name}", async (string name, ReportService reports, HttpResponse response) =>
-    {
-        var bytes = await reports.GenerateBatchLaserReportAsync(Uri.UnescapeDataString(name));
-        if (bytes is null) return Results.NotFound();
-        var fileName = $"Laser-Batch-{Uri.UnescapeDataString(name)}.pdf";
-        response.Headers.ContentDisposition = $"inline; filename=\"{fileName}\"";
-        return Results.File(bytes, "application/pdf");
-    }).RequireAuthorization();
-
     app.MapGet("/api/reports/schedule-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
     {
         var n  = Uri.UnescapeDataString(name);

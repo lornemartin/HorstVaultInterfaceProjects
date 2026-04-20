@@ -105,7 +105,7 @@
                                 style="@BtnStyle("danger")">Delete</button>
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
-                    <button @onclick="@(async () => await OpenReport("batch-laser", batch.Name))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "laser"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Laser</button>
                     <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Iron Worker"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Iron Worker</button>

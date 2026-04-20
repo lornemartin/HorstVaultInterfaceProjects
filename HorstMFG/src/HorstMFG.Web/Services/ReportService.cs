@@ -21,99 +21,7 @@ public class ReportService
         _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
     }
 
-    // ── Daily Schedule (Schedule → ScheduleOrder → PartLineItem) ─────────────
-
-    public async Task<byte[]?> GenerateScheduleLaserReportAsync(string scheduleName)
-    {
-        var schedules = await _db.Schedules
-            .Where(s => s.Name == scheduleName)
-            .Include(s => s.ScheduleOrders)
-                .ThenInclude(so => so.Parts)
-            .ToListAsync();
-
-        if (schedules.Count == 0) return null;
-
-        var pdfFolder = schedules[0].LocalPdfFolder
-            ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
-
-        var groups = schedules
-            .SelectMany(s => s.ScheduleOrders)
-            .SelectMany(so => so.Parts
-                .Where(p => !p.IsStock &&
-                            p.Operations != null &&
-                            p.Operations.Contains("laser", StringComparison.OrdinalIgnoreCase))
-                .Select(p => new { Part = p, Label = so.OrderNumber, ParentQty = so.Qty }))
-            .GroupBy(x => x.Part.PartNumber)
-            .Select(g => BuildGroup(g.Key,
-                g.First().Part.Title,
-                g.First().Part.Thickness,
-                g.First().Part.Material,
-                g.GroupBy(x => x.Label)
-                 .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
-                 .OrderBy(o => o.Key)
-                 .ToList(),
-                Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .Where(g => File.Exists(g.PdfPath))
-            .OrderBy(g => ParseThickness(g.Thickness))
-            .ToList();
-
-        if (groups.Count == 0)
-        {
-            _log.LogWarning("No laser parts with local PDFs found for schedule '{Name}'", scheduleName);
-            return null;
-        }
-
-        _log.LogInformation("Generating laser report for schedule '{Name}': {Count} parts", scheduleName, groups.Count);
-        return BuildLaserPdf(groups, scheduleName, isSchedule: true, _log);
-    }
-
-    // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
-
-    public async Task<byte[]?> GenerateBatchLaserReportAsync(string batchName)
-    {
-        var batches = await _db.Batches
-            .Where(b => b.Name == batchName)
-            .Include(b => b.BatchProducts)
-                .ThenInclude(bp => bp.Parts)
-            .ToListAsync();
-
-        if (batches.Count == 0) return null;
-
-        var pdfFolder = batches[0].LocalPdfFolder
-            ?? Path.Combine(_localPdfPath, "Batches", batchName);
-
-        var groups = batches
-            .SelectMany(b => b.BatchProducts)
-            .SelectMany(bp => bp.Parts
-                .Where(p => p.IsStock &&
-                            p.Operations != null &&
-                            p.Operations.Contains("laser", StringComparison.OrdinalIgnoreCase))
-                .Select(p => new { Part = p, Label = bp.ProductName, ParentQty = bp.Qty }))
-            .GroupBy(x => x.Part.PartNumber)
-            .Select(g => BuildGroup(g.Key,
-                g.First().Part.Title,
-                g.First().Part.Thickness,
-                g.First().Part.Material,
-                g.GroupBy(x => x.Label)
-                 .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
-                 .OrderBy(o => o.Key)
-                 .ToList(),
-                Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .Where(g => File.Exists(g.PdfPath))
-            .OrderBy(g => ParseThickness(g.Thickness))
-            .ToList();
-
-        if (groups.Count == 0)
-        {
-            _log.LogWarning("No laser parts with local PDFs found for batch '{Name}'", batchName);
-            return null;
-        }
-
-        _log.LogInformation("Generating laser report for batch '{Name}': {Count} parts", batchName, groups.Count);
-        return BuildLaserPdf(groups, batchName, isSchedule: false, _log);
-    }
-
-    // ── Operation reports (tabular) ───────────────────────────────────────────
+    // ── Schedule (Schedule → ScheduleOrder → PartLineItem) ───────────────────
 
     public async Task<byte[]?> GenerateScheduleOperationReportAsync(string scheduleName, string operation)
     {
@@ -146,8 +54,9 @@ public class ReportService
                  .ToList(),
                 Path.Combine(pdfFolder, g.Key + ".pdf")))
             .Where(g => File.Exists(g.PdfPath))
-            .OrderBy(g => ParseThickness(g.Thickness))
             .ToList();
+
+        groups = SortGroups(groups, operation);
 
         if (groups.Count == 0)
         {
@@ -156,8 +65,10 @@ public class ReportService
         }
 
         _log.LogInformation("Generating '{Op}' report for schedule '{Name}': {Count} parts", operation, scheduleName, groups.Count);
-        return BuildLaserPdf(groups, scheduleName, isSchedule: true, _log);
+        return BuildReport(groups, scheduleName, isSchedule: true, operation, _log);
     }
+
+    // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
 
     public async Task<byte[]?> GenerateBatchOperationReportAsync(string batchName, string operation)
     {
@@ -190,8 +101,9 @@ public class ReportService
                  .ToList(),
                 Path.Combine(pdfFolder, g.Key + ".pdf")))
             .Where(g => File.Exists(g.PdfPath))
-            .OrderBy(g => ParseThickness(g.Thickness))
             .ToList();
+
+        groups = SortGroups(groups, operation);
 
         if (groups.Count == 0)
         {
@@ -200,12 +112,32 @@ public class ReportService
         }
 
         _log.LogInformation("Generating '{Op}' report for batch '{Name}': {Count} parts", operation, batchName, groups.Count);
-        return BuildLaserPdf(groups, batchName, isSchedule: false, _log);
+        return BuildReport(groups, batchName, isSchedule: false, operation, _log);
     }
+
+    // ── Per-operation sort ────────────────────────────────────────────────────
+
+    private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)
+        => operation.ToLowerInvariant() switch
+        {
+            "laser" => [.. groups.OrderBy(g => ParseThickness(g.Thickness)).ThenBy(g => g.Material)],
+            _       => [.. groups.OrderBy(g => g.PartNumber)],
+        };
+
+    // ── Per-operation report builder ──────────────────────────────────────────
+
+    private static byte[] BuildReport(List<LaserPartGroup> groups, string sourceName,
+        bool isSchedule, string operation, ILogger log)
+        => operation.ToLowerInvariant() switch
+        {
+            // Add cases here for operations that need a different layout, e.g.:
+            // "purchased" => BuildTablePdf(groups, sourceName, isSchedule, log),
+            _ => BuildLaserPdf(groups, sourceName, isSchedule, operation, log),
+        };
 
     // ── PDF assembly ─────────────────────────────────────────────────────────
 
-    private static byte[] BuildLaserPdf(List<LaserPartGroup> parts, string sourceName, bool isSchedule, ILogger log)
+    private static byte[] BuildLaserPdf(List<LaserPartGroup> parts, string sourceName, bool isSchedule, string operation, ILogger log)
     {
         var output = new PdfDocument();
         output.PageSettings.Size = PdfPageSize.Letter;
@@ -238,7 +170,7 @@ public class ReportService
 
                 // Page 2: cover page with thumbnail + qty breakdown (back of sheet)
                 var cover = output.Pages.Add();
-                DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule);
+                DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule, operation);
             }
             finally
             {
@@ -253,18 +185,18 @@ public class ReportService
     }
 
     private static void DrawCoverPage(PdfPage cover, PdfTemplate template,
-        bool rotated, bool isLandscape, LaserPartGroup part, string sourceName, bool isSchedule)
+        bool rotated, bool isLandscape, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
     {
         if (isLandscape)
-            DrawCoverPageHorizontal(cover, template, rotated, part, sourceName, isSchedule);
+            DrawCoverPageHorizontal(cover, template, rotated, part, sourceName, isSchedule, operation);
         else
-            DrawCoverPageVertical(cover, template, rotated, part, sourceName, isSchedule);
+            DrawCoverPageVertical(cover, template, rotated, part, sourceName, isSchedule, operation);
     }
 
     /// <summary>
     /// Landscape source PDF: thumbnail on top, details below.
     /// </summary>
-    private static void DrawCoverPageHorizontal(PdfPage cover, PdfTemplate template, bool rotated, LaserPartGroup part, string sourceName, bool isSchedule)
+    private static void DrawCoverPageHorizontal(PdfPage cover, PdfTemplate template, bool rotated, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
     {
         var g  = cover.Graphics;
         float pw = cover.GetClientSize().Width;
@@ -294,13 +226,13 @@ public class ReportService
             new PointF(margin, divY), new PointF(pw - margin, divY));
 
         // Details — bottom section
-        DrawDetails(g, part, margin + 10f, divY + 18f, pw, margin, sourceName, isSchedule);
+        DrawDetails(g, part, margin + 10f, divY + 18f, pw, margin, sourceName, isSchedule, operation);
     }
 
     /// <summary>
     /// Portrait source PDF: thumbnail on left, details on right.
     /// </summary>
-    private static void DrawCoverPageVertical(PdfPage cover, PdfTemplate template, bool rotated, LaserPartGroup part, string sourceName, bool isSchedule)
+    private static void DrawCoverPageVertical(PdfPage cover, PdfTemplate template, bool rotated, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
     {
         var g  = cover.Graphics;
         float pw = cover.GetClientSize().Width;
@@ -330,7 +262,7 @@ public class ReportService
             new PointF(divX, margin), new PointF(divX, ph - margin));
 
         // Details — right section
-        DrawDetails(g, part, divX + 18f, 50f, pw, margin, sourceName, isSchedule);
+        DrawDetails(g, part, divX + 18f, 50f, pw, margin, sourceName, isSchedule, operation);
     }
 
     /// <summary>
@@ -365,7 +297,7 @@ public class ReportService
     }
 
     private static void DrawDetails(PdfGraphics g, LaserPartGroup part,
-        float bx, float by, float pw, float margin, string sourceName, bool isSchedule)
+        float bx, float by, float pw, float margin, string sourceName, bool isSchedule, string operation)
     {
         var fontTitle  = new PdfStandardFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Bold);
         var fontBold11 = new PdfStandardFont(PdfFontFamily.Helvetica, 11, PdfFontStyle.Bold);
@@ -400,6 +332,9 @@ public class ReportService
             g.DrawString(part.Material, fontReg10, black, new PointF(bx + 62f, by));
             by += 17f;
         }
+        g.DrawString("Operation", fontReg9, grayBrush, new PointF(bx, by));
+        g.DrawString(operation,   fontReg10, black,    new PointF(bx + 62f, by));
+        by += 17f;
         string sourceLabel = isSchedule ? "Schedule" : "Batch";
         g.DrawString(sourceLabel, fontReg9, grayBrush, new PointF(bx, by));
         g.DrawString(sourceName,  fontReg10, black,    new PointF(bx + 62f, by));
@@ -446,7 +381,9 @@ public class ReportService
 
     private static double ParseThickness(string? thickness)
     {
-        if (double.TryParse(thickness, NumberStyles.Number, CultureInfo.InvariantCulture, out double d))
+        if (string.IsNullOrWhiteSpace(thickness)) return double.MaxValue;
+        var numeric = thickness.Split(' ')[0];
+        if (double.TryParse(numeric, NumberStyles.Number, CultureInfo.InvariantCulture, out double d))
             return d;
         return double.MaxValue;
     }
