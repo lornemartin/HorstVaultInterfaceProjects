@@ -48,6 +48,7 @@ public class ReportService
                 g.First().Part.Title,
                 g.First().Part.Thickness,
                 g.First().Part.Material,
+                g.First().Part.StructCode,
                 g.GroupBy(x => x.Label)
                  .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
                  .OrderBy(o => o.Key)
@@ -95,6 +96,7 @@ public class ReportService
                 g.First().Part.Title,
                 g.First().Part.Thickness,
                 g.First().Part.Material,
+                g.First().Part.StructCode,
                 g.GroupBy(x => x.Label)
                  .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
                  .OrderBy(o => o.Key)
@@ -120,8 +122,9 @@ public class ReportService
     private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)
         => operation.ToLowerInvariant() switch
         {
-            "laser" => [.. groups.OrderBy(g => ParseThickness(g.Thickness)).ThenBy(g => g.Material)],
-            _       => [.. groups.OrderBy(g => g.PartNumber)],
+            "laser" or "iron worker"    => [.. groups.OrderBy(g => ParseThickness(g.Thickness)).ThenBy(g => g.Material)],
+            "machine shop" or "bandsaw" => [.. groups.OrderBy(g => g.StructCode).ThenBy(g => g.Material)],
+            _                           => [.. groups.OrderBy(g => g.PartNumber)],
         };
 
     // ── Per-operation report builder ──────────────────────────────────────────
@@ -367,16 +370,18 @@ public class ReportService
         string? title,
         string? thickness,
         string? material,
+        string? structCode,
         List<(string Label, int Qty)> orders,
         string pdfPath) => new()
     {
-        PartNumber = partNumber,
-        Title      = title,
-        Thickness  = thickness,
-        Material   = material,
-        TotalQty   = orders.Sum(o => o.Qty),
-        Orders     = orders,
-        PdfPath    = pdfPath,
+        PartNumber  = partNumber,
+        Title       = title,
+        Thickness   = thickness,
+        Material    = material,
+        StructCode  = structCode,
+        TotalQty    = orders.Sum(o => o.Qty),
+        Orders      = orders,
+        PdfPath     = pdfPath,
     };
 
     private static double ParseThickness(string? thickness)
@@ -390,12 +395,13 @@ public class ReportService
 
     private sealed class LaserPartGroup
     {
-        public string PartNumber { get; init; } = "";
-        public string? Title     { get; init; }
-        public string? Thickness { get; init; }
-        public string? Material  { get; init; }
-        public int TotalQty      { get; init; }
+        public string PartNumber  { get; init; } = "";
+        public string? Title      { get; init; }
+        public string? Thickness  { get; init; }
+        public string? Material   { get; init; }
+        public string? StructCode { get; init; }
+        public int TotalQty       { get; init; }
         public List<(string Label, int Qty)> Orders { get; init; } = new();
-        public string PdfPath    { get; init; } = "";
+        public string PdfPath     { get; init; } = "";
     }
 }
