@@ -109,13 +109,13 @@
                     }
                     <button @onclick="@(async () => await OpenReport("schedule-laser", sched.Name))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Laser</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op/Iron Worker", sched.Name))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "Iron Worker"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Iron Worker</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op/Machine Shop", sched.Name))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "Machine Shop"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Machine Shop</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op/Bandsaw", sched.Name))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "Bandsaw"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Bandsaw</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op/Purchased", sched.Name))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "Purchased"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Purchased</button>
                 </span>
             }
@@ -603,10 +603,12 @@
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
-    private async Task OpenReport(string route, string name)
+    private async Task OpenReport(string type, string name, string? operation = null)
     {
-        await JS.InvokeVoidAsync("window.open",
-            $"/api/reports/{route}/{Uri.EscapeDataString(name)}", "_blank");
+        var url = operation is null
+            ? $"/api/reports/{type}/{Uri.EscapeDataString(name)}"
+            : $"/api/reports/{type}/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(operation)}";
+        await JS.InvokeVoidAsync("window.open", url, "_blank");
     }
 
     // ── Stock checkbox ────────────────────────────────────────────────────────
