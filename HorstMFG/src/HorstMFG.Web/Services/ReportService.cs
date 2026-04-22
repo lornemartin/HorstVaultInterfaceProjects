@@ -23,6 +23,113 @@ public class ReportService
 
     // ── Schedule (Schedule → ScheduleOrder → PartLineItem) ───────────────────
 
+    public async Task<byte[]?> GenerateScheduleShopTravellerAsync(string scheduleName)
+    {
+        var schedules = await _db.Schedules
+            .Where(s => s.Name == scheduleName)
+            .Include(s => s.ScheduleOrders)
+                .ThenInclude(so => so.Parts)
+            .ToListAsync();
+
+        if (schedules.Count == 0) return null;
+
+        var pdfFolder = schedules[0].LocalPdfFolder
+            ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
+
+        // Flatten schedule orders; group by the assembly PartNumber (= product key)
+        var allOrders = schedules
+            .SelectMany(s => s.ScheduleOrders)
+            .Select(so => new
+            {
+                so.OrderNumber,
+                Qty   = so.Qty,
+                Parts = so.Parts.Where(p => !p.IsStock).ToList(),
+            })
+            .ToList();
+
+        var products = new List<TravellerProduct>();
+
+        foreach (var pg in allOrders.GroupBy(o =>
+            o.Parts
+                .FirstOrDefault(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase))
+                ?.PartNumber ?? o.OrderNumber))
+        {
+            var assemblyPart = pg
+                .SelectMany(o => o.Parts)
+                .FirstOrDefault(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase));
+
+            var asmPath = assemblyPart != null
+                ? Path.Combine(pdfFolder, assemblyPart.PartNumber + ".pdf")
+                : null;
+            var asmPdfExists = asmPath != null && File.Exists(asmPath);
+
+            var orders = pg.Select(o => (o.OrderNumber, o.Qty)).ToList();
+
+            var components = pg
+                .SelectMany(o => o.Parts
+                    .Where(p => p.Operations != null &&
+                                (p.Operations.Contains("bandsaw",     StringComparison.OrdinalIgnoreCase) ||
+                                 p.Operations.Contains("iron worker", StringComparison.OrdinalIgnoreCase)))
+                    .Select(p => new { Part = p, o.OrderNumber, o.Qty }))
+                .GroupBy(x => x.Part.PartNumber)
+                .Select(g =>
+                {
+                    var path = Path.Combine(pdfFolder, g.Key + ".pdf");
+                    return new TravellerComponent
+                    {
+                        PartNumber     = g.Key,
+                        Title          = g.First().Part.Title,
+                        Thickness      = g.First().Part.Thickness,
+                        Material       = g.First().Part.Material,
+                        StructCode     = g.First().Part.StructCode,
+                        TotalQty       = g.Sum(x => x.Part.Qty * x.Qty),
+                        OrderBreakdown = g.GroupBy(x => x.OrderNumber)
+                                          .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
+                                          .ToList(),
+                        PdfPath        = File.Exists(path) ? path : null,
+                    };
+                })
+                .OrderBy(c => c.StructCode).ThenBy(c => c.Material)
+                .ToList();
+
+            if (!asmPdfExists && !components.Any()) continue;
+
+            products.Add(new TravellerProduct
+            {
+                ProductKey      = pg.Key,
+                AssemblyTitle   = assemblyPart?.Title,
+                AssemblyPdfPath = asmPdfExists ? asmPath : null,
+                Orders          = orders,
+                Components      = components,
+            });
+        }
+
+        // Cross-references: partNumber → all product keys that use it
+        var partToProducts = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var product in products)
+            foreach (var comp in product.Components)
+            {
+                if (!partToProducts.TryGetValue(comp.PartNumber, out var list))
+                    partToProducts[comp.PartNumber] = list = [];
+                list.Add(product.ProductKey);
+            }
+
+        foreach (var product in products)
+            foreach (var comp in product.Components)
+                if (partToProducts.TryGetValue(comp.PartNumber, out var keys))
+                    comp.AlsoInProducts = keys.Where(k => k != product.ProductKey).ToList();
+
+        if (!products.Any())
+        {
+            _log.LogWarning("No Shop Traveller content found for schedule '{Name}'", scheduleName);
+            return null;
+        }
+
+        _log.LogInformation("Generating Shop Traveller for schedule '{Name}': {Count} products",
+            scheduleName, products.Count);
+        return BuildTravellerPdf(products, scheduleName, _log);
+    }
+
     public async Task<byte[]?> GenerateScheduleOperationReportAsync(string scheduleName, string operation)
     {
         var schedules = await _db.Schedules
@@ -404,4 +511,374 @@ public class ReportService
         public List<(string Label, int Qty)> Orders { get; init; } = new();
         public string PdfPath     { get; init; } = "";
     }
+
+    // ── Traveller PDF builder ─────────────────────────────────────────────────
+
+    private static byte[] BuildTravellerPdf(List<TravellerProduct> products, string scheduleName, ILogger log)
+    {
+        var output = new PdfDocument();
+        output.PageSettings.Size = PdfPageSize.Letter;
+        output.PageSettings.Margins.All = 0;
+
+        foreach (var product in products)
+        {
+            // Product cover page (front) + blank back for duplex
+            TravellerAppendProductCoverPage(output, product, scheduleName);
+
+            // Assembly drawing first
+            if (product.AssemblyPdfPath != null)
+            {
+                TravellerAppendDrawingPages(output,
+                    product.AssemblyPdfPath,
+                    new TravellerPageInfo(
+                        PartNumber: product.ProductKey,
+                        Title:      product.AssemblyTitle,
+                        Thickness:  null, Material: null, StructCode: null,
+                        TotalQty:   product.Orders.Sum(o => o.Qty),
+                        Orders:     product.Orders,
+                        SourceName: scheduleName,
+                        IsAssembly: true,
+                        AlsoIn:     []),
+                    log);
+            }
+
+            // Fabricated components (bandsaw / iron worker)
+            foreach (var comp in product.Components)
+            {
+                var info = new TravellerPageInfo(
+                    PartNumber: comp.PartNumber,
+                    Title:      comp.Title,
+                    Thickness:  comp.Thickness,
+                    Material:   comp.Material,
+                    StructCode: comp.StructCode,
+                    TotalQty:   comp.TotalQty,
+                    Orders:     comp.OrderBreakdown,
+                    SourceName: scheduleName,
+                    IsAssembly: false,
+                    AlsoIn:     comp.AlsoInProducts);
+
+                if (comp.PdfPath != null)
+                    TravellerAppendDrawingPages(output, comp.PdfPath, info, log);
+                else
+                    TravellerAppendTextOnlyPage(output, info);
+            }
+        }
+
+        using var ms = new MemoryStream();
+        output.Save(ms);
+        output.Close();
+        return ms.ToArray();
+    }
+
+    private static void TravellerAppendDrawingPages(PdfDocument output, string pdfPath,
+        TravellerPageInfo info, ILogger log)
+    {
+        byte[] srcBytes;
+        try { srcBytes = File.ReadAllBytes(pdfPath); }
+        catch (Exception ex)
+        {
+            log.LogWarning("Could not read PDF {Path}: {Msg}", pdfPath, ex.Message);
+            TravellerAppendTextOnlyPage(output, info);
+            return;
+        }
+
+        var srcDoc = new PdfLoadedDocument(srcBytes);
+        try
+        {
+            if (srcDoc.Pages.Count == 0) { TravellerAppendTextOnlyPage(output, info); return; }
+
+            // Each PDF page becomes its own duplex sheet: details cover (front) + drawing (back)
+            for (int i = 0; i < srcDoc.Pages.Count; i++)
+            {
+                var srcPage = srcDoc.Pages[i] as PdfLoadedPage;
+                if (srcPage == null) continue;
+
+                var template = srcPage.CreateTemplate();
+                bool rotated = srcPage.Rotation == PdfPageRotateAngle.RotateAngle90 ||
+                               srcPage.Rotation == PdfPageRotateAngle.RotateAngle270;
+                bool isLandscape = rotated ? template.Height > template.Width
+                                           : template.Width  > template.Height;
+
+                var cover = output.Pages.Add();
+                TravellerDrawCoverPage(cover, template, rotated, isLandscape, info);
+                output.ImportPage(srcDoc, i);
+            }
+        }
+        finally { srcDoc.Close(); }
+    }
+
+    private static void TravellerAppendTextOnlyPage(PdfDocument output, TravellerPageInfo info)
+    {
+        TravellerDrawTextOnlyPage(output.Pages.Add(), info);
+        output.Pages.Add(); // blank back for duplex alignment
+    }
+
+    private static void TravellerDrawCoverPage(PdfPage cover, PdfTemplate template,
+        bool rotated, bool isLandscape, TravellerPageInfo info)
+    {
+        if (isLandscape)
+            TravellerDrawCoverPageHorizontal(cover, template, rotated, info);
+        else
+            TravellerDrawCoverPageVertical(cover, template, rotated, info);
+    }
+
+    private static void TravellerDrawCoverPageHorizontal(PdfPage cover, PdfTemplate template,
+        bool rotated, TravellerPageInfo info)
+    {
+        var g     = cover.Graphics;
+        float pw  = cover.GetClientSize().Width;
+        float ph  = cover.GetClientSize().Height;
+        float margin = 20f;
+        float divY   = ph * 0.55f;
+
+        float vW = rotated ? template.Height : template.Width;
+        float vH = rotated ? template.Width  : template.Height;
+        float scale  = Math.Min((pw - margin * 2f) / vW, (divY - margin * 2f) / vH);
+        float thumbW = vW * scale;
+        float thumbH = vH * scale;
+        float thumbX = (pw - thumbW) / 2f;
+        float thumbY = margin + ((divY - margin * 2f) - thumbH) / 2f;
+
+        DrawTemplate(g, template, rotated, thumbX, thumbY, thumbW, thumbH);
+        g.DrawRectangle(new PdfPen(new PdfColor(180, 180, 180), 0.5f),
+            new RectangleF(thumbX, thumbY, thumbW, thumbH));
+        g.DrawLine(new PdfPen(new PdfColor(210, 210, 210), 1f),
+            new PointF(margin, divY), new PointF(pw - margin, divY));
+
+        TravellerDrawDetails(g, info, margin + 10f, divY + 18f, pw, margin);
+    }
+
+    private static void TravellerDrawCoverPageVertical(PdfPage cover, PdfTemplate template,
+        bool rotated, TravellerPageInfo info)
+    {
+        var g     = cover.Graphics;
+        float pw  = cover.GetClientSize().Width;
+        float ph  = cover.GetClientSize().Height;
+        float margin = 20f;
+        float divX   = pw * 0.50f;
+
+        float vW = rotated ? template.Height : template.Width;
+        float vH = rotated ? template.Width  : template.Height;
+        float scale  = Math.Min((divX - margin * 2f) / vW, (ph - margin * 2f) / vH);
+        float thumbW = vW * scale;
+        float thumbH = vH * scale;
+        float thumbX = margin + ((divX - margin * 2f) - thumbW) / 2f;
+        float thumbY = (ph - thumbH) / 2f;
+
+        DrawTemplate(g, template, rotated, thumbX, thumbY, thumbW, thumbH);
+        g.DrawRectangle(new PdfPen(new PdfColor(180, 180, 180), 0.5f),
+            new RectangleF(thumbX, thumbY, thumbW, thumbH));
+        g.DrawLine(new PdfPen(new PdfColor(210, 210, 210), 1f),
+            new PointF(divX, margin), new PointF(divX, ph - margin));
+
+        TravellerDrawDetails(g, info, divX + 18f, 50f, pw, margin);
+    }
+
+    private static void TravellerDrawTextOnlyPage(PdfPage page, TravellerPageInfo info)
+    {
+        var g      = page.Graphics;
+        float pw   = page.GetClientSize().Width;
+        float ph   = page.GetClientSize().Height;
+        float margin = 30f;
+        float boxW = pw * 0.44f;
+        float boxH = ph - margin * 2f;
+
+        // Grey "No Drawing" placeholder
+        g.DrawRectangle(
+            new PdfPen(new PdfColor(200, 200, 200), 0.5f),
+            new PdfSolidBrush(new PdfColor(245, 245, 245)),
+            new RectangleF(margin, margin, boxW, boxH));
+
+        var noDrawFont = new PdfStandardFont(PdfFontFamily.Helvetica, 13, PdfFontStyle.Italic);
+        var noDrawSize = noDrawFont.MeasureString("No Drawing");
+        g.DrawString("No Drawing", noDrawFont,
+            new PdfSolidBrush(new PdfColor(160, 160, 160)),
+            new PointF(margin + (boxW - noDrawSize.Width) / 2f,
+                       margin + (boxH - noDrawSize.Height) / 2f));
+
+        // Vertical divider
+        float divX = margin + boxW + 15f;
+        g.DrawLine(new PdfPen(new PdfColor(210, 210, 210), 1f),
+            new PointF(divX, margin), new PointF(divX, ph - margin));
+
+        TravellerDrawDetails(g, info, divX + 15f, margin + 30f, pw, margin);
+    }
+
+    private static void TravellerDrawDetails(PdfGraphics g, TravellerPageInfo info,
+        float bx, float by, float pw, float margin)
+    {
+        var fontTitle  = new PdfStandardFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Bold);
+        var fontBold11 = new PdfStandardFont(PdfFontFamily.Helvetica, 11, PdfFontStyle.Bold);
+        var fontReg10  = new PdfStandardFont(PdfFontFamily.Helvetica, 10);
+        var fontReg9   = new PdfStandardFont(PdfFontFamily.Helvetica,  9);
+        var fontItal9  = new PdfStandardFont(PdfFontFamily.Helvetica,  9, PdfFontStyle.Italic);
+        var black      = PdfBrushes.Black;
+        var grayBrush  = new PdfSolidBrush(new PdfColor(110, 110, 110));
+        var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 0.5f);
+
+        g.DrawString(info.PartNumber, fontTitle, black, new PointF(bx, by));
+        by += 26f;
+
+        if (!string.IsNullOrWhiteSpace(info.Title))
+        {
+            g.DrawString(info.Title, fontReg10, black, new PointF(bx, by));
+            by += 18f;
+        }
+        by += 8f;
+
+        if (!string.IsNullOrWhiteSpace(info.StructCode))
+        {
+            g.DrawString("Struct Code", fontReg9, grayBrush, new PointF(bx, by));
+            g.DrawString(info.StructCode, fontReg10, black, new PointF(bx + 72f, by));
+            by += 17f;
+        }
+        if (!string.IsNullOrWhiteSpace(info.Thickness))
+        {
+            g.DrawString("Thickness",  fontReg9, grayBrush, new PointF(bx, by));
+            g.DrawString(info.Thickness, fontReg10, black,  new PointF(bx + 72f, by));
+            by += 17f;
+        }
+        if (!string.IsNullOrWhiteSpace(info.Material))
+        {
+            g.DrawString("Material",   fontReg9, grayBrush, new PointF(bx, by));
+            g.DrawString(info.Material, fontReg10, black,   new PointF(bx + 72f, by));
+            by += 17f;
+        }
+        g.DrawString("Schedule",      fontReg9,  grayBrush, new PointF(bx, by));
+        g.DrawString(info.SourceName, fontReg10, black,     new PointF(bx + 72f, by));
+        by += 24f;
+
+        g.DrawString($"Total Qty:  {info.TotalQty}", fontBold11, black, new PointF(bx, by));
+        by += 20f;
+        g.DrawLine(grayPen, new PointF(bx, by), new PointF(pw - margin, by));
+        by += 10f;
+
+        float qtyColX = pw - margin - 45f;
+        foreach (var (orderNum, qty) in info.Orders)
+        {
+            g.DrawString(orderNum,   fontReg9, black, new PointF(bx, by));
+            g.DrawString($"{qty} pcs", fontReg9, black, new PointF(qtyColX, by));
+            by += 15f;
+        }
+
+        if (info.AlsoIn.Count > 0)
+        {
+            by += 10f;
+            g.DrawLine(grayPen, new PointF(bx, by), new PointF(pw - margin, by));
+            by += 8f;
+            g.DrawString("Also in:  " + string.Join(", ", info.AlsoIn),
+                fontItal9, grayBrush, new PointF(bx, by));
+        }
+    }
+
+    private static void TravellerAppendProductCoverPage(PdfDocument output, TravellerProduct product, string scheduleName)
+    {
+        TravellerDrawProductCover(output.Pages.Add(), product, scheduleName);
+        output.Pages.Add(); // blank back for duplex
+    }
+
+    private static void TravellerDrawProductCover(PdfPage page, TravellerProduct product, string scheduleName)
+    {
+        var g      = page.Graphics;
+        float pw   = page.GetClientSize().Width;
+        float ph   = page.GetClientSize().Height;
+        float margin = 50f;
+
+        var fontHeader = new PdfStandardFont(PdfFontFamily.Helvetica,  9);
+        var fontLarge  = new PdfStandardFont(PdfFontFamily.Helvetica, 26, PdfFontStyle.Bold);
+        var fontTitle  = new PdfStandardFont(PdfFontFamily.Helvetica, 14);
+        var fontBold12 = new PdfStandardFont(PdfFontFamily.Helvetica, 12, PdfFontStyle.Bold);
+        var fontReg10  = new PdfStandardFont(PdfFontFamily.Helvetica, 10);
+        var black      = PdfBrushes.Black;
+        var grayBrush  = new PdfSolidBrush(new PdfColor(130, 130, 130));
+        var darkBrush  = new PdfSolidBrush(new PdfColor( 80,  80,  80));
+        var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 1f);
+
+        // Header strip
+        g.DrawString("SHOP TRAVELLER", fontHeader, grayBrush, new PointF(margin, margin));
+        g.DrawString(scheduleName, fontHeader, grayBrush,
+            new PointF(pw - margin - fontHeader.MeasureString(scheduleName).Width, margin));
+        g.DrawLine(grayPen, new PointF(margin, margin + 16f), new PointF(pw - margin, margin + 16f));
+
+        // Centered block ~32% from top
+        float cy = ph * 0.32f;
+
+        var pnSize = fontLarge.MeasureString(product.ProductKey);
+        g.DrawString(product.ProductKey, fontLarge, black,
+            new PointF((pw - pnSize.Width) / 2f, cy));
+        cy += pnSize.Height + 10f;
+
+        if (!string.IsNullOrWhiteSpace(product.AssemblyTitle))
+        {
+            var titleSize = fontTitle.MeasureString(product.AssemblyTitle);
+            g.DrawString(product.AssemblyTitle, fontTitle, darkBrush,
+                new PointF((pw - titleSize.Width) / 2f, cy));
+            cy += titleSize.Height + 16f;
+        }
+
+        var schedText = "Schedule  " + scheduleName;
+        var schedSize = fontReg10.MeasureString(schedText);
+        g.DrawString(schedText, fontReg10, grayBrush,
+            new PointF((pw - schedSize.Width) / 2f, cy));
+        cy += 40f;
+
+        g.DrawLine(grayPen, new PointF(margin * 2f, cy), new PointF(pw - margin * 2f, cy));
+        cy += 20f;
+
+        int totalQty = product.Orders.Sum(o => o.Qty);
+        float labelX = pw / 2f - 100f;
+        float qtyX   = pw / 2f + 60f;
+
+        foreach (var (orderNum, qty) in product.Orders)
+        {
+            g.DrawString(orderNum, fontReg10, black, new PointF(labelX, cy));
+            g.DrawString($"{qty} pcs", fontReg10, black, new PointF(qtyX, cy));
+            cy += 18f;
+        }
+
+        if (product.Orders.Count > 1)
+        {
+            cy += 4f;
+            g.DrawLine(grayPen, new PointF(labelX, cy), new PointF(qtyX + 50f, cy));
+            cy += 8f;
+            g.DrawString("Total", fontBold12, black, new PointF(labelX, cy));
+            g.DrawString($"{totalQty} pcs", fontBold12, black, new PointF(qtyX, cy));
+        }
+    }
+
+    // ── Traveller data types ──────────────────────────────────────────────────
+
+    private sealed class TravellerProduct
+    {
+        public string  ProductKey       { get; init; } = "";
+        public string? AssemblyTitle    { get; init; }
+        public string? AssemblyPdfPath  { get; init; }
+        public List<(string OrderNumber, int Qty)> Orders     { get; init; } = new();
+        public List<TravellerComponent>            Components { get; init; } = new();
+    }
+
+    private sealed class TravellerComponent
+    {
+        public string  PartNumber     { get; init; } = "";
+        public string? Title          { get; init; }
+        public string? Thickness      { get; init; }
+        public string? Material       { get; init; }
+        public string? StructCode     { get; init; }
+        public int     TotalQty       { get; init; }
+        public List<(string OrderNumber, int Qty)> OrderBreakdown { get; init; } = new();
+        public string? PdfPath        { get; init; }
+        public List<string> AlsoInProducts { get; set; } = new();
+    }
+
+    private sealed record TravellerPageInfo(
+        string PartNumber,
+        string? Title,
+        string? Thickness,
+        string? Material,
+        string? StructCode,
+        int TotalQty,
+        List<(string OrderNumber, int Qty)> Orders,
+        string SourceName,
+        bool IsAssembly,
+        IReadOnlyList<string> AlsoIn);
 }

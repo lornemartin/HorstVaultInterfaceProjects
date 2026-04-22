@@ -89,6 +89,15 @@ try
     app.UseAntiforgery();
 
     // Minimal API: reports
+    app.MapGet("/api/reports/schedule-traveller/{name}", async (string name, ReportService reports, HttpResponse response) =>
+    {
+        var n     = Uri.UnescapeDataString(name);
+        var bytes = await reports.GenerateScheduleShopTravellerAsync(n);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"ShopTraveller-{n}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
     app.MapGet("/api/reports/schedule-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
     {
         var n  = Uri.UnescapeDataString(name);
