@@ -5,6 +5,7 @@
 - **.NET 8 ASP.NET Core Hosting Bundle** — installs the runtime and IIS ASP.NET Core Module v2
 - **PostgreSQL** — install on the server or point to an existing instance
 - **IIS** with the WebSockets feature enabled (required for Blazor Server SignalR)
+- **Git** — required on the server to pull updates from the repository and run the deploy script (see Deployment Workflow)
 
 ---
 
@@ -13,6 +14,42 @@
 - App pool .NET CLR Version: **No Managed Code** (ASP.NET Core runs out-of-process)
 - App pool identity: **domain service account** with access to network shares (see Permissions below)
 - Enable **WebSockets** in IIS features — without this, Blazor Server falls back to long-polling
+
+---
+
+## Expected Users & Clients
+
+| Location | Role | Count | Client type |
+| -------- | ---- | ----- | ----------- |
+| Plant 1 | Nesting station | 1 | Bridge app + browser |
+| Plant 2 | Nesting station | 1 | Bridge app + browser |
+| Plant 1 | Data entry | 1 | Bridge app + browser |
+| Plant 2 | Data entry | 1 | Bridge app + browser |
+| Plant 1, 2, 3 | Read-only / reports | Several | Browser |
+
+**Nesting station and data entry PCs** run two things: the HorstMFG Bridge client app and a browser for the UI. The Bridge app is a background service that acts as a local agent on the client PC — it exposes the local file system (nesting project files, export files) to the web app, and relays commands and data between the web app's database and the local environment. It maintains a persistent connection to `/bridgehub` on the server. These are the only machines that need the bridge client installed — four total (one of each role per plant).
+
+**Read-only users** access the app through a browser and are limited to generating and printing reports from the database. No write access is needed for these accounts.
+
+This is a small concurrent user count. The server does not need to be sized for high traffic — the main resource consumers are PDF report generation (CPU + disk I/O) and EF Core queries (DB connections). A modest Windows Server VM or physical machine with an SSD is sufficient.
+
+---
+
+## SignalR & Client Connectivity
+
+The app uses SignalR in two separate roles:
+
+**1. Blazor Server UI circuit (`/_blazor`)**
+Every browser tab running the app holds a persistent WebSocket connection to the server. This is how Blazor Server pushes UI updates to the browser in real time. If WebSockets are unavailable, SignalR falls back to long-polling — functional but significantly more chatty.
+
+**2. Bridge hub (`/bridgehub`)**
+Each nesting station (Plant1 and Plant 2) runs a small bridge client app that connects to this endpoint and holds a persistent WebSocket connection. The bridge authenticates via an API key (the `Bridge:ApiKey` in `appsettings.Production.json`) and uses this connection to receive nesting commands and report results back to the server. Unlike browser sessions, bridge connections are machine-to-machine and are intended to stay connected indefinitely.
+
+### Network Requirements for Bridge Clients
+
+- Nesting station PCs must be able to reach the server on **port 443** (outbound TCP). If a firewall exists between the shop floor network segment and the server, that traffic must be explicitly allowed.
+- Any network device that aggressively terminates idle TCP connections (some firewalls and managed switches do this after 5–30 minutes of low traffic) will silently drop bridge connections. SignalR sends keepalive pings, but if the device kills the socket before the ping fires, the bridge will reconnect automatically — you may see log entries like "Bridge station X disconnected / reconnected" more often than expected. If this is a problem, increase the idle timeout on the relevant network device or adjust the SignalR server timeout settings.
+- WebSockets must not be terminated by an intermediate proxy. Standard HTTPS pass-through is fine; a proxy that terminates and re-encrypts TLS needs to be configured to allow WebSocket upgrades (`Upgrade: websocket` header must pass through).
 
 ---
 
@@ -65,7 +102,7 @@ domain (hwvsse01, HWVMWK02) using Kerberos or NTLM, the same way a logged-in use
 
 Network share permissions have two independent layers that both must allow access:
 
-**Share-level permissions** (set on the sharing server — hwvsse01 / HWVMWK02):
+**Share-level permissions** (set on the sharing server — hwvsse01):
 
 - Right-click the shared folder → Properties → Sharing → Advanced Sharing → Permissions
 - Add `DOMAIN\svc-horstmfg`
