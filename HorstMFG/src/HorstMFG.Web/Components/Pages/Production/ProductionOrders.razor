@@ -4,12 +4,14 @@
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
+@inject ProtectedLocalStorage LocalStorage
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Components.Shared
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Grids
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.Security.Claims
 
 <PageTitle>Orders - HorstMFG</PageTitle>
@@ -132,7 +134,21 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-90);
     private DateTime? _toDate;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            var from = await LocalStorage.GetAsync<DateTime?>("prod-orders-from");
+            var to   = await LocalStorage.GetAsync<DateTime?>("prod-orders-to");
+            if (from.Success) _fromDate = from.Value;
+            if (to.Success)   _toDate   = to.Value;
+        }
+        catch { }
+        await LoadAsync();
+        StateHasChanged();
+    }
 
     private async Task LoadAsync()
     {
@@ -212,6 +228,12 @@
 
     private async Task ReloadAsync()
     {
+        try
+        {
+            await LocalStorage.SetAsync("prod-orders-from", _fromDate);
+            await LocalStorage.SetAsync("prod-orders-to", _toDate);
+        }
+        catch { }
         await LoadAsync();
         StateHasChanged();
     }
