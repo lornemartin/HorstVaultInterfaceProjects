@@ -39,6 +39,10 @@
     <label style="font-size:.9em; color:#374151; margin:0;">To</label>
     <SfDatePicker TValue="DateTime?" @bind-Value="_toDate" Format="yyyy-MM-dd" Width="140px" Placeholder="today" />
     <button class="btn btn-sm btn-primary" @onclick="ReloadAsync">Load</button>
+    <label style="font-size:.9em; color:#374151; margin:0; display:flex; align-items:center; gap:.35rem; cursor:pointer;">
+        <input type="checkbox" checked="@_hideComplete" @onchange="OnHideCompleteChanged" />
+        Hide fully nested
+    </label>
     @if (_items.Count > 0)
     {
         <span style="font-size:.8em; color:#6b7280;">@_items.Count rows</span>
@@ -133,6 +137,7 @@
     private int? _stationId;
     private DateTime? _fromDate = DateTime.Today.AddDays(-90);
     private DateTime? _toDate;
+    private bool _hideComplete;
 
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -142,8 +147,10 @@
         {
             var from = await LocalStorage.GetAsync<DateTime?>("prod-orders-from");
             var to   = await LocalStorage.GetAsync<DateTime?>("prod-orders-to");
-            if (from.Success) _fromDate = from.Value;
-            if (to.Success)   _toDate   = to.Value;
+            var hide = await LocalStorage.GetAsync<bool>("prod-orders-hide-complete");
+            if (from.Success) _fromDate     = from.Value;
+            if (to.Success)   _toDate       = to.Value;
+            if (hide.Success) _hideComplete = hide.Value;
         }
         catch { }
         await LoadAsync();
@@ -169,6 +176,9 @@
 
         if (_toDate.HasValue)
             query = query.Where(i => i.NestOrder.EntryDate < _toDate.Value.AddDays(1).ToUniversalTime());
+
+        if (_hideComplete)
+            query = query.Where(i => i.QtyRequired > i.QtyNested);
 
         _items = await query
             .Select(i => new OrderItemRow
@@ -232,10 +242,17 @@
         {
             await LocalStorage.SetAsync("prod-orders-from", _fromDate);
             await LocalStorage.SetAsync("prod-orders-to", _toDate);
+            await LocalStorage.SetAsync("prod-orders-hide-complete", _hideComplete);
         }
         catch { }
         await LoadAsync();
         StateHasChanged();
+    }
+
+    private async Task OnHideCompleteChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _hideComplete = (bool)(e.Value ?? false);
+        await ReloadAsync();
     }
 
     private async Task OnQtyRequiredChangedAsync(OrderItemRow row, string? value)
