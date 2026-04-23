@@ -18,7 +18,9 @@
       "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects/HorstMFG -name *.dll -path *Syncfusion*Grids*)",
       "Bash(find /c/Users/lorne/source/repos/HorstVaultInterfaceProjects -type d -name HorstMFG*)",
       "Bash(msbuild HorstMFG.Bridge\\\\HorstMFG.Bridge.sln /t:Clean,Build /p:Configuration=Debug /p:Platform=\"Any CPU\")",
-      "Bash(sqlcmd *)"
+      "Bash(sqlcmd *)",
+      "Bash(dotnet ef *)",
+      "Bash(psql -U postgres -d horstmfg -c \"\\\\d nest_orders\")"
     ]
   }
 }

@@ -8,6 +8,7 @@
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Components.Shared
 @using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Grids
 @using System.Security.Claims
 
@@ -30,11 +31,24 @@
               SelectedItems="_selectedForNesting"
               OnCompleted="ReloadAsync" />
 
+<div style="display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; flex-wrap:wrap;">
+    <label style="font-size:.9em; color:#374151; margin:0;">From</label>
+    <SfDatePicker TValue="DateTime?" @bind-Value="_fromDate" Format="yyyy-MM-dd" Width="140px" />
+    <label style="font-size:.9em; color:#374151; margin:0;">To</label>
+    <SfDatePicker TValue="DateTime?" @bind-Value="_toDate" Format="yyyy-MM-dd" Width="140px" Placeholder="today" />
+    <button class="btn btn-sm btn-primary" @onclick="ReloadAsync">Load</button>
+    @if (_items.Count > 0)
+    {
+        <span style="font-size:.8em; color:#6b7280;">@_items.Count rows</span>
+    }
+</div>
+
 <SfGrid @ref="_grid"
-        TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v2"
+        TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v3"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
-        EnablePersistence="true" Height="600">
+        AllowPaging="true" EnablePersistence="true" Height="600">
+    <GridPageSettings PageSize="100" PageSizes="@(new int[]{50,100,200,500})" />
     <GridTemplates>
         <DetailTemplate>
             @{
@@ -114,6 +128,8 @@
     private List<NestingSelectionItem> _selectedForNesting = new();
     private int  _plantId;
     private int? _stationId;
+    private DateTime? _fromDate = DateTime.Today.AddDays(-90);
+    private DateTime? _toDate;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -127,8 +143,15 @@
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
         var query = db.BatchItems.AsQueryable();
+
         if (!isAdmin && _plantId > 0)
             query = query.Where(i => i.NestBatch.PlantId == _plantId);
+
+        if (_fromDate.HasValue)
+            query = query.Where(i => i.NestBatch.EntryDate >= _fromDate.Value.ToUniversalTime());
+
+        if (_toDate.HasValue)
+            query = query.Where(i => i.NestBatch.EntryDate < _toDate.Value.AddDays(1).ToUniversalTime());
 
         _items = await query
             .Select(i => new BatchItemRow
@@ -151,9 +174,9 @@
             .OrderBy(i => i.BatchName).ThenBy(i => i.FileName)
             .ToListAsync();
 
-        // Load nest associations for all visible items
+        // Load nest associations only for the items we just fetched
         var itemIds = _items.Select(i => i.Id).ToList();
-        if (itemIds.Any())
+        if (itemIds.Count > 0)
         {
             var nestData = await db.NestedParts
                 .Where(np => np.BatchItemId.HasValue && itemIds.Contains(np.BatchItemId.Value))
