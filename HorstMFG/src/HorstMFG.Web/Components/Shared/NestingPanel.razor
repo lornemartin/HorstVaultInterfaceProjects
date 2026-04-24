@@ -126,6 +126,7 @@
     private string? _pendingCommandType;
     private List<StatusLine> _statusLines = new();
     private bool _eventsSubscribed;
+    private int _prevPlantId = -1;
 
     private record StationOption(int Id, string Label);
     private record StatusLine(string Text, string Css = "");
@@ -133,6 +134,15 @@
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync() => await LoadStationsAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PlantId != _prevPlantId)
+        {
+            _prevPlantId = PlantId;
+            await LoadStationsAsync();
+        }
+    }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
