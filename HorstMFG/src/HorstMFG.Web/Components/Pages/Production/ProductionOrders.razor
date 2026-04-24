@@ -5,6 +5,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
 @inject ProtectedLocalStorage LocalStorage
+@inject IJSRuntime JS
+@inject HorstMFG.Web.Services.LocalStorageService LocalSvc
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Components.Shared
@@ -13,6 +15,7 @@
 @using Syncfusion.Blazor.Grids
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.Security.Claims
+@implements IAsyncDisposable
 
 <PageTitle>Orders - HorstMFG</PageTitle>
 
@@ -92,6 +95,17 @@
             </div>
         </DetailTemplate>
     </GridTemplates>
+    <GridGroupSettings ShowGroupedColumn="false" EnableLazyLoading="true">
+        <CaptionTemplate>
+            @{
+                var ctx = context as CaptionTemplateContext;
+                var keyStr = ctx!.Key?.ToString() ?? "";
+            }
+            <span data-group-key="@keyStr" data-group-level="1" style="display:none;"></span>
+            <span style="font-weight:600;">@keyStr</span>
+            <span style="margin-left:.5rem; color:#6b7280; font-size:.8rem;">(@ctx.Count)</span>
+        </CaptionTemplate>
+    </GridGroupSettings>
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
     <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" />
     <GridEvents TValue="OrderItemRow"
@@ -138,6 +152,8 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-90);
     private DateTime? _toDate;
     private bool _hideComplete;
+    private HashSet<string> _expandedGroupKeys = new();
+    private DotNetObjectReference<ProductionOrders>? _dotNetRef;
 
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -153,8 +169,14 @@
             if (hide.Success) _hideComplete = hide.Value;
         }
         catch { }
+        _dotNetRef = DotNetObjectReference.Create(this);
+        try { await JS.InvokeVoidAsync("horstGrid.watchStringExpansion", "ProductionOrdersGrid_v3", _dotNetRef); }
+        catch (JSException) { }
+        var savedKeys = await LocalSvc.GetAsync<List<string>>("prod-orders-expanded-groups");
+        if (savedKeys?.Count > 0) _expandedGroupKeys = savedKeys.ToHashSet();
         await LoadAsync();
         StateHasChanged();
+        await RestoreExpansionAsync();
     }
 
     private async Task LoadAsync()
@@ -247,6 +269,7 @@
         catch { }
         await LoadAsync();
         StateHasChanged();
+        await RestoreExpansionAsync();
     }
 
     private async Task OnHideCompleteChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
@@ -307,6 +330,30 @@
                 : row.QtyNested == row.QtyRequired ? "remaining-complete"
                 : "remaining-partial";
         args.Cell.AddClass(new[] { css });
+    }
+
+    [JSInvokable]
+    public async Task UpdateGroupExpansionState(List<string> keys)
+    {
+        _expandedGroupKeys = keys.ToHashSet();
+        await LocalSvc.SetAsync("prod-orders-expanded-groups", keys);
+    }
+
+    private async Task RestoreExpansionAsync()
+    {
+        if (_expandedGroupKeys.Count == 0) return;
+        try
+        {
+            await JS.InvokeVoidAsync("horstGrid.restoreStringExpansion",
+                "ProductionOrdersGrid_v3", _expandedGroupKeys.ToList());
+        }
+        catch (JSException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        await ValueTask.CompletedTask;
     }
 
     private class OrderItemRow

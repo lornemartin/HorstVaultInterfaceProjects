@@ -87,6 +87,63 @@ window.horstGrid = {
                 dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2);
             }, 150);
         }, true);
+    },
+
+    // ── String-keyed group expansion (for grids with non-integer group keys) ───
+
+    getExpandedGroupStringKeys: function (gridId) {
+        var el = document.getElementById(gridId);
+        if (!el) return [];
+        var keys = [];
+        el.querySelectorAll('.e-recordplusexpand').forEach(function (icon) {
+            var row = icon.closest('tr');
+            if (!row) return;
+            var keyEl = row.querySelector('[data-group-key]');
+            if (!keyEl) return;
+            var key = keyEl.dataset.groupKey;
+            if (key && keys.indexOf(key) === -1) keys.push(key);
+        });
+        return keys;
+    },
+
+    restoreStringExpansion: function (gridId, keys) {
+        var el = document.getElementById(gridId);
+        if (!el || !keys || keys.length === 0) return;
+
+        function tryExpand() {
+            var collapseIcons = el.querySelectorAll('.e-recordpluscollapse');
+            for (var i = 0; i < collapseIcons.length; i++) {
+                var icon = collapseIcons[i];
+                var row  = icon.closest('tr');
+                if (!row) continue;
+                var keyEl = row.querySelector('[data-group-key]');
+                if (!keyEl) continue;
+                var key = keyEl.dataset.groupKey;
+                if (keys.indexOf(key) !== -1) {
+                    _horstGridRestoring = true;
+                    icon.click();
+                    setTimeout(function () {
+                        _horstGridRestoring = false;
+                        tryExpand();
+                    }, 100);
+                    return;
+                }
+            }
+        }
+        setTimeout(tryExpand, 150);
+    },
+
+    watchStringExpansion: function (gridId, dotNetRef) {
+        var el = document.getElementById(gridId);
+        if (!el) return;
+        el.addEventListener('click', function (e) {
+            if (_horstGridRestoring) return;
+            if (!e.target.closest('.e-recordpluscollapse, .e-recordplusexpand')) return;
+            setTimeout(function () {
+                var keys = window.horstGrid.getExpandedGroupStringKeys(gridId);
+                dotNetRef.invokeMethodAsync('UpdateGroupExpansionState', keys);
+            }, 150);
+        }, true);
     }
 };
 
