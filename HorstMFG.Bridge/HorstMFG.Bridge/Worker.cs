@@ -177,7 +177,8 @@ public class Worker : BackgroundService
         }
         finally
         {
-            _fileWatcher.Resume();
+            // Cooldown absorbs any async RPD write Radan makes after processing NotifyProjectChanged
+            _fileWatcher.Resume(cooldownMs: 4000);
         }
     }
 

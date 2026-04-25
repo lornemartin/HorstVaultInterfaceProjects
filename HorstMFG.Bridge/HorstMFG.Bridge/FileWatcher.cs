@@ -57,14 +57,27 @@ public class FileWatcher : IDisposable
         _log.LogInformation("FileWatcher: watching {Path}", projectPath);
     }
 
-    public void Suspend() => _suspended = true;
-
-    public void Resume()
+    public void Suspend()
     {
-        _suspended = false;
-        // Discard any debounce timer that fired during suspension
+        _suspended = true;
         _debounceTimer?.Dispose();
         _debounceTimer = null;
+    }
+
+    public void Resume(int cooldownMs = 0)
+    {
+        if (cooldownMs <= 0)
+        {
+            _suspended = false;
+            return;
+        }
+        // Stay suppressed for cooldownMs to absorb any async RPD writes by Radan
+        _debounceTimer?.Dispose();
+        _debounceTimer = new Timer(_ =>
+        {
+            _suspended     = false;
+            _debounceTimer = null;
+        }, null, cooldownMs, Timeout.Infinite);
     }
 
     public void Detach()
@@ -93,6 +106,7 @@ public class FileWatcher : IDisposable
             return;
         }
 
+        Suspend();
         try
         {
             _log.LogInformation("FileWatcher: RPD changed — auto-syncing");
@@ -103,6 +117,10 @@ public class FileWatcher : IDisposable
         catch (Exception ex)
         {
             _log.LogError(ex, "FileWatcher: auto-sync failed");
+        }
+        finally
+        {
+            Resume();
         }
     }
 
