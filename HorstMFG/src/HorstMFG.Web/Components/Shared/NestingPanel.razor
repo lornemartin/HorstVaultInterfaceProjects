@@ -441,7 +441,7 @@
             case "RetrieveFromNesting": await ProcessRetrieveFromNestingAsync(payload); break;
             case "Sync":               await ProcessSyncAsync(payload); break;
             case "Finalize":           await ProcessFinalizeAsync(payload); break;
-            case "RetrieveFromVault":  ProcessRetrieveFromVaultLog(payload); break;
+            case "RetrieveFromVault":  await ProcessRetrieveFromVaultAsync(payload); break;
             case "UpdateThumbnail":    await ProcessUpdateThumbnailAsync(payload); break;
         }
     }
@@ -587,7 +587,7 @@
         Log($"Finalized. New project: {result.NewProjectName}");
     }
 
-    private void ProcessRetrieveFromVaultLog(string payload)
+    private async Task ProcessRetrieveFromVaultAsync(string payload)
     {
         var results = JsonSerializer.Deserialize<List<RetrieveFromVaultResultDto>>(payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -599,6 +599,20 @@
         if (err > 0) Log($"{err} file(s) failed:", "text-danger");
         foreach (var r in results.Where(r => !r.Success))
             Log($"  Item {r.ItemId}: {r.Error}", "text-danger");
+
+        // Auto-follow-up: update thumbnails for every successfully retrieved part
+        var successIds  = results.Where(r => r.Success).Select(r => r.ItemId).ToHashSet();
+        var thumbItems  = SelectedItems.Where(i => successIds.Contains(i.ItemId)).ToList();
+        if (thumbItems.Any())
+        {
+            Log($"Updating thumbnail for {thumbItems.Count} retrieved file(s)…");
+            var thumbPayload = JsonSerializer.Serialize(thumbItems.Select(i => new
+            {
+                PartId   = i.PartId,
+                FileName = i.FileName ?? "",
+            }));
+            await SendCommandAsync("UpdateThumbnail", thumbPayload);
+        }
     }
 
     private Task ProcessUpdateThumbnailAsync(string payload)
