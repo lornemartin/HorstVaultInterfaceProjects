@@ -64,7 +64,7 @@
                 var row = (context as BatchItemRow)!;
             }
             <div style="display:flex; gap:1.5rem; padding:.75rem; align-items:flex-start;">
-                <img src="/api/thumbnails/part/@row.PartId" loading="lazy"
+                <img src="/api/thumbnails/part/@row.PartId?v=@_thumbnailVersion" loading="lazy"
                      style="height:140px; object-fit:contain; border:1px solid #dee2e6; border-radius:4px; background:#fafafa; flex-shrink:0;"
                      onerror="this.style.display='none'" />
                 @if (row.Nests.Any())
@@ -73,7 +73,7 @@
                         @foreach (var nest in row.Nests)
                         {
                             <div style="border:1px solid #dee2e6; border-radius:4px; padding:.5rem; display:flex; gap:.6rem; align-items:flex-start; background:#fff;">
-                                <img src="/api/thumbnails/nest/@nest.NestId" loading="lazy"
+                                <img src="/api/thumbnails/nest/@nest.NestId?v=@_thumbnailVersion" loading="lazy"
                                      style="height:80px; object-fit:contain; flex-shrink:0;"
                                      onerror="this.style.display='none'" />
                                 <div>
@@ -118,7 +118,7 @@
         <GridColumn HeaderText="" Width="68" AllowSorting="false" AllowFiltering="false" AllowGrouping="false" AllowReordering="false">
             <Template>
                 @{ var row = (context as BatchItemRow)!; }
-                <img src="/api/thumbnails/part/@row.PartId" loading="lazy"
+                <img src="/api/thumbnails/part/@row.PartId?v=@_thumbnailVersion" loading="lazy"
                      style="height:42px; object-fit:contain; display:block; margin:auto;"
                      onerror="this.style.display='none'" />
             </Template>
@@ -153,6 +153,7 @@
     private bool _hideComplete;
     private HashSet<string> _expandedGroupKeys = new();
     private DotNetObjectReference<ProductionBatches>? _dotNetRef;
+    private long _thumbnailVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -265,6 +266,7 @@
             await LocalStorage.SetAsync("prod-batches-hide-complete", _hideComplete);
         }
         catch { }
+        _thumbnailVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await LoadAsync();
         StateHasChanged();
         await RestoreExpansionAsync();
