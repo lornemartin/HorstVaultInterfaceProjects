@@ -25,17 +25,35 @@ public class UpdateThumbnailHandler
     public List<UpdateThumbnailResult> Execute(List<UpdateThumbnailItem> items,
                                                Action<string, int> reportProgress)
     {
+        _log.LogInformation("UpdateThumbnail: received {Count} item(s)", items.Count);
+
         var results = new List<UpdateThumbnailResult>();
 
         for (int i = 0; i < items.Count; i++)
         {
-            var item    = items[i];
-            var symPath = Path.Combine(_config.SymNetworkSharePath, item.FileName + ".sym");
+            var item     = items[i];
+            var baseName = Path.GetFileNameWithoutExtension(item.FileName);
+            var symPath  = Path.Combine(_config.SymNetworkSharePath, baseName + ".sym");
+            bool exists  = File.Exists(symPath);
+
+            _log.LogInformation("Item {Index}/{Total}: FileName={FileName} → symPath={SymPath} exists={Exists}",
+                i + 1, items.Count, item.FileName, symPath, exists);
+
             reportProgress($"Extracting thumbnail for {item.FileName} ({i + 1}/{items.Count})",
                            (i + 1) * 100 / items.Count);
+
+            if (!exists)
+            {
+                _log.LogWarning("Sym file not found: {SymPath}", symPath);
+                results.Add(new UpdateThumbnailResult { PartId = item.PartId, Success = false });
+                continue;
+            }
+
             try
             {
                 var bytes = _nesting.ExtractThumbnail(symPath);
+                _log.LogInformation("ExtractThumbnail for {FileName}: {Bytes}",
+                    item.FileName, bytes != null ? $"{bytes.Length} bytes" : "null");
                 results.Add(new UpdateThumbnailResult
                 {
                     PartId         = item.PartId,

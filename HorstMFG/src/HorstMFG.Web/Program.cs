@@ -224,8 +224,9 @@ try
     }).RequireAuthorization();
 
     // Minimal API: thumbnails
-    app.MapGet("/api/thumbnails/part/{partId:int}", async (int partId, IDbContextFactory<ApplicationDbContext> db) =>
+    app.MapGet("/api/thumbnails/part/{partId:int}", async (int partId, IDbContextFactory<ApplicationDbContext> db, HttpContext http) =>
     {
+        http.Response.Headers.CacheControl = "no-store";
         await using var ctx = await db.CreateDbContextAsync();
         var bytes = await ctx.Parts.Where(p => p.Id == partId).Select(p => p.Thumbnail).FirstOrDefaultAsync();
         if (bytes is null) return Results.NotFound();
@@ -235,8 +236,9 @@ try
         return Results.File(bytes, mime);
     }).RequireAuthorization();
 
-    app.MapGet("/api/thumbnails/nest/{nestId:int}", async (int nestId, IDbContextFactory<ApplicationDbContext> db) =>
+    app.MapGet("/api/thumbnails/nest/{nestId:int}", async (int nestId, IDbContextFactory<ApplicationDbContext> db, HttpContext http) =>
     {
+        http.Response.Headers.CacheControl = "no-store";
         await using var ctx = await db.CreateDbContextAsync();
         var bytes = await ctx.Nests.Where(n => n.Id == nestId).Select(n => n.Thumbnail).FirstOrDefaultAsync();
         if (bytes is null) return Results.NotFound();

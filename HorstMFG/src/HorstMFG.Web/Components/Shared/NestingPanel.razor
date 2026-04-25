@@ -13,7 +13,6 @@
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.DropDowns
-@using Syncfusion.Blazor.SplitButtons
 @using System.Text.Json
 
 <div class="nesting-panel border rounded p-2 bg-light" style="margin-bottom:1.5rem;">
@@ -85,14 +84,15 @@
 
         <span style="border-left:1px solid #ced4da; height:28px; align-self:center;"></span>
 
-        <SfDropDownButton IconCss="e-icons e-more-horizontal-1" Content="More"
-                          Disabled="@(_isBusy || _stationId == null)"
-                          ItemSelected="OnMoreItemSelectedAsync">
-            <DropDownMenuItems>
-                <DropDownMenuItem Id="vault"     Text="Retrieve from Vault"  IconCss="e-icons e-lock"      Disabled="@(!SelectedItems.Any())" />
-                <DropDownMenuItem Id="thumbnail" Text="Update Thumbnails"    IconCss="e-icons e-thumbnail" Disabled="@(!SelectedItems.Any())" />
-            </DropDownMenuItems>
-        </SfDropDownButton>
+        <SfButton IconCss="e-icons e-lock" OnClick="RetrieveFromVaultAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+            Retrieve from Vault
+        </SfButton>
+
+        <SfButton IconCss="e-icons e-thumbnail" OnClick="UpdateThumbnailsAsync"
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+            Update Thumbnails
+        </SfButton>
     </div>
 
     @if (_statusLines.Count > 0)
@@ -324,6 +324,9 @@
     {
         if (!SelectedItems.Any()) return;
 
+        Log($"UpdateThumbnail: {SelectedItems.Count} item(s) — " +
+            string.Join(", ", SelectedItems.Select(i => $"{i.FileName} (PartId={i.PartId})")));
+
         var payload = JsonSerializer.Serialize(SelectedItems.Select(i => new
         {
             PartId   = i.PartId,
@@ -335,15 +338,6 @@
 
     private Task SyncAsync() => SendCommandAsync("Sync", "{}");
 
-    private async Task OnMoreItemSelectedAsync(MenuEventArgs args)
-    {
-        switch (args.Item.Id)
-        {
-            case "vault":     await RetrieveFromVaultAsync();  break;
-            case "thumbnail": await UpdateThumbnailsAsync();   break;
-        }
-    }
-
     private async Task FinalizeAsync()
     {
         bool ok = await JS.InvokeAsync<bool>("confirm",
@@ -354,20 +348,28 @@
 
     private async Task SendCommandAsync(string commandType, string payload)
     {
-        if (_stationId == null) return;
+        if (_stationId == null)
+        {
+            Log("SendCommandAsync: no station selected — command not sent.", "text-danger");
+            return;
+        }
 
         _isBusy             = true;
         _pendingCommandId   = Guid.NewGuid().ToString();
         _pendingCommandType = commandType;
         _statusLines.Clear();
-        Log($"Sending {commandType}…");
+        Log($"Sending {commandType} to station {_stationId}…");
 
         bool sent = BridgeHub.TrySendCommand(HubContext, _stationId.Value,
                                              _pendingCommandId, commandType, payload);
         if (!sent)
         {
-            Log("Station is not connected.", "text-danger");
+            Log($"Station {_stationId} is not connected.", "text-danger");
             _isBusy = false;
+        }
+        else
+        {
+            Log($"Command {_pendingCommandId![..8]}… dispatched — waiting for result.");
         }
         StateHasChanged();
         await Task.CompletedTask;
@@ -599,21 +601,22 @@
             Log($"  Item {r.ItemId}: {r.Error}", "text-danger");
     }
 
-    private async Task ProcessUpdateThumbnailAsync(string payload)
+    private Task ProcessUpdateThumbnailAsync(string payload)
     {
         var results = JsonSerializer.Deserialize<List<UpdateThumbnailResultDto>>(payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        if (results == null) return;
+        if (results == null) return Task.CompletedTask;
 
-        await using var db = await DbContextFactory.CreateDbContextAsync();
-        int updated = 0;
-        foreach (var r in results.Where(r => r.Success && r.ThumbnailBytes != null))
+        foreach (var r in results)
         {
-            var part = await db.Parts.FindAsync(r.PartId);
-            if (part != null) { part.Thumbnail = r.ThumbnailBytes; updated++; }
+            var name = SelectedItems.FirstOrDefault(i => i.PartId == r.PartId)?.FileName
+                       ?? $"PartId {r.PartId}";
+            if (r.Success && r.ThumbnailBytes != null)
+                Log($"Thumbnail updated: {name}");
+            else
+                Log($"No sym file for {name} — thumbnail cleared.", "text-warning");
         }
-        await db.SaveChangesAsync();
-        Log($"Updated {updated} thumbnail(s).");
+        return Task.CompletedTask;
     }
 
     private async Task ApplySyncPayloadAsync(SyncPayloadDto sync)

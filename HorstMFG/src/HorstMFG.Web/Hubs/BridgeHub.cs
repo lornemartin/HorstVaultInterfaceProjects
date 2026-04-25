@@ -107,9 +107,9 @@ public class BridgeHub : Hub
     /// <summary>Called by the bridge when a command finishes.</summary>
     public async Task CommandResult(int stationId, string commandId, bool success, string payload)
     {
-        _log.LogDebug("CommandResult station={StationId} cmd={CommandId} ok={Success}",
-                      stationId, commandId, success);
         _commandTypes.TryRemove(commandId, out var commandType);
+        _log.LogInformation("CommandResult station={StationId} cmd={CommandId} type={Type} ok={Success}",
+                            stationId, commandId, commandType ?? "(null)", success);
         if (commandType == "UpdateThumbnail" && success)
             await HandleThumbnailResultAsync(payload);
         _notifications.OnCommandCompleted(stationId, commandId, success, payload);
@@ -121,15 +121,33 @@ public class BridgeHub : Hub
         {
             var results = JsonSerializer.Deserialize<List<ThumbnailResultDto>>(payload,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (results == null) return;
+            if (results == null) { _log.LogWarning("HandleThumbnailResult: payload deserialized to null"); return; }
+
+            _log.LogInformation("HandleThumbnailResult: {Total} result(s), {Ok} successful",
+                results.Count, results.Count(r => r.Success));
+
             await using var db = await _dbFactory.CreateDbContextAsync();
-            foreach (var r in results.Where(r => r.Success && r.ThumbnailBytes != null))
+            int stored = 0, cleared = 0;
+            foreach (var r in results)
             {
                 var part = await db.Parts.FindAsync(r.PartId);
-                if (part != null) part.Thumbnail = r.ThumbnailBytes;
+                if (part == null) { _log.LogWarning("PartId={PartId} not found in database", r.PartId); continue; }
+
+                if (r.Success && r.ThumbnailBytes != null)
+                {
+                    part.Thumbnail = r.ThumbnailBytes;
+                    stored++;
+                    _log.LogInformation("Stored {Bytes} bytes for PartId={PartId}", r.ThumbnailBytes.Length, r.PartId);
+                }
+                else
+                {
+                    part.Thumbnail = null;
+                    cleared++;
+                    _log.LogInformation("Cleared thumbnail for PartId={PartId} (no sym file)", r.PartId);
+                }
             }
             await db.SaveChangesAsync();
-            _log.LogInformation("Stored thumbnails for {Count} part(s)", results.Count(r => r.Success));
+            _log.LogInformation("HandleThumbnailResult: stored={Stored} cleared={Cleared}", stored, cleared);
         }
         catch (Exception ex)
         {
