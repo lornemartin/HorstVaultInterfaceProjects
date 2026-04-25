@@ -82,17 +82,17 @@
             Finalize
         </SfButton>
 
-        <span style="border-left:1px solid #ced4da; height:28px; align-self:center;"></span>
+        <div style="margin-left:auto; display:flex; gap:.5rem;">
+            <SfButton CssClass="e-outline" IconCss="e-icons e-lock" OnClick="RetrieveFromVaultAsync"
+                      Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+                Retrieve from Vault
+            </SfButton>
 
-        <SfButton IconCss="e-icons e-lock" OnClick="RetrieveFromVaultAsync"
-                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
-            Retrieve from Vault
-        </SfButton>
-
-        <SfButton IconCss="e-icons e-thumbnail" OnClick="UpdateThumbnailsAsync"
-                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
-            Update Thumbnails
-        </SfButton>
+            <SfButton CssClass="e-outline" IconCss="e-icons e-thumbnail" OnClick="UpdateThumbnailsAsync"
+                      Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
+                Update Thumbnails
+            </SfButton>
+        </div>
     </div>
 
     @if (_statusLines.Count > 0)
