@@ -36,15 +36,19 @@ public class SendToNestingHandler
             reportProgress($"Sending {item.FileName} ({i + 1}/{items.Count})",
                            (i + 1) * 100 / items.Count);
 
-            var symSharePath = Path.Combine(_config.SymNetworkSharePath, item.FileName + ".sym");
+            var baseName     = Path.GetFileNameWithoutExtension(item.FileName);
+            var symSharePath = Path.Combine(_config.SymNetworkSharePath, baseName + ".sym");
             var missingSymFile = !File.Exists(symSharePath);
+
+            _log.LogInformation("Item {Index}/{Total}: FileName={FileName} → symPath={SymPath} exists={Exists}",
+                i + 1, items.Count, item.FileName, symSharePath, !missingSymFile);
 
             // Determine destination sym path in project Symbols folder
             var destDir = Path.Combine(projectFolder, "Symbols",
                                        item.OrderNumber ?? "Unknown",
                                        projectName,
-                                       item.FileName);
-            var destSym = Path.Combine(destDir, item.FileName + ".sym");
+                                       baseName);
+            var destSym = Path.Combine(destDir, baseName + ".sym");
 
             if (!missingSymFile)
             {

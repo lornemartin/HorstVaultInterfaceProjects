@@ -472,8 +472,20 @@
         }
 
         await db.SaveChangesAsync();
-        Log($"Sent {sent} item(s) to nesting project.");
-        if (warned > 0) Log($"Warning: {warned} item(s) had no .sym file and were added without geometry.", "text-warning");
+
+        foreach (var r in results)
+        {
+            var name = SelectedItems.FirstOrDefault(i => i.ItemId == r.ItemId)?.FileName
+                       ?? $"ItemId {r.ItemId}";
+            if (r.MissingSymFile)
+                Log($"  {name} → Radan ID #{r.RadanIdNumber} (no .sym file — added without geometry)", "text-warning");
+            else
+                Log($"  {name} → Radan ID #{r.RadanIdNumber}");
+        }
+
+        Log($"Sent {sent} item(s) to nesting project." +
+            (warned > 0 ? $" {warned} missing .sym file(s)." : ""),
+            warned > 0 ? "text-warning" : "");
     }
 
     private async Task ProcessRetrieveFromNestingAsync(string payload)
