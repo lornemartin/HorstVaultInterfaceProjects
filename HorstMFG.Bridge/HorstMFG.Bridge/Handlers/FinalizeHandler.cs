@@ -20,6 +20,7 @@ public class FinalizeHandler
     public FinalizeResult Execute(string projectPath, Action<string, int> reportProgress)
     {
         reportProgress("Syncing current project state…", 10);
+        _nesting.FlushCurrentState();
         var project = _nesting.LoadProject(projectPath);
         var sync    = _nesting.ReadSyncData(project);
 

@@ -8,6 +8,22 @@ namespace HorstMFG.Bridge.Nesting.Radan;
 /// <summary>Implements INestingProjectService using the Radan RPD file format.</summary>
 public class RadanProjectService : INestingProjectService
 {
+    public void FlushCurrentState()
+    {
+        try
+        {
+            var ri     = new RadanInterface();
+            var errMsg = "";
+            ri.SaveNest(ref errMsg);
+            if (ri.isProjectOpen(ref errMsg))
+                ri.SaveProject();
+        }
+        catch
+        {
+            // Radan may not be running — not fatal
+        }
+    }
+
     public NestingProjectData LoadProject(string path)
     {
         var prj = RpdService.Load(path);

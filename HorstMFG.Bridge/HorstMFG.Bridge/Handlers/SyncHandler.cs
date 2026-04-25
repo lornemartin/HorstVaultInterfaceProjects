@@ -21,6 +21,7 @@ public class SyncHandler
     public SyncPayload Execute(string projectPath)
     {
         _log.LogInformation("Sync: loading project {Path}", projectPath);
+        _nesting.FlushCurrentState();
         var project = _nesting.LoadProject(projectPath);
         return _nesting.ReadSyncData(project);
     }

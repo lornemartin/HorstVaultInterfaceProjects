@@ -20,6 +20,7 @@ public class RetrieveFromNestingHandler
     public RetrieveFromNestingResult Execute(
         string projectPath, List<RetrieveFromNestingItem> items)
     {
+        _nesting.FlushCurrentState();
         var project = _nesting.LoadProject(projectPath);
 
         // Sync first to capture latest nested quantities before modifying the project

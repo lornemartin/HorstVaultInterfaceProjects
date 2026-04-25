@@ -4,6 +4,11 @@ namespace HorstMFG.Bridge.Nesting;
 
 public interface INestingProjectService
 {
+    /// <summary>
+    /// Tells the running nesting software to flush its in-memory state (open nest + project)
+    /// to disk before we read the RPD file. Call this before LoadProject on any write operation.
+    /// </summary>
+    void               FlushCurrentState();
     NestingProjectData LoadProject(string path);
     void               SaveProject(NestingProjectData project, string path);
     /// <summary>Tells the running nesting software to reload the project so changes are visible.</summary>

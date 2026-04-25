@@ -135,6 +135,7 @@ public class Worker : BackgroundService
             return;
         }
 
+        _fileWatcher.Suspend();
         try
         {
             void Progress(string msg, int pct) =>
@@ -173,6 +174,10 @@ public class Worker : BackgroundService
         {
             _log.LogError(ex, "Command {Type} failed", commandType);
             await SendResultAsync(commandId, false, ex.Message);
+        }
+        finally
+        {
+            _fileWatcher.Resume();
         }
     }
 

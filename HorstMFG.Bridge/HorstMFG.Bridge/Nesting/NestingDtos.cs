@@ -80,9 +80,10 @@ public class UpdateThumbnailItem
 
 public class SendToNestingResult
 {
-    public int   ItemId         { get; set; }
-    public long  RadanIdNumber  { get; set; }
-    public bool  MissingSymFile { get; set; }
+    public int   ItemId            { get; set; }
+    public long  RadanIdNumber     { get; set; }
+    public bool  MissingSymFile    { get; set; }
+    public bool  VerifiedInProject { get; set; }
 }
 
 public class RetrieveFromVaultResult

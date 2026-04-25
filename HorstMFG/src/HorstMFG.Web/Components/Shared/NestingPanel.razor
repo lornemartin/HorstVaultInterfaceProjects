@@ -477,15 +477,20 @@
         {
             var name = SelectedItems.FirstOrDefault(i => i.ItemId == r.ItemId)?.FileName
                        ?? $"ItemId {r.ItemId}";
+            var verified = r.VerifiedInProject ? " ✓ confirmed in project" : " ✗ NOT found in saved project";
             if (r.MissingSymFile)
-                Log($"  {name} → Radan ID #{r.RadanIdNumber} (no .sym file — added without geometry)", "text-warning");
+                Log($"  {name} → Radan ID #{r.RadanIdNumber} (no .sym file — added without geometry){verified}", "text-warning");
+            else if (!r.VerifiedInProject)
+                Log($"  {name} → Radan ID #{r.RadanIdNumber}{verified}", "text-danger");
             else
-                Log($"  {name} → Radan ID #{r.RadanIdNumber}");
+                Log($"  {name} → Radan ID #{r.RadanIdNumber}{verified}");
         }
 
+        var notVerified = results.Count(r => !r.VerifiedInProject);
         Log($"Sent {sent} item(s) to nesting project." +
-            (warned > 0 ? $" {warned} missing .sym file(s)." : ""),
-            warned > 0 ? "text-warning" : "");
+            (warned     > 0 ? $" {warned} missing .sym file(s)." : "") +
+            (notVerified > 0 ? $" {notVerified} could not be verified in saved RPD." : ""),
+            notVerified > 0 ? "text-danger" : warned > 0 ? "text-warning" : "");
     }
 
     private async Task ProcessRetrieveFromNestingAsync(string payload)
@@ -799,7 +804,7 @@
 
     // ── Private deserialization DTOs ──────────────────────────────────────────
 
-    private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile);
+    private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile, bool VerifiedInProject);
     private record SyncPartDto(long RadanIdNumber, int QtyNested);
     private class NestEntryDto { public long RadanIdNumber { get; set; } public int Qty { get; set; } }
     private class SyncNestDto  { public string NestName { get; set; } = ""; public string? NestPath { get; set; } public byte[]? ThumbnailBytes { get; set; } public List<NestEntryDto> Parts { get; set; } = new(); }

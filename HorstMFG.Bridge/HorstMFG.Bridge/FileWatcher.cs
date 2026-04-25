@@ -23,6 +23,7 @@ public class FileWatcher : IDisposable
     private int _stationId;
     private string? _projectPath;
     private Timer? _debounceTimer;
+    private volatile bool _suspended;
     private const int DebounceMs = 2000;
 
     public FileWatcher(SyncHandler sync, ILogger<FileWatcher> log)
@@ -56,6 +57,16 @@ public class FileWatcher : IDisposable
         _log.LogInformation("FileWatcher: watching {Path}", projectPath);
     }
 
+    public void Suspend() => _suspended = true;
+
+    public void Resume()
+    {
+        _suspended = false;
+        // Discard any debounce timer that fired during suspension
+        _debounceTimer?.Dispose();
+        _debounceTimer = null;
+    }
+
     public void Detach()
     {
         _watcher?.Dispose();
@@ -66,6 +77,7 @@ public class FileWatcher : IDisposable
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
+        if (_suspended) return;
         // Reset debounce timer on every change event
         _debounceTimer?.Dispose();
         _debounceTimer = new Timer(_ => TriggerSync(), null, DebounceMs, Timeout.Infinite);

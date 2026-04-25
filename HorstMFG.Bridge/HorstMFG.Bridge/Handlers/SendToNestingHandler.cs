@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace HorstMFG.Bridge.Handlers;
 
@@ -25,6 +26,7 @@ public class SendToNestingHandler
                                              List<SendToNestingItem> items,
                                              Action<string, int> reportProgress)
     {
+        _nesting.FlushCurrentState();
         var project = _nesting.LoadProject(projectPath);
         var results = new List<SendToNestingResult>();
         var projectFolder = Path.GetDirectoryName(projectPath)!;
@@ -87,6 +89,20 @@ public class SendToNestingHandler
         }
 
         _nesting.SaveProject(project, projectPath);
+
+        // Read the saved RPD back from disk and verify each part is present
+        var savedProject  = _nesting.LoadProject(projectPath);
+        var savedSync     = _nesting.ReadSyncData(savedProject);
+        var savedPartIds  = new System.Collections.Generic.HashSet<long>(
+                               savedSync.Parts.Select(p => p.RadanIdNumber));
+        foreach (var r in results)
+        {
+            r.VerifiedInProject = savedPartIds.Contains(r.RadanIdNumber);
+            _log.LogInformation("Part {FileName} Radan ID={Id} verified={Verified}",
+                items.FirstOrDefault(i => i.ItemId == r.ItemId)?.FileName ?? "?",
+                r.RadanIdNumber, r.VerifiedInProject);
+        }
+
         _nesting.NotifyProjectChanged(projectPath);
         return results;
     }
