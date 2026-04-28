@@ -6,6 +6,8 @@ public class BatchProduct
     public int BatchId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public int Qty { get; set; } = 1;
+    public bool VaultBomImported { get; set; }
+    public string? Notes { get; set; }
 
     public Batch Batch { get; set; } = null!;
     public ICollection<PartLineItem> Parts { get; set; } = new List<PartLineItem>();
