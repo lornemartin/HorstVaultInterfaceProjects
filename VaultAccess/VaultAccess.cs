@@ -2111,107 +2111,68 @@ namespace VaultAccess
 
         public bool UpdateItem(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
         {
-            //*************************************************************************************
-            // make sure this function gets updated in the ItemExport Project if changes are made.
-            //*************************************************************************************
+            // Canonical implementation. ItemExport/ItemExportCommandExtension.cs holds a UI-flavored
+            // copy that must be kept in sync.
+            if (item == null) return false;
 
-            if (item == null)
-            {
-                return false;
-            }
-
-            long[] itemRevisionIds = new long[1];
-            itemRevisionIds[0] = item.RevId;
-
+            long[] itemRevisionIds = new long[] { item.RevId };
             Item[] itemsToCommit = new Item[0];
             long[] itemsToCommit_Ids = new long[0];
             try
             {
-                ItemService itemSvc =
-                   connection.WebServiceManager.ItemService;
+                ItemService itemSvc = connection.WebServiceManager.ItemService;
 
-                // doesn't seem to be necessary to put items into edit state to update them
-                //itemSvc.EditItems(itemRevisionIds);     
+                // Edit + commit cycle bumps the item's modified timestamp so downstream exports see fresh data.
+                List<Item> topLevelItems = itemSvc.EditItems(itemRevisionIds).ToList();
+                itemSvc.UpdateAndCommitItems(topLevelItems.ToArray());
 
                 itemSvc.UpdatePromoteComponents(itemRevisionIds, ItemAssignAll.Default, false);
 
                 DateTime now = DateTime.Now;
-
                 GetPromoteOrderResults compO = itemSvc.GetPromoteComponentOrder(out now);
-                //long[] compO = itemSvc.GetPromoteComponentOrder(out now);
 
-                ArrayList compOrder = new ArrayList(compO.PrimaryArray);
-                ArrayList subSet = new ArrayList();
-                int setSize = 100;
-                int setNum = 0;
-
-                //get full sets
-                while (setNum < compOrder.Count / setSize)
+                // Null when the item has children with no associations (e.g. manually created top-level assemblies).
+                if (compO.PrimaryArray != null)
                 {
-                    subSet = compOrder.GetRange
-                                  (setNum * setSize, setSize);
-                    itemSvc.PromoteComponents
-                  (now, (long[])subSet.ToArray(typeof(long)));
-                    setNum++;
-                }
+                    ArrayList compOrder = new ArrayList(compO.PrimaryArray);
+                    ArrayList subSet;
+                    int setSize = 100;
+                    int setNum = 0;
 
-                //get remaining set
-                if (compOrder.Count % setSize > 0)
-                {
-                    subSet = compOrder.GetRange
-                (setNum * setSize, compOrder.Count % setSize);
-                    itemSvc.PromoteComponents
-                  (now, (long[])subSet.ToArray(typeof(long)));
-                }
-
-                ItemsAndFiles result = itemSvc.
-                             GetPromoteComponentsResults(now);
-                Item[] items = null;
-                items = result.ItemRevArray;
-                int[] statusArray = result.StatusArray;
-                // loop through the Items in the ItemRevArray
-                for (int i = 0; i < items.Length; i++)
-                {
-                    // see if the item in the ItemRevArray
-                    //has been updated (not equal to 1)
-                    if (statusArray[i] != 1)
+                    while (setNum < compOrder.Count / setSize)
                     {
-                        //change the size of the array
-                        Array.Resize(ref itemsToCommit,
-                                    itemsToCommit.Length + 1);
-                        //add the updated item to the array
-                        //that will be committed
-                        itemsToCommit[itemsToCommit.Length - 1]
-                                                      = items[i];
+                        subSet = compOrder.GetRange(setNum * setSize, setSize);
+                        itemSvc.PromoteComponents(now, (long[])subSet.ToArray(typeof(long)));
+                        setNum++;
+                    }
+                    if (compOrder.Count % setSize > 0)
+                    {
+                        subSet = compOrder.GetRange(setNum * setSize, compOrder.Count % setSize);
+                        itemSvc.PromoteComponents(now, (long[])subSet.ToArray(typeof(long)));
                     }
 
-
+                    ItemsAndFiles result = itemSvc.GetPromoteComponentsResults(now);
+                    Item[] items = result.ItemRevArray;
+                    int[] statusArray = result.StatusArray;
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        if (statusArray[i] != 1)
+                        {
+                            Array.Resize(ref itemsToCommit, itemsToCommit.Length + 1);
+                            itemsToCommit[itemsToCommit.Length - 1] = items[i];
+                        }
+                    }
+                    itemSvc.UpdateAndCommitItems(itemsToCommit);
                 }
-                //commit the updated items             
-                itemSvc.UpdateAndCommitItems(itemsToCommit);
-                // Testing catch - this could cause error
-                // as items contains Items that may
-                // not need to be updated
-                // itemSvc.UpdateAndCommitItems(items);
             }
             catch
             {
-                // get the items that need to be undone
                 for (int i = 0; i < itemsToCommit.Length; i++)
                 {
-                    // change the size of the array
-                    // of Ids (long)
-                    Array.Resize(ref itemsToCommit_Ids,
-                               itemsToCommit_Ids.Length + 1);
-                    //Add the id to the array that will be
-                    // used in UndoEditItems()     
-                    itemsToCommit_Ids
-                        [itemsToCommit_Ids.Length - 1]
-                                       = itemsToCommit[i].Id;
+                    Array.Resize(ref itemsToCommit_Ids, itemsToCommit_Ids.Length + 1);
+                    itemsToCommit_Ids[itemsToCommit_Ids.Length - 1] = itemsToCommit[i].Id;
                 }
-                connection.WebServiceManager.ItemService.
-                            UndoEditItems(itemsToCommit_Ids);
-
+                connection.WebServiceManager.ItemService.UndoEditItems(itemsToCommit_Ids);
             }
 
             return true;

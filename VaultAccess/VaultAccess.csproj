@@ -215,6 +215,7 @@
     <Compile Include="AddFileCommand.cs" />
     <Compile Include="Condition.cs" />
     <Compile Include="VaultAccess.cs" />
+    <Compile Include="VaultBomQueryService.cs" />
     <Compile Include="ListBoxItems.cs" />
     <Compile Include="OpenFileCommand.cs" />
     <Compile Include="Program.cs" />

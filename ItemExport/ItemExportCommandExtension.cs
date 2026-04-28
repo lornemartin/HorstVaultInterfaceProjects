@@ -669,10 +669,9 @@ namespace ItemExport
             }
         }
 
+        // UI-flavored copy of VaultAccess.UpdateItem (canonical implementation lives there).
+        // Keep the body in sync with VaultAccess; the only intended differences are the MessageBox calls.
         void UpdateItem(Autodesk.Connectivity.WebServices.Item item, VDF.Vault.Currency.Connections.Connection connection)
-        //*************************************************************************************
-        // make sure this function gets updated in the VaultAccess Project if changes are made.
-        //*************************************************************************************
         {
 
             if (item == null)
