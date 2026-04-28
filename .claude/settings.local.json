@@ -20,7 +20,10 @@
       "Bash(msbuild HorstMFG.Bridge\\\\HorstMFG.Bridge.sln /t:Clean,Build /p:Configuration=Debug /p:Platform=\"Any CPU\")",
       "Bash(sqlcmd *)",
       "Bash(dotnet ef *)",
-      "Bash(psql -U postgres -d horstmfg -c \"\\\\d nest_orders\")"
+      "Bash(psql -U postgres -d horstmfg -c \"\\\\d nest_orders\")",
+      "Read(//c/Users/lorne/source/repos/HorstMFG.Bridge/**)",
+      "Read(//c/Users/lorne/source/repos/HorstMFG.Bridge/HorstMFG.Bridge/**)",
+      "PowerShell(Get-NetTCPConnection *)"
     ]
   }
 }
