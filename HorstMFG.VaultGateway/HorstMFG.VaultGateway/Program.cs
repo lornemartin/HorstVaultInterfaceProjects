@@ -36,7 +36,9 @@ try
         .ConfigureServices((ctx, services) =>
         {
             services.Configure<GatewayConfig>(ctx.Configuration.GetSection("Gateway"));
+            services.Configure<VaultConfig>(ctx.Configuration.GetSection("Vault"));
             services.AddHttpClient();
+            services.AddSingleton<VaultClient>();
             services.AddSingleton<ImportJobRunner>();
             services.AddHostedService<Worker>();
         });

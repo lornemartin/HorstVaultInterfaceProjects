@@ -40,12 +40,10 @@ namespace VaultAccess
     public class VaultBomQueryService
     {
         private readonly VaultAccess _vault;
-        private readonly VDF.Vault.Currency.Connections.Connection _conn;
 
-        public VaultBomQueryService(VaultAccess vault, VDF.Vault.Currency.Connections.Connection conn)
+        public VaultBomQueryService(VaultAccess vault)
         {
             _vault = vault;
-            _conn = conn;
         }
 
         /// <summary>
@@ -57,9 +55,9 @@ namespace VaultAccess
         /// BomItemExportCommandHandler does so exported properties are guaranteed current.</param>
         public VaultBomResult GetItemBom(string itemNumber, bool refreshFromSource)
         {
-            var itemSvc = _conn.WebServiceManager.ItemService;
-            var pkgSvc = _conn.WebServiceManager.PackageService;
-            var docSvc = _conn.WebServiceManager.DocumentService;
+            var itemSvc = _vault.Connection.WebServiceManager.ItemService;
+            var pkgSvc = _vault.Connection.WebServiceManager.PackageService;
+            var docSvc = _vault.Connection.WebServiceManager.DocumentService;
 
             ACW.Item topItem;
             try
@@ -74,7 +72,7 @@ namespace VaultAccess
 
             if (refreshFromSource)
             {
-                _vault.UpdateItem(topItem, _conn);
+                _vault.UpdateItem(topItem, _vault.Connection);
                 ACW.ItemAssoc[] childAssocs = null;
                 try
                 {
@@ -87,7 +85,7 @@ namespace VaultAccess
                     {
                         var children = itemSvc.GetItemsByIds(new long[] { assoc.CldItemID });
                         if (children != null && children.Length > 0 && children[0] != null)
-                            _vault.UpdateItem(children[0], _conn);
+                            _vault.UpdateItem(children[0], _vault.Connection);
                     }
                 }
             }

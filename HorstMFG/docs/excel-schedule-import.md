@@ -186,6 +186,17 @@ trust the VS dev cert when posting callbacks. Usually fine after
   pool capacity is sufficient before deploying. If marginal, the gateway
   can connect on-demand (per-job) and disconnect when idle.
 
+- **Vault account for the Gateway.** The plan originally proposed reusing
+  the existing `JobProcessor` account, but Phase 4 testing surfaced that
+  `JobProcessor` lacks permission to run the promote-components routine
+  that `UpdateItem` depends on (Vault SDK error 303/155 from `EditItems`
+  / `UndoEditItems`). Options:
+  - Grant `JobProcessor` the additional permissions it needs (Edit Item +
+    Promote Components),
+  - Or use a different prod account that already has those rights.
+  Dev currently uses `lorne/lorne` (same as Bridge dev). Decision needed
+  before deploying to prod.
+
 ---
 
 ## Data model

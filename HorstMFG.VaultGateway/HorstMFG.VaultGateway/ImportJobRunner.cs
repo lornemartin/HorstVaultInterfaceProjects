@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using HorstMFG.VaultGateway.Dtos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using VA = VaultAccess;
 
 namespace HorstMFG.VaultGateway;
 
@@ -15,6 +17,7 @@ public class ImportJobRunner
 {
     private readonly IOptions<GatewayConfig> _config;
     private readonly IHttpClientFactory _httpFactory;
+    private readonly VaultClient _vault;
     private readonly ILogger<ImportJobRunner> _log;
     private readonly ConcurrentDictionary<string, JobStatus> _jobs = new();
 
@@ -26,10 +29,12 @@ public class ImportJobRunner
 
     public ImportJobRunner(IOptions<GatewayConfig> config,
                            IHttpClientFactory httpFactory,
+                           VaultClient vault,
                            ILogger<ImportJobRunner> log)
     {
         _config = config;
         _httpFactory = httpFactory;
+        _vault = vault;
         _log = log;
     }
 
@@ -62,20 +67,35 @@ public class ImportJobRunner
 
         foreach (var item in request.Items)
         {
-            // Stub work — Phase 4 swaps this for VaultBomQueryService.GetItemBom.
-            await Task.Delay(500);
-            var payload = BuildStubPayload(jobId, item);
+            VaultBomCallbackPayload payload;
+            try
+            {
+                payload = await Task.Run(() => BuildPayloadFromVault(jobId, item));
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Job {JobId} item {TrackingId} ({Product}) — Vault query failed",
+                    jobId, item.TrackingId, item.ProductNumber);
+                payload = new VaultBomCallbackPayload
+                {
+                    JobId = jobId,
+                    TrackingId = item.TrackingId,
+                    Found = false,
+                    ErrorMessage = ex.Message,
+                };
+                status.Errors.Add($"trackingId={item.TrackingId}: {ex.Message}");
+            }
 
             try
             {
                 await PostCallbackAsync(http, request.CallbackUrl, payload);
-                _log.LogInformation("Job {JobId} item {TrackingId} ({Product}) — callback sent",
-                    jobId, item.TrackingId, item.ProductNumber);
+                _log.LogInformation("Job {JobId} item {TrackingId} ({Product}) — callback sent (found={Found})",
+                    jobId, item.TrackingId, item.ProductNumber, payload.Found);
             }
             catch (Exception ex)
             {
-                _log.LogError(ex, "Job {JobId} item {TrackingId} — callback failed", jobId, item.TrackingId);
-                status.Errors.Add($"trackingId={item.TrackingId}: {ex.Message}");
+                _log.LogError(ex, "Job {JobId} item {TrackingId} — callback POST failed", jobId, item.TrackingId);
+                status.Errors.Add($"trackingId={item.TrackingId} callback: {ex.Message}");
             }
 
             status.ProcessedCount++;
@@ -104,18 +124,18 @@ public class ImportJobRunner
         }
     }
 
-    // Phase 3 stub: pretend half the items aren't found so HorstMFG.Web can exercise both branches.
-    private static VaultBomCallbackPayload BuildStubPayload(string jobId, ImportItem item)
+    private VaultBomCallbackPayload BuildPayloadFromVault(string jobId, ImportItem item)
     {
-        bool found = item.TrackingId % 2 == 0;
-        if (!found)
+        VA.VaultBomResult? result = _vault.GetItemBom(item.ProductNumber, refreshFromSource: true);
+
+        if (result is null)
         {
             return new VaultBomCallbackPayload
             {
                 JobId = jobId,
                 TrackingId = item.TrackingId,
                 Found = false,
-                ErrorMessage = "Stub: item not found in Vault",
+                ErrorMessage = $"Item '{item.ProductNumber}' not found in Vault",
             };
         }
 
@@ -124,41 +144,31 @@ public class ImportJobRunner
             JobId = jobId,
             TrackingId = item.TrackingId,
             Found = true,
-            Lines =
-            {
-                new VaultBomLine
-                {
-                    Level = "1",
-                    Number = item.ProductNumber,
-                    Title = $"Stub top-level for {item.ProductNumber}",
-                    Category = "Product",
-                    Qty = 1,
-                    Revision = "A",
-                },
-                new VaultBomLine
-                {
-                    Level = "1.1",
-                    Number = $"{item.ProductNumber}-CHILD-1",
-                    Title = "Stub child 1",
-                    Category = "Laser",
-                    Material = "MS",
-                    Thickness = "0.125",
-                    Operations = "Laser, Form",
-                    StructCode = "SH-125",
-                    Qty = 2,
-                    RequiresPdf = true,
-                    Revision = "A",
-                },
-                new VaultBomLine
-                {
-                    Level = "1.2",
-                    Number = $"{item.ProductNumber}-CHILD-2",
-                    Title = "Stub child 2",
-                    Category = "Purchased",
-                    Qty = 4,
-                    Revision = "B",
-                },
-            }
+            Lines = result.Lines.Select(MapLine).ToList(),
         };
     }
+
+    private static VaultBomLine MapLine(VA.VaultBomItem src) => new()
+    {
+        Level           = src.Level,
+        Number          = src.Number,
+        Title           = src.Title,
+        ItemDescription = src.ItemDescription,
+        Category        = src.Category,
+        Thickness       = src.Thickness,
+        Material        = src.Material,
+        Operations      = src.Operations,
+        Qty             = src.Qty,
+        StructCode      = src.StructCode,
+        PlantId         = src.PlantId,
+        IsStock         = src.IsStock,
+        RequiresPdf     = src.RequiresPdf,
+        Comment         = src.Comment,
+        DateModified    = src.DateModified,
+        LifecycleState  = src.LifecycleState,
+        StockName       = src.StockName,
+        Keywords        = src.Keywords,
+        Notes           = src.Notes,
+        Revision        = src.Revision,
+    };
 }

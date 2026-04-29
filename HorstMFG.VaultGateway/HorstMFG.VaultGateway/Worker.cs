@@ -16,6 +16,7 @@ public class Worker : BackgroundService
 {
     private readonly GatewayConfig _config;
     private readonly ImportJobRunner _runner;
+    private readonly VaultClient _vault;
     private readonly ILogger<Worker> _log;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -25,15 +26,20 @@ public class Worker : BackgroundService
 
     public Worker(IOptions<GatewayConfig> config,
                   ImportJobRunner runner,
+                  VaultClient vault,
                   ILogger<Worker> log)
     {
         _config = config.Value;
         _runner = runner;
+        _vault = vault;
         _log = log;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Login to Vault once at startup; VaultClient reconnects on demand if the connection drops.
+        _vault.Connect();
+
         var listener = new HttpListener();
         var prefix = _config.ListenUrl.EndsWith("/") ? _config.ListenUrl : _config.ListenUrl + "/";
         listener.Prefixes.Add(prefix);

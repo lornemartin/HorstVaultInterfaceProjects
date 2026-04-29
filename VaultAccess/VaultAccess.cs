@@ -77,6 +77,8 @@ namespace VaultAccess
         
         #endregion
 
+        public Vault.Currency.Connections.Connection Connection => m_conn;
+
         public bool IsConnectionActive()
         {
             if (m_conn != null)
@@ -154,6 +156,33 @@ namespace VaultAccess
                 Vault.Results.LogInResult results = Vault.Library.ConnectionManager.LogIn(
                     vaultServer, vault, vaultUserName, vaultPassword,
                     Vault.Currency.Connections.AuthenticationFlags.ReadOnly, null);
+
+                if (results.Success)
+                {
+                    m_conn = results.Connection;
+                    return "";
+                }
+
+                return results.Exception?.Message ?? "Login failed";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
+        /// <summary>
+        /// Headless variant of LoginForItems — Standard authentication (consumes a license)
+        /// without calling Vault.Forms.Library.Initialize(). Required for any caller that needs
+        /// to edit items or run promote-components from a service/console context.
+        /// </summary>
+        public string LoginHeadlessForItems(string vaultUserName, string vaultPassword, string vaultServer, string vault)
+        {
+            try
+            {
+                Vault.Results.LogInResult results = Vault.Library.ConnectionManager.LogIn(
+                    vaultServer, vault, vaultUserName, vaultPassword,
+                    Vault.Currency.Connections.AuthenticationFlags.Standard, null);
 
                 if (results.Success)
                 {
@@ -2165,14 +2194,20 @@ namespace VaultAccess
                     itemSvc.UpdateAndCommitItems(itemsToCommit);
                 }
             }
-            catch
+            catch (Exception originalException)
             {
-                for (int i = 0; i < itemsToCommit.Length; i++)
+                try
                 {
-                    Array.Resize(ref itemsToCommit_Ids, itemsToCommit_Ids.Length + 1);
-                    itemsToCommit_Ids[itemsToCommit_Ids.Length - 1] = itemsToCommit[i].Id;
+                    for (int i = 0; i < itemsToCommit.Length; i++)
+                    {
+                        Array.Resize(ref itemsToCommit_Ids, itemsToCommit_Ids.Length + 1);
+                        itemsToCommit_Ids[itemsToCommit_Ids.Length - 1] = itemsToCommit[i].Id;
+                    }
+                    if (itemsToCommit_Ids.Length > 0)
+                        connection.WebServiceManager.ItemService.UndoEditItems(itemsToCommit_Ids);
                 }
-                connection.WebServiceManager.ItemService.UndoEditItems(itemsToCommit_Ids);
+                catch { /* swallow cleanup failures so the original exception isn't lost */ }
+                throw;
             }
 
             return true;
