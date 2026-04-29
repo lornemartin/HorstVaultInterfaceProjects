@@ -13,14 +13,19 @@ namespace HorstMFG.Web.Services;
 public class BomService : IBomService
 {
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
+    private readonly BomPdfCopyService _pdfCopy;
     private readonly ILogger<BomService> _log;
     private readonly string _pdfSharePath;
     private readonly string _localPdfPath;
     private readonly string _powerJobsScriptPath;
 
-    public BomService(IDbContextFactory<ApplicationDbContext> dbFactory, ILogger<BomService> log, IConfiguration config)
+    public BomService(IDbContextFactory<ApplicationDbContext> dbFactory,
+                      BomPdfCopyService pdfCopy,
+                      ILogger<BomService> log,
+                      IConfiguration config)
     {
         _dbFactory = dbFactory;
+        _pdfCopy = pdfCopy;
         _log = log;
         _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
         _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
@@ -313,7 +318,7 @@ public class BomService : IBomService
 
         // Copy PDFs to local folder
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var (copied, total) = await CopyPdfsToLocalFolderAsync(partNumbers, localFolder);
+        var (copied, total) = await _pdfCopy.CopyForBatchAsync(name, partNumbers);
 
         _log.LogInformation(
             "Imported batch '{Name}' with {GroupCount} products. Copied {Copied}/{Total} PDFs to {Folder}",
@@ -378,49 +383,13 @@ public class BomService : IBomService
         await _db.SaveChangesAsync();
 
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var (copied, total) = await CopyPdfsToLocalFolderAsync(partNumbers, localFolder);
+        var (copied, total) = await _pdfCopy.CopyForScheduleAsync(name, partNumbers);
 
         _log.LogInformation(
             "Imported schedule '{Name}' (order {OrderNumber}) with {Count} items. Copied {Copied}/{Total} PDFs to {Folder}",
             name, orderNumber, lines.Count, copied, total, localFolder);
 
         return schedule;
-    }
-
-    private async Task<(int Copied, int Total)> CopyPdfsToLocalFolderAsync(IEnumerable<string> partNumbers, string destinationFolder)
-    {
-        var partList = partNumbers.ToList();
-
-        try
-        {
-            Directory.CreateDirectory(destinationFolder);
-        }
-        catch (Exception ex)
-        {
-            _log.LogWarning(ex, "Could not create local PDF folder: {Folder}", destinationFolder);
-            return (0, partList.Count);
-        }
-
-        int copied = 0;
-        await Parallel.ForEachAsync(partList,
-            new ParallelOptions { MaxDegreeOfParallelism = 4 },
-            async (partNumber, ct) =>
-            {
-                var sourcePath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
-                var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
-                try
-                {
-                    if (!await Task.Run(() => File.Exists(sourcePath), ct)) return;
-                    await Task.Run(() => File.Copy(sourcePath, destPath, overwrite: true), ct);
-                    Interlocked.Increment(ref copied);
-                }
-                catch (Exception ex)
-                {
-                    _log.LogWarning(ex, "Failed to copy PDF for {PartNumber}", partNumber);
-                }
-            });
-
-        return (copied, partList.Count);
     }
 
     public async Task<List<FlatSchedulePartRow>> GetFlatSchedulePartsAsync(

@@ -48,6 +48,9 @@ try
 
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
+    builder.Services.AddScoped<BomPdfCopyService>();
+    builder.Services.AddScoped<VaultBomIngestService>();
+    builder.Services.AddSingleton<BomImportJobTracker>();
     builder.Services.AddScoped<ReportService>();
     builder.Services.AddScoped<LocalStorageService>();
 
@@ -248,6 +251,44 @@ try
         return Results.File(bytes, mime);
     }).RequireAuthorization();
 
+    // Internal API: VaultGateway → HorstMFG callback for BOM ingest
+    var gatewayCallbackKey = builder.Configuration["Gateway:CallbackApiKey"] ?? "";
+
+    app.MapPost("/api/internal/vault-bom-result", async (
+        HttpContext http,
+        HorstMFG.Core.DTOs.VaultBomCallbackPayload payload,
+        VaultBomIngestService ingest) =>
+    {
+        if (string.IsNullOrEmpty(gatewayCallbackKey) ||
+            http.Request.Headers["X-Gateway-Key"].ToString() != gatewayCallbackKey)
+        {
+            return Results.Unauthorized();
+        }
+
+        await ingest.IngestSingleAsync(payload, http.RequestAborted);
+        return Results.Ok();
+    }).DisableAntiforgery();
+
+    // Dev-only helper: register a fake job in the in-memory tracker so a callback
+    // can be tested end-to-end without a full Excel import flow in place.
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapPost("/api/internal/test-register-job", (
+            HttpContext http,
+            TestRegisterJobRequest req,
+            BomImportJobTracker tracker) =>
+        {
+            if (string.IsNullOrEmpty(gatewayCallbackKey) ||
+                http.Request.Headers["X-Gateway-Key"].ToString() != gatewayCallbackKey)
+            {
+                return Results.Unauthorized();
+            }
+
+            tracker.Register(req.JobId, req.ImportType);
+            return Results.Ok();
+        }).DisableAntiforgery();
+    }
+
     app.MapHub<BridgeHub>("/hubs/bridge");
 
     app.MapRazorComponents<App>()
@@ -263,3 +304,5 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+internal record TestRegisterJobRequest(string JobId, HorstMFG.Core.Enums.BomType ImportType);

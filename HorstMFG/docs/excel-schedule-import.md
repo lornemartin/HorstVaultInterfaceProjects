@@ -48,7 +48,10 @@ fallback and stays untouched.
   extras.
 - **All-LA orders** (e.g. order A639141 in sample) — every row for that
   order is `LA-`. Treat as an order with no product number, captured as
-  an empty ScheduleOrder with notes.
+  an empty `ScheduleOrder` (`ProductNumber = null`, `VaultBomImported = false`)
+  with all the LA-row info accumulated in `Notes`. The user can later
+  edit `ProductNumber` from the schedule grid (see "Editable ProductNumber"
+  below) and trigger a re-import to fetch the BOM once the Vault item exists.
 
 Other columns (B = date, C = numeric, F = `D` flag) are ignored for V1.
 
@@ -753,12 +756,34 @@ UI:
 - On the schedule/batch detail page, add a **Re-import BOM** button next
   to each child where `VaultBomImported = false`.
 - Bulk **Re-import all missing BOMs** button on the parent header.
+- Re-import always sends the **current** `ProductNumber` value (so if
+  the user edited it after the original failed import, the re-import
+  uses the new value).
 
 Server:
 
 - Reuses `VaultBomIngestService` exactly. New ingest replaces any
   existing `PartLineItem` rows for that parent (delete-then-insert) so
   the operation is idempotent. PDF copy re-runs as part of the ingest.
+
+### Editable ProductNumber on the schedule grid
+
+Some orders enter the system without a known product number — either
+because the Excel was an "all-LA" order, or because a typo'd number
+returned `Not in Vault` on first import. The user needs to be able to
+type the correct `ProductNumber` after the fact, then re-import.
+
+Plan:
+
+- New service method `UpdateScheduleOrderProductNumberAsync(orderId, productNumber)`
+  on `BomService`, parallel to the existing `UpdateScheduleOrderQtyAsync`
+  (BomService.cs:540).
+- Add an inline-editable `ProductNumber` cell on `DailySchedule.razor`'s
+  grid (or wherever `ScheduleOrder` rows render). Saves on blur.
+- Updating clears `VaultBomImported` (since the new product number's
+  BOM hasn't been pulled yet) — re-import button becomes available.
+- A parallel `UpdateBatchProductNameAsync` may be added for batches if
+  the same need surfaces; deferred until requested.
 
 ---
 
@@ -833,7 +858,7 @@ install when the PDF-on-demand effort resumes.
 | 5     | Extract `BomPdfCopyService` from BomService; `VaultBomIngestService` ingests + copies PDFs | Manual: feed a fake callback at HorstMFG.Web, verify PartLineItems + PDFs land |
 | 6     | Schedule import: `ExcelScheduleParser` + `ExcelScheduleImportService` + `ExcelScheduleImport.razor` | Upload sample schedule file end-to-end          |
 | 7     | Batch import: `ExcelBatchParser` + `ExcelBatchImportService` + `ExcelBatchImport.razor` | Upload sample batch file end-to-end             |
-| 8     | Re-import button + Gateway-offline handling + error states                           | Manual: stop gateway, import, restart, retry    |
+| 8     | Re-import button + editable ProductNumber on grid + Gateway-offline handling + error states | Manual: stop gateway, import, restart, retry; edit a ProductNumber, re-import, see BOM populate |
 
 Each phase ends in a working, mergeable state. Phase 7 can be parallelized
 with Phase 8 once Phase 6 is in.
