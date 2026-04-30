@@ -50,6 +50,9 @@ try
     builder.Services.AddScoped<IBomService, BomService>();
     builder.Services.AddScoped<BomPdfCopyService>();
     builder.Services.AddScoped<VaultBomIngestService>();
+    builder.Services.AddScoped<ExcelScheduleParser>();
+    builder.Services.AddScoped<ExcelScheduleImportService>();
+    builder.Services.AddHttpClient<VaultGatewayClient>();
     builder.Services.AddSingleton<BomImportJobTracker>();
     builder.Services.AddScoped<ReportService>();
     builder.Services.AddScoped<LocalStorageService>();

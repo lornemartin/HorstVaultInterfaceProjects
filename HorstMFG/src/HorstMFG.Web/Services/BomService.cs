@@ -451,6 +451,45 @@ public class BomService : IBomService
             }
         }
 
+        // Surface ScheduleOrders that have no PartLineItems yet (placeholders from the
+        // Excel import flow, or orders whose Vault BOM query returned "not found").
+        // These need to appear as empty groups so the user can see + edit them.
+        var seenOrderIds = rows.Select(r => r.ScheduleOrderId).ToHashSet();
+        var emptyOrders = await db.Set<ScheduleOrder>()
+            .Where(so => !seenOrderIds.Contains(so.Id))
+            .Where(so => !plantId.HasValue || so.Schedule.PlantId == plantId.Value)
+            .Where(so => !fromDate.HasValue || so.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(so => !toDate.HasValue || so.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(so => term == null ||
+                EF.Functions.ILike(so.Schedule.Name, $"%{term}%") ||
+                EF.Functions.ILike(so.OrderNumber, $"%{term}%") ||
+                (so.ProductNumber != null && EF.Functions.ILike(so.ProductNumber, $"%{term}%")))
+            .Select(so => new FlatSchedulePartRow
+            {
+                ScheduleId         = so.ScheduleId,
+                ScheduleName       = so.Schedule.Name,
+                ScheduleImportDate = so.Schedule.ImportDate,
+                ScheduleReleased   = so.Schedule.ReadyForProduction,
+                ScheduleOrderId    = so.Id,
+                OrderNumber        = so.OrderNumber,
+                OrderQty           = so.Qty,
+                ProductNumber      = so.ProductNumber,
+                ProductDescription = null,
+                PartLineItemId     = 0,
+                PartNumber         = "",
+                Description        = "",
+                Category           = "",
+                Material           = "",
+                Thickness          = "",
+                Operations         = "",
+                Qty                = 0,
+                IsStock            = false,
+                HasPdf             = false,
+                Notes              = so.Notes,
+            })
+            .ToListAsync();
+
+        rows.AddRange(emptyOrders);
         return rows;
     }
 

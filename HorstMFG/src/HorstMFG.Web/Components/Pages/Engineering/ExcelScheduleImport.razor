@@ -1,0 +1,228 @@
+@page "/engineering/excel-schedule-import"
+@attribute [Authorize(Policy = "EngineeringOnly")]
+@rendermode InteractiveServer
+@inject ExcelScheduleImportService ImportSvc
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
+@implements IDisposable
+@using System.Security.Claims
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Services
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Schedule from Excel - HorstMFG</PageTitle>
+
+<h3>Schedule from Excel</h3>
+
+@if (_state == State.Upload)
+{
+    <p>Upload a schedule Excel file. The schedule name comes from cell A1; rows below define orders (Col A = Order #, Col D = Qty, Col E = Product #).</p>
+
+    <InputFile OnChange="OnFileSelected" accept=".xlsx" class="form-control" style="max-width: 480px;" />
+
+    @if (_message is not null)
+    {
+        <div style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.25rem;
+                    background-color: @(_isError ? "#fee2e2" : "#dcfce7");
+                    color: @(_isError ? "#991b1b" : "#166534");">@_message</div>
+    }
+}
+
+@if (_state == State.Preview && _import is not null)
+{
+    <div style="margin-top: 1rem;">
+        <p>
+            <strong>Schedule:</strong> @_scheduleName <br/>
+            <strong>Orders to create:</strong> @_import.OrdersCreated
+            (with product: @(_import.OrdersCreated - _import.OrdersWithoutProduct),
+            placeholders: @_import.OrdersWithoutProduct)
+        </p>
+
+        @if (_import.Warnings.Count > 0)
+        {
+            <details style="margin-bottom: 1rem;">
+                <summary>Warnings (@_import.Warnings.Count)</summary>
+                <ul>@foreach (var w in _import.Warnings) { <li>@w</li> }</ul>
+            </details>
+        }
+
+        @if (!string.IsNullOrEmpty(_import.GatewayError))
+        {
+            <div style="padding: 0.75rem; margin-bottom: 1rem; border-radius: 0.25rem;
+                        background-color: #fee2e2; color: #991b1b;">
+                <strong>Gateway dispatch failed:</strong> @_import.GatewayError <br/>
+                The schedule and its orders were saved. Click <em>Retry</em> when the Gateway is available.
+            </div>
+            <SfButton CssClass="e-primary" OnClick="RetryDispatch">Retry</SfButton>
+        }
+
+        <SfButton CssClass="e-flat" OnClick="GoToSchedule">View Schedule</SfButton>
+    </div>
+
+    @if (_orders is not null)
+    {
+        <table class="table" style="margin-top: 1rem; font-size: 0.9rem;">
+            <thead>
+                <tr><th>Order #</th><th>Product</th><th>Qty</th><th>Status</th><th>Parts</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var o in _orders)
+                {
+                    <tr>
+                        <td>@o.OrderNumber</td>
+                        <td>@(string.IsNullOrEmpty(o.ProductNumber) ? "—" : o.ProductNumber)</td>
+                        <td>@o.Qty</td>
+                        <td>@StatusLabel(o)</td>
+                        <td>@(_partCounts.TryGetValue(o.Id, out var c) ? c : 0)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@if (_state == State.Errors && _errors.Count > 0)
+{
+    <div style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.25rem;
+                background-color: #fee2e2; color: #991b1b;">
+        <strong>Parse errors:</strong>
+        <ul style="margin: 0.5rem 0 0;">@foreach (var e in _errors) { <li>@e</li> }</ul>
+    </div>
+    <SfButton CssClass="e-flat" OnClick="Reset">Try Another File</SfButton>
+}
+
+@code {
+    private enum State { Upload, Preview, Errors }
+    private State _state = State.Upload;
+    private string? _message;
+    private bool _isError;
+    private string? _scheduleName;
+    private List<string> _errors = new();
+    private ExcelScheduleImportResult? _import;
+    private List<ScheduleOrder>? _orders;
+    private Dictionary<int, int> _partCounts = new();
+    private System.Threading.Timer? _pollTimer;
+    private CancellationTokenSource? _pollCts;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _message = null;
+        var file = e.File;
+        if (file is null) return;
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            var (plantId, userId) = GetPlantAndUser();
+            _import = await ImportSvc.ImportAsync(ms, plantId, userId);
+            if (!_import.Success)
+            {
+                _errors = _import.Errors;
+                _state = State.Errors;
+                return;
+            }
+
+            _scheduleName = await GetScheduleName(_import.ScheduleId!.Value);
+            await RefreshOrdersAsync();
+            _state = State.Preview;
+            StartPolling();
+        }
+        catch (Exception ex)
+        {
+            _message = $"Failed to read file: {ex.Message}";
+            _isError = true;
+        }
+    }
+
+    private async Task RetryDispatch()
+    {
+        if (_import?.ScheduleId is null) return;
+        _import = await ImportSvc.RetrySchedulePendingAsync(_import.ScheduleId.Value);
+        await RefreshOrdersAsync();
+        StartPolling();
+    }
+
+    private void StartPolling()
+    {
+        _pollCts?.Cancel();
+        _pollCts = new CancellationTokenSource();
+        _pollTimer?.Dispose();
+        _pollTimer = new System.Threading.Timer(async _ =>
+        {
+            await RefreshOrdersAsync();
+            await InvokeAsync(StateHasChanged);
+            if (_orders is not null && _orders.All(o => o.VaultBomImported || string.IsNullOrEmpty(o.ProductNumber)))
+            {
+                _pollTimer?.Dispose();
+                _pollTimer = null;
+            }
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private async Task RefreshOrdersAsync()
+    {
+        if (_import?.ScheduleId is null) return;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        _orders = await db.ScheduleOrders
+            .Where(so => so.ScheduleId == _import.ScheduleId)
+            .OrderBy(so => so.Id)
+            .ToListAsync();
+        _partCounts = await db.PartLineItems
+            .Where(p => p.ScheduleOrderId != null && _orders.Select(o => (int?)o.Id).Contains(p.ScheduleOrderId))
+            .GroupBy(p => p.ScheduleOrderId!.Value)
+            .Select(g => new { OrderId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.OrderId, x => x.Count);
+    }
+
+    private static string StatusLabel(ScheduleOrder o)
+    {
+        if (string.IsNullOrEmpty(o.ProductNumber)) return "No product (edit & retry)";
+        if (o.VaultBomImported) return "Imported";
+        return "Pending";
+    }
+
+    private async Task<string> GetScheduleName(int id)
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        return await db.Schedules.Where(s => s.Id == id).Select(s => s.Name).FirstAsync();
+    }
+
+    private (int PlantId, int UserId) GetPlantAndUser()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        var plantId = int.Parse(user?.FindFirst("PlantId")?.Value ?? "1");
+        var userId  = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
+        return (plantId, userId);
+    }
+
+    private void GoToSchedule()
+    {
+        if (_import?.ScheduleId is not null)
+            Nav.NavigateTo("/engineering/orders");
+    }
+
+    private void Reset()
+    {
+        _state = State.Upload;
+        _message = null;
+        _errors.Clear();
+        _import = null;
+        _orders = null;
+        _partCounts.Clear();
+        _pollTimer?.Dispose();
+        _pollTimer = null;
+    }
+
+    public void Dispose()
+    {
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+        _pollTimer?.Dispose();
+    }
+}
