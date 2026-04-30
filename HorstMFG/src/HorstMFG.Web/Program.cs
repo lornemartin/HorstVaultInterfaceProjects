@@ -52,6 +52,8 @@ try
     builder.Services.AddScoped<VaultBomIngestService>();
     builder.Services.AddScoped<ExcelScheduleParser>();
     builder.Services.AddScoped<ExcelScheduleImportService>();
+    builder.Services.AddScoped<ExcelBatchParser>();
+    builder.Services.AddScoped<ExcelBatchImportService>();
     builder.Services.AddHttpClient<VaultGatewayClient>();
     builder.Services.AddSingleton<BomImportJobTracker>();
     builder.Services.AddScoped<ReportService>();

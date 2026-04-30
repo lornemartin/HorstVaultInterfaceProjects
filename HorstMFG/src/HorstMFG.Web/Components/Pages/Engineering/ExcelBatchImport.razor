@@ -1,0 +1,206 @@
+@page "/engineering/excel-batch-import"
+@attribute [Authorize(Policy = "EngineeringOnly")]
+@rendermode InteractiveServer
+@inject ExcelBatchImportService ImportSvc
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
+@implements IDisposable
+@using System.Security.Claims
+@using HorstMFG.Core.Entities
+@using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Services
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Batch from Excel - HorstMFG</PageTitle>
+
+<h3>Batch from Excel</h3>
+
+@if (_state == State.Upload)
+{
+    <p>Upload a batch Excel file. The batch name comes from cell A1; rows below define products (Col A = Qty, Col B = Product #).</p>
+
+    <InputFile OnChange="OnFileSelected" accept=".xlsx" class="form-control" style="max-width: 480px;" />
+
+    @if (_message is not null)
+    {
+        <div style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.25rem;
+                    background-color: @(_isError ? "#fee2e2" : "#dcfce7");
+                    color: @(_isError ? "#991b1b" : "#166534");">@_message</div>
+    }
+}
+
+@if (_state == State.Preview && _import is not null)
+{
+    <div style="margin-top: 1rem;">
+        <p>
+            <strong>Batch:</strong> @_batchName <br/>
+            <strong>Products created:</strong> @_import.ProductsCreated
+        </p>
+
+        @if (_import.Warnings.Count > 0)
+        {
+            <details style="margin-bottom: 1rem;" open>
+                <summary>Warnings (@_import.Warnings.Count)</summary>
+                <ul>@foreach (var w in _import.Warnings) { <li>@w</li> }</ul>
+            </details>
+        }
+
+        @if (!string.IsNullOrEmpty(_import.GatewayError))
+        {
+            <div style="padding: 0.75rem; margin-bottom: 1rem; border-radius: 0.25rem;
+                        background-color: #fee2e2; color: #991b1b;">
+                <strong>Gateway dispatch failed:</strong> @_import.GatewayError <br/>
+                The batch and its products were saved. Click <em>Retry</em> when the Gateway is available.
+            </div>
+            <SfButton CssClass="e-primary" OnClick="RetryDispatch">Retry</SfButton>
+        }
+
+        <SfButton CssClass="e-flat" OnClick="GoToBatches">View Batches</SfButton>
+    </div>
+
+    @if (_products is not null)
+    {
+        <table class="table" style="margin-top: 1rem; font-size: 0.9rem;">
+            <thead>
+                <tr><th>Product</th><th>Qty</th><th>Status</th><th>Parts</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _products)
+                {
+                    <tr>
+                        <td>@p.ProductName</td>
+                        <td>@p.Qty</td>
+                        <td>@(p.VaultBomImported ? "Imported" : "Pending")</td>
+                        <td>@(_partCounts.TryGetValue(p.Id, out var c) ? c : 0)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@if (_state == State.Errors && _errors.Count > 0)
+{
+    <div style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.25rem;
+                background-color: #fee2e2; color: #991b1b;">
+        <strong>Parse errors:</strong>
+        <ul style="margin: 0.5rem 0 0;">@foreach (var e in _errors) { <li>@e</li> }</ul>
+    </div>
+    <SfButton CssClass="e-flat" OnClick="Reset">Try Another File</SfButton>
+}
+
+@code {
+    private enum State { Upload, Preview, Errors }
+    private State _state = State.Upload;
+    private string? _message;
+    private bool _isError;
+    private string? _batchName;
+    private List<string> _errors = new();
+    private ExcelBatchImportResult? _import;
+    private List<BatchProduct>? _products;
+    private Dictionary<int, int> _partCounts = new();
+    private System.Threading.Timer? _pollTimer;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _message = null;
+        var file = e.File;
+        if (file is null) return;
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            var (plantId, userId) = GetPlantAndUser();
+            _import = await ImportSvc.ImportAsync(ms, plantId, userId);
+            if (!_import.Success)
+            {
+                _errors = _import.Errors;
+                _state = State.Errors;
+                return;
+            }
+
+            _batchName = await GetBatchName(_import.BatchId!.Value);
+            await RefreshProductsAsync();
+            _state = State.Preview;
+            StartPolling();
+        }
+        catch (Exception ex)
+        {
+            _message = $"Failed to read file: {ex.Message}";
+            _isError = true;
+        }
+    }
+
+    private async Task RetryDispatch()
+    {
+        if (_import?.BatchId is null) return;
+        _import = await ImportSvc.RetryBatchPendingAsync(_import.BatchId.Value);
+        await RefreshProductsAsync();
+        StartPolling();
+    }
+
+    private void StartPolling()
+    {
+        _pollTimer?.Dispose();
+        _pollTimer = new System.Threading.Timer(async _ =>
+        {
+            await RefreshProductsAsync();
+            await InvokeAsync(StateHasChanged);
+            if (_products is not null && _products.All(p => p.VaultBomImported))
+            {
+                _pollTimer?.Dispose();
+                _pollTimer = null;
+            }
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private async Task RefreshProductsAsync()
+    {
+        if (_import?.BatchId is null) return;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        _products = await db.BatchProducts
+            .Where(bp => bp.BatchId == _import.BatchId)
+            .OrderBy(bp => bp.Id)
+            .ToListAsync();
+        _partCounts = await db.PartLineItems
+            .Where(p => p.BatchProductId != null && _products.Select(bp => (int?)bp.Id).Contains(p.BatchProductId))
+            .GroupBy(p => p.BatchProductId!.Value)
+            .Select(g => new { ProductId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ProductId, x => x.Count);
+    }
+
+    private async Task<string> GetBatchName(int id)
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        return await db.Batches.Where(b => b.Id == id).Select(b => b.Name).FirstAsync();
+    }
+
+    private (int PlantId, int UserId) GetPlantAndUser()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        var plantId = int.Parse(user?.FindFirst("PlantId")?.Value ?? "1");
+        var userId  = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
+        return (plantId, userId);
+    }
+
+    private void GoToBatches() => Nav.NavigateTo("/engineering/batches");
+
+    private void Reset()
+    {
+        _state = State.Upload;
+        _message = null;
+        _errors.Clear();
+        _import = null;
+        _products = null;
+        _partCounts.Clear();
+        _pollTimer?.Dispose();
+        _pollTimer = null;
+    }
+
+    public void Dispose() => _pollTimer?.Dispose();
+}

@@ -500,7 +500,7 @@ public class BomService : IBomService
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
         // Direct projection: single SQL JOIN, no tracked entities, no in-memory mapping
-        return await db.Set<PartLineItem>()
+        var rows = await db.Set<PartLineItem>()
             .Where(p => p.BatchProductId != null)
             .Where(p => !plantId.HasValue || p.BatchProduct!.Batch.PlantId == plantId.Value)
             .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
@@ -535,6 +535,43 @@ public class BomService : IBomService
                 Notes = p.Notes,
             })
             .ToListAsync();
+
+        // Surface BatchProducts that have no PartLineItems yet (Vault import pending
+        // or "not found"). Empty groups so the user can see them in the grid.
+        var seenProductIds = rows.Select(r => r.BatchProductId).ToHashSet();
+        var emptyProducts = await db.Set<BatchProduct>()
+            .Where(bp => !seenProductIds.Contains(bp.Id))
+            .Where(bp => !plantId.HasValue || bp.Batch.PlantId == plantId.Value)
+            .Where(bp => !fromDate.HasValue || bp.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(bp => !toDate.HasValue || bp.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(bp => term == null ||
+                EF.Functions.ILike(bp.Batch.Name, $"%{term}%") ||
+                EF.Functions.ILike(bp.ProductName, $"%{term}%"))
+            .Select(bp => new FlatBatchPartRow
+            {
+                BatchId         = bp.BatchId,
+                BatchName       = bp.Batch.Name,
+                BatchImportDate = bp.Batch.ImportDate,
+                BatchReleased   = bp.Batch.ReadyForProduction,
+                BatchProductId  = bp.Id,
+                ProductName     = bp.ProductName,
+                ProductQty      = bp.Qty,
+                PartLineItemId  = 0,
+                PartNumber      = "",
+                Description     = "",
+                Category        = "",
+                Material        = "",
+                Thickness       = "",
+                Operations      = "",
+                Qty             = 0,
+                IsStock         = false,
+                HasPdf          = false,
+                Notes           = bp.Notes,
+            })
+            .ToListAsync();
+
+        rows.AddRange(emptyProducts);
+        return rows;
     }
 
     public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)
