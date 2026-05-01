@@ -5,6 +5,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject IBomService BomService
+@inject HorstMFG.Web.Services.ExcelBatchImportService BatchImportSvc
 @inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
 @inject HorstMFG.Web.Services.LocalStorageService LocalStorage
 @using HorstMFG.Core.DTOs
@@ -38,6 +39,15 @@
 }
 
 <h3>Batches</h3>
+
+@if (_statusMessage is not null)
+{
+    <div style="padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 0.75rem;
+                background: @(_statusIsError ? "#fee2e2" : "#dcfce7");
+                color: @(_statusIsError ? "#991b1b" : "#166534"); font-size: 0.875rem;">
+        @_statusMessage
+    </div>
+}
 
 <div style="display: flex; gap: 2rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
     <div style="min-width: 200px;">
@@ -99,6 +109,11 @@
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
                     @if (!batch.IsReleased)
                     {
+                        @if (_productMeta.Values.Any(p => p.BatchId == batch.Id && !p.VaultBomImported))
+                        {
+                            <button @onclick="@(async () => await OnRetryBatchPending(batch.Id))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")">Re-import pending</button>
+                        }
                         <button @onclick="@(async () => await OnReleaseBatch(batch))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("e-primary")">Release to Production</button>
                         <button @onclick="@(async () => await OnDeleteBatch(batch))" @onclick:stopPropagation="true"
@@ -134,6 +149,11 @@
                                @onclick:stopPropagation="true"
                                min="1" max="9999"
                                style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
+                        @if (!product.VaultBomImported)
+                        {
+                            <button @onclick="@(async () => await OnRetryBatchProduct(product.Id))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")">Re-import BOM</button>
+                        }
                         <button @onclick="@(async () => await OnDeleteBatchProduct(product))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
                     }
@@ -243,7 +263,7 @@
     private Dictionary<int, ProductCaption> _productMeta = new();
 
     private sealed record BatchCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
-    private sealed record ProductCaption(int Id, int BatchId, string? ProductName, int Qty, bool IsReleased);
+    private sealed record ProductCaption(int Id, int BatchId, string? ProductName, int Qty, bool IsReleased, bool VaultBomImported);
 
     // ── Persisted state ───────────────────────────────────────────────────────
     private sealed class BatchesGridState
@@ -272,6 +292,10 @@
     private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _saveCts;
     private DotNetObjectReference<Batches>? _dotNetRef;
+
+    // Status message (retry feedback)
+    private string? _statusMessage;
+    private bool _statusIsError;
 
     // PDF thumbnail hover
     private string? _thumbNumber;
@@ -332,6 +356,7 @@
     private async Task LoadData()
     {
         _loading = true;
+        _statusMessage = null;
         StateHasChanged();
         var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
         _rows = await BomService.GetFlatBatchPartsAsync(_selectedPlantId, _fromDate, _toDate, term);
@@ -359,7 +384,8 @@
                 g.First().BatchId,
                 g.First().ProductName,
                 g.First().ProductQty,
-                g.First().BatchReleased));
+                g.First().BatchReleased,
+                g.First().VaultBomImported));
     }
 
     // ── Filter handlers ───────────────────────────────────────────────────────
@@ -600,6 +626,49 @@
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
         await BomService.UpdateBatchProductQtyAsync(productId, qty);
         await LoadData();
+    }
+
+    private async Task OnRetryBatchProduct(int productId)
+    {
+        var result = await BatchImportSvc.RetrySingleBatchProductAsync(productId);
+        if (!string.IsNullOrEmpty(result.GatewayError))
+        {
+            _statusMessage = $"Gateway error: {result.GatewayError}";
+            _statusIsError = true;
+        }
+        else if (!result.Success)
+        {
+            _statusMessage = result.Errors.FirstOrDefault() ?? "Re-import failed.";
+            _statusIsError = true;
+        }
+        else
+        {
+            _statusMessage = "Re-import submitted. Refresh in a moment to see results.";
+            _statusIsError = false;
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnRetryBatchPending(int batchId)
+    {
+        var result = await BatchImportSvc.RetryBatchPendingAsync(batchId);
+        if (!string.IsNullOrEmpty(result.GatewayError))
+        {
+            _statusMessage = $"Gateway error: {result.GatewayError}";
+            _statusIsError = true;
+        }
+        else if (!result.Success)
+        {
+            _statusMessage = result.Errors.FirstOrDefault() ?? "Re-import failed.";
+            _statusIsError = true;
+        }
+        else
+        {
+            var msg = result.Warnings.FirstOrDefault();
+            _statusMessage = msg ?? $"Re-import submitted for {result.ProductsDispatched} pending product(s). Refresh in a moment to see results.";
+            _statusIsError = false;
+        }
+        StateHasChanged();
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────

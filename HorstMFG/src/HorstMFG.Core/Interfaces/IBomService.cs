@@ -48,6 +48,12 @@ public interface IBomService
     Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty);
 
     /// <summary>
+    /// Update the ProductNumber on a ScheduleOrder and reset VaultBomImported so the
+    /// re-import button becomes available.
+    /// </summary>
+    Task UpdateScheduleOrderProductNumberAsync(int scheduleOrderId, string? productNumber);
+
+    /// <summary>
     /// Update the IsStock flag on a PartLineItem.
     /// </summary>
     Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);

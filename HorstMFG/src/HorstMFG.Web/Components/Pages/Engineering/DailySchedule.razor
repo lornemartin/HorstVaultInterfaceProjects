@@ -5,6 +5,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject IBomService BomService
+@inject HorstMFG.Web.Services.ExcelScheduleImportService ScheduleImportSvc
 @inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
 @inject HorstMFG.Web.Services.LocalStorageService LocalStorage
 @using HorstMFG.Core.DTOs
@@ -36,6 +37,15 @@
 }
 
 <h3>Orders</h3>
+
+@if (_statusMessage is not null)
+{
+    <div style="padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 0.75rem;
+                background: @(_statusIsError ? "#fee2e2" : "#dcfce7");
+                color: @(_statusIsError ? "#991b1b" : "#166534"); font-size: 0.875rem;">
+        @_statusMessage
+    </div>
+}
 
 <div style="display: flex; gap: 2rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
     <div style="min-width: 200px;">
@@ -101,6 +111,11 @@
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
                     @if (!sched.IsReleased)
                     {
+                        @if (_orderMeta.Values.Any(o => o.ScheduleId == sched.Id && !o.VaultBomImported && !string.IsNullOrEmpty(o.ProductNumber)))
+                        {
+                            <button @onclick="@(async () => await OnRetrySchedulePending(sched.Id))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")">Re-import pending</button>
+                        }
                         <button @onclick="@(async () => await OnReleaseSchedule(sched))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("e-primary")">Release to Production</button>
                         <button @onclick="@(async () => await OnDeleteSchedule(sched))" @onclick:stopPropagation="true"
@@ -124,11 +139,23 @@
             else if (ctx.Field == "ScheduleOrderId" && _orderMeta.TryGetValue(key, out var order))
             {
                 <span data-group-key="@order.Id" data-group-level="2" style="display:none;"></span>
-                @if (order.ProductNumber is not null)
+                @if (order.IsReleased)
                 {
-                    <span style="font-style: italic; color: #374151; margin-right: 0.5rem;">@order.ProductNumber</span>
+                    @if (order.ProductNumber is not null)
+                    {
+                        <span style="font-style: italic; color: #374151; margin-right: 0.5rem;">@order.ProductNumber</span>
+                    }
                 }
-                <span style="font-weight: 700;">@order.OrderNumber</span>
+                else
+                {
+                    <input type="text" value="@order.ProductNumber"
+                           @onchange="@(async e => await OnScheduleOrderProductNumberChanged(order.Id, e.Value?.ToString()))"
+                           @onclick:stopPropagation="true"
+                           placeholder="product number"
+                           title="Edit product number, then click Re-import BOM"
+                           style="width: 170px; font-style: italic; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px; font-size: 0.875rem; color: #374151;" />
+                }
+                <span style="font-weight: 700; margin-left: 0.35rem;">@order.OrderNumber</span>
                 @if (order.ProductDescription is not null)
                 {
                     <span style="margin-left: 0.75rem; color: #6b7280; font-size: 0.85rem;">@order.ProductDescription</span>
@@ -146,6 +173,11 @@
                                @onclick:stopPropagation="true"
                                min="1" max="9999"
                                style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
+                        @if (!order.VaultBomImported && !string.IsNullOrEmpty(order.ProductNumber))
+                        {
+                            <button @onclick="@(async () => await OnRetryOrder(order.Id))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")">Re-import BOM</button>
+                        }
                         <button @onclick="@(async () => await OnDeleteOrder(order))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
                     }
@@ -259,7 +291,7 @@
 
     private sealed record ScheduleCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
     private sealed record OrderCaption(int Id, int ScheduleId, string? OrderNumber, int Qty, bool IsReleased,
-                                       string? ProductNumber, string? ProductDescription);
+                                       string? ProductNumber, string? ProductDescription, bool VaultBomImported);
 
     // ── Persisted state ───────────────────────────────────────────────────────
     private sealed class OrdersGridState
@@ -290,6 +322,10 @@
     private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _saveCts;
     private DotNetObjectReference<DailySchedule>? _dotNetRef;
+
+    // Status message (retry feedback)
+    private string? _statusMessage;
+    private bool _statusIsError;
 
     // PDF thumbnail hover
     private string? _thumbNumber;
@@ -350,6 +386,7 @@
     private async Task LoadData()
     {
         _loading = true;
+        _statusMessage = null;
         StateHasChanged();
         var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
         _rows = await BomService.GetFlatSchedulePartsAsync(_selectedPlantId, _fromDate, _toDate, term);
@@ -379,7 +416,8 @@
                 g.First().OrderQty,
                 g.First().ScheduleReleased,
                 g.First().ProductNumber,
-                g.First().ProductDescription));
+                g.First().ProductDescription,
+                g.First().VaultBomImported));
     }
 
     private async Task ApplyGridFilters()
@@ -602,6 +640,60 @@
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
         await BomService.UpdateScheduleOrderQtyAsync(orderId, qty);
         await LoadData();
+    }
+
+    private async Task OnScheduleOrderProductNumberChanged(int orderId, string? rawValue)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
+        await BomService.UpdateScheduleOrderProductNumberAsync(orderId, trimmed);
+        _statusMessage = trimmed is null
+            ? "Product number cleared. Enter a product number and click Re-import BOM."
+            : $"Product number set to '{trimmed}'. Click Re-import BOM to fetch the BOM.";
+        _statusIsError = false;
+        await LoadData();
+    }
+
+    private async Task OnRetryOrder(int orderId)
+    {
+        var result = await ScheduleImportSvc.RetrySingleScheduleOrderAsync(orderId);
+        if (!string.IsNullOrEmpty(result.GatewayError))
+        {
+            _statusMessage = $"Gateway error: {result.GatewayError}";
+            _statusIsError = true;
+        }
+        else if (!result.Success)
+        {
+            _statusMessage = result.Errors.FirstOrDefault() ?? "Re-import failed.";
+            _statusIsError = true;
+        }
+        else
+        {
+            _statusMessage = "Re-import submitted. Refresh in a moment to see results.";
+            _statusIsError = false;
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnRetrySchedulePending(int scheduleId)
+    {
+        var result = await ScheduleImportSvc.RetrySchedulePendingAsync(scheduleId);
+        if (!string.IsNullOrEmpty(result.GatewayError))
+        {
+            _statusMessage = $"Gateway error: {result.GatewayError}";
+            _statusIsError = true;
+        }
+        else if (!result.Success)
+        {
+            _statusMessage = result.Errors.FirstOrDefault() ?? "Re-import failed.";
+            _statusIsError = true;
+        }
+        else
+        {
+            var msg = result.Warnings.FirstOrDefault();
+            _statusMessage = msg ?? $"Re-import submitted for {result.OrdersDispatched} pending order(s). Refresh in a moment to see results.";
+            _statusIsError = false;
+        }
+        StateHasChanged();
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────

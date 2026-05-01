@@ -34,6 +34,9 @@ public class FlatSchedulePartRow
     public bool HasPdf { get; set; }
     public string? Notes { get; set; }
 
+    // ── Import status ────────────────────────────────────────────────────────
+    public bool VaultBomImported { get; set; }
+
     // ── Sort helpers ─────────────────────────────────────────────────────────
     public int CategoryOrder => Category.ToLowerInvariant() switch
     {

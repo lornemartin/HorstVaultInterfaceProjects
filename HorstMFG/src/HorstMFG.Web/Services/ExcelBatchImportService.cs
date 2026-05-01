@@ -137,6 +137,40 @@ public class ExcelBatchImportService
     }
 
     /// <summary>
+    /// Re-issues a Vault BOM query for a single BatchProduct.
+    /// </summary>
+    public async Task<ExcelBatchImportResult> RetrySingleBatchProductAsync(
+        int productId, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var product = await db.BatchProducts.FirstOrDefaultAsync(bp => bp.Id == productId, ct);
+
+        if (product is null)
+            return new ExcelBatchImportResult(false, null, null, null, 0, 0,
+                new(), new() { $"Product {productId} not found." });
+
+        try
+        {
+            var items = new List<VaultGatewayClient.GatewayBatchItem>
+            {
+                new(product.Id, product.ProductName)
+            };
+            var jobId = await _gateway.SubmitBatchAsync(items, ct);
+            _jobs.Register(jobId, BomType.MakeToOrder);
+            _log.LogInformation("Single retry submitted for BatchProduct {Id} ({Product}), jobId={JobId}",
+                product.Id, product.ProductName, jobId);
+            return new ExcelBatchImportResult(true, product.BatchId, jobId, null,
+                0, 1, new(), new());
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Single retry for batch product {Id} failed", productId);
+            return new ExcelBatchImportResult(true, product.BatchId, null, ex.Message,
+                0, 0, new(), new());
+        }
+    }
+
+    /// <summary>
     /// Walks parsed rows, merging duplicates by ProductNumber. The first occurrence
     /// becomes the BatchProduct; later duplicates get summed into its Qty and the
     /// merge is recorded in Notes + warnings (per "merge with a warning" decision).

@@ -421,6 +421,7 @@ public class BomService : IBomService
                 ScheduleOrderId = p.ScheduleOrderId!.Value,
                 OrderNumber = p.ScheduleOrder!.OrderNumber,
                 OrderQty = p.ScheduleOrder!.Qty,
+                VaultBomImported = p.ScheduleOrder!.VaultBomImported,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
                 Description = p.Description,
@@ -475,6 +476,7 @@ public class BomService : IBomService
                 OrderQty           = so.Qty,
                 ProductNumber      = so.ProductNumber,
                 ProductDescription = null,
+                VaultBomImported   = so.VaultBomImported,
                 PartLineItemId     = 0,
                 PartNumber         = "",
                 Description        = "",
@@ -522,6 +524,7 @@ public class BomService : IBomService
                 BatchProductId = p.BatchProductId!.Value,
                 ProductName = p.BatchProduct!.ProductName,
                 ProductQty = p.BatchProduct!.Qty,
+                VaultBomImported = p.BatchProduct!.VaultBomImported,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
                 Description = p.Description,
@@ -549,24 +552,25 @@ public class BomService : IBomService
                 EF.Functions.ILike(bp.ProductName, $"%{term}%"))
             .Select(bp => new FlatBatchPartRow
             {
-                BatchId         = bp.BatchId,
-                BatchName       = bp.Batch.Name,
-                BatchImportDate = bp.Batch.ImportDate,
-                BatchReleased   = bp.Batch.ReadyForProduction,
-                BatchProductId  = bp.Id,
-                ProductName     = bp.ProductName,
-                ProductQty      = bp.Qty,
-                PartLineItemId  = 0,
-                PartNumber      = "",
-                Description     = "",
-                Category        = "",
-                Material        = "",
-                Thickness       = "",
-                Operations      = "",
-                Qty             = 0,
-                IsStock         = false,
-                HasPdf          = false,
-                Notes           = bp.Notes,
+                BatchId          = bp.BatchId,
+                BatchName        = bp.Batch.Name,
+                BatchImportDate  = bp.Batch.ImportDate,
+                BatchReleased    = bp.Batch.ReadyForProduction,
+                BatchProductId   = bp.Id,
+                ProductName      = bp.ProductName,
+                ProductQty       = bp.Qty,
+                VaultBomImported = bp.VaultBomImported,
+                PartLineItemId   = 0,
+                PartNumber       = "",
+                Description      = "",
+                Category         = "",
+                Material         = "",
+                Thickness        = "",
+                Operations       = "",
+                Qty              = 0,
+                IsStock          = false,
+                HasPdf           = false,
+                Notes            = bp.Notes,
             })
             .ToListAsync();
 
@@ -588,6 +592,17 @@ public class BomService : IBomService
         await db.Set<ScheduleOrder>()
             .Where(so => so.Id == scheduleOrderId)
             .ExecuteUpdateAsync(s => s.SetProperty(so => so.Qty, qty));
+    }
+
+    public async Task UpdateScheduleOrderProductNumberAsync(int scheduleOrderId, string? productNumber)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(productNumber) ? null : productNumber.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.Id == scheduleOrderId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(so => so.ProductNumber, trimmed)
+                .SetProperty(so => so.VaultBomImported, false));
     }
 
     public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)

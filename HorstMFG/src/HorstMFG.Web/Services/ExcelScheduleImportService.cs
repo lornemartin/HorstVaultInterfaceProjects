@@ -155,6 +155,45 @@ public class ExcelScheduleImportService
     }
 
     /// <summary>
+    /// Re-issues a Vault BOM query for a single ScheduleOrder. Used when the user
+    /// re-imports after editing ProductNumber or after a per-order gateway failure.
+    /// </summary>
+    public async Task<ExcelScheduleImportResult> RetrySingleScheduleOrderAsync(
+        int orderId, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var order = await db.ScheduleOrders.FirstOrDefaultAsync(so => so.Id == orderId, ct);
+
+        if (order is null)
+            return new ExcelScheduleImportResult(false, null, null, null, 0, 0, 0,
+                new(), new() { $"Order {orderId} not found." });
+
+        if (string.IsNullOrEmpty(order.ProductNumber))
+            return new ExcelScheduleImportResult(false, order.ScheduleId, null, null, 0, 1, 0,
+                new(), new() { "Order has no product number — set it before retrying." });
+
+        try
+        {
+            var items = new List<VaultGatewayClient.GatewayBatchItem>
+            {
+                new(order.Id, order.ProductNumber)
+            };
+            var jobId = await _gateway.SubmitBatchAsync(items, ct);
+            _jobs.Register(jobId, BomType.MakeToStock);
+            _log.LogInformation("Single retry submitted for ScheduleOrder {Id} ({Product}), jobId={JobId}",
+                order.Id, order.ProductNumber, jobId);
+            return new ExcelScheduleImportResult(true, order.ScheduleId, jobId, null,
+                0, 0, 1, new(), new());
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Single retry for order {Id} failed", orderId);
+            return new ExcelScheduleImportResult(true, order.ScheduleId, null, ex.Message,
+                0, 0, 0, new(), new());
+        }
+    }
+
+    /// <summary>
     /// Walks parsed rows in order. Real product rows produce ScheduleOrders, suffixed
     /// (a/b/c…) when an OrderNumber repeats. LA- continuation rows are appended to
     /// the most recent real order in the same OrderNumber as a Notes line. If an
