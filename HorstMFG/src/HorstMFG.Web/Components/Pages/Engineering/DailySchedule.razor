@@ -150,9 +150,12 @@
                 {
                     <input type="text" value="@order.ProductNumber"
                            @onchange="@(async e => await OnScheduleOrderProductNumberChanged(order.Id, e.Value?.ToString()))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
                            @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
                            placeholder="product number"
-                           title="Edit product number, then click Re-import BOM"
+                           title="Edit product number, press Enter or click elsewhere to save"
                            style="width: 170px; font-style: italic; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px; font-size: 0.875rem; color: #374151;" />
                 }
                 <span style="font-weight: 700; margin-left: 0.35rem;">@order.OrderNumber</span>
@@ -646,11 +649,12 @@
     {
         var trimmed = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
         await BomService.UpdateScheduleOrderProductNumberAsync(orderId, trimmed);
+        await LoadData();
         _statusMessage = trimmed is null
             ? "Product number cleared. Enter a product number and click Re-import BOM."
             : $"Product number set to '{trimmed}'. Click Re-import BOM to fetch the BOM.";
         _statusIsError = false;
-        await LoadData();
+        StateHasChanged();
     }
 
     private async Task OnRetryOrder(int orderId)
