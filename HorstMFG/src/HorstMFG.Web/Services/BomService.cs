@@ -586,6 +586,17 @@ public class BomService : IBomService
             .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.Qty, qty));
     }
 
+    public async Task UpdateBatchProductNameAsync(int batchProductId, string productName)
+    {
+        var trimmed = productName.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.Id == batchProductId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(bp => bp.ProductName, trimmed)
+                .SetProperty(bp => bp.VaultBomImported, false));
+    }
+
     public async Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

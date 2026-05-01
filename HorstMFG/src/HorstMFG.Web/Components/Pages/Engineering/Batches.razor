@@ -135,7 +135,22 @@
             else if (ctx.Field == "BatchProductId" && _productMeta.TryGetValue(key, out var product))
             {
                 <span data-group-key="@product.Id" data-group-level="2" style="display:none;"></span>
-                <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
+                @if (product.IsReleased)
+                {
+                    <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
+                }
+                else
+                {
+                    <input type="text" value="@product.ProductName"
+                           @onchange="@(async e => await OnBatchProductNameChanged(product.Id, e.Value?.ToString() ?? ""))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                           @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
+                           placeholder="product number"
+                           title="Edit product number, press Enter or click elsewhere to save"
+                           style="width: 200px; font-style: italic; font-weight: 600; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px; font-size: 0.875rem; color: #374151;" />
+                }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
                     <span style="font-size: 0.8rem; color: #6b7280;">Qty:</span>
                     @if (product.IsReleased)
@@ -626,6 +641,17 @@
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
         await BomService.UpdateBatchProductQtyAsync(productId, qty);
         await LoadData();
+    }
+
+    private async Task OnBatchProductNameChanged(int productId, string rawValue)
+    {
+        var trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+        await BomService.UpdateBatchProductNameAsync(productId, trimmed);
+        await LoadData();
+        _statusMessage = $"Product name set to '{trimmed}'. Click Re-import BOM to fetch the BOM.";
+        _statusIsError = false;
+        StateHasChanged();
     }
 
     private async Task OnRetryBatchProduct(int productId)

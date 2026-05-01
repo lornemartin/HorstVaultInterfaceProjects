@@ -43,6 +43,12 @@ public interface IBomService
     Task UpdateBatchProductQtyAsync(int batchProductId, int qty);
 
     /// <summary>
+    /// Update the ProductName (Vault item number) on a BatchProduct and reset VaultBomImported
+    /// so the re-import button becomes available.
+    /// </summary>
+    Task UpdateBatchProductNameAsync(int batchProductId, string productName);
+
+    /// <summary>
     /// Update the Qty on a ScheduleOrder (order row in the Orders grid).
     /// </summary>
     Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty);
