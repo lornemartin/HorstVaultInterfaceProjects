@@ -5,6 +5,27 @@ var _horstGridRestoring = false;
 
 window.horstGrid = {
 
+    // Save the grid content pane's scroll position before a data reload.
+    saveScrollTop: function (gridId) {
+        var el = document.getElementById(gridId);
+        var content = el && el.querySelector('.e-content');
+        return content ? content.scrollTop : 0;
+    },
+
+    // Restore scroll position after reload + group-expansion animations finish.
+    // Retries several times to beat Syncfusion's own scroll resets.
+    restoreScrollTop: function (gridId, top) {
+        if (!top) return;
+        var attempts = 0;
+        function trySet() {
+            var el = document.getElementById(gridId);
+            var content = el && el.querySelector('.e-content');
+            if (content) content.scrollTop = top;
+            if (++attempts < 6) setTimeout(trySet, 80);
+        }
+        setTimeout(trySet, 180);
+    },
+
     // Read which groups are currently expanded.
     // Queries .e-recordplusexpand icons directly — no dependency on ej.
     getExpandedGroupKeys: function (gridId) {
