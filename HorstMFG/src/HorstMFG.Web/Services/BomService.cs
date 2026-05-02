@@ -421,6 +421,7 @@ public class BomService : IBomService
                 ScheduleOrderId = p.ScheduleOrderId!.Value,
                 OrderNumber = p.ScheduleOrder!.OrderNumber,
                 OrderQty = p.ScheduleOrder!.Qty,
+                ProductNumber = p.ScheduleOrder!.ProductNumber,
                 VaultBomImported = p.ScheduleOrder!.VaultBomImported,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
@@ -436,8 +437,8 @@ public class BomService : IBomService
             })
             .ToListAsync();
 
-        // Resolve ProductNumber/ProductDescription per order from the "Product" category rows
-        // already present in results — no additional DB round-trip needed
+        // Resolve ProductDescription per order from the "Product" category part row.
+        // ProductNumber is read directly from ScheduleOrder (reliable regardless of Vault category).
         var productLookup = rows
             .Where(r => r.Category.Equals("product", StringComparison.OrdinalIgnoreCase))
             .GroupBy(r => r.ScheduleOrderId)
@@ -446,10 +447,7 @@ public class BomService : IBomService
         foreach (var row in rows)
         {
             if (productLookup.TryGetValue(row.ScheduleOrderId, out var prod))
-            {
-                row.ProductNumber = prod.PartNumber;
                 row.ProductDescription = prod.Description;
-            }
         }
 
         // Surface ScheduleOrders that have no PartLineItems yet (placeholders from the
@@ -590,11 +588,12 @@ public class BomService : IBomService
     {
         var trimmed = productName.Trim();
         await using var db = await _dbFactory.CreateDbContextAsync();
-        await db.Set<BatchProduct>()
-            .Where(bp => bp.Id == batchProductId)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(bp => bp.ProductName, trimmed)
-                .SetProperty(bp => bp.VaultBomImported, false));
+        var product = await db.Set<BatchProduct>().FindAsync(batchProductId);
+        if (product is null) return;
+        if (product.ProductName == trimmed) return; // same value — no need to reset VaultBomImported
+        product.ProductName = trimmed;
+        product.VaultBomImported = false;
+        await db.SaveChangesAsync();
     }
 
     public async Task UpdateScheduleOrderQtyAsync(int scheduleOrderId, int qty)
@@ -609,11 +608,12 @@ public class BomService : IBomService
     {
         var trimmed = string.IsNullOrWhiteSpace(productNumber) ? null : productNumber.Trim();
         await using var db = await _dbFactory.CreateDbContextAsync();
-        await db.Set<ScheduleOrder>()
-            .Where(so => so.Id == scheduleOrderId)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(so => so.ProductNumber, trimmed)
-                .SetProperty(so => so.VaultBomImported, false));
+        var order = await db.Set<ScheduleOrder>().FindAsync(scheduleOrderId);
+        if (order is null) return;
+        if (order.ProductNumber == trimmed) return; // same value — no need to reset VaultBomImported
+        order.ProductNumber = trimmed;
+        order.VaultBomImported = false;
+        await db.SaveChangesAsync();
     }
 
     public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)
