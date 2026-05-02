@@ -176,7 +176,14 @@
                                @onclick:stopPropagation="true"
                                min="1" max="9999"
                                style="width: 58px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; font-weight: 600;" />
-                        @if (!order.VaultBomImported && !string.IsNullOrEmpty(order.ProductNumber))
+                        @if (_importingOrderIds.Contains(order.Id) && !order.VaultBomImported)
+                        {
+                            <span style="display:inline-flex;align-items:center;gap:0.3rem;color:#3b82f6;font-size:0.8rem;">
+                                <span style="display:inline-block;width:12px;height:12px;border:2px solid #bfdbfe;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></span>
+                                Importing…
+                            </span>
+                        }
+                        else if (!order.VaultBomImported && !string.IsNullOrEmpty(order.ProductNumber))
                         {
                             <button @onclick="@(async () => await OnRetryOrder(order.Id))" @onclick:stopPropagation="true"
                                     style="@BtnStyle("e-primary")">Re-import BOM</button>
@@ -324,7 +331,11 @@
     private HashSet<int> _expandedOrderIds    = new();
     private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _saveCts;
+    private CancellationTokenSource? _pollCts;
     private DotNetObjectReference<DailySchedule>? _dotNetRef;
+
+    // Orders currently being polled for VaultBomImported completion
+    private HashSet<int> _importingOrderIds = new();
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -672,8 +683,9 @@
         }
         else
         {
-            _statusMessage = "Re-import submitted. Refresh in a moment to see results.";
-            _statusIsError = false;
+            _importingOrderIds.Add(orderId);
+            _statusMessage = null;
+            StartOrderPollIfNeeded();
         }
         StateHasChanged();
     }
@@ -693,11 +705,79 @@
         }
         else
         {
-            var msg = result.Warnings.FirstOrDefault();
-            _statusMessage = msg ?? $"Re-import submitted for {result.OrdersDispatched} pending order(s). Refresh in a moment to see results.";
-            _statusIsError = false;
+            var warning = result.Warnings.FirstOrDefault();
+            if (warning is not null)
+            {
+                _statusMessage = warning;
+                _statusIsError = false;
+            }
+            else
+            {
+                foreach (var id in _orderMeta.Values
+                    .Where(o => o.ScheduleId == scheduleId && !o.VaultBomImported && !string.IsNullOrEmpty(o.ProductNumber))
+                    .Select(o => o.Id))
+                {
+                    _importingOrderIds.Add(id);
+                }
+                _statusMessage = null;
+                StartOrderPollIfNeeded();
+            }
         }
         StateHasChanged();
+    }
+
+    private void StartOrderPollIfNeeded()
+    {
+        if (_importingOrderIds.Count == 0) return;
+        _pollCts?.Cancel();
+        _pollCts = new CancellationTokenSource();
+        _ = PollOrderImportAsync(_pollCts.Token);
+    }
+
+    private async Task PollOrderImportAsync(CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(90);
+
+        while (_importingOrderIds.Count > 0)
+        {
+            if (ct.IsCancellationRequested) return;
+            if (DateTime.UtcNow >= deadline) break;
+
+            try { await Task.Delay(2000, ct); }
+            catch (OperationCanceledException) { return; }
+
+            try
+            {
+                await using var db = await DbContextFactory.CreateDbContextAsync(ct);
+                var ids = _importingOrderIds.ToList();
+                var results = await db.ScheduleOrders
+                    .Where(so => ids.Contains(so.Id))
+                    .Select(so => new { so.Id, so.VaultBomImported })
+                    .ToListAsync(ct);
+                foreach (var r in results.Where(r => r.VaultBomImported))
+                    _importingOrderIds.Remove(r.Id);
+                var found = results.Select(r => r.Id).ToHashSet();
+                foreach (var id in ids.Where(id => !found.Contains(id)))
+                    _importingOrderIds.Remove(id);
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception) { }
+
+            await InvokeAsync(StateHasChanged);
+        }
+
+        var timedOut = _importingOrderIds.Count > 0;
+        _importingOrderIds.Clear();
+
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            _statusMessage = timedOut
+                ? "Import timed out — check the gateway is running."
+                : "BOM imported successfully.";
+            _statusIsError = timedOut;
+            StateHasChanged();
+        });
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
@@ -756,6 +836,7 @@
         _dotNetRef?.Dispose();
         _saveCts?.Cancel();
         _searchCts?.Cancel();
+        _pollCts?.Cancel();
         await ValueTask.CompletedTask;
     }
 }
