@@ -83,6 +83,14 @@
             <input type="checkbox" @bind="_hideReleased" @bind:after="OnHideReleasedChanged" />
             Hide released
         </label>
+        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" @bind="_hideAssemblies" @bind:after="OnHideAssembliesChanged" />
+            Hide assemblies
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" @bind="_hideNonStock" @bind:after="OnHideNonStockChanged" />
+            Hide non-stock parts
+        </label>
     </div>
 </div>
 
@@ -294,8 +302,10 @@
     // ── Persisted state ───────────────────────────────────────────────────────
     private sealed class BatchesGridState
     {
-        public int?      DateRangeDays    { get; set; } = 30;
-        public bool      HideReleased     { get; set; } = false;
+        public int?      DateRangeDays      { get; set; } = 30;
+        public bool      HideReleased       { get; set; } = false;
+        public bool      HideAssemblies     { get; set; } = true;
+        public bool      HideNonStock       { get; set; } = true;
         public List<int> ExpandedBatchIds   { get; set; } = new();
         public List<int> ExpandedProductIds { get; set; } = new();
     }
@@ -312,7 +322,9 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
     private string _searchTerm = "";
-    private bool _hideReleased = false;
+    private bool _hideReleased    = false;
+    private bool _hideAssemblies  = true;
+    private bool _hideNonStock    = true;
     private HashSet<int> _expandedBatchIds   = new();
     private HashSet<int> _expandedProductIds = new();
     private CancellationTokenSource? _searchCts;
@@ -458,12 +470,30 @@
         await SaveStateAsync();
     }
 
+    private async Task OnHideAssembliesChanged()
+    {
+        await ApplyGridFilters();
+        await RestoreExpansionAsync();
+        await SaveStateAsync();
+    }
+
+    private async Task OnHideNonStockChanged()
+    {
+        await ApplyGridFilters();
+        await RestoreExpansionAsync();
+        await SaveStateAsync();
+    }
+
     private async Task ApplyGridFilters()
     {
         if (_batchGrid is null) return;
         await _batchGrid.ClearFilteringAsync();
         if (_hideReleased)
             await _batchGrid.FilterByColumnAsync("BatchReleased", "equal", false);
+        if (_hideAssemblies)
+            await _batchGrid.FilterByColumnAsync("CategoryOrder", "notequal", 1);
+        if (_hideNonStock)
+            await _batchGrid.FilterByColumnAsync("IsStock", "equal", true);
     }
 
     // ── Sort interception — keep CategoryOrder as permanent primary sort ─────
@@ -492,10 +522,12 @@
     {
         var state = await LocalStorage.GetAsync<BatchesGridState>(StateKey);
         if (state is null) return;
-        _dateRangeDays = state.DateRangeDays;
-        _fromDate      = _dateRangeDays.HasValue ? DateTime.Today.AddDays(-_dateRangeDays.Value) : null;
-        _toDate        = _dateRangeDays.HasValue ? DateTime.Today : null;
-        _hideReleased  = state.HideReleased;
+        _dateRangeDays   = state.DateRangeDays;
+        _fromDate        = _dateRangeDays.HasValue ? DateTime.Today.AddDays(-_dateRangeDays.Value) : null;
+        _toDate          = _dateRangeDays.HasValue ? DateTime.Today : null;
+        _hideReleased    = state.HideReleased;
+        _hideAssemblies  = state.HideAssemblies;
+        _hideNonStock    = state.HideNonStock;
         _expandedBatchIds   = state.ExpandedBatchIds.ToHashSet();
         _expandedProductIds = state.ExpandedProductIds.ToHashSet();
     }
@@ -504,8 +536,10 @@
     {
         await LocalStorage.SetAsync(StateKey, new BatchesGridState
         {
-            DateRangeDays     = _dateRangeDays,
-            HideReleased      = _hideReleased,
+            DateRangeDays      = _dateRangeDays,
+            HideReleased       = _hideReleased,
+            HideAssemblies     = _hideAssemblies,
+            HideNonStock       = _hideNonStock,
             ExpandedBatchIds   = _expandedBatchIds.ToList(),
             ExpandedProductIds = _expandedProductIds.ToList(),
         });
