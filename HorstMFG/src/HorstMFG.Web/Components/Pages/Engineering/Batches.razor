@@ -335,6 +335,7 @@
     // Products currently being polled for VaultBomImported completion
     private HashSet<int> _importingProductIds = new();
     private Dictionary<int, string> _importErrorByProductId = new();
+    private int? _activePartLineItemId;
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -487,6 +488,7 @@
     private async Task ApplyGridFilters()
     {
         if (_batchGrid is null) return;
+        _restoringExpansion = true;
         await _batchGrid.ClearFilteringAsync();
         if (_hideReleased)
             await _batchGrid.FilterByColumnAsync("BatchReleased", "equal", false);
@@ -498,11 +500,13 @@
 
     // ── Sort interception — keep CategoryOrder as permanent primary sort ─────
     private bool _managingSort;
+    private bool _restoringExpansion;
 
     private async Task OnSortActionBegin(ActionEventArgs<FlatBatchPartRow> args)
     {
         if (args.RequestType != Syncfusion.Blazor.Grids.Action.Sorting || _managingSort || args.ColumnName == "CategoryOrder")
             return;
+        if (_restoringExpansion) { args.Cancel = true; return; }
 
         args.Cancel = true;
         _managingSort = true;
@@ -581,7 +585,11 @@
     private async Task RestoreExpansionAsync()
     {
         if (_batchGrid is null || (_expandedBatchIds.Count == 0 && _expandedProductIds.Count == 0))
+        {
+            _restoringExpansion = false;
             return;
+        }
+        _ = Task.Delay(2500).ContinueWith(_ => InvokeAsync(() => { _restoringExpansion = false; }));
         try
         {
             await JS.InvokeVoidAsync("horstGrid.restoreExpansion", "BatchesGrid_v6",
@@ -599,6 +607,8 @@
             args.Row.AddClass(new[] { "row-has-notes" });
         if (!args.Data.IsStock)
             args.Row.AddClass(new[] { "row-dimmed" });
+        if (args.Data.PartLineItemId == _activePartLineItemId)
+            args.Row.AddClass(new[] { "row-active-part" });
     }
 
     // ── PDF thumbnail ─────────────────────────────────────────────────────────
@@ -691,6 +701,7 @@
     private async Task OnBatchProductQtyChanged(int productId, string rawValue)
     {
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
+        _activePartLineItemId = null;
         await BomService.UpdateBatchProductQtyAsync(productId, qty);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
         await LoadData();
@@ -701,6 +712,7 @@
     {
         var trimmed = rawValue.Trim();
         if (string.IsNullOrEmpty(trimmed)) return;
+        _activePartLineItemId = null;
         await BomService.UpdateBatchProductNameAsync(productId, trimmed);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
         await LoadData();
@@ -712,6 +724,7 @@
 
     private async Task OnRetryBatchProduct(int productId)
     {
+        _activePartLineItemId = null;
         var result = await BatchImportSvc.RetrySingleBatchProductAsync(productId);
         if (!string.IsNullOrEmpty(result.GatewayError))
         {
@@ -835,6 +848,7 @@
     // ── Stock checkbox ────────────────────────────────────────────────────────
     private async Task OnIsStockChanged(FlatBatchPartRow row, bool newValue)
     {
+        _activePartLineItemId = row.PartLineItemId;
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {

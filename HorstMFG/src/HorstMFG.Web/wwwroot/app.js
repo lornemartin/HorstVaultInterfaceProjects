@@ -59,6 +59,11 @@ window.horstGrid = {
 
         console.log('[horstGrid] restoreExpansion: keys to restore', { level1Keys: level1Keys, level2Keys: level2Keys });
 
+        // Deadline-based polling: Syncfusion may fire its own deferred collapse after a filter
+        // change (overwriting our expansion), so we keep re-checking until nothing is left to
+        // expand or the window closes.
+        var deadline = Date.now() + 2000;
+
         function tryExpand() {
             var collapseIcons = el.querySelectorAll('.e-recordpluscollapse');
             console.log('[horstGrid] restoreExpansion: scanning', collapseIcons.length, 'collapsed icons');
@@ -86,11 +91,17 @@ window.horstGrid = {
                     return;
                 }
             }
-            console.log('[horstGrid] restoreExpansion: done');
+            // Nothing to expand right now — keep polling until deadline in case
+            // Syncfusion collapses things again after its own deferred render.
+            if (Date.now() < deadline) {
+                setTimeout(tryExpand, 200);
+            } else {
+                console.log('[horstGrid] restoreExpansion: done');
+            }
         }
 
-        // Small delay so the grid has painted its initial collapsed state
-        setTimeout(tryExpand, 150);
+        // Initial delay: let Syncfusion finish its post-filter DOM work before first scan.
+        setTimeout(tryExpand, 300);
     },
 
     // Attach a click listener so we're notified when the user expands/collapses
@@ -165,6 +176,17 @@ window.horstGrid = {
                 dotNetRef.invokeMethodAsync('UpdateGroupExpansionState', keys);
             }, 150);
         }, true);
+    },
+
+    highlightCaptionRow: function (gridId, key, level) {
+        var styleId = 'hor-highlight-style-' + gridId;
+        var existing = document.getElementById(styleId);
+        if (existing) existing.remove();
+        if (!key) return;
+        var style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = '#' + gridId + ' tr:has(> td > span[data-group-key="' + key + '"][data-group-level="' + level + '"]) > td { background-color: #fefce8 !important; box-shadow: inset 3px 0 0 #d97706; }';
+        document.head.appendChild(style);
     }
 };
 

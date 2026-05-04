@@ -341,6 +341,7 @@
     // Orders currently being polled for VaultBomImported completion
     private HashSet<int> _importingOrderIds = new();
     private Dictionary<int, string> _importErrorByOrderId = new();
+    private int? _activePartLineItemId;
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -575,6 +576,8 @@
             args.Row.AddClass(new[] { "row-has-notes" });
         if (args.Data.IsStock)
             args.Row.AddClass(new[] { "row-dimmed" });
+        if (args.Data.PartLineItemId == _activePartLineItemId)
+            args.Row.AddClass(new[] { "row-active-part" });
     }
 
     // ── PDF thumbnail ─────────────────────────────────────────────────────────
@@ -659,6 +662,7 @@
     private async Task OnScheduleOrderQtyChanged(int orderId, string rawValue)
     {
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
+        _activePartLineItemId = null;
         await BomService.UpdateScheduleOrderQtyAsync(orderId, qty);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v6");
         await LoadData();
@@ -668,6 +672,7 @@
     private async Task OnScheduleOrderProductNumberChanged(int orderId, string? rawValue)
     {
         var trimmed = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
+        _activePartLineItemId = null;
         await BomService.UpdateScheduleOrderProductNumberAsync(orderId, trimmed);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v6");
         await LoadData();
@@ -681,6 +686,7 @@
 
     private async Task OnRetryOrder(int orderId)
     {
+        _activePartLineItemId = null;
         var result = await ScheduleImportSvc.RetrySingleScheduleOrderAsync(orderId);
         if (!string.IsNullOrEmpty(result.GatewayError))
         {
@@ -804,6 +810,7 @@
     // ── Stock checkbox ────────────────────────────────────────────────────────
     private async Task OnIsStockChanged(FlatSchedulePartRow row, bool newValue)
     {
+        _activePartLineItemId = row.PartLineItemId;
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {

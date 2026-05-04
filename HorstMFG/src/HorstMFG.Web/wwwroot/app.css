@@ -208,6 +208,11 @@ h1:focus {
 #BatchesGrid_v6 .e-filterbar { display: none !important; }
 
 /* Engineering grid row styles */
+.e-grid .e-row.row-active-part > td {
+    background-color: #fefce8 !important;
+    box-shadow: inset 3px 0 0 #d97706;
+}
+
 .e-grid .e-row.row-released td {
     background-color: #dcfce7 !important;
     font-weight: 600;
@@ -250,6 +255,7 @@ h1:focus {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
 
 /* ── Context menu visibility per row type ────────────────────────────────── */
 
