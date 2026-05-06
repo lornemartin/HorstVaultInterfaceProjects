@@ -400,10 +400,13 @@
     // ── Data loading ──────────────────────────────────────────────────────────
     private async Task LoadData()
     {
+        _restoringExpansion = true;
         _loading = true;
         _statusMessage = null;
         _importErrorByProductId.Clear();
         StateHasChanged();
+        await JS.InvokeVoidAsync("console.log", "[DBG Batches] LoadData start — expandedBatches:",
+            _expandedBatchIds.ToList(), "expandedProducts:", _expandedProductIds.ToList());
         var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
         _rows = await BomService.GetFlatBatchPartsAsync(_selectedPlantId, _fromDate, _toDate, term);
         BuildMeta();
@@ -504,6 +507,11 @@
 
     private async Task OnSortActionBegin(ActionEventArgs<FlatBatchPartRow> args)
     {
+        await JS.InvokeVoidAsync("console.log",
+            "[DBG Batches] OnSortActionBegin: requestType=" + args.RequestType +
+            " col=" + args.ColumnName +
+            " managingSort=" + _managingSort +
+            " restoringExpansion=" + _restoringExpansion);
         if (args.RequestType != Syncfusion.Blazor.Grids.Action.Sorting || _managingSort || args.ColumnName == "CategoryOrder")
             return;
         if (_restoringExpansion) { args.Cancel = true; return; }
@@ -519,6 +527,7 @@
         {
             _managingSort = false;
         }
+        await RestoreExpansionAsync();
     }
 
     // ── State persistence ─────────────────────────────────────────────────────
@@ -574,6 +583,8 @@
     {
         _expandedBatchIds   = level1.ToHashSet();
         _expandedProductIds = level2.ToHashSet();
+        Logger.LogWarning("[DBG Batches] UpdateExpansionState: level1=[{L1}] level2=[{L2}]",
+            string.Join(",", level1), string.Join(",", level2));
         DebounceSaveState();
     }
 
@@ -586,9 +597,13 @@
     {
         if (_batchGrid is null || (_expandedBatchIds.Count == 0 && _expandedProductIds.Count == 0))
         {
+            await JS.InvokeVoidAsync("console.log", "[DBG Batches] RestoreExpansionAsync: nothing to restore",
+                "batches=", _expandedBatchIds.Count, "products=", _expandedProductIds.Count);
             _restoringExpansion = false;
             return;
         }
+        await JS.InvokeVoidAsync("console.log", "[DBG Batches] RestoreExpansionAsync: restoring",
+            "batches=", _expandedBatchIds.ToList(), "products=", _expandedProductIds.ToList());
         _ = Task.Delay(2500).ContinueWith(_ => InvokeAsync(() => { _restoringExpansion = false; }));
         try
         {

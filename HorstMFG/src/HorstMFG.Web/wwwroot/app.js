@@ -110,14 +110,37 @@ window.horstGrid = {
     watchExpansion: function (gridId, dotNetRef) {
         var el = document.getElementById(gridId);
         if (!el) { console.log('[horstGrid] watchExpansion: element not found', gridId); return; }
+        console.log('[horstGrid] watchExpansion: listener attached to', gridId);
         el.addEventListener('click', function (e) {
-            if (_horstGridRestoring) return;
-            if (!e.target.closest('.e-recordpluscollapse, .e-recordplusexpand')) return;
-            console.log('[horstGrid] expand/collapse clicked in', gridId);
-            setTimeout(function () {
-                var keys = window.horstGrid.getExpandedGroupKeys(gridId);
-                dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2);
-            }, 150);
+            if (_horstGridRestoring) {
+                console.log('[horstGrid] watchExpansion: click suppressed (_horstGridRestoring=true)', gridId);
+                return;
+            }
+            var icon = e.target.closest('.e-recordpluscollapse, .e-recordplusexpand');
+            if (!icon) return;
+            console.log('[horstGrid] watchExpansion: USER expand/collapse click detected in', gridId);
+
+            // Determine what class the icon should have after Syncfusion finishes.
+            // A collapse icon (.e-recordpluscollapse) becomes expand (.e-recordplusexpand) once loaded.
+            // An expand icon (.e-recordplusexpand) becomes collapse (.e-recordpluscollapse) immediately.
+            var wasCollapse = icon.classList.contains('e-recordpluscollapse');
+            var expectedClass = wasCollapse ? 'e-recordplusexpand' : 'e-recordpluscollapse';
+
+            // Poll until the icon flips class (signals lazy-load is complete), then capture state.
+            var polls = 0;
+            function poll() {
+                if (icon.classList.contains(expectedClass) || polls >= 20) {
+                    setTimeout(function () {
+                        var keys = window.horstGrid.getExpandedGroupKeys(gridId);
+                        console.log('[horstGrid] watchExpansion: sending to UpdateExpansionState (poll=' + polls + ')', keys);
+                        dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2);
+                    }, 80);
+                } else {
+                    polls++;
+                    setTimeout(poll, 100);
+                }
+            }
+            setTimeout(poll, 80);
         }, true);
     },
 
