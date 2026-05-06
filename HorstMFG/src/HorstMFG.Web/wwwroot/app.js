@@ -1,7 +1,8 @@
 // ── Grid group-expansion helpers ──────────────────────────────────────────
-// Flag set during programmatic restore so the watchExpansion listener
-// does not attempt to snapshot partial state mid-restore.
-var _horstGridRestoring = false;
+// Per-grid flag set during programmatic restore so each grid's watchExpansion
+// listener does not snapshot partial state mid-restore.
+// Keyed by gridId so concurrent restores on different grids don't interfere.
+var _horstGridRestoring = {};
 
 window.horstGrid = {
 
@@ -59,44 +60,63 @@ window.horstGrid = {
 
         console.log('[horstGrid] restoreExpansion: keys to restore', { level1Keys: level1Keys, level2Keys: level2Keys });
 
-        // Deadline-based polling: Syncfusion may fire its own deferred collapse after a filter
-        // change (overwriting our expansion), so we keep re-checking until nothing is left to
-        // expand or the window closes.
-        var deadline = Date.now() + 2000;
+        // Hold the per-grid restoring flag for the entire process so this grid's
+        // watchExpansion stays silent. Uses gridId key so concurrent restores on
+        // different grids don't interfere with each other.
+        _horstGridRestoring[gridId] = true;
+        var deadline = Date.now() + 5000;
 
         function tryExpand() {
+            if (Date.now() > deadline) {
+                _horstGridRestoring[gridId] = false;
+                console.log('[horstGrid] restoreExpansion: done (deadline)', gridId);
+                return;
+            }
+
             var collapseIcons = el.querySelectorAll('.e-recordpluscollapse');
-            console.log('[horstGrid] restoreExpansion: scanning', collapseIcons.length, 'collapsed icons');
+            console.log('[horstGrid] restoreExpansion: scanning', collapseIcons.length, 'collapsed icons', gridId);
+
+            var clickedIcon = null;
             for (var i = 0; i < collapseIcons.length; i++) {
                 var icon = collapseIcons[i];
                 var row  = icon.closest('tr');
                 if (!row) continue;
                 var keyEl = row.querySelector('[data-group-key]');
-                if (!keyEl) {
-                    console.log('[horstGrid] collapsed row has no data-group-key — HTML:', row.innerHTML.substring(0, 400));
-                    continue;
-                }
+                if (!keyEl) continue;
                 var key   = parseInt(keyEl.dataset.groupKey,   10);
                 var level = parseInt(keyEl.dataset.groupLevel, 10);
                 var want  = (level === 1 && level1Keys.indexOf(key) !== -1) ||
                             (level === 2 && level2Keys.indexOf(key) !== -1);
                 if (want) {
-                    console.log('[horstGrid] clicking to expand level', level, 'key', key);
-                    _horstGridRestoring = true;
-                    icon.click(); // Syncfusion's own handler expands the group
-                    setTimeout(function () {
-                        _horstGridRestoring = false;
-                        tryExpand(); // re-scan: child rows are now in the DOM
-                    }, 100);
-                    return;
+                    console.log('[horstGrid] clicking to expand level', level, 'key', key, gridId);
+                    icon.click();
+                    clickedIcon = icon;
+                    break;
                 }
             }
-            // Nothing to expand right now — keep polling until deadline in case
-            // Syncfusion collapses things again after its own deferred render.
-            if (Date.now() < deadline) {
-                setTimeout(tryExpand, 200);
+
+            if (clickedIcon) {
+                // Wait for the clicked icon to flip to .e-recordplusexpand (lazy-load complete)
+                // before rescanning. Without this wait we would double-click and cancel the expansion.
+                var polls = 0;
+                function waitForFlip() {
+                    if (clickedIcon.classList.contains('e-recordplusexpand') || polls >= 30) {
+                        setTimeout(tryExpand, 100);
+                    } else {
+                        polls++;
+                        setTimeout(waitForFlip, 100);
+                    }
+                }
+                setTimeout(waitForFlip, 80);
             } else {
-                console.log('[horstGrid] restoreExpansion: done');
+                // Nothing to expand this pass — keep polling until deadline in case
+                // Syncfusion fires a deferred collapse after its own render.
+                if (Date.now() < deadline) {
+                    setTimeout(tryExpand, 200);
+                } else {
+                    _horstGridRestoring[gridId] = false;
+                    console.log('[horstGrid] restoreExpansion: done', gridId);
+                }
             }
         }
 
@@ -112,8 +132,8 @@ window.horstGrid = {
         if (!el) { console.log('[horstGrid] watchExpansion: element not found', gridId); return; }
         console.log('[horstGrid] watchExpansion: listener attached to', gridId);
         el.addEventListener('click', function (e) {
-            if (_horstGridRestoring) {
-                console.log('[horstGrid] watchExpansion: click suppressed (_horstGridRestoring=true)', gridId);
+            if (_horstGridRestoring[gridId]) {
+                console.log('[horstGrid] watchExpansion: click suppressed (restoring)', gridId);
                 return;
             }
             var icon = e.target.closest('.e-recordpluscollapse, .e-recordplusexpand');
@@ -165,6 +185,7 @@ window.horstGrid = {
         var el = document.getElementById(gridId);
         if (!el || !keys || keys.length === 0) return;
 
+        _horstGridRestoring[gridId] = true;
         function tryExpand() {
             var collapseIcons = el.querySelectorAll('.e-recordpluscollapse');
             for (var i = 0; i < collapseIcons.length; i++) {
@@ -175,15 +196,14 @@ window.horstGrid = {
                 if (!keyEl) continue;
                 var key = keyEl.dataset.groupKey;
                 if (keys.indexOf(key) !== -1) {
-                    _horstGridRestoring = true;
                     icon.click();
                     setTimeout(function () {
-                        _horstGridRestoring = false;
                         tryExpand();
-                    }, 100);
+                    }, 150);
                     return;
                 }
             }
+            _horstGridRestoring[gridId] = false;
         }
         setTimeout(tryExpand, 150);
     },
@@ -192,7 +212,7 @@ window.horstGrid = {
         var el = document.getElementById(gridId);
         if (!el) return;
         el.addEventListener('click', function (e) {
-            if (_horstGridRestoring) return;
+            if (_horstGridRestoring[gridId]) return;
             if (!e.target.closest('.e-recordpluscollapse, .e-recordplusexpand')) return;
             setTimeout(function () {
                 var keys = window.horstGrid.getExpandedGroupStringKeys(gridId);
