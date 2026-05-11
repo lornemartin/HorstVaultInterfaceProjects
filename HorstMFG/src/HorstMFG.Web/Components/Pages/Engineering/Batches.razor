@@ -126,6 +126,8 @@
                                 style="@BtnStyle("e-primary")">Release to Production</button>
                         <button @onclick="@(async () => await OnDeleteBatch(batch))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
+                        <button @onclick="@(async () => await OnMarkAllStockBatchLevel(batch))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("")">Mark all as stock</button>
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
                     <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "laser"))" @onclick:stopPropagation="true"
@@ -190,6 +192,8 @@
                         }
                         <button @onclick="@(async () => await OnDeleteBatchProduct(product))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
+                        <button @onclick="@(() => OnMarkAllAsStockClicked(product))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("")">Mark all as stock</button>
                     }
                 </span>
             }
@@ -290,6 +294,25 @@
     </DialogTemplates>
 </SfDialog>
 
+<SfDialog @bind-Visible="_showMarkAllStockDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
+          Header="Mark All Parts as Stock" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            @if (_markAllStockProduct is not null && _markAllStockBatch is not null)
+            {
+                <p>Mark all parts in <strong>@_markAllStockProduct.ProductName</strong> as stock?</p>
+                <p><strong>This batch item only</strong> marks all parts in <strong>@_markAllStockProduct.ProductName</strong>.</p>
+                <p><strong>All batch items</strong> marks the same part numbers wherever they appear across all batch items in <strong>@_markAllStockBatch.Name</strong>.</p>
+            }
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnMarkAllStockCancel">Cancel</SfButton>
+            <SfButton OnClick="OnMarkAllStockThisOnly" CssClass="e-outline" style="margin-left: 8px;">This batch item only</SfButton>
+            <SfButton OnClick="OnMarkAllStockEntireBatch" CssClass="e-primary" style="margin-left: 8px;">All batch items</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
 @code {
     // ── Data ─────────────────────────────────────────────────────────────────
     private List<FlatBatchPartRow> _rows = new();
@@ -351,6 +374,11 @@
     private bool _stockDialogNewValue;
     private int _stockDialogSiblingCount;
     private double _stockDialogScrollTop;
+
+    // Mark-all-as-stock dialog
+    private bool _showMarkAllStockDialog;
+    private ProductCaption? _markAllStockProduct;
+    private BatchCaption? _markAllStockBatch;
 
     private record PlantOption(int? Id, string Name);
 
@@ -905,6 +933,60 @@
     {
         _showStockDialog = false;
         _stockDialogRow = null;
+    }
+
+    // ── Mark all as stock ─────────────────────────────────────────────────────
+    private void OnMarkAllAsStockClicked(ProductCaption product)
+    {
+        if (!_batchMeta.TryGetValue(product.BatchId, out var batch)) return;
+        _markAllStockProduct = product;
+        _markAllStockBatch = batch;
+        _showMarkAllStockDialog = true;
+        StateHasChanged();
+    }
+
+    private void OnMarkAllStockCancel()
+    {
+        _showMarkAllStockDialog = false;
+        _markAllStockProduct = null;
+        _markAllStockBatch = null;
+    }
+
+    private async Task OnMarkAllStockThisOnly()
+    {
+        _showMarkAllStockDialog = false;
+        if (_markAllStockProduct is null) return;
+        var productId = _markAllStockProduct.Id;
+        _markAllStockProduct = null;
+        _markAllStockBatch = null;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
+        await BomService.MarkAllPartsAsStockForBatchProductAsync(productId);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v6", scrollTop);
+    }
+
+    private async Task OnMarkAllStockEntireBatch()
+    {
+        _showMarkAllStockDialog = false;
+        if (_markAllStockProduct is null) return;
+        var productId = _markAllStockProduct.Id;
+        _markAllStockProduct = null;
+        _markAllStockBatch = null;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
+        await BomService.MarkMatchingPartsAsStockAcrossBatchAsync(productId);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v6", scrollTop);
+    }
+
+    private async Task OnMarkAllStockBatchLevel(BatchCaption batch)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Mark all parts in every batch item of '{batch.Name}' as stock?");
+        if (!confirmed) return;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
+        await BomService.MarkAllPartsAsStockForBatchAsync(batch.Id);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v6", scrollTop);
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────

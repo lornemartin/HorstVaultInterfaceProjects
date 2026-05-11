@@ -77,6 +77,22 @@ public interface IBomService
     Task UpdatePartIsStockForAllSiblingsAsync(int partLineItemId, bool isStock);
 
     /// <summary>
+    /// Set IsStock = true for every PartLineItem belonging to the given BatchProduct.
+    /// </summary>
+    Task MarkAllPartsAsStockForBatchProductAsync(int batchProductId);
+
+    /// <summary>
+    /// Set IsStock = true for every PartLineItem belonging to any BatchProduct in the given Batch.
+    /// </summary>
+    Task MarkAllPartsAsStockForBatchAsync(int batchId);
+
+    /// <summary>
+    /// Set IsStock = true for all PartLineItems in the batch that share a PartNumber with any
+    /// part in the given BatchProduct.
+    /// </summary>
+    Task MarkMatchingPartsAsStockAcrossBatchAsync(int batchProductId);
+
+    /// <summary>
     /// Permanently delete a PartLineItem from the database.
     /// </summary>
     Task RemovePartLineItemAsync(int partLineItemId);

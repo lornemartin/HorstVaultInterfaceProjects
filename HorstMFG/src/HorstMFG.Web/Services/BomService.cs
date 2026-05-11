@@ -676,6 +676,39 @@ public class BomService : IBomService
         }
     }
 
+    public async Task MarkAllPartsAsStockForBatchProductAsync(int batchProductId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProductId == batchProductId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, true));
+    }
+
+    public async Task MarkAllPartsAsStockForBatchAsync(int batchId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProduct!.BatchId == batchId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, true));
+    }
+
+    public async Task MarkMatchingPartsAsStockAcrossBatchAsync(int batchProductId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var batchProduct = await db.Set<BatchProduct>().AsNoTracking().FirstOrDefaultAsync(bp => bp.Id == batchProductId);
+        if (batchProduct is null) return;
+        var partNumbers = await db.Set<PartLineItem>()
+            .AsNoTracking()
+            .Where(p => p.BatchProductId == batchProductId)
+            .Select(p => p.PartNumber)
+            .Distinct()
+            .ToListAsync();
+        if (partNumbers.Count == 0) return;
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProduct!.BatchId == batchProduct.BatchId && partNumbers.Contains(p.PartNumber))
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, true));
+    }
+
     public async Task RemovePartLineItemAsync(int partLineItemId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
