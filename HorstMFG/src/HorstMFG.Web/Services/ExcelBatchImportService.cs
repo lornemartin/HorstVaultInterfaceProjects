@@ -24,6 +24,7 @@ public record ExcelBatchImportResult(
 public class ExcelBatchImportService
 {
     private readonly ExcelBatchParser _parser;
+    private readonly PoBatchParser _poParser;
     private readonly VaultGatewayClient _gateway;
     private readonly BomImportJobTracker _jobs;
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
@@ -32,6 +33,7 @@ public class ExcelBatchImportService
 
     public ExcelBatchImportService(
         ExcelBatchParser parser,
+        PoBatchParser poParser,
         VaultGatewayClient gateway,
         BomImportJobTracker jobs,
         IDbContextFactory<ApplicationDbContext> dbFactory,
@@ -39,6 +41,7 @@ public class ExcelBatchImportService
         ILogger<ExcelBatchImportService> log)
     {
         _parser = parser;
+        _poParser = poParser;
         _gateway = gateway;
         _jobs = jobs;
         _dbFactory = dbFactory;
@@ -51,16 +54,30 @@ public class ExcelBatchImportService
     {
         var parsed = _parser.Parse(xlsx);
         if (parsed.Errors.Count > 0)
-            return new ExcelBatchImportResult(false, null, null, null, 0, 0,
-                new(), parsed.Errors);
+            return Failure(parsed.Errors);
+        return await ImportParsedAsync(parsed, plantId, userId, ct);
+    }
 
+    public async Task<ExcelBatchImportResult> ImportFromPoAsync(
+        Stream stream, int plantId, int userId, CancellationToken ct = default)
+    {
+        ParsedBatch parsed;
+        try { parsed = _poParser.Parse(stream); }
+        catch (Exception ex) { return Failure(new() { $"Could not read file: {ex.Message}" }); }
+        if (parsed.Errors.Count > 0)
+            return Failure(parsed.Errors);
+        return await ImportParsedAsync(parsed, plantId, userId, ct);
+    }
+
+    private async Task<ExcelBatchImportResult> ImportParsedAsync(
+        ParsedBatch parsed, int plantId, int userId, CancellationToken ct)
+    {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var existing = await db.Batches.FirstOrDefaultAsync(
             b => b.Name == parsed.Name && b.PlantId == plantId, ct);
         if (existing is not null)
-            return new ExcelBatchImportResult(false, null, null, null, 0, 0,
-                new(), new() { $"A batch named '{parsed.Name}' already exists in this plant." });
+            return Failure(new() { $"A batch named '{parsed.Name}' already exists in this plant." });
 
         var batch = new Batch
         {
@@ -97,6 +114,9 @@ public class ExcelBatchImportService
                 products.Count, 0, warnings, new List<string>());
         }
     }
+
+    private static ExcelBatchImportResult Failure(List<string> errors) =>
+        new(false, null, null, null, 0, 0, new(), errors);
 
     /// <summary>
     /// Re-issues a Vault BOM query for batch products that aren't yet imported.

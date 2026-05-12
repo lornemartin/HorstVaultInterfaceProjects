@@ -18,9 +18,25 @@
 
 @if (_state == State.Upload)
 {
-    <p>Upload a batch Excel file. The batch name comes from cell A1; rows below define products (Col A = Qty, Col B = Product #).</p>
+    <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.4rem;">Format</label>
+        <div style="display: flex; gap: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                <input type="radio" name="batchFormat" checked="@(_format == BatchImportFormat.Standard)"
+                       @onchange="@(() => _format = BatchImportFormat.Standard)" />
+                Standard (.xlsx) — A1 = batch name, col A = qty, col B = product #
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                <input type="radio" name="batchFormat" checked="@(_format == BatchImportFormat.PurchaseOrder)"
+                       @onchange="@(() => _format = BatchImportFormat.PurchaseOrder)" />
+                Purchase Order (.xls / .xlsx) — E15 = batch name, col D = qty, col F = product
+            </label>
+        </div>
+    </div>
 
-    <InputFile OnChange="OnFileSelected" accept=".xlsx" class="form-control" style="max-width: 480px;" />
+    <InputFile OnChange="OnFileSelected"
+               accept="@(_format == BatchImportFormat.Standard ? ".xlsx" : ".xls,.xlsx")"
+               class="form-control" style="max-width: 480px;" />
 
     @if (_message is not null)
     {
@@ -92,7 +108,10 @@
 
 @code {
     private enum State { Upload, Preview, Errors }
+    private enum BatchImportFormat { Standard, PurchaseOrder }
+
     private State _state = State.Upload;
+    private BatchImportFormat _format = BatchImportFormat.Standard;
     private string? _message;
     private bool _isError;
     private string? _batchName;
@@ -116,7 +135,9 @@
             ms.Position = 0;
 
             var (plantId, userId) = GetPlantAndUser();
-            _import = await ImportSvc.ImportAsync(ms, plantId, userId);
+            _import = _format == BatchImportFormat.PurchaseOrder
+                ? await ImportSvc.ImportFromPoAsync(ms, plantId, userId)
+                : await ImportSvc.ImportAsync(ms, plantId, userId);
             if (!_import.Success)
             {
                 _errors = _import.Errors;
