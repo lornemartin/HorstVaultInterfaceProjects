@@ -38,6 +38,11 @@ public interface IBomService
         int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
 
     /// <summary>
+    /// Rename a Batch (top-level group in the Batches grid).
+    /// </summary>
+    Task UpdateBatchNameAsync(int batchId, string name);
+
+    /// <summary>
     /// Update the Qty on a BatchProduct (product row in the Batches grid).
     /// </summary>
     Task UpdateBatchProductQtyAsync(int batchProductId, int qty);

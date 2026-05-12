@@ -107,7 +107,21 @@
             @if (ctx.Field == "BatchId" && _batchMeta.TryGetValue(key, out var batch))
             {
                 <span data-group-key="@batch.Id" data-group-level="1" style="display:none;"></span>
-                <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
+                @if (batch.IsReleased)
+                {
+                    <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
+                }
+                else
+                {
+                    <input type="text" value="@batch.Name"
+                           @onchange="@(async e => await OnBatchNameChanged(batch.Id, e.Value?.ToString() ?? ""))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                           @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
+                           title="Edit batch name, press Enter or click elsewhere to save"
+                           style="font-weight: 700; font-size: 1rem; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px; color: #111827; min-width: 180px;" />
+                }
                 <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
                     @batch.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
                 </span>
@@ -739,6 +753,17 @@
         if (!confirmed) return;
         await BomService.DeleteBatchProductAsync(product.Id);
         await LoadData();
+    }
+
+    private async Task OnBatchNameChanged(int batchId, string rawValue)
+    {
+        var trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+        if (_batchMeta.TryGetValue(batchId, out var current) && current.Name == trimmed) return;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v6");
+        await BomService.UpdateBatchNameAsync(batchId, trimmed);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v6", scrollTop);
     }
 
     private async Task OnBatchProductQtyChanged(int productId, string rawValue)

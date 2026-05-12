@@ -576,6 +576,16 @@ public class BomService : IBomService
         return rows;
     }
 
+    public async Task UpdateBatchNameAsync(int batchId, string name)
+    {
+        var trimmed = name.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<Batch>()
+            .Where(b => b.Id == batchId)
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.Name, trimmed));
+    }
+
     public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
