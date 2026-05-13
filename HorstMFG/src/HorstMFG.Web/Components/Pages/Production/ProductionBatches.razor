@@ -13,6 +13,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.Security.Claims
 @implements IAsyncDisposable
@@ -44,7 +45,7 @@
     <button class="btn btn-sm btn-primary" @onclick="ReloadAsync">Load</button>
     <label style="font-size:.9em; color:#374151; margin:0; display:flex; align-items:center; gap:.35rem; cursor:pointer;">
         <input type="checkbox" checked="@_hideComplete" @onchange="OnHideCompleteChanged" />
-        Hide fully nested
+        Hide complete / fully nested
     </label>
     @if (_items.Count > 0)
     {
@@ -137,10 +138,42 @@
         <GridColumn Field="@nameof(BatchItemRow.Material)"       HeaderText="Material"   Width="110" />
         <GridColumn Field="@nameof(BatchItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.BatchName)"      HeaderText="Batch"      Width="180" />
-        <GridColumn Field="@nameof(BatchItemRow.IsComplete)"     HeaderText="Complete"   Width="95"  DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field="@nameof(BatchItemRow.IsComplete)" HeaderText="Complete" Width="95" TextAlign="TextAlign.Center">
+            <Template>
+                @{ var row = (context as BatchItemRow)!; }
+                <input type="checkbox" checked="@row.IsComplete"
+                       disabled="@(row.IsComplete && row.QtyNested >= row.QtyRequired)"
+                       @onchange="@(async e => await OnIsCompleteChangedAsync(row, (bool)e.Value!))"
+                       @onclick:stopPropagation="true"
+                       title="@(row.IsComplete && row.QtyNested >= row.QtyRequired ? "Cannot un-complete a fully nested item" : "")"
+                       style="cursor:@(row.IsComplete && row.QtyNested >= row.QtyRequired ? "not-allowed" : "pointer"); width:16px; height:16px;" />
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(BatchItemRow.Notes)"          HeaderText="Notes"      Width="180" />
     </GridColumns>
 </SfGrid>
+
+<SfDialog @bind-Visible="_completeDialogVisible" Width="440px" IsModal="true" ShowCloseIcon="true"
+          Header="Mark Item Complete" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            @if (_completeDialogRow is not null)
+            {
+                <p>This item has only <strong>@_completeDialogRow.QtyNested</strong> of <strong>@_completeDialogRow.QtyRequired</strong> nested.
+                   Marking it complete will treat it as done even though nesting is not finished.</p>
+                <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer; margin-top:1rem;">
+                    <input type="checkbox" @bind="_completeDialogConfirmed" />
+                    I understand this item is not fully nested
+                </label>
+            }
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnCompleteDialogCancel">Cancel</SfButton>
+            <SfButton Disabled="@(!_completeDialogConfirmed)" OnClick="OnCompleteDialogConfirm"
+                      CssClass="e-primary" style="margin-left:8px;">Mark Complete</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
 
 @code {
     private SfGrid<BatchItemRow>? _grid;
@@ -154,6 +187,10 @@
     private HashSet<string> _expandedGroupKeys = new();
     private DotNetObjectReference<ProductionBatches>? _dotNetRef;
     private long _thumbnailVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+    private bool _completeDialogVisible;
+    private BatchItemRow? _completeDialogRow;
+    private bool _completeDialogConfirmed;
 
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -200,7 +237,7 @@
             query = query.Where(i => i.NestBatch.EntryDate < _toDate.Value.AddDays(1).ToUniversalTime());
 
         if (_hideComplete)
-            query = query.Where(i => i.QtyRequired > i.QtyNested);
+            query = query.Where(i => i.QtyRequired > i.QtyNested && !i.IsComplete);
 
         _items = await query
             .Select(i => new BatchItemRow
@@ -287,6 +324,46 @@
         if (item == null) return;
         item.QtyRequired = qty;
         await db.SaveChangesAsync();
+    }
+
+    private async Task OnIsCompleteChangedAsync(BatchItemRow row, bool newValue)
+    {
+        if (!newValue && row.QtyNested >= row.QtyRequired) return;
+        if (newValue && row.QtyNested < row.QtyRequired)
+        {
+            _completeDialogRow = row;
+            _completeDialogConfirmed = false;
+            _completeDialogVisible = true;
+            StateHasChanged();
+            return;
+        }
+        await SaveIsCompleteAsync(row, newValue);
+    }
+
+    private async Task SaveIsCompleteAsync(BatchItemRow row, bool newValue)
+    {
+        row.IsComplete = newValue;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var item = await db.BatchItems.FindAsync(row.Id);
+        if (item == null) return;
+        item.IsComplete = newValue;
+        await db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private void OnCompleteDialogCancel()
+    {
+        _completeDialogVisible = false;
+        _completeDialogRow = null;
+    }
+
+    private async Task OnCompleteDialogConfirm()
+    {
+        _completeDialogVisible = false;
+        if (_completeDialogRow is null) return;
+        var row = _completeDialogRow;
+        _completeDialogRow = null;
+        await SaveIsCompleteAsync(row, true);
     }
 
     private void OnRowSelected(RowSelectEventArgs<BatchItemRow> args)
