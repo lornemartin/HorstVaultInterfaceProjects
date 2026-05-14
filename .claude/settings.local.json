@@ -23,7 +23,9 @@
       "Bash(psql -U postgres -d horstmfg -c \"\\\\d nest_orders\")",
       "Read(//c/Users/lorne/source/repos/HorstMFG.Bridge/**)",
       "Read(//c/Users/lorne/source/repos/HorstMFG.Bridge/HorstMFG.Bridge/**)",
-      "PowerShell(Get-NetTCPConnection *)"
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\lorne\\\\source\\\\repos\\\\HorstVaultInterfaceProjects\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

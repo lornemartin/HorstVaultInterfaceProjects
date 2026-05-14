@@ -7,15 +7,19 @@
 @inject ProtectedLocalStorage LocalStorage
 @inject IJSRuntime JS
 @inject HorstMFG.Web.Services.LocalStorageService LocalSvc
+@inject Microsoft.AspNetCore.SignalR.IHubContext<HorstMFG.Web.Hubs.BridgeHub> HubContext
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Components.Shared
+@using HorstMFG.Web.Hubs
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Popups
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IO
 @using System.Security.Claims
+@using System.Text.Json
 @implements IAsyncDisposable
 
 <PageTitle>Batches - HorstMFG</PageTitle>
@@ -105,6 +109,14 @@
             <span data-group-key="@keyStr" data-group-level="1" style="display:none;"></span>
             <span style="font-weight:600;">@keyStr</span>
             <span style="margin-left:.5rem; color:#6b7280; font-size:.8rem;">(@ctx.Count)</span>
+            @if (ctx.Field == "BatchName" && _batchNameToNestBatchId.TryGetValue(keyStr, out var addNestBatchId))
+            {
+                <button @onclick="@(() => OpenAddPartDialog(addNestBatchId, keyStr))"
+                        @onclick:stopPropagation="true"
+                        style="margin-left:.75rem; padding:2px 8px; font-size:.75rem; border-radius:3px; border:1px solid #d1d5db; background:white; color:#374151; cursor:pointer;">
+                    + Add Part
+                </button>
+            }
         </CaptionTemplate>
     </GridGroupSettings>
     <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" />
@@ -175,6 +187,51 @@
     </DialogTemplates>
 </SfDialog>
 
+<SfDialog @bind-Visible="_addPartDialogVisible" Width="500px" IsModal="true" ShowCloseIcon="true"
+          Header="Add Part to Batch" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            <p style="font-size:.85rem; color:#6b7280; margin-bottom:.75rem;">
+                Batch: <strong>@_addPartGroupLabel</strong>
+            </p>
+            @if (_addPartError is not null)
+            {
+                <div style="color:#dc2626; font-size:.85rem; margin-bottom:.5rem; padding:.4rem .6rem; background:#fee2e2; border-radius:3px;">
+                    @_addPartError
+                </div>
+            }
+            <div style="display:grid; grid-template-columns:130px 1fr; gap:.5rem .75rem; align-items:start;">
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">.sym File</label>
+                <div>
+                    <InputFile OnChange="OnAddPartFileSelected" accept=".sym" style="font-size:.85rem;" />
+                    <div style="font-size:.75rem; color:#9ca3af; margin-top:.2rem;">Optional — pre-fills file name; file is copied to the sym share if configured.</div>
+                </div>
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">File Name *</label>
+                <input type="text" @bind="_addPartFileName" placeholder="e.g. 12345-REV-A"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:100%;" />
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">Description</label>
+                <input type="text" @bind="_addPartDescription"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:100%;" />
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">Material</label>
+                <input type="text" @bind="_addPartMaterial"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:100%;" />
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">Thickness</label>
+                <input type="number" @bind="_addPartThickness" step="0.001" min="0"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:120px;" />
+                <label style="font-size:.875rem; font-weight:500; padding-top:2px;">Has Bends</label>
+                <input type="checkbox" @bind="_addPartHasBends" style="width:16px; height:16px; margin-top:4px;" />
+                <label style="font-size:.875rem; font-weight:500; padding-top:4px;">Qty Required *</label>
+                <input type="number" @bind="_addPartQty" min="1" max="9999"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:80px;" />
+            </div>
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnAddPartCancel">Cancel</SfButton>
+            <SfButton OnClick="OnAddPartConfirm" CssClass="e-primary" style="margin-left:8px;">Add Part</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
 @code {
     private SfGrid<BatchItemRow>? _grid;
     private List<BatchItemRow> _items = new();
@@ -191,6 +248,20 @@
     private bool _completeDialogVisible;
     private BatchItemRow? _completeDialogRow;
     private bool _completeDialogConfirmed;
+
+    private Dictionary<string, int> _batchNameToNestBatchId = new();
+
+    private bool _addPartDialogVisible;
+    private int _addPartTargetId;
+    private string _addPartGroupLabel  = "";
+    private string _addPartFileName    = "";
+    private string _addPartDescription = "";
+    private string _addPartMaterial    = "";
+    private decimal _addPartThickness;
+    private bool _addPartHasBends;
+    private int _addPartQty = 1;
+    private IBrowserFile? _addPartSymFile;
+    private string? _addPartError;
 
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -243,6 +314,7 @@
             .Select(i => new BatchItemRow
             {
                 Id               = i.Id,
+                NestBatchId      = i.NestBatchId,
                 PartId           = i.PartId,
                 RadanIdNumber    = i.RadanIdNumber,
                 BatchName        = i.NestBatch.Batch.Name,
@@ -292,6 +364,11 @@
         }
 
         _selectedForNesting.Clear();
+
+        _batchNameToNestBatchId = _items
+            .Where(i => i.BatchName != null)
+            .GroupBy(i => i.BatchName!)
+            .ToDictionary(g => g.Key, g => g.First().NestBatchId);
     }
 
     private async Task ReloadAsync()
@@ -427,6 +504,92 @@
         catch (JSException) { }
     }
 
+    // ── Add Part ─────────────────────────────────────────────────────────────────
+    private void OpenAddPartDialog(int nestBatchId, string batchName)
+    {
+        _addPartTargetId    = nestBatchId;
+        _addPartGroupLabel  = batchName;
+        _addPartFileName    = "";
+        _addPartDescription = "";
+        _addPartMaterial    = "";
+        _addPartThickness   = 0;
+        _addPartHasBends    = false;
+        _addPartQty         = 1;
+        _addPartSymFile     = null;
+        _addPartError       = null;
+        _addPartDialogVisible = true;
+    }
+
+    private void OnAddPartFileSelected(InputFileChangeEventArgs e)
+    {
+        _addPartSymFile = e.File;
+        if (string.IsNullOrEmpty(_addPartFileName))
+            _addPartFileName = Path.GetFileNameWithoutExtension(e.File.Name);
+    }
+
+    private void OnAddPartCancel() => _addPartDialogVisible = false;
+
+    private async Task OnAddPartConfirm()
+    {
+        _addPartError = null;
+        var fileName = _addPartFileName.Trim();
+        if (string.IsNullOrEmpty(fileName)) { _addPartError = "File name is required."; return; }
+        if (_addPartQty < 1)               { _addPartError = "Qty must be at least 1."; return; }
+
+        _addPartDialogVisible = false;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == fileName);
+        if (part == null)
+        {
+            part = new Part
+            {
+                FileName    = fileName,
+                Description = string.IsNullOrWhiteSpace(_addPartDescription) ? null : _addPartDescription.Trim(),
+                Material    = string.IsNullOrWhiteSpace(_addPartMaterial)    ? null : _addPartMaterial.Trim(),
+                Thickness   = _addPartThickness > 0 ? _addPartThickness : null,
+                HasBends    = _addPartHasBends,
+            };
+            db.Parts.Add(part);
+        }
+        else
+        {
+            if (part.Description == null && !string.IsNullOrWhiteSpace(_addPartDescription)) part.Description = _addPartDescription.Trim();
+            if (part.Material    == null && !string.IsNullOrWhiteSpace(_addPartMaterial))    part.Material    = _addPartMaterial.Trim();
+            if (part.Thickness   == null && _addPartThickness > 0)                           part.Thickness   = _addPartThickness;
+        }
+        await db.SaveChangesAsync();
+
+        db.BatchItems.Add(new BatchItem { NestBatchId = _addPartTargetId, PartId = part.Id, QtyRequired = _addPartQty });
+        await db.SaveChangesAsync();
+
+        if (_addPartSymFile != null)
+        {
+            var symDir = Configuration["FileSystemPaths:SymNetworkSharePath"];
+            if (!string.IsNullOrEmpty(symDir) && Directory.Exists(symDir))
+            {
+                try
+                {
+                    var symPath = Path.Combine(symDir, fileName + ".sym");
+                    await using var rs = _addPartSymFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                    await using var fs = File.Create(symPath);
+                    await rs.CopyToAsync(fs);
+                }
+                catch { }
+            }
+        }
+
+        var stationId = BridgeHub.GetAnyOnlineStationId();
+        if (stationId != null)
+        {
+            var thumbPayload = JsonSerializer.Serialize(new[] { new { PartId = part.Id, FileName = fileName } });
+            BridgeHub.TrySendCommand(HubContext, stationId.Value,
+                Guid.NewGuid().ToString(), "UpdateThumbnail", thumbPayload);
+        }
+
+        await ReloadAsync();
+    }
+
     public async ValueTask DisposeAsync()
     {
         _dotNetRef?.Dispose();
@@ -436,6 +599,7 @@
     private class BatchItemRow
     {
         public int     Id               { get; set; }
+        public int     NestBatchId      { get; set; }
         public int     PartId           { get; set; }
         public int?    RadanIdNumber    { get; set; }
         public string? BatchName        { get; set; }
