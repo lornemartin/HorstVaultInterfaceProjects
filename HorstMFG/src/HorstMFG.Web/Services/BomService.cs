@@ -961,10 +961,11 @@ public class BomService : IBomService
         }
         else
         {
-            // Refresh any fields that may have been missing on a previous release
-            if (part.Thickness is null)  part.Thickness   = ParseThickness(line.Thickness);
-            if (part.Material is null)   part.Material     = line.Material;
-            if (part.Description is null) part.Description = line.Description;
+            // Always update from BOM data so changes in the source are reflected
+            var thk = ParseThickness(line.Thickness);
+            if (thk.HasValue)                              part.Thickness   = thk;
+            if (!string.IsNullOrWhiteSpace(line.Material))    part.Material    = line.Material;
+            if (!string.IsNullOrWhiteSpace(line.Description)) part.Description = line.Description;
         }
         await db.SaveChangesAsync();
         return part;
