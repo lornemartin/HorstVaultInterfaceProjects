@@ -92,6 +92,11 @@
                       Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any())">
                 Update Thumbnails
             </SfButton>
+
+            <SfButton CssClass="e-danger e-outline" IconCss="e-icons e-close" OnClick="OnDeleteSelectedAsync"
+                      Disabled="@(_isBusy || !SelectedItems.Any())">
+                Delete Selected
+            </SfButton>
         </div>
     </div>
 
@@ -630,6 +635,54 @@
             }));
             await SendCommandAsync("UpdateThumbnail", thumbPayload);
         }
+    }
+
+    private async Task OnDeleteSelectedAsync()
+    {
+        if (!SelectedItems.Any()) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var ids = SelectedItems.Select(i => i.ItemId).ToList();
+
+        if (ItemType == "Order")
+        {
+            var items = await db.OrderItems.Where(i => ids.Contains(i.Id)).ToListAsync();
+            var blocked = items
+                .Where(i => i.QtyNested > 0)
+                .Select(i => SelectedItems.FirstOrDefault(s => s.ItemId == i.Id)?.FileName ?? $"Id {i.Id}")
+                .ToList();
+            if (blocked.Any())
+            {
+                await JS.InvokeVoidAsync("alert",
+                    $"Cannot delete — {blocked.Count} item(s) have nested quantities and must be retrieved first:\n{string.Join("\n", blocked)}");
+                return;
+            }
+            bool ok = await JS.InvokeAsync<bool>("confirm", $"Delete {items.Count} selected item(s)? This cannot be undone.");
+            if (!ok) return;
+            db.OrderItems.RemoveRange(items);
+        }
+        else
+        {
+            var items = await db.BatchItems.Where(i => ids.Contains(i.Id)).ToListAsync();
+            var blocked = items
+                .Where(i => i.QtyNested > 0)
+                .Select(i => SelectedItems.FirstOrDefault(s => s.ItemId == i.Id)?.FileName ?? $"Id {i.Id}")
+                .ToList();
+            if (blocked.Any())
+            {
+                await JS.InvokeVoidAsync("alert",
+                    $"Cannot delete — {blocked.Count} item(s) have nested quantities and must be retrieved first:\n{string.Join("\n", blocked)}");
+                return;
+            }
+            bool ok = await JS.InvokeAsync<bool>("confirm", $"Delete {items.Count} selected item(s)? This cannot be undone.");
+            if (!ok) return;
+            db.BatchItems.RemoveRange(items);
+        }
+
+        await db.SaveChangesAsync();
+        Log($"Deleted {ids.Count} item(s).");
+        StateHasChanged();
+        await OnCompleted.InvokeAsync();
     }
 
     private Task ProcessUpdateThumbnailAsync(string payload)

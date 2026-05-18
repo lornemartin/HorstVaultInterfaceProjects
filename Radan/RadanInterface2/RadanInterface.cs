@@ -668,6 +668,8 @@ namespace RadanInterface2
                 return "No Thickness Calculated";
             }
 
+            if (doc.DocumentElement?.FirstChild == null) return "Error, No Thickness Found.";
+
             // cycle through each child node
             foreach (XmlNode node in doc.DocumentElement.FirstChild)
             {
@@ -677,8 +679,8 @@ namespace RadanInterface2
                     {
                         if (subNode.OuterXml.Contains("Thickness"))
                         {
-                            string attr = subNode.Attributes["value"].Value;
-                            return attr;
+                            string attr = subNode.Attributes?["value"]?.Value;
+                            if (attr != null) return attr;
                         }
                     }
                 }
@@ -732,6 +734,8 @@ namespace RadanInterface2
                 return "No Material Specified";
             }
 
+            if (doc.DocumentElement?.FirstChild == null) return "Error, No Material Specified.";
+
             // cycle through each child node
             foreach (XmlNode node in doc.DocumentElement.FirstChild)
             {
@@ -741,8 +745,8 @@ namespace RadanInterface2
                     {
                         if (subNode.OuterXml.Contains("Material"))
                         {
-                            string attr = subNode.Attributes["value"].Value;
-                            return attr;
+                            string attr = subNode.Attributes?["value"]?.Value;
+                            if (attr != null) return attr;
                         }
                     }
                 }
@@ -764,29 +768,21 @@ namespace RadanInterface2
                 return "";
             }
 
+            if (doc.DocumentElement?.FirstChild == null) return "";
+
             // cycle through each child node
             foreach (XmlNode node in doc.DocumentElement.FirstChild)
             {
-                try
+                if (node.InnerXml.Contains("Part Description"))
                 {
-                    if (node.InnerXml.Contains("Part Description"))
+                    foreach (XmlNode subNode in node)
                     {
-                        foreach (XmlNode subNode in node)
+                        if (subNode.OuterXml.Contains("Part Description"))
                         {
-                            if (subNode.OuterXml.Contains("Part Description"))
-                            {
-                                string attr = subNode.Attributes["value"].Value;
-                                return attr;
-                            }
+                            return subNode.Attributes?["value"]?.Value ?? "";
                         }
                     }
                 }
-                catch (Exception)
-                {
-                    // shouldn't really do this, but I couldn't figure out how to test for a null value in this attribute, so relying on the exception handler instead
-                    return null;
-                }
-
             }
             return "";
         }

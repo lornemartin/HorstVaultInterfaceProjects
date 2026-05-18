@@ -95,9 +95,12 @@ public class RetrieveFromVaultResult
 
 public class UpdateThumbnailResult
 {
-    public int     PartId         { get; set; }
-    public byte[]? ThumbnailBytes { get; set; }
-    public bool    Success        { get; set; }
+    public int      PartId         { get; set; }
+    public byte[]?  ThumbnailBytes { get; set; }
+    public bool     Success        { get; set; }
+    public string?  Description    { get; set; }
+    public string?  Material       { get; set; }
+    public decimal? Thickness      { get; set; }
 }
 
 public class RetrieveFromNestingResult

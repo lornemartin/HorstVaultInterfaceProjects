@@ -31,4 +31,6 @@ public interface INestingProjectService
                                          string? description, string? orderNumber,
                                          string? scheduleName, string? batchName, bool hasBends);
     byte[]?            ExtractThumbnail(string symPath);
+    /// <summary>Reads description, material, and thickness stored in the .sym file XML.</summary>
+    (string? Description, string? Material, decimal? Thickness) ReadPartAttributes(string symPath);
 }

@@ -31,10 +31,9 @@ public class UpdateThumbnailHandler
 
         for (int i = 0; i < items.Count; i++)
         {
-            var item     = items[i];
-            var baseName = Path.GetFileNameWithoutExtension(item.FileName);
-            var symPath  = Path.Combine(_config.SymNetworkSharePath, baseName + ".sym");
-            bool exists  = File.Exists(symPath);
+            var item    = items[i];
+            var symPath = Path.Combine(_config.SymNetworkSharePath, item.FileName + ".sym");
+            bool exists = File.Exists(symPath);
 
             _log.LogInformation("Item {Index}/{Total}: FileName={FileName} → symPath={SymPath} exists={Exists}",
                 i + 1, items.Count, item.FileName, symPath, exists);
@@ -49,23 +48,24 @@ public class UpdateThumbnailHandler
                 continue;
             }
 
-            try
+            byte[]? bytes = null;
+            try { bytes = _nesting.ExtractThumbnail(symPath); }
+            catch (Exception ex) { _log.LogError(ex, "ExtractThumbnail failed for {FileName}", item.FileName); }
+
+            var (desc, mat, thk) = _nesting.ReadPartAttributes(symPath); // never throws
+
+            _log.LogInformation("UpdateThumbnail for {FileName}: {Bytes}; desc={Desc} mat={Mat} thk={Thk}",
+                item.FileName, bytes != null ? $"{bytes.Length} bytes" : "null", desc, mat, thk);
+
+            results.Add(new UpdateThumbnailResult
             {
-                var bytes = _nesting.ExtractThumbnail(symPath);
-                _log.LogInformation("ExtractThumbnail for {FileName}: {Bytes}",
-                    item.FileName, bytes != null ? $"{bytes.Length} bytes" : "null");
-                results.Add(new UpdateThumbnailResult
-                {
-                    PartId         = item.PartId,
-                    ThumbnailBytes = bytes,
-                    Success        = bytes != null,
-                });
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, "Failed to extract thumbnail for {FileName}", item.FileName);
-                results.Add(new UpdateThumbnailResult { PartId = item.PartId, Success = false });
-            }
+                PartId         = item.PartId,
+                ThumbnailBytes = bytes,
+                Success        = bytes != null,
+                Description    = desc,
+                Material       = mat,
+                Thickness      = thk,
+            });
         }
 
         _log.LogInformation("UpdateThumbnail complete: {Success}/{Total} part(s) had thumbnail data",

@@ -520,11 +520,24 @@
         _addPartDialogVisible = true;
     }
 
-    private void OnAddPartFileSelected(InputFileChangeEventArgs e)
+    private async Task OnAddPartFileSelected(InputFileChangeEventArgs e)
     {
-        _addPartSymFile = e.File;
-        if (string.IsNullOrEmpty(_addPartFileName))
-            _addPartFileName = Path.GetFileNameWithoutExtension(e.File.Name);
+        _addPartSymFile     = e.File;
+        _addPartFileName    = Path.GetFileNameWithoutExtension(e.File.Name);
+        _addPartDescription = "";
+        _addPartMaterial    = "";
+        _addPartThickness   = 0;
+
+        var fileName = _addPartFileName.Trim();
+        if (string.IsNullOrEmpty(fileName)) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var part = await db.Parts.AsNoTracking().FirstOrDefaultAsync(p => p.FileName == fileName);
+        if (part == null) return;
+
+        _addPartDescription = part.Description ?? "";
+        _addPartMaterial    = part.Material    ?? "";
+        _addPartThickness   = part.Thickness   ?? 0;
     }
 
     private void OnAddPartCancel() => _addPartDialogVisible = false;
@@ -554,9 +567,9 @@
         }
         else
         {
-            if (part.Description == null && !string.IsNullOrWhiteSpace(_addPartDescription)) part.Description = _addPartDescription.Trim();
-            if (part.Material    == null && !string.IsNullOrWhiteSpace(_addPartMaterial))    part.Material    = _addPartMaterial.Trim();
-            if (part.Thickness   == null && _addPartThickness > 0)                           part.Thickness   = _addPartThickness;
+            if (!string.IsNullOrWhiteSpace(_addPartDescription)) part.Description = _addPartDescription.Trim();
+            if (!string.IsNullOrWhiteSpace(_addPartMaterial))    part.Material    = _addPartMaterial.Trim();
+            if (_addPartThickness > 0)                           part.Thickness   = _addPartThickness;
         }
         await db.SaveChangesAsync();
 

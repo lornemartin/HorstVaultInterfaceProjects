@@ -100,6 +100,30 @@ public class RadanProjectService : INestingProjectService
             ref errMsg);
     }
 
+    public (string? Description, string? Material, decimal? Thickness) ReadPartAttributes(string symPath)
+    {
+        try
+        {
+            var ri = new RadanInterface();
+
+            string? desc = null, mat = null, thkStr = null;
+            try { desc   = ri.GetDescriptionFromSym(symPath); } catch { }
+            try { mat    = ri.GetMaterialTypeFromSym(symPath); } catch { }
+            try { thkStr = ri.GetThicknessFromSym(symPath);    } catch { }
+
+            var cleanDesc = !string.IsNullOrWhiteSpace(desc) ? desc.Trim() : null;
+            var cleanMat  = !string.IsNullOrWhiteSpace(mat) && !mat.StartsWith("Error") && !mat.StartsWith("No ")
+                            ? mat.Trim() : null;
+            decimal? thk  = decimal.TryParse(thkStr, out var t) && t > 0 ? t : null;
+
+            return (cleanDesc, cleanMat, thk);
+        }
+        catch
+        {
+            return (null, null, null);
+        }
+    }
+
     public string CreateNewProject(string currentPath, DateTime date)
         => RpdService.CreateNewProject(currentPath, date);
 

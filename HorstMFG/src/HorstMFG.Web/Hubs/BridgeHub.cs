@@ -145,6 +145,10 @@ public class BridgeHub : Hub
                     cleared++;
                     _log.LogInformation("Cleared thumbnail for PartId={PartId} (no sym file)", r.PartId);
                 }
+
+                if (part.Description == null && r.Description != null) part.Description = r.Description;
+                if (part.Material    == null) part.Material = r.Material ?? "Steel, Mild";
+                if (part.Thickness   == null && r.Thickness   != null) part.Thickness   = r.Thickness;
             }
             await db.SaveChangesAsync();
             _log.LogInformation("HandleThumbnailResult: stored={Stored} cleared={Cleared}", stored, cleared);
@@ -155,7 +159,8 @@ public class BridgeHub : Hub
         }
     }
 
-    private record ThumbnailResultDto(int PartId, byte[]? ThumbnailBytes, bool Success);
+    private record ThumbnailResultDto(int PartId, byte[]? ThumbnailBytes, bool Success,
+                                      string? Description, string? Material, decimal? Thickness);
 
     /// <summary>Called by the bridge to report command progress.</summary>
     public Task Progress(int stationId, string commandId, string message, int percent)
