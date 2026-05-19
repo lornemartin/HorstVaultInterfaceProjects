@@ -32,72 +32,92 @@ public class SendToNestingHandler
         var projectFolder = Path.GetDirectoryName(projectPath)!;
         var projectName   = Path.GetFileNameWithoutExtension(projectPath);
 
-        for (int i = 0; i < items.Count; i++)
-        {
-            var item = items[i];
-            reportProgress($"Sending {item.FileName} ({i + 1}/{items.Count})",
-                           (i + 1) * 100 / items.Count);
+        // Group by FileName — identical parts become one Radan entry with combined qty
+        var groups = items
+            .GroupBy(i => i.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-            var symSharePath = Path.Combine(_config.SymNetworkSharePath, item.FileName + ".sym");
+        for (int g = 0; g < groups.Count; g++)
+        {
+            var group    = groups[g].ToList();
+            var rep      = group[0];  // representative for sym copy and attribute writing
+            var totalQty = group.Sum(i => i.QtyRequired);
+
+            reportProgress($"Sending {rep.FileName} ({g + 1}/{groups.Count})",
+                           (g + 1) * 100 / groups.Count);
+
+            var symSharePath   = Path.Combine(_config.SymNetworkSharePath, rep.FileName + ".sym");
             var missingSymFile = !File.Exists(symSharePath);
 
-            _log.LogInformation("Item {Index}/{Total}: FileName={FileName} → symPath={SymPath} exists={Exists}",
-                i + 1, items.Count, item.FileName, symSharePath, !missingSymFile);
+            _log.LogInformation(
+                "Group {Index}/{Total}: FileName={FileName} count={Count} totalQty={Qty} symExists={Exists}",
+                g + 1, groups.Count, rep.FileName, group.Count, totalQty, !missingSymFile);
 
-            // Determine destination sym path in project Symbols folder
             var destDir = Path.Combine(projectFolder, "Symbols",
-                                       item.OrderNumber ?? "Unknown",
+                                       rep.OrderNumber ?? "Unknown",
                                        projectName,
-                                       item.FileName);
-            var destSym = Path.Combine(destDir, item.FileName + ".sym");
+                                       rep.FileName);
+            var destSym = Path.Combine(destDir, rep.FileName + ".sym");
 
             if (!missingSymFile)
             {
                 Directory.CreateDirectory(destDir);
                 File.Copy(symSharePath, destSym, overwrite: true);
-                var orderNumber = item.ItemType == "Order" ? item.OrderNumber : null;
-                _nesting.SetPartAttributes(destSym, item.Material, item.Thickness,
-                    item.Description, orderNumber, item.ScheduleName, item.BatchName, item.HasBends);
-                _log.LogInformation("Copied {Sym} to project", item.FileName);
+                var orderNumber = rep.ItemType == "Order"
+                    ? string.Join(", ", group.Select(i => i.OrderNumber)
+                                            .Where(o => !string.IsNullOrEmpty(o))
+                                            .Distinct())
+                    : null;
+                _nesting.SetPartAttributes(destSym, rep.Material, rep.Thickness,
+                    rep.Description, orderNumber, rep.ScheduleName, rep.BatchName, rep.HasBends);
+                _log.LogInformation("Copied {Sym} to project", rep.FileName);
             }
             else
             {
-                _log.LogWarning("Symbol file not found for {FileName} — adding to project without sym", item.FileName);
+                _log.LogWarning("Symbol file not found for {FileName} — adding without sym", rep.FileName);
             }
 
+            // If any item in the group already has a RadanIdNumber, reuse it (re-send)
+            var existingId = group.Select(i => i.RadanIdNumber).FirstOrDefault(id => id.HasValue);
+
             long partId;
-            if (item.RadanIdNumber.HasValue)
+            if (existingId.HasValue)
             {
-                // Part already exists in the project (re-send of a partially-nested item) — update qty only
-                _nesting.UpdatePartQty(project, item.RadanIdNumber.Value, item.QtyRequired);
-                partId = item.RadanIdNumber.Value;
-                _log.LogInformation("Updated qty for existing part {Id} to {Qty}", partId, item.QtyRequired);
+                _nesting.UpdatePartQty(project, existingId.Value, totalQty);
+                partId = existingId.Value;
+                _log.LogInformation("Updated qty for existing Radan ID {Id} to {Qty}", partId, totalQty);
             }
             else
             {
                 partId = _nesting.GetNextId(project);
-                _nesting.AddPart(project, destSym, partId, item.QtyRequired, item.Material, item.Thickness);
+                _nesting.AddPart(project, destSym, partId, totalQty, rep.Material, rep.Thickness);
+                _log.LogInformation("Added new Radan part ID {Id} qty {Qty}", partId, totalQty);
             }
 
-            results.Add(new SendToNestingResult
+            // All items in the group share the same RadanIdNumber
+            foreach (var item in group)
             {
-                ItemId         = item.ItemId,
-                RadanIdNumber  = partId,
-                MissingSymFile = missingSymFile,
-            });
+                results.Add(new SendToNestingResult
+                {
+                    ItemId         = item.ItemId,
+                    RadanIdNumber  = partId,
+                    MissingSymFile = missingSymFile,
+                });
+            }
         }
 
         _nesting.SaveProject(project, projectPath);
 
-        // Read the saved RPD back from disk and verify each part is present
-        var savedProject  = _nesting.LoadProject(projectPath);
-        var savedSync     = _nesting.ReadSyncData(savedProject);
-        var savedPartIds  = new System.Collections.Generic.HashSet<long>(
-                               savedSync.Parts.Select(p => p.RadanIdNumber));
+        // Read the saved RPD back from disk and verify each unique part is present
+        var savedProject = _nesting.LoadProject(projectPath);
+        var savedSync    = _nesting.ReadSyncData(savedProject);
+        var savedPartIds = new System.Collections.Generic.HashSet<long>(
+                              savedSync.Parts.Select(p => p.RadanIdNumber));
         foreach (var r in results)
         {
             r.VerifiedInProject = savedPartIds.Contains(r.RadanIdNumber);
-            _log.LogInformation("Part {FileName} Radan ID={Id} verified={Verified}",
+            _log.LogInformation("ItemId={ItemId} FileName={FileName} RadanID={Id} verified={Verified}",
+                r.ItemId,
                 items.FirstOrDefault(i => i.ItemId == r.ItemId)?.FileName ?? "?",
                 r.RadanIdNumber, r.VerifiedInProject);
         }

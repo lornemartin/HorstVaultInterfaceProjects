@@ -233,6 +233,19 @@
         var toSend = SelectedItems.Where(i => !i.IsInRadanProject).ToList();
         if (!toSend.Any()) return;
 
+        // For each filename that has a not-yet-sent item, also include any already-in-project
+        // items sharing that filename so the bridge sees the full group: combined qty and all
+        // order numbers get concatenated correctly.
+        var newFileNames = toSend
+            .Where(i => !string.IsNullOrEmpty(i.FileName))
+            .Select(i => i.FileName!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var inProjectSiblings = SelectedItems
+            .Where(i => i.IsInRadanProject && i.FileName != null && newFileNames.Contains(i.FileName))
+            .ToList();
+        if (inProjectSiblings.Any())
+            toSend.AddRange(inProjectSiblings);
+
         var noFile = toSend.Where(i => string.IsNullOrEmpty(i.FileName)).ToList();
         if (noFile.Any())
         {
@@ -266,11 +279,14 @@
         var toRetrieve = SelectedItems.Where(i => i.RadanIdNumber != null).ToList();
         if (!toRetrieve.Any()) return;
 
-        var payload = JsonSerializer.Serialize(toRetrieve.Select(i => new
-        {
-            ItemId        = i.ItemId,
-            RadanIdNumber = i.RadanIdNumber!.Value,
-        }));
+        // Deduplicate — send one representative per unique RadanIdNumber
+        var payload = JsonSerializer.Serialize(toRetrieve
+            .GroupBy(i => i.RadanIdNumber!.Value)
+            .Select(g => new
+            {
+                ItemId        = g.First().ItemId,
+                RadanIdNumber = g.Key,
+            }));
 
         await SendCommandAsync("RetrieveFromNesting", payload);
     }
@@ -289,11 +305,13 @@
                 .Select(i => new { i.Id, i.RadanIdNumber })
                 .ToListAsync();
             if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
-            payload = JsonSerializer.Serialize(items.Select(i => new
-            {
-                ItemId        = i.Id,
-                RadanIdNumber = i.RadanIdNumber!.Value,
-            }));
+            payload = JsonSerializer.Serialize(items
+                .GroupBy(i => i.RadanIdNumber!.Value)
+                .Select(g => new
+                {
+                    ItemId        = g.First().Id,
+                    RadanIdNumber = g.Key,
+                }));
         }
         else
         {
@@ -302,11 +320,13 @@
                 .Select(i => new { i.Id, i.RadanIdNumber })
                 .ToListAsync();
             if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
-            payload = JsonSerializer.Serialize(items.Select(i => new
-            {
-                ItemId        = i.Id,
-                RadanIdNumber = i.RadanIdNumber!.Value,
-            }));
+            payload = JsonSerializer.Serialize(items
+                .GroupBy(i => i.RadanIdNumber!.Value)
+                .Select(g => new
+                {
+                    ItemId        = g.First().Id,
+                    RadanIdNumber = g.Key,
+                }));
         }
 
         await SendCommandAsync("RetrieveFromNesting", payload);
@@ -508,34 +528,79 @@
 
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
-        // Un-nested items: clear everything including RadanIdNumber
-        foreach (var id in result.ClearedItemIds)
+        // Each ID in ClearedItemIds / AdjustedItemIds is a representative for a unique RadanIdNumber.
+        // Expand to ALL DB items sharing that RadanIdNumber at this station so grouped items are
+        // all updated together.
+        if (ItemType == "Order")
         {
-            if (ItemType == "Order")
+            if (result.ClearedItemIds.Any())
             {
-                var item = await db.OrderItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+                var clearedRadanIds = await db.OrderItems
+                    .Where(i => result.ClearedItemIds.Contains(i.Id) && i.RadanIdNumber != null)
+                    .Select(i => i.RadanIdNumber!.Value).Distinct().ToListAsync();
+                if (clearedRadanIds.Any())
+                {
+                    var allCleared = await db.OrderItems
+                        .Where(i => i.NestingStationId == _stationId
+                                 && i.RadanIdNumber != null
+                                 && clearedRadanIds.Contains(i.RadanIdNumber!.Value))
+                        .ToListAsync();
+                    foreach (var item in allCleared)
+                        { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+                }
             }
-            else
+
+            if (result.AdjustedItemIds.Any())
             {
-                var item = await db.BatchItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+                var adjustedRadanIds = await db.OrderItems
+                    .Where(i => result.AdjustedItemIds.Contains(i.Id) && i.RadanIdNumber != null)
+                    .Select(i => i.RadanIdNumber!.Value).Distinct().ToListAsync();
+                if (adjustedRadanIds.Any())
+                {
+                    var allAdjusted = await db.OrderItems
+                        .Where(i => i.NestingStationId == _stationId
+                                 && i.RadanIdNumber != null
+                                 && adjustedRadanIds.Contains(i.RadanIdNumber!.Value))
+                        .ToListAsync();
+                    foreach (var item in allAdjusted)
+                        { item.IsInRadanProject = false; item.NestingStationId = null; }
+                }
             }
         }
-
-        // Partially/fully nested items: clear project status but keep RadanIdNumber so
-        // re-sending updates the existing Radan part instead of creating a duplicate.
-        foreach (var id in result.AdjustedItemIds)
+        else
         {
-            if (ItemType == "Order")
+            if (result.ClearedItemIds.Any())
             {
-                var item = await db.OrderItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.NestingStationId = null; }
+                var clearedRadanIds = await db.BatchItems
+                    .Where(i => result.ClearedItemIds.Contains(i.Id) && i.RadanIdNumber != null)
+                    .Select(i => i.RadanIdNumber!.Value).Distinct().ToListAsync();
+                if (clearedRadanIds.Any())
+                {
+                    var allCleared = await db.BatchItems
+                        .Where(i => i.NestingStationId == _stationId
+                                 && i.RadanIdNumber != null
+                                 && clearedRadanIds.Contains(i.RadanIdNumber!.Value))
+                        .ToListAsync();
+                    foreach (var item in allCleared)
+                        { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+                }
             }
-            else
+
+            if (result.AdjustedItemIds.Any())
             {
-                var item = await db.BatchItems.FindAsync(id);
-                if (item != null) { item.IsInRadanProject = false; item.NestingStationId = null; }
+                var adjustedRadanIds = await db.BatchItems
+                    .Where(i => result.AdjustedItemIds.Contains(i.Id) && i.RadanIdNumber != null)
+                    .Select(i => i.RadanIdNumber!.Value).Distinct().ToListAsync();
+                if (adjustedRadanIds.Any())
+                {
+                    var allAdjusted = await db.BatchItems
+                        .Where(i => i.NestingStationId == _stationId
+                                 && i.RadanIdNumber != null
+                                 && adjustedRadanIds.Contains(i.RadanIdNumber!.Value))
+                        .ToListAsync();
+                    foreach (var item in allAdjusted)
+                        { item.IsInRadanProject = false; item.NestingStationId = null; }
+                }
             }
         }
 
@@ -723,8 +788,17 @@
                 .ToListAsync();
             foreach (var p in sync.Parts)
             {
-                var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
-                if (item != null) item.QtyNested = p.QtyNested;
+                // FIFO: fill each item up to QtyRequired; last item absorbs any excess (over-nesting)
+                var sharedItems = items.Where(i => i.RadanIdNumber == (int)p.RadanIdNumber)
+                                       .OrderBy(i => i.Id).ToList();
+                int remaining = p.QtyNested;
+                for (int idx = 0; idx < sharedItems.Count; idx++)
+                {
+                    var item = sharedItems[idx];
+                    int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
+                    item.QtyNested = fill;
+                    remaining = Math.Max(0, remaining - fill);
+                }
             }
 
             foreach (var syncNest in sync.Nests)
@@ -745,15 +819,28 @@
 
                 foreach (var entry in syncNest.Parts)
                 {
-                    var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)entry.RadanIdNumber);
-                    if (item == null) continue;
-
-                    var np = await db.NestedParts
-                        .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
-                    if (np == null)
-                        db.NestedParts.Add(new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = entry.Qty });
-                    else
-                        np.Qty = entry.Qty;
+                    var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
+                                           .OrderBy(i => i.Id).ToList();
+                    int remaining = entry.Qty;
+                    for (int idx = 0; idx < sharedItems.Count; idx++)
+                    {
+                        var item = sharedItems[idx];
+                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
+                        remaining = Math.Max(0, remaining - fill);
+                        var np = await db.NestedParts
+                            .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
+                        if (fill > 0)
+                        {
+                            if (np == null)
+                                db.NestedParts.Add(new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = fill });
+                            else
+                                np.Qty = fill;
+                        }
+                        else if (np != null)
+                        {
+                            db.NestedParts.Remove(np);
+                        }
+                    }
                 }
             }
 
@@ -789,8 +876,17 @@
                 .ToListAsync();
             foreach (var p in sync.Parts)
             {
-                var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)p.RadanIdNumber);
-                if (item != null) item.QtyNested = p.QtyNested;
+                // FIFO: fill each item up to QtyRequired; last item absorbs any excess (over-nesting)
+                var sharedItems = items.Where(i => i.RadanIdNumber == (int)p.RadanIdNumber)
+                                       .OrderBy(i => i.Id).ToList();
+                int remaining = p.QtyNested;
+                for (int idx = 0; idx < sharedItems.Count; idx++)
+                {
+                    var item = sharedItems[idx];
+                    int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
+                    item.QtyNested = fill;
+                    remaining = Math.Max(0, remaining - fill);
+                }
             }
 
             foreach (var syncNest in sync.Nests)
@@ -811,15 +907,28 @@
 
                 foreach (var entry in syncNest.Parts)
                 {
-                    var item = items.FirstOrDefault(i => i.RadanIdNumber == (int)entry.RadanIdNumber);
-                    if (item == null) continue;
-
-                    var np = await db.NestedParts
-                        .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
-                    if (np == null)
-                        db.NestedParts.Add(new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = entry.Qty });
-                    else
-                        np.Qty = entry.Qty;
+                    var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
+                                           .OrderBy(i => i.Id).ToList();
+                    int remaining = entry.Qty;
+                    for (int idx = 0; idx < sharedItems.Count; idx++)
+                    {
+                        var item = sharedItems[idx];
+                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
+                        remaining = Math.Max(0, remaining - fill);
+                        var np = await db.NestedParts
+                            .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
+                        if (fill > 0)
+                        {
+                            if (np == null)
+                                db.NestedParts.Add(new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = fill });
+                            else
+                                np.Qty = fill;
+                        }
+                        else if (np != null)
+                        {
+                            db.NestedParts.Remove(np);
+                        }
+                    }
                 }
             }
 
