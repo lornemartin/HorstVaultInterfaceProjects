@@ -23,11 +23,6 @@ using Autodesk.Connectivity.WebServices;
 using Autodesk.Connectivity.WebServicesTools;
 using System.Reflection;
 using Environment = System.Environment;
-using Serilog;
-using Serilog.Events;
-using Serilog.Formatting.Json;
-using Serilog.Core;
-
 namespace PrintPDF
 {
 
@@ -48,18 +43,6 @@ namespace PrintPDF
                         ghostScriptPath = AppSettings.Get("GhostScriptWorkingFolder").ToString();
                     }
                     catch { }
-
-                    LoggingLevelSwitch levelSwitch = new LoggingLevelSwitch();
-                    levelSwitch.MinimumLevel = LogEventLevel.Verbose;
-                    string logFileLocation = outputFolder + "PDFPrint2.log";
-                    Log.Logger = new LoggerConfiguration()
-                                    // add a rolling file for all logs
-                                    .WriteTo.File(logFileLocation,
-                                         shared: true, fileSizeLimitBytes: 5000000)
-                                    .WriteTo.Console()
-                                    // set default minimum level
-                                    .MinimumLevel.ControlledBy(levelSwitch)
-                                   .CreateLogger();
 
                     ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
                     ApprenticeServerDrawingDocument drgDoc;
@@ -136,7 +119,6 @@ namespace PrintPDF
                     }
                     logMessage += "Sheet Names All Read When Printing " + idwFileToPrint.idwName + "\r\n";
                     logMessage += "Sheet count: " + drawingSheets.Count + "\r\n";
-                    Log.Information("Sheet Names All Read When Printing " + idwFileToPrint.idwName);
 
                     string printer = pdfPrinterName;
                     string pdfFileName = "";
@@ -206,7 +188,6 @@ namespace PrintPDF
                                 catch (Exception printEx)
                                 {
                                     logMessage += "PrintToFile FAILED for sheet " + actualSheetIndex + " (" + modelName + "): " + printEx.ToString() + "\r\n";
-                                    Log.Error("PrintToFile FAILED for sheet " + actualSheetIndex + " (" + modelName + "): " + printEx.ToString());
                                     actualSheetIndex++;
                                     modifiedSheetIndex++;
                                     continue;
@@ -215,7 +196,6 @@ namespace PrintPDF
                                 if (!System.IO.File.Exists(pdfFileName))
                                 {
                                     logMessage += "PDF file for " + pdfFileName + " could not be generated.\r\n";
-                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated.");
                                     continue;
                                 }
 
@@ -242,7 +222,6 @@ namespace PrintPDF
                                     if (gsProcess.ExitCode != 0)
                                     {
                                         logMessage += "Ghostscript conversion failed (exit code " + gsProcess.ExitCode + "): " + gsError + "\r\n";
-                                        Log.Error("Ghostscript conversion failed: " + gsError);
                                         actualSheetIndex++;
                                         modifiedSheetIndex++;
                                         continue;
@@ -259,12 +238,10 @@ namespace PrintPDF
                                 if (System.IO.File.Exists(pdfFileName))
                                 {
                                     logMessage += "PDF file generated for " + pdfFileName + "\r\n";
-                                    Log.Information("PDF file generated for " + pdfFileName);
                                 }
                                 else
                                 {
                                     logMessage += "PDF file for " + pdfFileName + " could not be generated after conversion.\r\n";
-                                    Log.Warning("PDF file for " + pdfFileName + " could not be generated after conversion.");
                                     continue;
                                 }
 
@@ -340,12 +317,10 @@ namespace PrintPDF
                                 if (!System.IO.File.Exists(pdfFileName))
                                 {
                                     logMessage += "No PDF Generated for " + pdfFileName + "\r\n";
-                                    Log.Warning("No PDF Generated for " + pdfFileName);
                                 }
                                 else
                                 {
                                     logMessage += "PDF Generated for " + pdfFileName + "\r\n";
-                                    Log.Information("PDF Generated for " + pdfFileName);
                                 }
 
                             }
@@ -355,8 +330,6 @@ namespace PrintPDF
                     {
                         errMessage += "PDF Generation Error in printToPDF\r\n";
                         errMessage += ex.ToString() + "\r\n";
-                        Log.Error("PDF Generation Error in printToPDF");
-                        Log.Error(ex.ToString());
                         return false;
                     }
                 }
@@ -365,8 +338,6 @@ namespace PrintPDF
                 {
                     errMessage += "IDW File Read Error in printToPDF\r\n";
                     errMessage += ex.Message + "\r\n";
-                    Log.Error("IDW File Read Error in printToPDF");
-                    Log.Error(ex.Message);
                     return false;
                 }
                 return true;
@@ -391,26 +362,21 @@ namespace PrintPDF
 
                 if (filesToDelete.Count > 0)
                 {
-                    //logMessage += @" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ";
-                    Log.Information(@" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ");
-
+                    logMessage += @" " + "\r\n" + @" " + "Count of files: " + filesToDelete.Count() + @" " + "\r\n" + @" ";
 
                     foreach (string f in filesToDelete)
                     {
-                        //logMessage += "File to delete: " + f + @" " + "\r\n" + @" ";
-                        Log.Information("File to delete: " + f + @" " + "\r\n" + @" ");
+                        logMessage += "File to delete: " + f + @" " + "\r\n" + @" ";
                         if (System.IO.File.Exists(f))
                         {
                             System.IO.File.Delete(f);
-                            //logMessage += "Deleted File " + f + @" " + "\r\n" + @" ";
-                            Log.Information("Deleted File " + f + @" " + "\r\n" + @" ");
+                            logMessage += "Deleted File " + f + @" " + "\r\n" + @" ";
                         }
                     }
                 }
                 else
                 {
-                    //logMessage += @" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ";
-                    Log.Information(@" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ");
+                    logMessage += @" " + "\r\n" + @" " + "No File Found to Delete for " + fileName + @" " + "\r\n" + @" ";
                 }
 
                 return true;
@@ -452,7 +418,6 @@ namespace PrintPDF
                         catch { }
                     }
                     logMessage += "PDF not ready yet (" + filePath + "), waiting... attempt " + (i + 1) + "/" + maxRetries + "\r\n";
-                    Log.Warning("PDF not ready yet (" + filePath + "), attempt " + (i + 1));
                     Thread.Sleep(1000);
                 }
             }

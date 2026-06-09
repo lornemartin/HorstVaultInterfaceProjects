@@ -98,9 +98,6 @@
     <Reference Include="Microsoft.Web.Services3">
       <HintPath>.\Microsoft.Web.Services3.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF">
-      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core">
@@ -131,12 +128,14 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+      <Project>{720a36fb-b09e-4bc2-9a55-ce1ae591d0cd}</Project>
+      <Name>PrintPDF</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   <Target Name="AfterBuild">
+    <Exec Command="xcopy /Y /I &quot;$(ProjectDir)..\PrintPDF\$(OutputPath)*.dll&quot; &quot;$(ProjectDir)$(OutputPath)&quot;" />
   </Target>
-  -->
 </Project>

@@ -102,9 +102,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Vault 2024 SDK Binaries\Connectivity.Explorer.ExtensibilityUtil.dll</HintPath>
     </Reference>
-    <Reference Include="PrintPDF">
-      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -120,6 +117,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+      <Project>{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}</Project>
+      <Name>PrintPDF</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="AppSettings.cs" />
     <Compile Include="FileUpdateHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -131,11 +134,7 @@
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   <Target Name="AfterBuild">
+    <Exec Command="xcopy /Y /I &quot;$(ProjectDir)..\PrintPDF\$(OutputPath)*.dll&quot; &quot;$(ProjectDir)$(OutputPath)&quot;" />
   </Target>
-  -->
 </Project>

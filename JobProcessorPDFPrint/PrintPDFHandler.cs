@@ -13,6 +13,7 @@ PARTICULAR PURPOSE.
 using System;
 using System.Linq;
 using System.IO;
+using System.Reflection;
 using PrintPDF;
 using System.Collections.Generic;
 
@@ -20,8 +21,6 @@ using ACJE = Autodesk.Connectivity.JobProcessor.Extensibility;
 using ACW = Autodesk.Connectivity.WebServices;
 using ACWT = Autodesk.Connectivity.WebServicesTools;
 using VDF = Autodesk.DataManagement.Client.Framework;
-using Inventor;
-
 using Autodesk.Connectivity.Extensibility.Framework;
 using Autodesk.Connectivity.Explorer.Extensibility;
 using Autodesk.Connectivity.WebServices;
@@ -34,6 +33,14 @@ namespace JobProcessorPrintPDF
 {
     public class PrintPDFHandler : ACJE.IJobHandler
     {
+        private static readonly string DiagLogPath = Path.Combine(Path.GetTempPath(), "VaultJPAssemblyResolve.log");
+
+        static PrintPDFHandler()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+            try { System.IO.File.AppendAllText(DiagLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] PrintPDFHandler static constructor: AssemblyResolve registered\r\n"); } catch { }
+        }
+
         private string TargetFolder { get; set; }
         private string PDFPath { get; set; }
         private string pdfPrinterName { get; set; }
@@ -153,18 +160,52 @@ namespace JobProcessorPrintPDF
             }
             catch (Exception ex)
             {
-                context.Log("Error in PDF Handler " + ex.Message + "\n\r", ACJE.MessageType.eError);
+                context.Log("Error in PDF Handler " + ex.ToString() + "\n\r", ACJE.MessageType.eError);
                 return ACJE.JobOutcome.Failure;
             }
         }
 
-        public void OnJobProcessorStartup(ACJE.IJobProcessorServices context) { }
+        public void OnJobProcessorStartup(ACJE.IJobProcessorServices context)
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+        }
 
-        public void OnJobProcessorShutdown(ACJE.IJobProcessorServices context) { }
+        public void OnJobProcessorShutdown(ACJE.IJobProcessorServices context)
+        {
+            AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;
+        }
 
         public void OnJobProcessorWake(ACJE.IJobProcessorServices context) { }
 
         public void OnJobProcessorSleep(ACJE.IJobProcessorServices context) { }
+
+        private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            try
+            {
+                // Use CodeBase (original path, unaffected by shadow copying) instead of Location
+                string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                string dir = Path.GetDirectoryName(new Uri(codeBase).LocalPath);
+                string simpleName = new AssemblyName(args.Name).Name;
+                string dllPath = Path.Combine(dir, simpleName + ".dll");
+                bool exists = System.IO.File.Exists(dllPath);
+
+                System.IO.File.AppendAllText(DiagLogPath,
+                    $"[{DateTime.Now:HH:mm:ss.fff}] Resolving '{args.Name}'\r\n  Dir: {dir}\r\n  File: {dllPath} ({(exists ? "FOUND" : "NOT FOUND")})\r\n");
+
+                if (exists)
+                {
+                    var asm = Assembly.LoadFrom(dllPath);
+                    System.IO.File.AppendAllText(DiagLogPath, $"  Loaded: {asm.FullName}\r\n");
+                    return asm;
+                }
+            }
+            catch (Exception ex)
+            {
+                try { System.IO.File.AppendAllText(DiagLogPath, $"  HANDLER ERROR: {ex}\r\n"); } catch { }
+            }
+            return null;
+        }
 
         #endregion
         
