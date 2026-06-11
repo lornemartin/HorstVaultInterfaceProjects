@@ -190,6 +190,7 @@
   <ItemGroup>
     <Compile Include="AppSettings.cs" />
     <Compile Include="PrintObject.cs" />
+    <Compile Include="StaDispatcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

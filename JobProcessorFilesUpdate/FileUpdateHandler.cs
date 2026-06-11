@@ -209,51 +209,16 @@ namespace JobProcessorFileUpdate
                 {
                     try
                     {
-                        string modelName = "";
+                        List<string> modelNames = null;
+                        PrintObject.InvokeOnComThread(() => { modelNames = GetIDWModelNames(fileName); });
 
-                        // set up lists for storing the actual model names the sheets are referencing
-                        List<string> modelNames = new List<string>();
-                        List<VDF.Vault.Currency.Entities.FileIteration> fIterations = new List<VDF.Vault.Currency.Entities.FileIteration>();
-
-                        VDF.Vault.Currency.Properties.PropertyDefinitionDictionary propDefs =
-                                       new VDF.Vault.Currency.Properties.PropertyDefinitionDictionary();
-                        Inventor.ApprenticeServerComponent oApprentice = new ApprenticeServerComponent();
-                        Inventor.ApprenticeServerDrawingDocument drgDoc;
-                        drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                        oApprentice.Open(fileName);
-                        drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
-                        ACW.PropDef[] filePropDefs =
-                                        connection.WebServiceManager.PropertyService.GetPropertyDefinitionsByEntityClassId("FILE");
-                        ACW.PropDef vaultNamePropDef = filePropDefs.Single(n => n.SysName == "Name");
-
-                        // for each sheet in the idw, search the vault for the sheet's corresponding ipt or iam 
-                        foreach (Sheet sh in drgDoc.Sheets)
+                        foreach (string modelName in modelNames)
                         {
-                            if (sh.DrawingViews.Count > 0)  // I added this line because one pdf with a BOM only sheet
-                                                            // kept failing.  This line fixed the problemf or that file
-                                                            // but it is definitely not well tested...
+                            PrintObject printOb = new PrintObject();
+                            if (!printOb.deletePDF(modelName, m_PDFPath, ref logMessage, ref errMessage))
                             {
-                                errMessage += " " + sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName + "found";
-                                if (sh.DrawingViews.Count > 0)
-                                {
-                                    // we were using the DisplayName property here until the 2023 update, when accessing it would thrown an exception quite often
-                                    // this was observed only when print pdfs, but I thought i might be prudent to change it here as well
-                                    //modelName = sh.DrawingViews[1].ReferencedDocumentDescriptor.DisplayName;
-                                    modelName = System.IO.Path.GetFileName(sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
-
-                                    PrintObject printOb = new PrintObject();
-                                    if (printOb.deletePDF(modelName, m_PDFPath, ref logMessage, ref errMessage))
-                                    {
-                                        //logMessage += "Deleted PDF: " + pair.Value.Value.ToString() + "\r\n";
-                                        //we already logged a message in the deletePDF function
-                                            }
-                                    else
-                                    {
-                                        logMessage += logMessage;
-                                        errMessage += "Can not delete PDF Error1 in function FileUpdate\r\n";
-                                        return false;
-                                    }
-                                }
+                                errMessage += "Can not delete PDF Error1 in function FileUpdate\r\n";
+                                return false;
                             }
                         }
                     }
@@ -336,6 +301,37 @@ namespace JobProcessorFileUpdate
                 // vault file is not an ipt, no need to search for sym file
                 return 0;
             }
+        }
+
+        private List<string> GetIDWModelNames(string fileName)
+        {
+            var modelNames = new List<string>();
+            Inventor.ApprenticeServerComponent oApprentice = null;
+            try
+            {
+                oApprentice = new ApprenticeServerComponent();
+                oApprentice.Open(fileName);
+                Inventor.ApprenticeServerDrawingDocument drgDoc = (Inventor.ApprenticeServerDrawingDocument)oApprentice.Document;
+
+                foreach (Sheet sh in drgDoc.Sheets)
+                {
+                    if (sh.DrawingViews.Count > 0)
+                    {
+                        string modelName = System.IO.Path.GetFileName(
+                            sh.DrawingViews[1].ReferencedDocumentDescriptor.ReferencedFileDescriptor.FullFileName);
+                        modelNames.Add(modelName);
+                    }
+                }
+            }
+            finally
+            {
+                if (oApprentice != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oApprentice);
+                    oApprentice = null;
+                }
+            }
+            return modelNames;
         }
 
         public string GetVaultCheckOutComment(VDF.Vault.Currency.Entities.FileIteration selectedFile, VDF.Vault.Currency.Connections.Connection connection)
