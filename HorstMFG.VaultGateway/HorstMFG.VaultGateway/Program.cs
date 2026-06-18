@@ -5,11 +5,16 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using System;
+using System.IO;
+
+// Windows Services don't reliably run with the executable's folder as the working
+// directory, so relative paths here can silently resolve elsewhere (e.g. System32).
+var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gateway-.log");
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
-    .WriteTo.File("logs/gateway-.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 try
@@ -18,6 +23,7 @@ try
                     args[0].Equals("--console", StringComparison.OrdinalIgnoreCase);
 
     var builder = Host.CreateDefaultBuilder(args)
+        .UseContentRoot(AppContext.BaseDirectory)
         .UseSerilog((ctx, services, cfg) =>
         {
             var isDev = ctx.HostingEnvironment.IsDevelopment();
@@ -25,7 +31,7 @@ try
                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                .MinimumLevel.Override("System",    LogEventLevel.Warning)
                .WriteTo.Console()
-               .WriteTo.File("logs/gateway-.log", rollingInterval: RollingInterval.Day);
+               .WriteTo.File(logPath, rollingInterval: RollingInterval.Day);
         })
         .ConfigureAppConfiguration((ctx, cfg) =>
         {

@@ -1,0 +1,2327 @@
+ ▐▛███▜▌   Claude Code v2.1.175
+▝▜█████▛▘  Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~\source\repos\HorstVaultInterfaceProjects
+
+
+❯ I'm ready to setup the Windows server as outlined in C:\Users\lorne\source\re 
+  pos\HorstVaultInterfaceProjects\HorstMFG\docs\server-deployment.md. I have a  
+  fresh Windows Server 2025 Standard Deployment, and am sitting at the server   
+  manager dashboard.  How do I proceed to enable IIS and whatever else needs    
+  configured?                                                                   
+
+● Let me read the deployment doc first.
+
+  Read 1 file (ctrl+o to expand)
+
+● Here's the sequence from Server Manager, in order:
+
+  ---
+  Step 1 — Install IIS with WebSockets
+
+  From Server Manager → Manage → Add Roles and Features:
+
+  1. Role-based installation → select the local server
+  2. Under Server Roles, check Web Server (IIS)
+  3. Expand Web Server → Application Development and check:
+    - WebSocket Protocol (required for Blazor SignalR)
+    - ASP.NET is not needed — leave it unchecked
+  4. Click through and install
+
+  No reboot required.
+
+  ---
+  Step 2 — Install the .NET 8 Hosting Bundle
+
+  On the server, download and run the .NET 8 ASP.NET Core Hosting Bundle from
+  Microsoft. After it installs, run this from an elevated PowerShell to register
+  the IIS module:
+
+  & "C:\Windows\System32\inetsrv\appcmd.exe" list module
+  /name:AspNetCoreModuleV2
+
+  You should see AspNetCoreModuleV2 listed. If the command returns nothing, run
+  iisreset and try again — the hosting bundle installer sometimes needs a reset
+  to register.
+
+  ---
+  Step 3 — Install PostgreSQL
+
+  Download PostgreSQL 16 (or 17) from postgresql.org. During install:
+  - Set a strong superuser (postgres) password — save it somewhere
+  - Default port 5432 is fine
+  - Include pgAdmin if you want a GUI
+
+  After install, open pgAdmin (or psql) and run:
+
+  CREATE DATABASE horstmfg;
+  CREATE USER horstmfg_user WITH PASSWORD 'your-strong-password-here';
+  GRANT ALL PRIVILEGES ON DATABASE horstmfg TO horstmfg_user;
+  -- Needed for EF Core migrations to create tables:
+  ALTER USER horstmfg_user CREATEDB;
+
+  ---
+  Step 4 — Create the domain service account
+
+  This is an Active Directory task. On your domain controller (or via RSAT),
+  create a user like svc-horstmfg in AD:
+  - Password never expires
+  - No special group memberships
+  - Plain domain user
+
+  Then come back to this server to configure IIS to use it once IIS is set up.
+
+  ---
+  Step 5 — Create the local folders
+
+  From an elevated PowerShell on the server:
+
+  New-Item -ItemType Directory -Force "C:\HorstMFG\PDFs\Batches"
+  New-Item -ItemType Directory -Force "C:\HorstMFG\PDFs\Schedules"
+  New-Item -ItemType Directory -Force "C:\inetpub\horstmfg"
+
+  ---
+  Step 6 — Open the firewall
+
+  New-NetFirewallRule -DisplayName "HorstMFG HTTP"  -Direction Inbound -Protocol
+  TCP -LocalPort 80  -Action Allow
+  New-NetFirewallRule -DisplayName "HorstMFG HTTPS" -Direction Inbound -Protocol
+  TCP -LocalPort 443 -Action Allow
+
+  ---
+  Step 7 — SSL certificate
+
+  If your domain has an internal CA (AD Certificate Services), request a cert
+  for whatever hostname you'll use (e.g. horstmfg.horst.local). If not, create a
+  self-signed cert:
+
+  New-SelfSignedCertificate -DnsName "horstmfg.horst.local" -CertStoreLocation
+  "cert:\LocalMachine\My"
+
+  With a self-signed cert you'll need to push the public key to Trusted Root on
+  each client machine (Group Policy is the clean way).
+
+  ---
+  IIS Site Setup (after all the above)
+
+  1. Open IIS Manager
+  2. Application Pools → Add Application Pool: name it HorstMFG, .NET CLR
+  Version = No Managed Code, Managed Pipeline = Integrated
+  3. Set the app pool identity: Advanced Settings → Identity → Custom account →
+  DOMAIN\svc-horstmfg
+  4. Sites → Add Website: physical path = C:\inetpub\horstmfg, app pool =
+  HorstMFG, binding = https/443, select the cert
+  5. Add a second binding: http/80 (for the redirect)
+  6. In the site's Configuration Editor, set environment variable
+  ASPNETCORE_ENVIRONMENT = Production
+
+  ---
+  Where are you at with the domain service account — does your sysadmin have
+  that created, or do you need to handle it yourself?
+
+✻ Brewed for 29s
+
+❯ in step 3 above, is DOMAIN a place holder, or is that the actual entry?       
+
+● DOMAIN is a placeholder — replace it with your actual Windows domain name (the
+  NetBIOS short name, not the full FQDN).
+
+  For example, if your domain is horst.local, the NetBIOS name is likely HORST,
+  so you'd enter:
+
+  HORST\svc-horstmfg
+
+  You can confirm your domain's NetBIOS name by running this on any
+  domain-joined machine:
+
+  (Get-WmiObject Win32_ComputerSystem).Domain
+
+  That returns the DNS name (e.g. horst.local). The NetBIOS short name is
+  usually just the first part before the dot — HORST — but if you're unsure,
+  run:
+
+  nltest /dsgetdc:horst.local
+
+  and look for the DC line, which will show the domain name format used for
+  authentication.
+
+✻ Crunched for 6s
+
+※ recap: Setting up Windows Server 2025 to host the HorstMFG Blazor app. Steps 1 through 3 are done conceptually; the immediate next action is confirming your actual domain name so the service account can be referenced correctly in IIS. (disable recaps in /config)
+
+❯ how can I test whether IIS is set up correctly?                               
+
+● The quickest test is to create a simple static page and browse to it.
+
+  1. Create a test page:
+
+  Set-Content "C:\inetpub\wwwroot\test.html" "<h1>IIS is working</h1>"
+
+  2. Browse to it on the server itself:
+
+  Open a browser on the server and go to http://localhost/test.html. You should
+  see the heading. If that works, IIS is serving content.
+
+  3. Browse to it from another machine:
+
+  From another PC on the network, browse to http://<server-ip>/test.html. If
+  that works, the firewall rules are open and IIS is reachable from the network.
+
+  ---
+  Specific things this confirms:
+
+  ┌──────────────────────────────┬──────────────────────────────────────────┐
+  │         What you see         │              What it means               │
+  ├──────────────────────────────┼──────────────────────────────────────────┤
+  │ Page loads on localhost      │ IIS is installed and running             │
+  ├──────────────────────────────┼──────────────────────────────────────────┤
+  │ Page loads from network      │ Firewall port 80 is open                 │
+  ├──────────────────────────────┼──────────────────────────────────────────┤
+  │ https://localhost loads the  │ HTTPS binding + cert is working          │
+  │ default IIS page             │                                          │
+  ├──────────────────────────────┼──────────────────────────────────────────┤
+  │ http:// redirects to         │ That's the app behavior, not IIS itself  │
+  │ https://                     │ — not testable until the app is deployed │
+  └──────────────────────────────┴──────────────────────────────────────────┘
+
+  ---
+  If localhost doesn't load, check that the World Wide Web Publishing Service is
+  running:
+
+  Get-Service W3SVC
+
+  It should show Running. If it's stopped: Start-Service W3SVC.
+
+  Once that's confirmed, you can move on to setting up the HorstMFG app pool and
+  site — the Default Web Site on port 80 is separate from your app's site.
+
+✻ Brewed for 9s
+
+❯ https://localhost/ doesn't load, but the service is running.  PS              
+  C:\Users\lorne> Get-Service W3SVC                                             
+                                                                                
+  Status   Name               DisplayName                                       
+  ------   ----               -----------                                       
+  Running  W3SVC              World Wide Web Publishing Service                 
+
+● First, try plain HTTP to isolate the issue:
+
+  http://localhost/test.html
+
+  If HTTP works but HTTPS doesn't — that's expected. The Default Web Site only
+  has an HTTP binding by default. HTTPS on port 443 won't work until you create
+  a binding and attach a certificate. That's fine — you'll set that up on the
+  HorstMFG site specifically, not the default site.
+
+  If HTTP also doesn't load, check what's actually listening on port 80:
+
+  netstat -ano | findstr ":80 "
+
+  And check that the Default Web Site is actually started in IIS Manager (it
+  should show a green "running" state). Also confirm the test page exists:
+
+  Test-Path "C:\inetpub\wwwroot\test.html"
+
+  ---
+  Which case are you hitting — HTTP works, or neither works?
+
+✻ Cogitated for 15s
+
+❯ http works but https doesn't                                                  
+
+● That's the expected result at this stage — nothing is wrong. The Default Web
+  Site has no HTTPS binding and no certificate attached, so port 443 isn't
+  listening at all yet.
+
+  You can confirm:
+
+  netstat -ano | findstr ":443 "
+
+  That should return nothing right now.
+
+  HTTPS gets configured when you set up the HorstMFG site with its SSL
+  certificate bound to port 443 — that's Steps 6 and 7 from earlier. The Default
+  Web Site on port 80 is just a sanity check that IIS is running; you don't
+  need HTTPS on it.
+
+  So your IIS status is: good to proceed. Next steps are:
+
+  1. Get the SSL certificate sorted (self-signed or from your internal CA)
+  2. Create the HorstMFG app pool and site in IIS Manager
+  3. Install the .NET 8 Hosting Bundle if you haven't yet
+
+  Have you created the domain service account yet, and do you have a certificate
+  to use?
+
+✻ Brewed for 7s
+
+❯ the domain service account has been created, as well as certificate has been  
+  issued using AD.                                                              
+                                                                                
+  PS C:\Users\lorne>  netstat -ano | findstr ":443 "                            
+    TCP    0.0.0.0:443            0.0.0.0:0              LISTENING       4      
+    TCP    192.168.50.21:443      192.168.50.21:64164    ESTABLISHED     4      
+    TCP    192.168.50.21:49990    172.172.255.218:443    ESTABLISHED     4460   
+    TCP    192.168.50.21:54353    40.79.167.10:443       ESTABLISHED     15084  
+    TCP    192.168.50.21:55404    52.36.176.20:443       ESTABLISHED     5340   
+    TCP    192.168.50.21:55406    52.7.200.96:443        ESTABLISHED     3968   
+    TCP    192.168.50.21:57304    52.34.129.87:443       ESTABLISHED     5628   
+    TCP    192.168.50.21:57347    13.248.181.252:443     ESTABLISHED     8624   
+    TCP    192.168.50.21:57374    13.248.181.252:443     ESTABLISHED     8624   
+    TCP    192.168.50.21:61226    52.33.116.162:443      CLOSE_WAIT      5340   
+    TCP    192.168.50.21:63322    13.91.222.61:443       ESTABLISHED     15084  
+    TCP    192.168.50.21:64055    52.35.98.42:443        ESTABLISHED     4120   
+    TCP    192.168.50.21:64164    192.168.50.21:443      ESTABLISHED     15084  
+    TCP    192.168.50.21:64982    35.166.89.213:443      ESTABLISHED     4120   
+    TCP    192.168.50.21:65295    100.23.123.51:443      ESTABLISHED     5340   
+    TCP    [::]:443               [::]:0                 LISTENING       4      
+
+● Port 443 is already listening (PID 4 = HTTP.sys/IIS kernel driver) — that's
+  good, it means IIS has something bound to 443 already. The earlier HTTPS
+  failure was likely a certificate trust warning the browser blocked rather than
+  a "not listening" error.
+
+  You're in good shape. Let's build the HorstMFG site now.
+
+  First, verify the AD cert landed in the right store:
+
+  Get-ChildItem Cert:\LocalMachine\My | Select-Object Subject, Thumbprint,
+  NotAfter
+
+  You should see the cert issued for your server's hostname. If it's not there,
+  it needs to be imported into the Local Machine → Personal store.
+
+  ---
+  Create the app pool and site — run these in an elevated PowerShell:
+
+  # Create app pool
+  New-WebAppPool -Name "HorstMFG"
+  Set-ItemProperty "IIS:\AppPools\HorstMFG" managedRuntimeVersion ""
+
+  # Set identity to the service account
+  $cred = Get-Credential   # enter DOMAIN\svc-horstmfg and password when 
+  prompted
+  Set-ItemProperty "IIS:\AppPools\HorstMFG" -Name processModel -Value @{
+      userName = $cred.UserName
+      password = $cred.GetNetworkCredential().Password
+      identityType = "SpecificUser"
+  }
+
+  Then create the site (replace the thumbprint and hostname):
+
+  $thumb = "PASTE_THUMBPRINT_HERE"   # from Get-ChildItem above
+  $hostname = "horstmfg.horst.local" # whatever DNS name the cert was issued for
+
+  New-Website -Name "HorstMFG" `
+      -PhysicalPath "C:\inetpub\horstmfg" `
+      -ApplicationPool "HorstMFG" `
+      -Port 443 -Ssl
+
+  # Bind the certificate
+  New-WebBinding -Name "HorstMFG" -Protocol https -Port 443 -HostHeader
+  $hostname
+  (Get-WebBinding -Name "HorstMFG" -Protocol https).AddSslCertificate($thumb,
+  "My")
+
+  # Add HTTP binding for redirect
+  New-WebBinding -Name "HorstMFG" -Protocol http -Port 80 -HostHeader $hostname
+
+  ---
+  Then set the environment variable:
+
+  Set-WebConfigurationProperty `
+      -PSPath "IIS:\Sites\HorstMFG" `
+      -Filter "system.webServer/aspNetCore/environmentVariables" `
+      -Name "." `
+      -Value @{ name = "ASPNETCORE_ENVIRONMENT"; value = "Production" }
+
+  ---
+  After this, what's the thumbprint from the cert store output? That's the main
+  thing needed to get the binding right.
+
+✻ Cooked for 27s
+
+❯ PS C:\Users\lorne>  Get-ChildItem Cert:\LocalMachine\My | Select-Object       
+  Subject, Thumbprint, NotAfter                                                 
+                                                                                
+  Subject                   Thumbprint                               NotAfter   
+  -------                   ----------                               --------   
+  CN=HWVSWEB01.HW.HORST.COM DE6DE86CA31DC1038A2676812CF59748DC94E5C6 6/12/2027  
+  10:09:13 AM                                                                   
+  CN=HWVSWEB01.HW.HORST.COM 6598CA4D14AE4202C3EF1F6A79FF56FDD364337B 6/12/2027  
+  10:11:32 AM                                                                   
+
+● Two certs with the same subject — likely one from the AD CA and one
+  self-signed. Check the issuer to tell them apart:
+
+  Get-ChildItem Cert:\LocalMachine\My | Select-Object Subject, Issuer,
+  Thumbprint
+
+  The one you want is the AD-issued cert — its Issuer will show your domain CA
+  name (something like CN=HW-CA or CN=HW-HWVSWEB01-CA). The self-signed one will
+  have Issuer equal to Subject (CN=HWVSWEB01.HW.HORST.COM).
+
+  Use the thumbprint of the AD-issued cert for the IIS binding. Once you paste
+  that output I can confirm which one to use.
+
+  Also note — the hostname for your site should be HWVSWEB01.HW.HORST.COM
+  (matching the cert's CN). Update the $hostname variable in the earlier
+  commands to that value.
+
+✻ Brewed for 10s
+
+❯ PS C:\Users\lorne>  Get-ChildItem Cert:\LocalMachine\My | Select-Object       
+  Subject, Issuer, Thumbprint                                                   
+                                                                                
+  Subject                   Issuer                                              
+  Thumbprint                                                                    
+  -------                   ------                                              
+  ----------                                                                    
+  CN=HWVSWEB01.HW.HORST.COM CN=HW-HWVSDC02-CA, DC=HW, DC=HORST, DC=COM          
+  DE6DE86CA31DC1038A2676812CF59748DC94E5C6                                      
+  CN=HWVSWEB01.HW.HORST.COM CN=HW-HWVSDC01-CA, DC=HW, DC=HORST, DC=COM          
+  6598CA4D14AE4202C3EF1F6A79FF56FDD364337B                                      
+
+● Both are valid domain CA-issued certs — either will work and both will be
+  trusted automatically by domain-joined machines. Pick the first one; it
+  doesn't matter which CA issued it for your purposes.
+
+  Use this thumbprint:
+
+  DE6DE86CA31DC1038A2676812CF59748DC94E5C6
+
+  Now run the app pool and site setup — paste this as a single block into an
+  elevated PowerShell:
+
+  $thumb    = "DE6DE86CA31DC1038A2676812CF59748DC94E5C6"
+  $hostname = "HWVSWEB01.HW.HORST.COM"
+
+  # Create app pool
+  New-WebAppPool -Name "HorstMFG"
+  Set-ItemProperty "IIS:\AppPools\HorstMFG" managedRuntimeVersion ""
+
+  # Set service account identity
+  $cred = Get-Credential
+  Set-ItemProperty "IIS:\AppPools\HorstMFG" -Name processModel -Value @{
+      userName     = $cred.UserName
+      password     = $cred.GetNetworkCredential().Password
+      identityType = "SpecificUser"
+  }
+
+  # Create site
+  New-Website -Name "HorstMFG" `
+      -PhysicalPath "C:\inetpub\horstmfg" `
+      -ApplicationPool "HorstMFG" `
+      -Port 443 -Ssl
+
+  # Bind the cert
+  New-WebBinding -Name "HorstMFG" -Protocol https -Port 443 -HostHeader
+  $hostname
+  (Get-WebBinding -Name "HorstMFG" -Protocol https).AddSslCertificate($thumb,
+  "My")
+
+  # HTTP binding for redirect
+  New-WebBinding -Name "HorstMFG" -Protocol http -Port 80 -HostHeader $hostname
+
+  When prompted by Get-Credential, enter HW\svc-horstmfg (or whatever the domain
+  short name is) and the service account password.
+
+  After it runs, open IIS Manager and confirm the HorstMFG site and app pool are
+  both showing. Then we'll install the .NET 8 Hosting Bundle.
+
+✻ Sautéed for 13s
+
+❯ I think I set that all up with your first seven steps                         
+
+● Good. Let's verify the key pieces are in place before moving to the deploy.
+  Run these:
+
+  # Confirm .NET 8 hosting bundle is installed
+  dotnet --list-runtimes | findstr "Microsoft.AspNetCore.App 8"
+
+  # Confirm app pool exists with correct settings
+  Get-WebConfiguration
+  "system.applicationHost/applicationPools/add[@name='HorstMFG']" |
+      Select-Object name, managedRuntimeVersion,
+  @{n="identity";e={$_.processModel.userName}}
+
+  # Confirm site exists and has the right bindings
+  Get-WebBinding -Name "HorstMFG"
+
+  # Confirm folders exist
+  Test-Path "C:\inetpub\horstmfg"
+  Test-Path "C:\HorstMFG\PDFs\Batches"
+  Test-Path "C:\HorstMFG\PDFs\Schedules"
+
+  Paste the output and we'll confirm everything looks right before doing the
+  first deploy.
+
+✻ Cooked for 14s
+
+❯ PS C:\Users\lorne> # Confirm .NET 8 hosting bundle is installed               
+  PS C:\Users\lorne>   dotnet --list-runtimes | findstr                         
+  "Microsoft.AspNetCore.App 8"                                                  
+  Microsoft.AspNetCore.App 8.0.28 [C:\Program                                   
+  Files\dotnet\shared\Microsoft.AspNetCore.App]                                 
+  Microsoft.NETCore.App 8.0.28 [C:\Program                                      
+  Files\dotnet\shared\Microsoft.NETCore.App]                                    
+  PS C:\Users\lorne>                                                            
+  PS C:\Users\lorne>   # Confirm app pool exists with correct settings          
+  PS C:\Users\lorne>   Get-WebConfiguration                                     
+  "system.applicationHost/applicationPools/add[@name='HorstMFG']" |             
+  >>       Select-Object name, managedRuntimeVersion,                           
+  @{n="identity";e={$_.processModel.userName}}                                  
+  PS C:\Users\lorne>                                                            
+  PS C:\Users\lorne>   # Confirm site exists and has the right bindings         
+  PS C:\Users\lorne>   Get-WebBinding -Name "HorstMFG"                          
+                                                                                
+  protocol bindingInformation                      sslFlags                     
+  -------- ------------------                      --------                     
+  https    192.168.50.21:443:horstmfg.hw.horst.com        0                     
+  http     192.168.50.21:80:horstmfg.hw.horst.com         0                     
+                                                                                
+                                                                                
+  PS C:\Users\lorne>                                                            
+  PS C:\Users\lorne>   # Confirm folders exist                                  
+  PS C:\Users\lorne>   Test-Path "C:\inetpub\horstmfg"                          
+  True                                                                          
+  PS C:\Users\lorne>   Test-Path "C:\HorstMFG\PDFs\Batches"                     
+  True                                                                          
+  PS C:\Users\lorne>   Test-Path "C:\HorstMFG\PDFs\Schedules"                   
+● A few things to address:
+
+  1. Hostname mismatch (important)
+
+  The site binding uses horstmfg.hw.horst.com but the cert was issued for
+  HWVSWEB01.HW.HORST.COM. Browsers will show a certificate mismatch warning. You
+  have two options:
+  - Request a new cert from your CA issued for horstmfg.hw.horst.com, or
+  - Change the site binding to use HWVSWEB01.HW.HORST.COM and point DNS to that
+  name
+
+  Which name do you want users to type in their browser? That name needs to
+  match the cert.
+
+  2. App pool returned no output
+
+  The query came back empty. Check directly:
+
+  Get-ChildItem IIS:\AppPools | Where-Object { $_.Name -eq "HorstMFG" } |
+      Select-Object Name, ManagedRuntimeVersion, State
+
+  3. Schedules path result was cut off — paste it if it returned False.
+
+  4. PostgreSQL — was that installed and the horstmfg database and user created?
+  That step hasn't been confirmed yet.
+
+  The hostname/cert mismatch is the most important thing to sort out before
+  going further — everything else can be fixed quickly once that's decided.
+
+✻ Cooked for 20s
+
+※ recap: Setting up a Windows Server 2025 to host the HorstMFG Blazor app via IIS. IIS and .NET 8 are installed, but the SSL cert hostname doesn't match the site binding — decide whether to request a new cert for `horstmfg.hw.horst.com` or rebind the site to `HWVSWEB01.HW.HORST.COM`. (disable recaps in /config)
+
+❯ PS C:\Users\lorne> Get-WebBinding -Name "HorstMFG"                            
+                                                                                
+  protocol bindingInformation                       sslFlags                    
+  -------- ------------------                       --------                    
+  https    192.168.50.21:443:HWVSWEB01.HW.HORST.COM        0                    
+  http     192.168.50.21:80:HWVSWEB01.HW.HORST.COM         0                    
+                                                                                
+                                                                                
+  PS C:\Users\lorne>                                                            
+  PS C:\Users\lorne>  Get-ChildItem IIS:\AppPools | Where-Object { $_.Name -eq  
+  "HorstMFG" } |                                                                
+  >>       Select-Object Name, ManagedRuntimeVersion, State                     
+                                                                                
+  name     managedRuntimeVersion state                                          
+  ----     --------------------- -----                                          
+  HORSTMFG                       Started                                        
+
+● Bindings look correct now — HWVSWEB01.HW.HORST.COM matches the cert. App pool
+  is running with no managed runtime (correct for ASP.NET Core).
+
+  Two quick things still to verify:
+
+  # Check service account is set on the app pool
+  (Get-Item IIS:\AppPools\HorstMFG).processModel.userName
+
+  # Check the SSL cert is actually bound (not just the binding entry)
+  netsh http show sslcert ipport=0.0.0.0:443
+
+  Also — has PostgreSQL been installed and the horstmfg database + user created?
+  That's the last infrastructure piece before we can do the first deploy.
+
+  Once those are confirmed, the remaining steps are all on the software side:
+  - Set folder permissions for the service account
+  - Clone the repo on the server
+  - Create appsettings.Production.json
+  - Publish and deploy the app
+
+✻ Baked for 14s
+
+❯ PS C:\Users\lorne>  Get-ChildItem IIS:\AppPools | Where-Object { $_.Name -eq  
+  "HorstMFG" } |                                                                
+  >>       Select-Object Name, ManagedRuntimeVersion, State                     
+                                                                                
+  name     managedRuntimeVersion state                                          
+  ----     --------------------- -----                                          
+  HORSTMFG                       Started                                        
+                                                                                
+                                                                                
+  PS C:\Users\lorne>  (Get-Item IIS:\AppPools\HorstMFG).processModel.userName   
+  HW.HORST.COM\svc-horstmfg                                                     
+  PS C:\Users\lorne>  netsh http show sslcert ipport=0.0.0.0:443                
+                                                                                
+  SSL Certificate bindings:                                                     
+  -------------------------                                                     
+                                                                                
+  The system cannot find the file specified.                                    
+                                                                                
+                                                                                
+  PS C:\Users\lorne>  netsh http show sslcert ipport=0.0.0.0:80                 
+                                                                                
+  SSL Certificate bindings:                                                     
+  -------------------------                                                     
+                                                                                
+  The system cannot find the file specified.                                    
+  PostgreSQL has been installed, and the database and user have been            
+  configured.                                                                   
+
+● The SSL cert isn't actually bound yet — the HTTPS binding entry exists in IIS
+  but no certificate is attached to it in HTTP.sys. That's why HTTPS won't work.
+  Fix it with:
+
+  $thumb = "DE6DE86CA31DC1038A2676812CF59748DC94E5C6"
+  (Get-WebBinding -Name "HorstMFG" -Protocol https).AddSslCertificate($thumb,
+  "My")
+
+  Then verify it took:
+
+  netsh http show sslcert ipport=192.168.50.21:443
+
+  You should see the certificate hash and a valid application ID in the output.
+
+  ---
+  With PostgreSQL done and everything else in place, after the cert bind the
+  remaining steps are:
+
+  1. Set folder permissions for HW.HORST.COM\svc-horstmfg
+  2. Clone the repo on the server + install Git if not already there
+  3. Create appsettings.Production.json in C:\inetpub\horstmfg\
+  4. Publish and deploy the app
+  5. Browse to https://HWVSWEB01.HW.HORST.COM to confirm it loads
+
+  Run that cert bind command and paste the netsh output so we can confirm it's
+  good before moving on.
+
+✻ Baked for 19s
+
+❯ PS C:\Users\lorne>  $thumb = "DE6DE86CA31DC1038A2676812CF59748DC94E5C6"       
+  PS C:\Users\lorne>   (Get-WebBinding -Name "HorstMFG" -Protocol               
+  https).AddSslCertificate($thumb, "My")                                        
+  PS C:\Users\lorne>  netsh http show sslcert ipport=192.168.50.21:443          
+                                                                                
+  SSL Certificate bindings:                                                     
+  -------------------------                                                     
+                                                                                
+                                                                                
+                                                                                
+      IP:port                      : 192.168.50.21:443                          
+      Certificate Hash             : de6de86ca31dc1038a2676812cf59748dc94e5c6   
+      Application ID               : {4dc3e181-e14b-4a21-b022-59fc669b0914}     
+      Certificate Store Name       : MY                                         
+      Verify Client Certificate Revocation : Enabled                            
+      Verify Revocation Using Cached Client Certificate Only : Disabled         
+      Use Revocation Freshness Time : Disabled                                  
+      Verify Revocation Using Cached URLs Only : Disabled                       
+      Disable Authority Info Access : Disabled                                  
+      Usage Check                  : Enabled                                    
+      Revocation Freshness Time    : 0                                          
+      URL Retrieval Timeout        : 0                                          
+      Ctl Identifier               : (null)                                     
+      Ctl Store Name               : (null)                                     
+      DS Mapper Usage              : Disabled                                   
+      Negotiate Client Certificate : Disabled                                   
+      Reject Connections           : Disabled                                   
+      Disable HTTP2                : Not Set                                    
+      Disable QUIC                 : Not Set                                    
+      Disable TLS1.2               : Not Set                                    
+      Disable TLS1.3               : Not Set                                    
+      Disable OCSP Stapling        : Not Set                                    
+      Enable Token Binding         : Not Set                                    
+      Log Extended Events          : Not Set                                    
+      Disable Legacy TLS Versions  : Not Set                                    
+      Enable Session Ticket        : Not Set                                    
+      Disable Session ID           : Not Set                                    
+      Enable Caching Client Hello  : Not Set                                    
+   Extended Property:                                                           
+      PropertyId                   : 0                                          
+      Receive Window               : 1048576                                    
+   Extended Property:                                                           
+      PropertyId                   : 1                                          
+      Max Settings Per Frame       : 2796202                                    
+      Max Settings Per Minute      : 4294967295                                 
+   Extended Property:                                                           
+      PropertyId                   : 2                                          
+      Send Buffering Flags         : 0x0                                        
+      Aggressive ICW               : Not Set                                    
+      Max Send Buffer Size         : 4294967295                                 
+      Max Concurrent Client Streams: 100                                        
+      Max Receive Buffer Size      : 0                                          
+      Decrypt On SSPI Thread       : Set                                        
+   Extended Property:                                                           
+      PropertyId                   : 3                                          
+      TLS Restrictions             : Not Set                                    
+   Extended Property:                                                           
+      PropertyId                   : 4                                          
+      Error Headers                : Not Set                                    
+      Status Code                  : 0                                          
+   Extended Property:                                                           
+      PropertyId                   : 6                                          
+      Cert Config                  : Not Set                                    
+
+● Certificate is bound and looks perfect. IIS is fully configured.
+
+  Now let's handle folder permissions for the service account. Run this in an
+  elevated PowerShell:
+
+  $account = "HW.HORST.COM\svc-horstmfg"
+  icacls "C:\inetpub\horstmfg"      /grant "${account}:(OI)(CI)RX" /T
+  icacls "C:\HorstMFG\PDFs"         /grant "${account}:(OI)(CI)M"  /T
+
+  The logs\ subfolder inside the app folder gets created automatically when the
+  app first runs — the service account will be able to write to it because it
+  has Modify on the parent.
+
+  ---
+  Next: Git and the repo. Is Git already installed on the server? Check:
+
+  git --version
+
+  If it's not installed, download Git for Windows and install it, then we'll
+  clone the repo and set up the deploy script.
+
+✻ Baked for 7s
+
+※ recap: Setting up Windows Server 2025 to host the HorstMFG Blazor app. IIS, .NET 8, PostgreSQL, and SSL are all configured. Next step is checking if Git is installed on the server with `git --version`. (disable recaps in /config)
+
+❯ The source code for HorstMfg is obviously in source control.  Do I create a   
+  new repo for the published output so I can pull it from the server?           
+
+● No — don't create a separate repo for build output. Committing compiled
+  binaries to git is messy. You have two clean options:
+
+  Option A: Publish on your dev PC, copy to the server (simpler)
+
+  On your dev PC:
+  dotnet publish src/HorstMFG.Web/HorstMFG.Web.csproj -c Release -o
+  C:\publish\horstmfg
+
+  Then copy the output to the server — either via a mapped drive, robocopy over
+  the network, or just drag-and-drop over RDP into C:\inetpub\horstmfg. Then
+  restart the app pool remotely or via RDP:
+  Restart-WebAppPool -Name "HorstMFG"
+
+  No SDK needed on the server — the Hosting Bundle you already installed is
+  enough.
+
+  Option B: Clone the source repo on the server, build there (as the doc 
+  describes)
+
+  This requires installing the .NET 8 SDK on the server (the Hosting Bundle is
+  runtime-only). Then you clone the repo, and the deploy script does git pull +
+  dotnet publish + restart — all in one step on the server.
+
+  ---
+  Recommendation: Option A is simpler to start with — you already have
+  everything you need, and for a small internal app with one developer pushing
+  changes, publishing locally and copying over RDP is fast enough. You can
+  always move to Option B later if you want a one-command deploy script.
+
+  Which do you prefer?
+
+✻ Worked for 27s
+
+❯ let's go with option B                                                        
+
+● Two things needed on the server first. Check what's already there:
+
+  git --version
+  dotnet --version
+
+  dotnet --version will return the SDK version if the SDK is installed, or
+  fail/return nothing useful if only the Hosting Bundle (runtime) is installed.
+  The Hosting Bundle you installed earlier is runtime-only — you need the SDK
+  separately to run dotnet publish.
+
+  ---
+  If Git is missing: download Git for Windows from git-scm.com and install with
+  defaults.
+
+  If the SDK is missing: download the .NET 8 SDK (not the Hosting Bundle) from
+  dot.net and install it. After installing, open a new PowerShell window and
+  confirm:
+
+  dotnet --version   # should show 8.x.x
+
+  ---
+  Once both are confirmed, we'll:
+  1. Clone the repo into a source folder on the server (e.g.
+  C:\src\HorstVaultInterfaceProjects)
+  2. Create the deploy script
+  3. Run the first publish
+
+  What's the remote URL for the repo? Run this on your dev PC to get it:
+
+  git remote get-url origin
+
+✻ Cogitated for 10s
+
+❯ git and .NET SDK are installed.  HorstMfg repo is cloned to server.           
+
+● Let me check the correct project path for the publish command.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Where did you clone the repo on the server? (e.g.
+  C:\src\HorstVaultInterfaceProjects or wherever you put it). Once you tell me
+  that path I can write the exact deploy script.
+
+  Also, create the deploy script file now — we'll fill in the path:
+
+  New-Item -ItemType Directory -Force "C:\scripts"
+
+  And create appsettings.Production.json on the server at
+  C:\inetpub\horstmfg\appsettings.Production.json — you'll need your actual DB
+  password and a generated API key for the Bridge:
+
+  {
+    "ConnectionStrings": {
+      "DefaultConnection": "Host=localhost;Database=horstmfg;Username=horstmfg_u
+  ser;Password=YOUR-DB-PASSWORD-HERE"
+    },
+    "Bridge": {
+      "ApiKey": "YOUR-BRIDGE-API-KEY-HERE"
+    },
+    "FileSystemPaths": {
+      "PdfSharePath": "\\\\hwvsse01\\Manufacturing\\PDF Drawing Files\\",
+      "LocalPdfPath": "C:\\HorstMFG\\PDFs\\"
+    }
+  }
+
+  For the Bridge API key, generate something random:
+
+  [System.Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum
+  256 }) -as [byte[]])
+
+  Save that output — you'll need it when configuring the bridge client apps on
+  the shop floor PCs later.
+
+✻ Baked for 19s
+
+※ recap: Setting up a Windows Server 2025 to host the HorstMFG Blazor app on IIS. IIS and SSL are configured; we need the server-side clone path to write the deploy script.
+
+❯ I've saved the appsettings file. The source repo is at the same spot it is on 
+  the dev PC.  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects          
+
+● Here's the deploy script — create this file on the server:
+
+  C:\scripts\deploy-horstmfg.ps1
+
+  $repoRoot    = "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects"
+  $projectPath = "$repoRoot\HorstMFG\src\HorstMFG.Web\HorstMFG.Web.csproj"
+  $publishPath = "C:\inetpub\horstmfg"
+  $appPool     = "HorstMFG"
+
+  Set-Location $repoRoot
+  git pull
+
+  dotnet publish $projectPath -c Release -o $publishPath
+
+  Restart-WebAppPool -Name $appPool
+  Write-Host "Deploy complete."
+
+  One important note: appsettings.Production.json stays safe — dotnet publish
+  only copies files that are part of the build output. Since that file isn't in
+  the repo it won't be touched.
+
+  Run the first deploy now:
+
+  & "C:\scripts\deploy-horstmfg.ps1"
+
+  Watch for any build errors in the output. If it succeeds and the app pool
+  restarts, browse to https://HWVSWEB01.HW.HORST.COM and you should see the app.
+
+✻ Churned for 16s
+
+❯  HorstMFG.Core -> C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Hor 
+  stMFG\src\HorstMFG.Core\bin\Release\net8.                                     
+    0\HorstMFG.Core.dll                                                         
+    HorstMFG.Infrastructure -> C:\Users\lorne\source\repos\HorstVaultInterfaceP 
+  rojects\HorstMFG\src\HorstMFG.Infrastructu                                    
+    re\bin\Release\net8.0\HorstMFG.Infrastructure.dll                           
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Production\Productio                                    
+  nOrders.razor(410,61): warning CS8604: Possible null reference argument for   
+  parameter 'value' in 'ValueTask ProtectedBr                                   
+  owserStorage.SetAsync(string key, object value)'.                             
+  [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src         
+  \HorstMFG.Web\HorstMFG.Web.csproj]                                            
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Production\Productio                                    
+  nOrders.razor(411,59): warning CS8604: Possible null reference argument for   
+  parameter 'value' in 'ValueTask ProtectedBr                                   
+  owserStorage.SetAsync(string key, object value)'.                             
+  [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src         
+  \HorstMFG.Web\HorstMFG.Web.csproj]                                            
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Engineering\BomImpor                                    
+  t.razor(289,24): warning CS1998: This async method lacks 'await' operators    
+  and will run synchronously. Consider using t                                  
+  he 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' 
+  to do CPU-bound work on a background thre                                     
+  ad. [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\Hor 
+  stMFG.Web\HorstMFG.Web.csproj]                                                
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Production\Productio                                    
+  nBatches.razor(378,62): warning CS8604: Possible null reference argument for  
+  parameter 'value' in 'ValueTask ProtectedB                                    
+  rowserStorage.SetAsync(string key, object value)'.                            
+  [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\sr          
+  c\HorstMFG.Web\HorstMFG.Web.csproj]                                           
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Production\Productio                                    
+  nBatches.razor(379,60): warning CS8604: Possible null reference argument for  
+  parameter 'value' in 'ValueTask ProtectedB                                    
+  rowserStorage.SetAsync(string key, object value)'.                            
+  [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\sr          
+  c\HorstMFG.Web\HorstMFG.Web.csproj]                                           
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Admin\Users.razor(11                                    
+  3,21): warning CS0649: Field 'Users._error' is never assigned to, and will    
+  always have its default value null [C:\Users                                  
+  \lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG.Web\Hor 
+  stMFG.Web.csproj]                                                             
+  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\src\HorstMFG 
+  .Web\Components\Pages\Admin\NestingStation                                    
+  s.razor(79,21): warning CS0649: Field 'NestingStations._error' is never       
+  assigned to, and will always have its default v                               
+  alue null [C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\s 
+  rc\HorstMFG.Web\HorstMFG.Web.csproj]                                          
+    HorstMFG.Web -> C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Hor 
+  stMFG\src\HorstMFG.Web\bin\Release\net8.0\                                    
+    HorstMFG.Web.dll                                                            
+    HorstMFG.Web -> C:\inetpub\horstmfg\                                        
+  Deploy complete.                                                              
+
+● Build succeeded — warnings only, no errors, and the output landed in
+  C:\inetpub\horstmfg\.
+
+  Browse to https://HWVSWEB01.HW.HORST.COM now. On first startup the app will
+  automatically run EF Core migrations to create the database schema, so it may
+  take a few extra seconds to respond the first time.
+
+  If it loads, check the event log for any startup errors:
+
+  Get-EventLog -LogName Application -Source "IIS AspNetCore Module V2" -Newest
+  10
+
+  What do you see in the browser?
+
+✻ Baked for 8s
+❯ HTTP Error 500.30 - ASP.NET Core app failed to start                          
+  Common solutions to this issue:                                               
+  The app failed to start                                                       
+  The app started but then stopped                                              
+  The app started but threw an exception during startup                         
+  Troubleshooting steps:                                                        
+  Check the system event log for error messages                                 
+  Enable logging the application process' stdout messages                       
+  Attach a debugger to the application process and inspect                      
+  For more guidance on diagnosing and handling these errors, visit Troubleshoot 
+  ASP.NET Core on Azure App Service and IIS.                                    
+
+● Check the event log first — it usually has the actual error:
+
+  Get-EventLog -LogName Application -Newest 20 |
+      Where-Object { $_.Source -match "IIS|ASP|W3SVC|HorstMFG" } |
+      Format-List TimeGenerated, Source, Message
+
+  Also enable stdout logging temporarily to capture the startup exception. Edit
+  C:\inetpub\horstmfg\web.config — find the aspNetCore element and set
+  stdoutLogEnabled="true":
+
+  <aspNetCore stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" ... />
+
+  Then create the logs folder and restart the app pool:
+
+  New-Item -ItemType Directory -Force "C:\inetpub\horstmfg\logs"
+  Restart-WebAppPool -Name "HorstMFG"
+
+  Browse to the site again to trigger the error, then read the log:
+
+  Get-ChildItem "C:\inetpub\horstmfg\logs" | Sort-Object LastWriteTime
+  -Descending | Select-Object -First 1 | Get-Content
+
+  Paste what you see from either the event log or the stdout log — that will
+  show exactly what's failing at startup.
+
+✻ Cogitated for 12s
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  Get-EventLog     
+  -LogName Application -Newest 20 |                                             
+  >>       Where-Object { $_.Source -match "IIS|ASP|W3SVC|HorstMFG" } |         
+  >>       Format-List TimeGenerated, Source, Message                           
+                                                                                
+                                                                                
+  TimeGenerated : 6/15/2026 7:07:48 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' failed to load coreclr.                                
+                  Exception message:                                            
+                  CLR worker thread exited prematurely                          
+                                                                                
+  TimeGenerated : 6/15/2026 7:07:48 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' has exited from Program.Main                           
+                  with exit code = '0'. First 30KB characters of captured       
+  stdout and stderr logs:                                                       
+                  [07:07:47 INF] Executed DbCommand (62ms) [Parameters=[],      
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [07:07:47 INF] Executed DbCommand (3ms) [Parameters=[],       
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [07:07:48 ERR] Failed executing DbCommand (11ms)              
+  [Parameters=[], CommandType='Text',                                           
+                  CommandTimeout='30']                                          
+                  CREATE TABLE "__EFMigrationsHistory" (                        
+                      "MigrationId" character varying(150) NOT NULL,            
+                      "ProductVersion" character varying(32) NOT NULL,          
+                      CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY         
+  ("MigrationId")                                                               
+                  );                                                            
+                  [07:07:48 FTL] Application terminated unexpectedly            
+                  Npgsql.PostgresException (0x80004005): 42501: permission      
+  denied for schema public                                                      
+                                                                                
+                  POSITION: 14                                                  
+                     at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean 
+  async, DataRowLoadingMode                                                     
+                  dataRowLoadingMode, Boolean readingNotifications, Boolean     
+  isReadingPrependedMessage)                                                    
+                     at System.Runtime.CompilerServices.PoolingAsyncValueTaskMe 
+  thodBuilder`1.StateMachineBox`1.System.Thr                                    
+                                                                                
+  eading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)         
+                     at Npgsql.NpgsqlDataReader.NextResult(Boolean async,       
+  Boolean isConsuming, CancellationToken                                        
+                  cancellationToken)                                            
+                     at Npgsql.NpgsqlDataReader.NextResult(Boolean async,       
+  Boolean isConsuming, CancellationToken                                        
+                  cancellationToken)                                            
+                     at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async,       
+  CommandBehavior behavior, CancellationToken                                   
+                  cancellationToken)                                            
+                     at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async,       
+  CommandBehavior behavior, CancellationToken                                   
+                  cancellationToken)                                            
+                     at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async,     
+  CancellationToken cancellationToken)                                          
+                     at Microsoft.EntityFrameworkCore.Storage.RelationalCommand 
+  .ExecuteNonQueryAsync(RelationalCommandPar                                    
+                  ameterObject parameterObject, CancellationToken               
+  cancellationToken)                                                            
+                     at Microsoft.EntityFrameworkCore.Storage.RelationalCommand 
+  .ExecuteNonQueryAsync(RelationalCommandPar                                    
+                  ameterObject parameterObject, CancellationToken               
+  cancellationToken)                                                            
+                     at Microsoft.EntityFrameworkCore.Storage.RelationalCommand 
+  .ExecuteNonQueryAsync(RelationalCommandPar                                    
+                  ameterObject parameterObject, CancellationToken               
+  cancellationToken)                                                            
+                     at Microsoft.EntityFrameworkCore.Migrations.Internal.Migra 
+  tor.MigrateAsync(String targetMigration,                                      
+                  CancellationToken cancellationToken)                          
+                     at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Intern 
+  al.NpgsqlMigrator.MigrateAsync(String                                         
+                  targetMigration, CancellationToken cancellationToken)         
+                     at                                                         
+  HorstMFG.Infrastructure.Data.DbInitializer.InitializeAsync() in               
+  C:\Users\lorne\source\repos\Horst                                             
+                  VaultInterfaceProjects\HorstMFG\src\HorstMFG.Infrastructure\D 
+  ata\DbInitializer.cs:line 21                                                  
+                     at Program.<Main>$(String[] args) in                       
+                  C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\Horst 
+  MFG\src\HorstMFG.Web\Program.cs:line 85                                       
+                    Exception data:                                             
+                      Severity: ERROR                                           
+                      SqlState: 42501                                           
+                      MessageText: permission denied for schema public          
+                      Position: 14                                              
+                      File: aclchk.c                                            
+                      Line: 2795                                                
+                      Routine: aclcheck_error                                   
+
+● Clear diagnosis — PostgreSQL 15+ changed the default permissions on the public
+  schema. horstmfg_user can connect but can't create tables. Easy fix.
+
+  Open psql or pgAdmin and run this against the horstmfg database:
+
+  GRANT ALL ON SCHEMA public TO horstmfg_user;
+
+  From the command line on the server:
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d horstmfg -c
+  "GRANT ALL ON SCHEMA public TO horstmfg_user;"
+
+  (Adjust the PostgreSQL version number in the path if you installed 17.)
+
+  Then restart the app pool and try again:
+
+  Restart-WebAppPool -Name "HorstMFG"
+
+  Browse to https://HWVSWEB01.HW.HORST.COM — this time the migrations should run
+  and the app should come up.
+
+✻ Brewed for 15s
+
+※ recap: Setting up a Windows Server 2025 for the HorstMFG Blazor app. IIS and the first deploy are done but the app is crashing on startup due to a PostgreSQL permissions issue — run the GRANT ALL ON SCHEMA public command above to fix it.
+
+❯ the app loads, but I can't log in                                             
+
+● Let me check how authentication and user seeding is set up.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● The database seeds a default admin account on first startup. Try:
+
+  - Username: admin
+  - Password: admin123
+
+  If that doesn't work, it's possible the seeding didn't run because the first
+  startup crashed before completing. Check whether the Plants table got
+  populated:
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d horstmfg -c
+  "SELECT COUNT(*) FROM \"Plants\";"
+
+  If it returns 0, the seed didn't run. You can force it by temporarily dropping
+  the __EFMigrationsHistory table — but a cleaner fix is to just insert the
+  seed data manually. Let me know what you get from that query and whether the
+  admin / admin123 login works.
+
+  Also — once you're in, change the admin password immediately from the Users
+  admin page.
+
+✻ Cooked for 18s
+
+※ recap: Setting up a Windows Server 2025 for the HorstMFG Blazor app. IIS, .NET, PostgreSQL, and the first deploy are all done — the app is loading but login is failing. Try username admin, password admin123.
+
+❯ admin login worked. I'm trying to figure out how to change the password.      
+
+● Let me check what's on the Users admin page.
+
+  Read 1 file (ctrl+o to expand)
+
+● Go to Admin → Users, then double-click the admin row. The edit dialog will
+  open with a Password field — leave it blank to keep the current password, or
+  type a new one to change it. Hit Save.
+
+  The password field label even says (leave blank to keep current) when editing,
+  so it's straightforward.
+
+✻ Cogitated for 9s
+
+※ recap: Setting up a Windows Server 2025 for the HorstMFG Blazor app. IIS, .NET, PostgreSQL, and the first deploy are all working. Next: change the admin password via Admin → Users, double-click the admin row.
+
+❯ I need to be able to switch between databases on the production server. I     
+  would like to copy over the existing test database from this dev machine to   
+  compare performance.  But then I need to be able to switch back to the new    
+  empty database for production.                                                
+
+● Clean approach: create a second database on the server (horstmfg_test),
+  restore the dev data into it, then switch between them by editing one line in
+  appsettings.Production.json and restarting the app pool.
+
+  ---
+  Step 1 — Dump the dev database (run on your dev PC):
+
+  & "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" -U postgres -d horstmfg -F
+  c -f "C:\temp\horstmfg_dev.dump"
+
+  Step 2 — Copy the dump to the server — simplest is to copy it over RDP (just
+  drag it across). Drop it somewhere like C:\temp\horstmfg_dev.dump on the
+  server.
+
+  Step 3 — Create the test database and restore (run on the server):
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "CREATE 
+  DATABASE horstmfg_test;"
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "GRANT ALL ON 
+  DATABASE horstmfg_test TO horstmfg_user;"
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d horstmfg_test
+  -c "GRANT ALL ON SCHEMA public TO horstmfg_user;"
+  & "C:\Program Files\PostgreSQL\16\bin\pg_restore.exe" -U postgres -d
+  horstmfg_test -F c "C:\temp\horstmfg_dev.dump"
+
+  ---
+  Switching databases — edit C:\inetpub\horstmfg\appsettings.Production.json,
+  change the Database= value, then restart the app pool:
+
+  To test database:
+  "DefaultConnection":
+  "Host=localhost;Database=horstmfg_test;Username=horstmfg_user;Password=..."
+
+  Back to production:
+  "DefaultConnection":
+  "Host=localhost;Database=horstmfg;Username=horstmfg_user;Password=..."
+
+  Restart-WebAppPool -Name "HorstMFG"
+
+  That's it — no deploy needed, just the config edit and a pool restart. The
+  switch takes about 5 seconds.
+
+✻ Brewed for 23s
+
+❯ HTTP Error 500.30 - ASP.NET Core app failed to start                          
+  Common solutions to this issue:                                               
+  The app failed to start                                                       
+  The app started but then stopped                                              
+  The app started but threw an exception during startup                         
+  Troubleshooting steps:                                                        
+  Check the system event log for error messages                                 
+  Enable logging the application process' stdout messages                       
+  Attach a debugger to the application process and inspect                      
+  For more guidance on diagnosing and handling these errors, visit Troubleshoot 
+  ASP.NET Core on Azure App Service and IIS.                                    
+
+● Check the event log:
+
+  Get-EventLog -LogName Application -Newest 20 |
+      Where-Object { $_.Source -match "IIS|ASP|W3SVC|HorstMFG" } |
+      Format-List TimeGenerated, Source, Message
+
+  Most likely it's the same schema permissions issue on the new horstmfg_test
+  database — the GRANT ALL ON SCHEMA public needs to run after the restore
+  completes, since pg_restore rebuilds the schema from the dump. Paste the log
+  output to confirm.
+
+✻ Cooked for 5s
+
+※ recap: Setting up Windows Server 2025 to host the HorstMFG Blazor app. Switched to the test database and got a 500.30 startup error — waiting on the event log output to diagnose it.
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  Get-EventLog     
+  -LogName Application -Newest 20 |                                             
+  >>       Where-Object { $_.Source -match "IIS|ASP|W3SVC|HorstMFG" } |         
+  >>       Format-List TimeGenerated, Source, Message                           
+                                                                                
+                                                                                
+  TimeGenerated : 6/16/2026 6:45:54 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' failed to load coreclr.                                
+                  Exception message:                                            
+                  CLR worker thread exited prematurely                          
+                                                                                
+  TimeGenerated : 6/16/2026 6:45:54 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' has exited from Program.Main                           
+                  with exit code = '0'. First 30KB characters of captured       
+  stdout and stderr logs:                                                       
+                  [06:45:53 INF] Executed DbCommand (71ms) [Parameters=[],      
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [06:45:53 INF] Executed DbCommand (11ms) [Parameters=[],      
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT "MigrationId", "ProductVersion"                        
+                  FROM "__EFMigrationsHistory"                                  
+                  ORDER BY "MigrationId";                                       
+                  [06:45:53 INF] Executed DbCommand (1ms) [Parameters=[],       
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [06:45:53 INF] Executed DbCommand (2ms) [Parameters=[],       
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [06:45:53 INF] Executed DbCommand (1ms) [Parameters=[],       
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT "MigrationId", "ProductVersion"                        
+                  FROM "__EFMigrationsHistory"                                  
+                  ORD                                                           
+  ──── (123 lines hidden) ───────────────────────────────────────────────────── 
+  e       : Could not start stdout file redirection to '.\logs\stdout' with     
+  application base                                                              
+                  'C:\inetpub\horstmfg\'. create_directories: Access is         
+  denied.: "C:\inetpub\horstmfg\.\logs".                                        
+                                                                                
+  TimeGenerated : 6/16/2026 6:39:02 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' failed to load coreclr.                                
+                  Exception message:                                            
+                  CLR worker thread exited prematurely                          
+                                                                                
+  TimeGenerated : 6/16/2026 6:39:02 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application '/LM/W3SVC/2/ROOT' with physical root             
+  'C:\inetpub\horstmfg\' has exited from Program.Main                           
+                  with exit code = '0'. First 30KB characters of captured       
+  stdout and stderr logs:                                                       
+                  [06:39:02 INF] Executed DbCommand (85ms) [Parameters=[],      
+  CommandType='Text', CommandTimeout='30']                                      
+                  SELECT EXISTS (                                               
+                      SELECT 1 FROM pg_catalog.pg_class c                       
+                      JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace    
+                      WHERE n.nspname='public' AND                              
+                            c.relname='__EFMigrationsHistory'                   
+                  )                                                             
+                  [06:39:02 ERR] Failed executing DbCommand (20ms)              
+  [Parameters=[], CommandType='Text',                                           
+                  CommandTimeout='30']                                          
+                  SELECT "MigrationId", "ProductVersion"                        
+                  FROM "__EFMigrationsHistory"                                  
+                  ORDER BY "MigrationId";                                       
+                  [06:39:02 FTL] Application terminated unexpectedly            
+                  Npgsql.PostgresException (0x80004005): 42501: permission      
+  denied for table __EFMigrationsHistory                                        
+                     at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean 
+  async, DataRowLoadingMode                                                     
+                  dataRowLoadingMode,                                           
+                                                                                
+  TimeGenerated : 6/16/2026 6:38:54 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Could not start stdout file redirection to '.\logs\stdout'    
+  with application base                                                         
+                  'C:\inetpub\horstmfg\'. create_directories: Access is         
+  denied.: "C:\inetpub\horstmfg\.\logs".                                        
+                                                                                
+  TimeGenerated : 6/16/2026 6:38:54 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Could not start stdout file redirection to '.\logs\stdout'    
+  with application base                                                         
+                  'C:\inetpub\horstmfg\'. create_directories: Access is         
+  denied.: "C:\inetpub\horstmfg\.\logs".                                        
+                                                                                
+  TimeGenerated : 6/16/2026 6:38:50 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application 'MACHINE/WEBROOT/APPHOST/HORSTMFG' has shutdown.  
+                                                                                
+
+● Two issues. The main one: GRANT ALL ON SCHEMA public gives schema-level access
+  but not table-level access. When pg_restore rebuilt the tables from the dump,
+  horstmfg_user wasn't granted rights to the tables themselves. Fix it:
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d horstmfg_test
+  -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO horstmfg_user;"
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d horstmfg_test
+  -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO horstmfg_user;"
+
+  The second issue: stdout logging is still enabled in web.config from earlier
+  and the logs folder doesn't exist yet. Turn off stdout logging since you're
+  done debugging — edit C:\inetpub\horstmfg\web.config and set:
+
+  stdoutLogEnabled="false"
+
+  Then restart and try again:
+
+  Restart-WebAppPool -Name "HorstMFG"
+
+  ---
+  Also worth noting for the future: any time you restore a dump into
+  horstmfg_test, you'll need to re-run those two GRANT commands. The dump
+  carries table ownership from the source but not the grants to horstmfg_user.
+
+✻ Sautéed for 21s
+
+❯ Now, for the VaultGateway so I can import batches and schedules.  I need to   
+  run this on the server as well, correct?                                      
+
+● Let me look for VaultGateway in the codebase.
+  Searched for 5 patterns, read 4 files (ctrl+o to expand)
+
+● Yes, it runs on the server — it's a Windows service that listens on
+  http://127.0.0.1:5050 (localhost only) and sits between the web app and
+  Autodesk Vault. The web app posts BOM import requests to it, it queries Vault,
+  and calls back to the web app with the results. Both must be on the same
+  machine because the loopback address is hardcoded.
+
+  Since it's .NET Framework 4.8, it can't use dotnet publish — build it with
+  MSBuild on your dev PC:
+
+  msbuild HorstMFG.VaultGateway\HorstMFG.VaultGateway.sln
+  /p:Configuration=Release /p:Platform=AnyCPU
+
+  Copy the output folder
+  (HorstMFG.VaultGateway\HorstMFG.VaultGateway\bin\Release\net48\) to the
+  server, e.g. C:\Services\VaultGateway\.
+
+  Create appsettings.Production.json in that folder on the server:
+
+  {
+    "Gateway": {
+      "ListenUrl": "http://127.0.0.1:5050",
+      "CallbackApiKey": "SAME-KEY-AS-YOUR-BRIDGE-APIKEY"
+    },
+    "Vault": {
+      "Server": "hwvsvt04",
+      "Vault": "Vault",
+      "Username": "svc-horstmfg",
+      "Password": "the-vault-password"
+    }
+  }
+
+  Then install and start it as a Windows service on the server:
+
+  New-Service -Name "HorstMFGVaultGateway" `
+      -BinaryPathName "C:\Services\VaultGateway\HorstMFG.VaultGateway.exe" `
+      -DisplayName "HorstMFG Vault Gateway" `
+      -StartupType Automatic `
+      -Description "Bridges HorstMFG web app to Autodesk Vault for BOM import"
+
+  # Set it to run as the domain service account
+  $svc = Get-WmiObject Win32_Service -Filter "Name='HorstMFGVaultGateway'"
+  $svc.Change($null,$null,$null,$null,$null,$null,"HW.HORST.COM\svc-horstmfg","t
+  he-service-account-password")
+
+  Start-Service HorstMFGVaultGateway
+
+  A couple of things to confirm before deploying:
+  1. Does svc-horstmfg have a Vault account, or does Vault use separate
+  credentials?
+  2. What's the CallbackApiKey used for on the web app side — is it the same as
+  the Bridge:ApiKey you generated earlier?
+
+✻ Crunched for 1m 41s
+
+※ recap: Setting up the production server for HorstMFG. The web app is deployed and running. Next step is building and deploying the VaultGateway Windows service, pending answers to two questions about Vault credentials and the CallbackApiKey.
+
+❯ I can't remember what the CallbackApiKey is used for, or whether it's used at 
+  all. It doesn't look like it's been set here on the dev machine, but I've     
+  been running it only in the debugger so far.  Would that make a difference?   
+
+● Let me check whether the key is actually validated anywhere.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● It is used and validated. The gateway sends it as an X-Gateway-Key header on
+  the callback, and the web app checks it at line 268-272 of Program.cs — if the
+  key is empty or doesn't match, it returns 401 and the BOM import silently
+  fails.
+
+  It worked in the debugger because both sides have matching values in their
+  appsettings.Development.json files ("dev-key-only-not-for-prod"). That file is
+  only loaded in the Development environment, which the debugger uses. In
+  Production that override isn't loaded, so both sides fall back to
+  "REPLACE_IN_PRODUCTION" from the base appsettings.json — which technically
+  match, but that's a placeholder, not a real secret.
+
+  For production you need a real shared key set in both places. Generate one:
+
+  [System.Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum
+  256 }) -as [byte[]])
+
+  Then add a Gateway section to the web app's appsettings.Production.json on the
+  server:
+
+  {
+    "ConnectionStrings": {
+      "DefaultConnection": "..."
+    },
+    "Bridge": {
+      "ApiKey": "..."
+    },
+    "Gateway": {
+      "CallbackApiKey": "YOUR-GENERATED-KEY-HERE",
+      "CallbackUrl":
+  "https://HWVSWEB01.HW.HORST.COM/api/internal/vault-bom-result"
+    },
+    "FileSystemPaths": {
+      "PdfSharePath": "\\\\hwvsse01\\Manufacturing\\PDF Drawing Files\\",
+      "LocalPdfPath": "C:\\HorstMFG\\PDFs\\"
+    }
+  }
+
+  And put the same key in the VaultGateway's appsettings.Production.json:
+
+  {
+    "Gateway": {
+      "ListenUrl": "http://127.0.0.1:5050",
+      "CallbackApiKey": "YOUR-GENERATED-KEY-HERE"
+    },
+    "Vault": {
+      "Server": "hwvsvt04",
+      "Vault": "Vault",
+      "Username": "svc-horstmfg",
+      "Password": "..."
+    }
+  }
+
+  Both files stay on the server only — don't commit them.
+
+✻ Crunched for 34s
+
+※ recap: Setting up the HorstMFG production server — IIS and the web app are running, now deploying the VaultGateway Windows service. Next step is building it with MSBuild on the dev PC and copying the output to the server.
+
+❯ 2026-06-17 6:55:00 AM                                                         
+  Issue:                                                                        
+  The solution file HorstMFG.VaultGateway.sln specifies a project configuration 
+  for project HorstMFG.VaultGateway.csproj that does not exist for that         
+  project - please check the solution to find and remove the configuration that 
+  is not in the below list.                                                     
+                                                                                
+  Existing project configurations:                                              
+  Debug|AnyCPU                                                                  
+  Release|AnyCPU                                                                
+                                                                                
+  Resolution options:                                                           
+  1. Edit the solution file HorstMFG.VaultGateway.sln to change the project     
+  configuration to one of the existing configurations for this project.         
+  2. Use the Configuration Manager to change the project configuration          
+  reference in the solution to an existing project configuration or to create a 
+  new project configuration.                                                    
+                                                                                
+  Project Path: C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMF 
+  G.VaultGateway\HorstMFG.VaultGateway\HorstMFG.VaultGateway.csproj             
+  Solution Path: C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstM 
+  FG.VaultGateway\HorstMFG.VaultGateway.sln                                     
+
+  Read 2 files (ctrl+o to expand)
+
+● Found it. The .csproj is an SDK-style project that only exposes Debug|AnyCPU
+  and Release|AnyCPU configurations (the <PlatformTarget>x64</PlatformTarget>
+  sets the actual CPU target internally, but doesn't create a separate "x64"
+  platform). The .sln file maps Release|Any CPU → Release|x64, which doesn't
+  exist as a project configuration — that mismatch is the error.
+
+  Fix the .sln file:
+
+● Update(HorstMFG.VaultGateway\HorstMFG.VaultGateway.sln)
+  ⎿  Added 8 lines, removed 8 lines
+      12      Release|x64 = Release|x64
+      13    EndGlobalSection
+      14    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+      15 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|Any CPU.Active
+         -Cfg = Debug|x64                                                
+      16 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|Any CPU.Build.
+         -0 = Debug|x64                                                  
+      17 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|x64.ActiveCfg 
+         -= Debug|x64                                                    
+      18 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|x64.Build.0 = 
+         -Debug|x64                                                      
+      19 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|Any CPU.Acti
+         -veCfg = Release|x64                                            
+      20 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|Any CPU.Buil
+         -d.0 = Release|x64                                              
+      21 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|x64.ActiveCf
+         -g = Release|x64                                                
+      22 -    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|x64.Build.0 
+         -= Release|x64                                                  
+      15 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|Any CPU.Active
+         +Cfg = Debug|Any CPU                                            
+      16 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|Any CPU.Build.
+         +0 = Debug|Any CPU                                              
+      17 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|x64.ActiveCfg 
+         += Debug|Any CPU                                                
+      18 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Debug|x64.Build.0 = 
+         +Debug|Any CPU                                                  
+      19 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|Any CPU.Acti
+         +veCfg = Release|Any CPU                                        
+      20 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|Any CPU.Buil
+         +d.0 = Release|Any CPU                                          
+      21 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|x64.ActiveCf
+         +g = Release|Any CPU                                            
+      22 +    {7B3F4D1C-2A8E-4F5C-9B7D-1E0F2A3C4B5D}.Release|x64.Build.0 
+         += Release|Any CPU                                              
+      23    EndGlobalSection
+      24    GlobalSection(SolutionProperties) = preSolution
+      25      HideSolutionNode = FALSE
+
+● Now the build command should be:
+
+  msbuild HorstMFG.VaultGateway\HorstMFG.VaultGateway.sln
+  /p:Configuration=Release /p:Platform="Any CPU"
+
+  The actual CPU architecture (x64) is still enforced by
+  <PlatformTarget>x64</PlatformTarget> in the csproj — that's unaffected by this
+  fix, it's purely about which solution platform name maps to which project
+  configuration. This was a pre-existing mismatch in the .sln, unrelated to
+  anything we changed during deployment. Try the build again.
+
+✻ Cooked for 20s
+
+❯ I recently made changes to PrintPDF in the JobProcessor projects.  looks like 
+  this project still references an older version.  How do I update that?        
+
+● Agent(Find PrintPDF reference in JobProcessor projects)
+  ⎿  Done (12 tool uses · 49.1k tokens · 43s)
+  (ctrl+o to expand)
+
+● Good news — the active build (JobProcessorPDFPrint\JobProcessorPrintPDF.sln
+  and JobProcessorFilesUpdate\JobProcessorFilesUpdate.sln) already uses a live 
+  ProjectReference to PrintPDF.csproj, not a static DLL reference:
+
+  <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+    <Project>{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}</Project>
+    <Name>PrintPDF</Name>
+  </ProjectReference>
+
+  That means a rebuild should automatically pick up your PrintPDF changes — no
+  reference update needed. Just rebuild the JobProcessor solution:
+
+  msbuild JobProcessorPDFPrint\JobProcessorPrintPDF.sln /p:Configuration=Release
+
+  What's likely tripping you up — there are some stale artifacts in that folder
+  that aren't part of the actual build:
+
+  1. JobProcessorPDFPrint\PrintPDF.dll — a loose, stray copy sitting directly in
+  the project root, dated Oct 2022. Not referenced by the active csproj, but if
+  you (or VS, or a script) ever copy/load that file directly, you'd see old
+  behavior. Worth deleting.
+  2. JobProcessorPDFPrint\JobProcessorPrintPDF - Copy.csproj and
+  JobProcessorFilesUpdate\JobProcessorFileUpdate - Copy.csproj — old VS2010-era
+  duplicate project files, not in any .sln, that do use a static HintPath
+  reference to ..\PrintPDF\bin\Debug\PrintPDF.dll. If you're opening one of
+  these by accident instead of the real .csproj, that would explain seeing an
+  old version.
+
+  If you're building via the .sln files listed in CLAUDE.md and still see old
+  behavior, check that you're not accidentally opening one of those " - Copy"
+  files in Visual Studio. Otherwise, just rebuild — the reference is already
+  live.
+
+  Want me to delete the stale DLL and the orphaned " - Copy" project files to
+  avoid future confusion?
+
+✻ Brewed for 55s
+
+❯ I'm seeing a PrintPDF.dll in the freshly built release output from            
+  HorstMFG.VaultGateway.  It is dated 2026-04-13.                               
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● Found the root cause — it's different from the JobProcessor situation.
+  VaultAccess.csproj (which HorstMFG.VaultGateway references via
+  ProjectReference) has a static DLL reference to PrintPDF, not a live
+  ProjectReference:
+
+  <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neutral, 
+  PublicKeyToken=0f443165cb96f6dd, processorArchitecture=AMD64">
+    <SpecificVersion>False</SpecificVersion>
+    <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath>
+  </Reference>
+
+  This points to PrintPDF\bin\Debug\PrintPDF.dll and only updates when that
+  specific file gets rebuilt — it doesn't rebuild PrintPDF as part of the
+  VaultGateway build chain. That's why you're seeing a 2026-04-13 DLL: it's
+  whatever was last built in PrintPDF\bin\Debug\, not your recent changes.
+
+  Fix: convert it to a live ProjectReference, the same pattern already used
+  correctly in JobProcessorPDFPrint and JobProcessorFilesUpdate:
+
+  <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">
+    <Project>{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}</Project>
+    <Name>PrintPDF</Name>
+  </ProjectReference>
+
+  This removes the static <Reference> block and replaces it with the
+  ProjectReference. Once that's in place, building VaultAccess (and anything
+  that references it, like VaultGateway) will always rebuild PrintPDF from
+  current source first.
+
+  Want me to make that edit to VaultAccess.csproj?
+
+✻ Cogitated for 21s
+
+❯ where else is VaultAccess used?                                               
+  Searched for 1 pattern (ctrl+o to expand)
+
+● VaultAccess.csproj is referenced by 6 other projects — it's the shared
+  foundation library CLAUDE.md calls out as "referenced by most other projects":
+
+  - HorstMFG.VaultGateway (what we're working on)
+  - HorstMFG.Bridge
+  - VaultItemProcessor — main GUI app
+  - RadanMaster — Radan CAD integration app
+  - DirectView2016 (VaultView) — Vault Explorer UI extension
+  - VaultDrawingRetrieveTest — test project
+
+  Converting PrintPDF to a ProjectReference in VaultAccess.csproj affects all of
+  them — each will now pull in current PrintPDF source on rebuild instead of
+  whatever stale DLL happened to be in PrintPDF\bin\Debug\. Since
+  ProjectReference paths resolve relative to the referencing project file (not
+  the solution), this works correctly regardless of which solution triggers the
+  build — no changes needed to the other .sln files.
+
+  This is a net improvement for all of them (no more silently-stale PrintPDF),
+  but it does mean PrintPDF gets rebuilt as a dependency every time any of these
+  six projects builds. Given PrintPDF is a small library, that's a non-issue in
+  practice.
+
+  Want me to proceed with the edit to VaultAccess.csproj?
+
+✻ Worked for 21s
+
+❯ yes                                                                           
+
+● Update(VaultAccess\VaultAccess.csproj)
+  ⎿  Removed 4 lines
+      162      <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version
+           =10.0.0.5, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, p
+           rocessorArchitecture=MSIL">
+      163        <HintPath>..\Radan\RadanMaster\packages\Microsoft.Bcl.As
+           yncInterfaces.10.0.5\lib\net462\Microsoft.Bcl.AsyncInterfaces.
+           dll</HintPath>
+      164      </Reference>
+      165 -    <Reference Include="PrintPDF, Version=1.0.0.0, Culture=neu
+          -tral, PublicKeyToken=0f443165cb96f6dd, processorArchitecture=A
+          -MD64">                                                        
+      166 -      <SpecificVersion>False</SpecificVersion>                
+      167 -      <HintPath>..\PrintPDF\bin\Debug\PrintPDF.dll</HintPath> 
+      168 -    </Reference>                                              
+      165      <Reference Include="Serilog, Version=4.3.0.0, Culture=neut
+           ral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MS
+           IL">
+      166        <HintPath>..\VaultItemProcessor\packages\Serilog.4.3.1\l
+           ib\net471\Serilog.dll</HintPath>
+      167      </Reference>
+
+● Now add the ProjectReference. SDK-style projects (and older-style ones too)
+  typically put ProjectReference items in their own ItemGroup — let me add it
+  right after the existing Reference ItemGroup closes.
+
+● Update(VaultAccess\VaultAccess.csproj)
+  ⎿  Added 6 lines
+      208      <Reference Include="System.Xml" />
+      209    </ItemGroup>
+      210    <ItemGroup>
+      211 +    <ProjectReference Include="..\PrintPDF\PrintPDF.csproj">  
+      212 +      <Project>{720A36FB-B09E-4BC2-9A55-CE1AE591D0CD}</Project
+          +>                                                             
+      213 +      <Name>PrintPDF</Name>                                   
+      214 +    </ProjectReference>                                       
+      215 +  </ItemGroup>                                                
+      216 +  <ItemGroup>                                                 
+      217      <Compile Include="AddFileCommand.cs" />
+      218      <Compile Include="Condition.cs" />
+      219      <Compile Include="VaultAccess.cs" />
+
+● Let's verify the build picks this up correctly.
+
+● Bash(cd "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects" && msbuild
+      VaultAccess/VaultAccess.csproj /p:Configuration=Debug /p:Platform=x64
+      /v:minimal /nologo…)
+  ⎿  /usr/bin/bash: msbuild: command not found
+
+● PowerShell($msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio"
+            -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -Expan…)
+  ⎿  MSBuild: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBui
+     ld\Current\Bin\MSBuild.exe
+
+● PowerShell(& "C:\Program Files\Microsoft Visual
+            Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" "C:\Users\lor
+            ne\source\repos\HorstVaultInterfaceProjects\VaultAccess…)
+  ⎿    PrintPDF -> C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\
+     PrintPDF\bin\Debug\PrintPDF.dll
+     C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\Va
+     … +50 lines (ctrl+o to expand)
+
+● Build succeeded — PrintPDF -> ...\PrintPDF\bin\Debug\PrintPDF.dll now appears
+  as its own build step before VaultAccess, confirming the ProjectReference is
+  live. Warnings are pre-existing unused-variable warnings in VaultAccess.cs,
+  unrelated to this change.
+
+  You can now rebuild HorstMFG.VaultGateway and it'll pull current PrintPDF
+  source automatically.
+
+✻ Baked for 50s
+
+※ recap: You're setting up the HorstMFG production server, and the VaultAccess project now correctly pulls live PrintPDF builds. Next: rebuild HorstMFG.VaultGateway and continue the VaultGateway deployment to the server. (disable recaps in /config)
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  New-Service      
+  -Name "HorstMFGVaultGateway" `                                                
+  >>       -BinaryPathName "C:\Services\VaultGateway\HorstMFG.VaultGateway.exe" 
+  `                                                                             
+  >>       -DisplayName "HorstMFG Vault Gateway" `                              
+  >>       -StartupType Automatic `                                             
+  >>       -Description "Bridges HorstMFG web app to Autodesk Vault for BOM     
+  import"                                                                       
+                                                                                
+  Status   Name               DisplayName                                       
+  ------   ----               -----------                                       
+  Stopped  HorstMFGVaultGa... HorstMFG Vault Gateway                            
+                                                                                
+                                                                                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects> $svc =            
+  Get-WmiObject Win32_Service -Filter "Name='HorstMFGVaultGateway'"             
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>                   
+  $svc.Change($null,$null,$null,$null,$null,$null,"HW.HORST.COM\svc-horstmfg"," 
+  A13-6g2GP%$D8XC[WXlV")                                                        
+                                                                                
+                                                                                
+  __GENUS          : 2                                                          
+  __CLASS          : __PARAMETERS                                               
+  __SUPERCLASS     :                                                            
+  __DYNASTY        : __PARAMETERS                                               
+  __RELPATH        :                                                            
+  __PROPERTY_COUNT : 1                                                          
+  __DERIVATION     : {}                                                         
+  __SERVER         :                                                            
+  __NAMESPACE      :                                                            
+  __PATH           :                                                            
+  ReturnValue      : 0                                                          
+  PSComputerName   :                                                            
+                                                                                
+                                                                                
+                                                                                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  Start-Service    
+  HorstMFGVaultGateway                                                          
+  Start-Service : Service 'HorstMFG Vault Gateway (HorstMFGVaultGateway)'       
+  cannot be started due to the following error:                                 
+  Cannot start service HorstMFGVaultGateway on computer '.'.                    
+  At line:1 char:2                                                              
+  +  Start-Service HorstMFGVaultGateway                                         
+  +  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                         
+      + CategoryInfo          : OpenError:                                      
+  (System.ServiceProcess.ServiceController:ServiceController) [Start-Service],  
+     ServiceCommandException                                                    
+      + FullyQualifiedErrorId :                                                 
+  CouldNotStartService,Microsoft.PowerShell.Commands.StartServiceCommand        
+                                                                                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects> sc.exe queryex    
+  HorstMfgVaultGateway                                                          
+                                                                                
+  SERVICE_NAME: HorstMfgVaultGateway                                            
+          TYPE               : 10  WIN32_OWN_PROCESS                            
+          STATE              : 1  STOPPED                                       
+          WIN32_EXIT_CODE    : 0  (0x0)                                         
+          SERVICE_EXIT_CODE  : 0  (0x0)                                         
+          CHECKPOINT         : 0x0                                              
+          WAIT_HINT          : 0x7d0                                            
+          PID                : 0                                                
+          FLAGS              :                                                  
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects> sc.exe start      
+  HorstMfgVaultGateway                                                          
+  [SC] StartService FAILED 1069:                                                
+                                                                                
+  The service did not start due to a logon failure.                             
+
+● The password almost certainly got corrupted. You used double quotes:
+
+  $svc.Change($null,$null,$null,$null,$null,$null,"HW.HORST.COM\svc-horstmfg","A
+  13-6g2GP%$D8XC[WXlV")
+
+  In PowerShell, double-quoted strings interpolate $variables. Your password
+  contains $D8XC, which PowerShell tried to substitute as a variable reference —
+  since $D8XC doesn't exist, it silently evaluated to an empty string. The
+  password that actually got set on the service was A13-6g2GP%XC[WXlV, not what
+  you intended. That's a textbook "logon failure" cause.
+
+  Fix — redo it with single quotes (single-quoted strings are literal, no
+  interpolation):
+
+  $svc = Get-WmiObject Win32_Service -Filter "Name='HorstMFGVaultGateway'"
+  $svc.Change($null,$null,$null,$null,$null,$null,"HW.HORST.COM\svc-horstmfg",'A
+  13-6g2GP%$D8XC[WXlV')
+  Start-Service HorstMFGVaultGateway
+
+  If it still fails to start with the same logon error, the second likely cause
+  is that svc-horstmfg hasn't been granted "Log on as a service" on this machine
+  — unlike IIS app pools, plain Windows Services don't grant this
+  automatically. Check/add it via:
+
+  secpol.msc → Local Policies → User Rights Assignment → "Log on as a service" →
+  Add User → svc-horstmfg
+
+  Try the single-quote fix first — that's the more likely culprit given the
+  password contents.
+
+✻ Churned for 20s
+
+❯ I got the service running. How can I watch logs from it on the server?        
+
+● The gateway logs to a rolling file via Serilog — logs\gateway-{date}.log,
+  relative to wherever the exe lives. Since it's running as a service from
+  C:\Services\VaultGateway\, the log file should be at:
+
+  C:\Services\VaultGateway\logs\gateway-20260617.log
+
+  To tail it live (PowerShell's equivalent of tail -f):
+
+  Get-Content "C:\Services\VaultGateway\logs\gateway-$(Get-Date -Format
+  yyyyMMdd).log" -Wait -Tail 20
+
+  -Tail 20 shows the last 20 lines first, then -Wait keeps streaming new lines
+  as they're written. Ctrl+C to stop watching.
+
+  To just check it's writing logs at all:
+
+  Get-ChildItem "C:\Services\VaultGateway\logs\"
+
+  If the logs folder doesn't exist yet, the service account may not have write
+  permission there — same pattern as the IIS logs folder earlier. Grant it if
+  needed:
+
+  icacls "C:\Services\VaultGateway" /grant "HW.HORST.COM\svc-horstmfg:(OI)(CI)M"
+  /T
+
+  Also worth checking the Windows Event Log in case the service crashes before
+  Serilog even initializes:
+
+  Get-EventLog -LogName Application -Source "HorstMFGVaultGateway" -Newest 10
+  -ErrorAction SilentlyContinue
+
+  Trigger a BOM import from the web app and watch the tail command — you should
+  see Vault connection and query activity stream in.
+
+✻ Baked for 7s
+
+❯ no logs being generated, and I haven't found anything in eventviewer either.  
+
+● A few things to check, in order:
+
+  1. Is the service actually still running?
+
+  Get-Service HorstMFGVaultGateway
+
+  If it shows Stopped, it crashed immediately after the last start — Windows
+  services with no recovery action configured don't restart themselves, and SCM
+  doesn't always surface this loudly.
+
+  2. Check the event log without filtering by source — the filter I gave you
+  last time (-Source "HorstMFGVaultGateway") was wrong. The app never registers
+  a custom event source; if it crashes with an unhandled exception, Windows logs
+  it under .NET Runtime or Application Error, not the service name:
+
+  Get-EventLog -LogName Application -Newest 15 | Format-List TimeGenerated,
+  Source, Message
+
+  3. Check folder permissions on the logs directory. Looking at Program.cs, the
+  line that creates the Serilog logger (Log.Logger = new 
+  LoggerConfiguration()...CreateLogger();) runs before the try/catch block. If
+  the service account can't create logs\ under C:\Services\VaultGateway\
+  (because we never granted it write access there — only talked about it), that
+  line throws unhandled and the whole process dies instantly, before any logging
+  or graceful error handling happens. That would explain both symptoms: no log
+  file, and a crash event under a different source.
+
+  Check/grant it now:
+
+  Test-Path "C:\Services\VaultGateway\logs"
+  icacls "C:\Services\VaultGateway" /grant "HW.HORST.COM\svc-horstmfg:(OI)(CI)M"
+  /T
+
+  Then restart the service and check again:
+
+  Restart-Service HorstMFGVaultGateway
+  Start-Sleep -Seconds 3
+  Get-Service HorstMFGVaultGateway
+  Get-ChildItem "C:\Services\VaultGateway\logs\" -ErrorAction SilentlyContinue
+
+  Run the broader event log query first — that'll tell us definitively whether
+  it's crashing and why.
+
+✻ Cogitated for 44s
+
+❯ I did run the icacls command and restart the service.                         
+
+● What did Get-Service HorstMFGVaultGateway and the event log query show after
+  the restart? Run both:
+
+  Get-Service HorstMFGVaultGateway
+  Get-EventLog -LogName Application -Newest 15 | Format-List TimeGenerated,
+  Source, Message
+
+  Paste the output — that'll tell us whether it's still crashing and why.
+
+✻ Cooked for 2s
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects> Get-Service       
+  HorstMFGVaultGateway                                                          
+                                                                                
+  Status   Name               DisplayName                                       
+  ------   ----               -----------                                       
+  Running  HorstMFGVaultGa... HorstMFG Vault Gateway                            
+                                                                                
+                                                                                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>   Get-EventLog    
+  -LogName Application -Newest 15 | Format-List TimeGenerated, Source, Message  
+                                                                                
+                                                                                
+  TimeGenerated : 6/17/2026 7:38:31 AM                                          
+  Source        : VSS                                                           
+  Message       : The VSS service is shutting down due to idle timeout.         
+                                                                                
+                                                                                
+  TimeGenerated : 6/17/2026 7:31:52 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application 'C:\inetpub\horstmfg\' started successfully.      
+                                                                                
+  TimeGenerated : 6/17/2026 7:31:45 AM                                          
+  Source        : IIS AspNetCore Module V2                                      
+  Message       : Application 'MACHINE/WEBROOT/APPHOST/HORSTMFG' has shutdown.  
+                                                                                
+  TimeGenerated : 6/17/2026 7:25:11 AM                                          
+  Source        : Windows Search Service Profile Notification                   
+  Message       : Windows Search Service has created default configuration for  
+  new user 'HW\svc-horstmfg' .                                                  
+                                                                                
+  TimeGenerated : 6/17/2026 7:23:13 AM                                          
+  Source        : edgeupdate                                                    
+  Message       : Service stopped.                                              
+                                                                                
+  TimeGenerated : 6/17/2026 7:19:53 AM                                          
+  Source        : VSS                                                           
+  Message       : The VSS service is shutting down due to idle timeout.         
+                                                                                
+                                                                                
+  TimeGenerated : 6/17/2026 7:16:53 AM                                          
+  Source        : DattoBackupAgentService                                       
+  Message       : Ending a Datto Windows Agent backup:                          
+  af3e886f-8fef-4f5c-9930-62573bd44b68. Result:  SUCCESSFUL!                    
+                                                                                
+  TimeGenerated : 6/17/2026 7:15:07 AM                                          
+  Source        : DattoBackupAgentService                                       
+  Message       : Beginning a Datto Windows Agent VSS snapshot.                 
+                                                                                
+  TimeGenerated : 6/17/2026 7:14:15 AM                                          
+  Source        : DattoBackupAgentService                                       
+  Message       : Beginning a Datto Windows Agent backup:                       
+  af3e886f-8fef-4f5c-9930-62573bd44b68                                          
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:06 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'Plant 2 - HP MFP M480' preference item in the       
+  'Printer Deployment Policy                                                    
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:06 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'HP Laser Jet M607' preference item in the 'Printer  
+  Deployment Policy                                                             
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:05 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'Craig - Lexmark MS312' preference item in the       
+  'Printer Deployment Policy                                                    
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:05 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'Engineering - Lexmark MS415' preference item in the 
+  'Printer Deployment Policy                                                    
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:05 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'House Colour - HP LazerJet MFP M477fnw' preference  
+  item in the 'Printer Deployment Policy                                        
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+                                                                                
+  TimeGenerated : 6/17/2026 7:06:05 AM                                          
+  Source        : Group Policy Printers                                         
+  Message       : The user 'Johnnie - Lexmark MS312' preference item in the     
+  'Printer Deployment Policy                                                    
+                  {39402F54-0CA6-4A5A-98BC-6EADC1EB41B2}' Group Policy Object   
+  did not apply because it failed with error                                    
+                  code '0x80070709 The printer name is invalid.' This error was 
+  suppressed.                                                                   
+● Good — no crash event for the gateway in there, and the service is confirmed
+  Running. This is consistent with it just sitting idle with nothing to log yet,
+  rather than crashing. Let me check what the Worker actually logs on startup.
+
+  Searched for 1 pattern, read 3 files (ctrl+o to expand)
+
+● Let's check two things in parallel — log file location, and whether the
+  listener even started (a more direct test than logs).
+
+  1. Check both possible log locations (working directory for Windows services
+  can sometimes default to System32):
+
+  Get-ChildItem "C:\Services\VaultGateway\logs\" -ErrorAction SilentlyContinue
+  Get-ChildItem "C:\Windows\System32\logs\" -ErrorAction SilentlyContinue
+
+  2. Test the listener directly — this tells us whether Worker.ExecuteAsync ever
+  got past _vault.Connect() to listener.Start(), independent of where logs are
+  landing:
+
+  Invoke-WebRequest -Uri "http://127.0.0.1:5050/api/jobs/test" -UseBasicParsing
+
+  If the listener is up, you'll get a 404 with {"error":"job not found"} —
+  meaning the gateway is alive and just hasn't logged anything because nothing's
+  happened yet. If you get "Unable to connect" / connection refused, the worker
+  never reached listener.Start() — most likely stuck or failing inside
+  _vault.Connect() trying to reach the Vault server (hwvsvt04), which is
+  plausible if there's a network/firewall issue between this server and the
+  Vault server.
+
+  Run both and paste what you get.
+
+✻ Churned for 51s
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  Get-ChildItem    
+  "C:\Services\VaultGateway\logs\" -ErrorAction SilentlyContinue                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>   Get-ChildItem   
+  "C:\Windows\System32\logs\" -ErrorAction SilentlyContinue                     
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects> Invoke-WebRequest 
+  -Uri "http://127.0.0.1:5050/api/jobs/test" -UseBasicParsing                   
+  Invoke-WebRequest : {"error":"job not found"}                                 
+  At line:1 char:1                                                              
+  + Invoke-WebRequest -Uri "http://127.0.0.1:5050/api/jobs/test" -UseBasi ...   
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~       
+      + CategoryInfo          : InvalidOperation:                               
+  (System.Net.HttpWebRequest:HttpWebRequest) [Invoke-WebRequest], WebExc        
+     eption                                                                     
+      + FullyQualifiedErrorId : WebCmdletWebResponseException,Microsoft.PowerSh 
+  ell.Commands.InvokeWebRequestCommand                                          
+
+● The gateway is alive and responding correctly — {"error":"job not found"} is
+  the expected 404 body from HandleGetJob. Invoke-WebRequest just throws on
+  non-2xx by default in Windows PowerShell 5.1; the response itself confirms the
+  listener started fine, so it got past _vault.Connect() successfully.
+
+  That means the Worker definitely executed _log.LogInformation("VaultGateway 
+  listening on {Prefix}", ...) and the Connect() call's own log line — yet
+  neither log folder has anything. So the File sink itself isn't writing,
+  somewhere. Let's find out where the process is actually running from and
+  search the whole disk for stray log files:
+
+  $procId = (Get-CimInstance Win32_Service -Filter
+  "Name='HorstMFGVaultGateway'").ProcessId
+  Get-CimInstance Win32_Process -Filter "ProcessId=$procId" | Select-Object
+  ProcessId, ExecutablePath, CommandLine
+
+  Get-ChildItem -Path C:\ -Filter "gateway-*.log" -Recurse -ErrorAction
+  SilentlyContinue -Force
+
+  The first command confirms which exe is actually running (in case there's a
+  stale process from an earlier deploy attempt still bound to port 5050 instead
+  of the one you just configured). The second is a brute-force search for the
+  log file anywhere on the disk, in case the working directory isn't what we
+  assumed.
+
+✻ Brewed for 14s
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>   Get-CimInstance 
+  Win32_Process -Filter "ProcessId=$procId" | Select-Object ProcessId,          
+  ExecutablePath, CommandLine                                                   
+                                                                                
+  ProcessId ExecutablePath                                     CommandLine      
+  --------- --------------                                     -----------      
+       4604 C:\Services\VaultGateway\HorstMFG.VaultGateway.exe                  
+  C:\Services\VaultGateway\HorstMFG.VaultGateway.exe                            
+                                                                                
+                                                                                
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>                   
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>   Get-ChildItem   
+  -Path C:\ -Filter "gateway-*.log" -Recurse -ErrorAction SilentlyContinue      
+  -Force                                                                        
+  PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>                   
+
+● Found it — neither log location has a file because both Serilog configurations
+  in Program.cs use a relative path ("logs/gateway-.log"), which resolves
+  against whatever the process's working directory happens to be at the moment
+  Serilog creates the sink. For a Windows Service launched by SCM, that's
+  typically C:\Windows\System32 by default — and critically, Serilog swallows 
+  file-sink errors silently unless you explicitly enable its self-diagnostics.
+  So when svc-horstmfg can't write to System32, the sink just fails quietly with
+  zero trace, while the Console sink (which goes nowhere for a service)
+  "succeeds." That's consistent with everything we've seen: listener works fine,
+  but no log file anywhere.
+
+  The fix is to use an absolute path tied to the executable's own directory
+  instead of a relative one. Let me update Program.cs:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(HorstMFG.VaultGateway\HorstMFG.VaultGateway\Program.cs)
+  ⎿  Added 6 lines, removed 1 line
+       5  using Serilog;
+       6  using Serilog.Events;
+       7  using System;
+       8 +using System.IO;                                               
+       9  
+      10 +// Windows Services don't reliably run with the executable's fo
+         +lder as the working                                            
+      11 +// directory, so relative paths here can silently resolve elsew
+         +here (e.g. System32).                                          
+      12 +var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "g
+         +ateway-.log");                                                 
+      13 +                                                               
+      14  Log.Logger = new LoggerConfiguration()
+      15      .MinimumLevel.Information()
+      16      .WriteTo.Console()
+      12 -    .WriteTo.File("logs/gateway-.log", rollingInterval: Rolling
+         -Interval.Day)                                                  
+      17 +    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day
+         +)                                                              
+      18      .CreateLogger();
+      19  
+      20  try
+
+● Update(HorstMFG.VaultGateway\HorstMFG.VaultGateway\Program.cs)
+  ⎿  Added 1 line, removed 1 line
+      30                 .MinimumLevel.Override("Microsoft", LogEventLeve
+          l.Warning)
+      31                 .MinimumLevel.Override("System",    LogEventLeve
+          l.Warning)
+      32                 .WriteTo.Console()
+      33 -               .WriteTo.File("logs/gateway-.log", rollingInterv
+         -al: RollingInterval.Day);                                      
+      33 +               .WriteTo.File(logPath, rollingInterval: RollingI
+         +nterval.Day);                                                  
+      34          })
+      35          .ConfigureAppConfiguration((ctx, cfg) =>
+      36          {
+
+● Also worth hardening the config loading the same way, since it relies on the
+  same relative-path assumption — even though it happened to work this time,
+  it's not guaranteed:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(HorstMFG.VaultGateway\HorstMFG.VaultGateway\Program.cs)
+  ⎿  Added 1 line
+      23                      args[0].Equals("--console", StringCompariso
+          n.OrdinalIgnoreCase);
+      24  
+      25      var builder = Host.CreateDefaultBuilder(args)
+      26 +        .UseContentRoot(AppContext.BaseDirectory)              
+      27          .UseSerilog((ctx, services, cfg) =>
+      28          {
+      29              var isDev = ctx.HostingEnvironment.IsDevelopment();
+
+● Now let's rebuild and redeploy.
+
+● PowerShell(& "C:\Program Files\Microsoft Visual
+            Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" "C:\Users\lor
+            ne\source\repos\HorstVaultInterfaceProjects\HorstMFG.Va…)
+  ⎿    PrintPDF -> C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\
+     PrintPDF\bin\Debug\PrintPDF.dll
+     C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\VaultAccess\Va
+     … +53 lines (ctrl+o to expand)
+
+● Build succeeded — HorstMFG.VaultGateway.exe is in bin\Release\net48\.
+
+  One side note unrelated to the log fix: VaultAccess and PrintPDF built in
+  Debug configuration even though we requested Release for the solution — that's
+  because HorstMFG.VaultGateway.sln only declares the HorstMFG.VaultGateway
+  project itself, so its ProjectReference to VaultAccess.csproj falls back to
+  VaultAccess's own default config (Debug). Functionally fine for now (same
+  code, just unoptimized/with debug symbols), not worth chasing unless you care
+  about it.
+
+  To redeploy:
+
+  1. Copy the new build output to the server, replacing what's in
+  C:\Services\VaultGateway\:
+    - Source: HorstMFG.VaultGateway\HorstMFG.VaultGateway\bin\Release\net48\
+    - Keep appsettings.Production.json — don't overwrite it, since it's
+  server-only and not part of the build output anyway
+  2. On the server:
+
+  Restart-Service HorstMFGVaultGateway
+  Start-Sleep -Seconds 3
+  Get-Content "C:\Services\VaultGateway\logs\gateway-$(Get-Date -Format
+  yyyyMMdd).log" -Tail 20
+
+  You should now see the startup lines: the Vault connection result and
+  VaultGateway listening on http://127.0.0.1:5050/.
+
+✻ Brewed for 2m 13s
+
+❯ /export deployment.txt                                                        
+  ⎿  Conversation exported to:
+     C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\deployment.txt
+
+※ recap: Setting up the production Windows server for HorstMFG: IIS, PostgreSQL, and the VaultGateway service are running. Fixed a logging bug in VaultGateway; next step is copying the new build to the server and restarting the service to confirm logs appear. (disable recaps in /config)
+
+❯ PS C:\Users\lorne\source\repos\HorstVaultInterfaceProjects>  Get-Content      
+  "C:\Services\VaultGateway\logs\gateway-$(Get-Date -Format yyyyMMdd).log"      
+  -Tail 20                                                                      
+  2026-06-18 06:15:29.545 -04:00 [WRN] Vault login failed: Exception of type    
+  'Autodesk.Connectivity.WebServices.VaultLicenseMismatchException' was thrown. 
+  2026-06-18 06:15:29.633 -04:00 [INF] VaultGateway listening on                
+  http://127.0.0.1:5050/                                                        
+
+● The logging fix worked — you can see both the warning and the listener startup
+  line now landing in the file correctly.
+
+  The remaining issue is a Vault licensing problem, not a deployment one:
+  VaultLicenseMismatchException means the svc-horstmfg account doesn't have a
+  compatible Vault license assigned (or none at all). This happens when:
+
+  1. No license seat assigned to svc-horstmfg in Vault's user/license
+  administration — service accounts created fresh in AD don't automatically get
+  a Vault license; that's a separate grant inside Vault itself (via Vault Server
+  Console or ADMS user management).
+  2. Wrong license type — Vault has different license categories (e.g., named
+  user vs. a special automation/service license), and the account may be
+  assigned one that doesn't support this kind of programmatic login.
+  3. No seats available — if your Vault license pool is fully consumed by other
+  logged-in users, a new connection attempt can also fail this way.
+
+  This is something only your Vault administrator can resolve (likely the same
+  person who can get into the Vault Server Console / Autodesk Identity
+  Management admin panel). Worth checking:
+
+  - Open the Vault Server Console on hwvsvt04 → check whether svc-horstmfg has
+  been granted a Vault user account and license at all
+  - Compare against how the existing JobProcessor extensions authenticate —
+  CLAUDE.md mentions JobProcessorPDFPrint/JobProcessorFilesUpdate already run
+  inside the Vault Job Processor framework, which may use a different licensing
+  path (a dedicated Job Processor license) than this gateway's direct
+  ConnectionManager.LogIn call
+
+  Do you know who manages Vault user/license administration, or do you have
+  access to the Vault Server Console yourself?
+
+✻ Cogitated for 21s
+
+❯ /export                                                                       
+"C:\mysrc\HorstVaultInterfaceProjects\HorstMFG\docs\HorstMfgDeployment.txt"       ⎿  Failed to export conversation: ENOENT: no such file or directory, mkdir
+     'C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\"C:\mysrc\HorstVau
+     ltInterfaceProjects\HorstMFG\docs'
