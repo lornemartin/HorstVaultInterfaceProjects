@@ -77,13 +77,14 @@ public class SendToNestingHandler
                 _log.LogWarning("Symbol file not found for {FileName} — adding without sym", rep.FileName);
             }
 
-            // If any item in the group already has a RadanIdNumber, reuse it (re-send)
+            // If any item in the group already has a RadanIdNumber, try to reuse it.
+            // The ID may not exist in the current project (e.g. carried over from a previous project),
+            // in which case we fall through and add the part as new.
             var existingId = group.Select(i => i.RadanIdNumber).FirstOrDefault(id => id.HasValue);
 
             long partId;
-            if (existingId.HasValue)
+            if (existingId.HasValue && _nesting.UpdatePartQty(project, existingId.Value, totalQty))
             {
-                _nesting.UpdatePartQty(project, existingId.Value, totalQty);
                 partId = existingId.Value;
                 _log.LogInformation("Updated qty for existing Radan ID {Id} to {Qty}", partId, totalQty);
             }
@@ -91,7 +92,8 @@ public class SendToNestingHandler
             {
                 partId = _nesting.GetNextId(project);
                 _nesting.AddPart(project, destSym, partId, totalQty, rep.Material, rep.Thickness);
-                _log.LogInformation("Added new Radan part ID {Id} qty {Qty}", partId, totalQty);
+                _log.LogInformation("Added new Radan part ID {Id} qty {Qty} (existingId={ExistingId} not in project)",
+                    partId, totalQty, existingId?.ToString() ?? "none");
             }
 
             // All items in the group share the same RadanIdNumber

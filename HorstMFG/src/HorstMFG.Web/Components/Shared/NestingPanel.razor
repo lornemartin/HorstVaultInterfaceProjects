@@ -58,7 +58,7 @@
     <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:.6rem;">
 
         <SfButton CssClass="e-primary" IconCss="e-icons e-upload-1" OnClick="SendToNestingAsync"
-                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => !i.IsInRadanProject))">
+                  Disabled="@(_isBusy || _stationId == null || !SelectedItems.Any(i => i.QtyNested < i.QtyRequired))">
             Send to Nesting
         </SfButton>
 
@@ -127,6 +127,7 @@
     private int? _stationId;
     private string _projectPath = "";
     private bool _isBusy;
+    private bool _pendingFinalize;
     private string? _pendingCommandId;
     private string? _pendingCommandType;
     private List<StatusLine> _statusLines = new();
@@ -230,18 +231,25 @@
 
     private async Task SendToNestingAsync()
     {
-        var toSend = SelectedItems.Where(i => !i.IsInRadanProject).ToList();
+        // Send items with remaining qty only — fully nested items (QtyNested >= QtyRequired) are excluded.
+        var toSend = SelectedItems
+            .Where(i => i.QtyNested < i.QtyRequired)
+            .ToList();
         if (!toSend.Any()) return;
 
-        // For each filename that has a not-yet-sent item, also include any already-in-project
-        // items sharing that filename so the bridge sees the full group: combined qty and all
-        // order numbers get concatenated correctly.
+        // For each filename that has an item being sent, also pull in any already-in-project
+        // siblings sharing that filename (not already in toSend) so the bridge sees the full
+        // group: combined qty and all order numbers get concatenated correctly.
+        var toSendIds = toSend.Select(i => i.ItemId).ToHashSet();
         var newFileNames = toSend
             .Where(i => !string.IsNullOrEmpty(i.FileName))
             .Select(i => i.FileName!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var inProjectSiblings = SelectedItems
-            .Where(i => i.IsInRadanProject && i.FileName != null && newFileNames.Contains(i.FileName))
+            .Where(i => !toSendIds.Contains(i.ItemId)
+                     && i.IsInRadanProject
+                     && i.FileName != null
+                     && newFileNames.Contains(i.FileName))
             .ToList();
         if (inProjectSiblings.Any())
             toSend.AddRange(inProjectSiblings);
@@ -293,25 +301,26 @@
 
     private async Task RetrieveAllFromNestingAsync()
     {
-        if (_stationId == null) return;
+        var payload = await BuildRetrieveAllPayloadAsync();
+        if (payload == null) { Log("No items currently in a Radan project for this station."); return; }
+        await SendCommandAsync("RetrieveFromNesting", payload);
+    }
 
+    private async Task<string?> BuildRetrieveAllPayloadAsync()
+    {
+        if (_stationId == null) return null;
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
-        string payload;
         if (ItemType == "Order")
         {
             var items = await db.OrderItems
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
                 .Select(i => new { i.Id, i.RadanIdNumber })
                 .ToListAsync();
-            if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
-            payload = JsonSerializer.Serialize(items
+            if (!items.Any()) return null;
+            return JsonSerializer.Serialize(items
                 .GroupBy(i => i.RadanIdNumber!.Value)
-                .Select(g => new
-                {
-                    ItemId        = g.First().Id,
-                    RadanIdNumber = g.Key,
-                }));
+                .Select(g => new { ItemId = g.First().Id, RadanIdNumber = g.Key }));
         }
         else
         {
@@ -319,17 +328,11 @@
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
                 .Select(i => new { i.Id, i.RadanIdNumber })
                 .ToListAsync();
-            if (!items.Any()) { Log("No items currently in a Radan project for this station."); return; }
-            payload = JsonSerializer.Serialize(items
+            if (!items.Any()) return null;
+            return JsonSerializer.Serialize(items
                 .GroupBy(i => i.RadanIdNumber!.Value)
-                .Select(g => new
-                {
-                    ItemId        = g.First().Id,
-                    RadanIdNumber = g.Key,
-                }));
+                .Select(g => new { ItemId = g.First().Id, RadanIdNumber = g.Key }));
         }
-
-        await SendCommandAsync("RetrieveFromNesting", payload);
     }
 
     private async Task RetrieveFromVaultAsync()
@@ -366,9 +369,20 @@
     private async Task FinalizeAsync()
     {
         bool ok = await JS.InvokeAsync<bool>("confirm",
-            "This will sync the current project, mark completion, and create a new empty project. Continue?");
+            "This will retrieve all nested parts, mark completion, and create a new empty project. Continue?");
         if (!ok) return;
-        await SendCommandAsync("Finalize", "{}");
+
+        var retrievePayload = await BuildRetrieveAllPayloadAsync();
+        if (retrievePayload != null)
+        {
+            Log("Retrieving all nested parts before finalizing…");
+            _pendingFinalize = true;
+            await SendCommandAsync("RetrieveFromNesting", retrievePayload);
+        }
+        else
+        {
+            await SendCommandAsync("Finalize", "{}");
+        }
     }
 
     private async Task SendCommandAsync(string commandType, string payload)
@@ -429,6 +443,16 @@
 
             try   { await ProcessResultAsync(payload); }
             catch (Exception ex) { Log($"Error processing result: {ex.Message}", "text-danger"); }
+
+            // If Finalize requested a retrieve-all first, now send the actual Finalize
+            if (_pendingFinalize && _pendingCommandType == "RetrieveFromNesting")
+            {
+                _pendingFinalize = false;
+                StateHasChanged();
+                await OnCompleted.InvokeAsync();
+                await SendCommandAsync("Finalize", "{}");
+                return;
+            }
 
             StateHasChanged();
             await OnCompleted.InvokeAsync();

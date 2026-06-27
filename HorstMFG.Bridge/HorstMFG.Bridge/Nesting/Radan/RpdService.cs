@@ -51,10 +51,12 @@ internal static class RpdService
             part.Number = part.Made;
     }
 
-    public static void UpdatePartQty(RadanProject project, long nestingId, int qty)
+    public static bool UpdatePartQty(RadanProject project, long nestingId, int qty)
     {
         var part = project.Parts.Part.FirstOrDefault(p => p.ID == nestingId);
-        if (part != null) part.Number = qty;
+        if (part == null) return false;
+        part.Number = qty;
+        return true;
     }
 
     public static SyncPayload BuildSyncPayload(RadanProject project, string nestFolder)
