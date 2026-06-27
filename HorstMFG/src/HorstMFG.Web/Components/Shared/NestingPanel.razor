@@ -811,64 +811,11 @@
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
 
-            foreach (var syncNest in sync.Nests)
-            {
-                var nest = await db.Nests
-                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
-                if (nest == null)
-                {
-                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
-                    db.Nests.Add(nest);
-                    await db.SaveChangesAsync();
-                }
-                else
-                {
-                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
-                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
-                }
-
-                foreach (var entry in syncNest.Parts)
-                {
-                    var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
-                                           .OrderBy(i => i.Id).ToList();
-                    int remaining = entry.Qty;
-                    for (int idx = 0; idx < sharedItems.Count; idx++)
-                    {
-                        var item = sharedItems[idx];
-                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
-                        remaining = Math.Max(0, remaining - fill);
-                        var np = await db.NestedParts
-                            .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
-                        if (fill > 0)
-                        {
-                            if (np == null)
-                                db.NestedParts.Add(new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = fill });
-                            else
-                                np.Qty = fill;
-                        }
-                        else if (np != null)
-                        {
-                            db.NestedParts.Remove(np);
-                        }
-                    }
-                }
-            }
-
-            // Persist NestedParts changes, then recompute QtyNested as the sum across all projects
-            await db.SaveChangesAsync();
+            // Preload all existing NestedParts so we can calculate per-item remaining capacity
+            // without hitting the DB per row, and keep the list in sync as we process each nest.
             var orderItemIds = items.Select(i => i.Id).ToList();
-            var orderTotals = await db.NestedParts
+            var allNestedParts = await db.NestedParts
                 .Where(np => np.OrderItemId.HasValue && orderItemIds.Contains(np.OrderItemId.Value))
-                .GroupBy(np => np.OrderItemId!.Value)
-                .Select(g => new { ItemId = g.Key, Total = g.Sum(np => np.Qty) })
-                .ToDictionaryAsync(x => x.ItemId, x => x.Total);
-            foreach (var item in items)
-                item.QtyNested = orderTotals.GetValueOrDefault(item.Id, 0);
-        }
-        else
-        {
-            var items = await db.BatchItems
-                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
 
             foreach (var syncNest in sync.Nests)
@@ -895,35 +842,104 @@
                     for (int idx = 0; idx < sharedItems.Count; idx++)
                     {
                         var item = sharedItems[idx];
-                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
+                        // Capacity = how much more this item can absorb in THIS nest:
+                        // QtyRequired minus what's already recorded in every OTHER nest.
+                        var otherNestsQty = allNestedParts
+                            .Where(np => np.OrderItemId == item.Id && np.NestId != nest.Id)
+                            .Sum(np => np.Qty);
+                        var capacity = Math.Max(0, item.QtyRequired - otherNestsQty);
+                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, capacity);
                         remaining = Math.Max(0, remaining - fill);
-                        var np = await db.NestedParts
-                            .FirstOrDefaultAsync(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
+
+                        var np = allNestedParts.FirstOrDefault(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
                         if (fill > 0)
                         {
                             if (np == null)
-                                db.NestedParts.Add(new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = fill });
+                            {
+                                var newNp = new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = fill };
+                                db.NestedParts.Add(newNp);
+                                allNestedParts.Add(newNp);
+                            }
                             else
                                 np.Qty = fill;
                         }
                         else if (np != null)
                         {
                             db.NestedParts.Remove(np);
+                            allNestedParts.Remove(np);
                         }
                     }
                 }
             }
 
-            // Persist NestedParts changes, then recompute QtyNested as the sum across all projects
-            await db.SaveChangesAsync();
-            var batchItemIds = items.Select(i => i.Id).ToList();
-            var batchTotals = await db.NestedParts
-                .Where(np => np.BatchItemId.HasValue && batchItemIds.Contains(np.BatchItemId.Value))
-                .GroupBy(np => np.BatchItemId!.Value)
-                .Select(g => new { ItemId = g.Key, Total = g.Sum(np => np.Qty) })
-                .ToDictionaryAsync(x => x.ItemId, x => x.Total);
             foreach (var item in items)
-                item.QtyNested = batchTotals.GetValueOrDefault(item.Id, 0);
+                item.QtyNested = allNestedParts.Where(np => np.OrderItemId == item.Id).Sum(np => np.Qty);
+        }
+        else
+        {
+            var items = await db.BatchItems
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
+                .ToListAsync();
+
+            var batchItemIds = items.Select(i => i.Id).ToList();
+            var allNestedParts = await db.NestedParts
+                .Where(np => np.BatchItemId.HasValue && batchItemIds.Contains(np.BatchItemId.Value))
+                .ToListAsync();
+
+            foreach (var syncNest in sync.Nests)
+            {
+                var nest = await db.Nests
+                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
+                if (nest == null)
+                {
+                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
+                    db.Nests.Add(nest);
+                    await db.SaveChangesAsync();
+                }
+                else
+                {
+                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
+                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
+                }
+
+                foreach (var entry in syncNest.Parts)
+                {
+                    var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
+                                           .OrderBy(i => i.Id).ToList();
+                    int remaining = entry.Qty;
+                    for (int idx = 0; idx < sharedItems.Count; idx++)
+                    {
+                        var item = sharedItems[idx];
+                        var otherNestsQty = allNestedParts
+                            .Where(np => np.BatchItemId == item.Id && np.NestId != nest.Id)
+                            .Sum(np => np.Qty);
+                        var capacity = Math.Max(0, item.QtyRequired - otherNestsQty);
+                        int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, capacity);
+                        remaining = Math.Max(0, remaining - fill);
+
+                        var np = allNestedParts.FirstOrDefault(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
+                        if (fill > 0)
+                        {
+                            if (np == null)
+                            {
+                                var newNp = new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = fill };
+                                db.NestedParts.Add(newNp);
+                                allNestedParts.Add(newNp);
+                            }
+                            else
+                                np.Qty = fill;
+                        }
+                        else if (np != null)
+                        {
+                            db.NestedParts.Remove(np);
+                            allNestedParts.Remove(np);
+                        }
+                    }
+                }
+            }
+
+            foreach (var item in items)
+                item.QtyNested = allNestedParts.Where(np => np.BatchItemId == item.Id).Sum(np => np.Qty);
         }
 
         await db.SaveChangesAsync();
