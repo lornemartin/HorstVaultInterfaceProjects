@@ -9,6 +9,7 @@ public record NestingSelectionItem(
     int     PartId,
     string? FileName,
     int     QtyRequired,
+    int     QtyNested,
     string? Material,
     decimal Thickness,
     /// <summary>Order number for Order items; Batch name for Batch items. Used as the Symbols sub-folder.</summary>

@@ -260,7 +260,7 @@
             ItemId        = i.ItemId,
             ItemType      = ItemType,
             FileName      = i.FileName ?? "",
-            QtyRequired   = i.QtyRequired,
+            QtyRequired   = i.QtyRequired - i.QtyNested,
             Material      = i.Material,
             Thickness     = i.Thickness,
             OrderNumber   = i.GroupName,
