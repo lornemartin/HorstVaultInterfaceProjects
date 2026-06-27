@@ -138,20 +138,23 @@
                     </a>
                 </div>
 
-                <div class="dash-group-label">Nesting</div>
-                <div class="dash-grid">
-                    @if (_stationId.HasValue)
-                    {
-                        <a href="/production/orders" class="dash-card">
-                            <div class="dash-count @(_partsInRadan > 0 ? "c-blue" : "")">@_partsInRadan</div>
-                            <div class="dash-label">Radan Items to nest</div>
-                        </a>
-                    }
-                    <div class="dash-card" style="grid-column: span 2; min-width: 0;">
-                        <div class="dash-count c-blue">@_totalPartsNested.ToString("N0")</div>
-                        <div class="dash-label">Total Parts Nested</div>
+                @if (_showNestedTotals)
+                {
+                    <div class="dash-group-label">Nesting</div>
+                    <div class="dash-grid">
+                        @if (_stationId.HasValue)
+                        {
+                            <a href="/production/orders" class="dash-card">
+                                <div class="dash-count @(_partsInRadan > 0 ? "c-blue" : "")">@_partsInRadan</div>
+                                <div class="dash-label">Radan Items to Nest</div>
+                            </a>
+                        }
+                        <div class="dash-card" style="grid-column: span 2; min-width: 0;">
+                            <div class="dash-count c-blue">@_totalPartsNested.ToString("N0")</div>
+                            <div class="dash-label">Total Parts Nested</div>
+                        </div>
                     </div>
-                </div>
+                }
             }
         }
     </Authorized>
@@ -161,6 +164,7 @@
     private bool _loading = true;
     private bool _showEngineering;
     private bool _showProduction;
+    private bool _showNestedTotals;
     private int  _plantId;
     private bool _isAdmin;
     private int? _stationId;
@@ -193,10 +197,11 @@
         int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
         if (int.TryParse(user?.FindFirst("StationId")?.Value, out var sid)) _stationId = sid;
 
-        _showEngineering = _isAdmin || (user?.HasClaim(ClaimTypes.Role, "Engineering") ?? false);
-        _showProduction  = _isAdmin
+        _showEngineering  = _isAdmin || (user?.HasClaim(ClaimTypes.Role, "Engineering") ?? false);
+        _showProduction   = _isAdmin
                         || (user?.HasClaim(ClaimTypes.Role, "Nesting")   ?? false)
                         || (user?.HasClaim(ClaimTypes.Role, "ShopFloor") ?? false);
+        _showNestedTotals = _isAdmin || (user?.HasClaim(ClaimTypes.Role, "Nesting") ?? false);
 
         bool filterByPlant = !_isAdmin && _plantId > 0;
 
