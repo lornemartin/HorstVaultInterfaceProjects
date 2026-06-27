@@ -786,20 +786,6 @@
             var items = await db.OrderItems
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
-            foreach (var p in sync.Parts)
-            {
-                // FIFO: fill each item up to QtyRequired; last item absorbs any excess (over-nesting)
-                var sharedItems = items.Where(i => i.RadanIdNumber == (int)p.RadanIdNumber)
-                                       .OrderBy(i => i.Id).ToList();
-                int remaining = p.QtyNested;
-                for (int idx = 0; idx < sharedItems.Count; idx++)
-                {
-                    var item = sharedItems[idx];
-                    int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
-                    item.QtyNested = fill;
-                    remaining = Math.Max(0, remaining - fill);
-                }
-            }
 
             foreach (var syncNest in sync.Nests)
             {
@@ -844,50 +830,22 @@
                 }
             }
 
-            // Remove NestedParts for this station's items that belong to nests no longer in the sync
-            var syncNestNamesOrder = sync.Nests.Select(n => n.NestName).ToHashSet();
-            var itemIdsOrder = items.Select(i => i.Id).ToList();
-            var staleOrder = await db.NestedParts
-                .Where(np => np.OrderItemId.HasValue
-                          && itemIdsOrder.Contains(np.OrderItemId.Value)
-                          && !syncNestNamesOrder.Contains(np.Nest.NestName))
-                .ToListAsync();
-            if (staleOrder.Count > 0)
-            {
-                var staleIds     = staleOrder.Select(np => np.Id).ToHashSet();
-                var staleNestIds = staleOrder.Select(np => np.NestId).Distinct().ToList();
-                db.NestedParts.RemoveRange(staleOrder);
-                foreach (var nestId in staleNestIds)
-                {
-                    var hasOtherParts = await db.NestedParts
-                        .AnyAsync(np => np.NestId == nestId && !staleIds.Contains(np.Id));
-                    if (!hasOtherParts)
-                    {
-                        var nest = await db.Nests.FindAsync(nestId);
-                        if (nest != null) db.Nests.Remove(nest);
-                    }
-                }
-            }
+            // Persist NestedParts changes, then recompute QtyNested as the sum across all projects
+            await db.SaveChangesAsync();
+            var orderItemIds = items.Select(i => i.Id).ToList();
+            var orderTotals = await db.NestedParts
+                .Where(np => np.OrderItemId.HasValue && orderItemIds.Contains(np.OrderItemId.Value))
+                .GroupBy(np => np.OrderItemId!.Value)
+                .Select(g => new { ItemId = g.Key, Total = g.Sum(np => np.Qty) })
+                .ToDictionaryAsync(x => x.ItemId, x => x.Total);
+            foreach (var item in items)
+                item.QtyNested = orderTotals.GetValueOrDefault(item.Id, 0);
         }
         else
         {
             var items = await db.BatchItems
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
-            foreach (var p in sync.Parts)
-            {
-                // FIFO: fill each item up to QtyRequired; last item absorbs any excess (over-nesting)
-                var sharedItems = items.Where(i => i.RadanIdNumber == (int)p.RadanIdNumber)
-                                       .OrderBy(i => i.Id).ToList();
-                int remaining = p.QtyNested;
-                for (int idx = 0; idx < sharedItems.Count; idx++)
-                {
-                    var item = sharedItems[idx];
-                    int fill = idx == sharedItems.Count - 1 ? remaining : Math.Min(remaining, item.QtyRequired);
-                    item.QtyNested = fill;
-                    remaining = Math.Max(0, remaining - fill);
-                }
-            }
 
             foreach (var syncNest in sync.Nests)
             {
@@ -932,30 +890,16 @@
                 }
             }
 
-            // Remove NestedParts for this station's items that belong to nests no longer in the sync
-            var syncNestNamesBatch = sync.Nests.Select(n => n.NestName).ToHashSet();
-            var itemIdsBatch = items.Select(i => i.Id).ToList();
-            var staleBatch = await db.NestedParts
-                .Where(np => np.BatchItemId.HasValue
-                          && itemIdsBatch.Contains(np.BatchItemId.Value)
-                          && !syncNestNamesBatch.Contains(np.Nest.NestName))
-                .ToListAsync();
-            if (staleBatch.Count > 0)
-            {
-                var staleIds     = staleBatch.Select(np => np.Id).ToHashSet();
-                var staleNestIds = staleBatch.Select(np => np.NestId).Distinct().ToList();
-                db.NestedParts.RemoveRange(staleBatch);
-                foreach (var nestId in staleNestIds)
-                {
-                    var hasOtherParts = await db.NestedParts
-                        .AnyAsync(np => np.NestId == nestId && !staleIds.Contains(np.Id));
-                    if (!hasOtherParts)
-                    {
-                        var nest = await db.Nests.FindAsync(nestId);
-                        if (nest != null) db.Nests.Remove(nest);
-                    }
-                }
-            }
+            // Persist NestedParts changes, then recompute QtyNested as the sum across all projects
+            await db.SaveChangesAsync();
+            var batchItemIds = items.Select(i => i.Id).ToList();
+            var batchTotals = await db.NestedParts
+                .Where(np => np.BatchItemId.HasValue && batchItemIds.Contains(np.BatchItemId.Value))
+                .GroupBy(np => np.BatchItemId!.Value)
+                .Select(g => new { ItemId = g.Key, Total = g.Sum(np => np.Qty) })
+                .ToDictionaryAsync(x => x.ItemId, x => x.Total);
+            foreach (var item in items)
+                item.QtyNested = batchTotals.GetValueOrDefault(item.Id, 0);
         }
 
         await db.SaveChangesAsync();
