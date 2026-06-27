@@ -1,31 +1,287 @@
 @page "/"
 @attribute [Authorize]
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@using HorstMFG.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
 
-<PageTitle>Home - HorstMFG</PageTitle>
+<PageTitle>Dashboard - HorstMFG</PageTitle>
 
-<h1>Dashboard</h1>
+<style>
+    .dash-section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9ca3af;
+        margin: 1.75rem 0 0.5rem;
+    }
+    .dash-group-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 0.75rem 0 0.4rem;
+    }
+    .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.75rem;
+    }
+    .dash-card {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 1.1rem 0.85rem;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid #f3f4f6;
+        transition: box-shadow .15s, border-color .15s;
+    }
+    .dash-card:hover  { box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-color: #e5e7eb; color: inherit; }
+    .dash-count       { font-size: 2.1rem; font-weight: 700; line-height: 1; color: #6b7280; }
+    .dash-label       { font-size: 0.78rem; color: #6b7280; margin-top: 0.35rem; }
+    .c-blue           { color: #1e40af; }
+    .c-amber          { color: #b45309; }
+    .c-green          { color: #166534; }
+</style>
+
+<h1 style="margin-bottom:.25rem;">Dashboard</h1>
 
 <AuthorizeView>
     <Authorized>
-        <p>Welcome, @context.User.Identity?.Name. You are logged in to <strong>@context.User.FindFirst("PlantName")?.Value</strong>.</p>
+        <p style="color:#6b7280; margin-bottom:0;">
+            @context.User.Identity?.Name &mdash; <strong>@context.User.FindFirst("PlantName")?.Value</strong>
+        </p>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 2rem;">
-            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4>BOM Import</h4>
-                <p style="color: #64748b;">Import and manage Bills of Materials</p>
-            </div>
-            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4>Orders</h4>
-                <p style="color: #64748b;">Track production orders</p>
-            </div>
-            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4>Nesting</h4>
-                <p style="color: #64748b;">Manage Radan nesting projects</p>
-            </div>
-            <div style="padding: 1.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4>PDFs</h4>
-                <p style="color: #64748b;">Generate and manage shop drawings</p>
-            </div>
-        </div>
+        @if (_loading)
+        {
+            <p style="color:#9ca3af; margin-top:2rem;">Loading…</p>
+        }
+        else
+        {
+            @* ── Engineering ──────────────────────────────────────────── *@
+            @if (_showEngineering)
+            {
+                <div class="dash-section-title">Engineering</div>
+
+                <div class="dash-group-label">Schedules</div>
+                <div class="dash-grid">
+                    <a href="/engineering/orders" class="dash-card">
+                        <div class="dash-count @(_engSchedulesPending > 0 ? "c-amber" : "c-green")">@_engSchedulesPending</div>
+                        <div class="dash-label">Pending Release</div>
+                    </a>
+                    <a href="/engineering/orders" class="dash-card">
+                        <div class="dash-count c-green">@_engSchedulesReleased</div>
+                        <div class="dash-label">Released</div>
+                    </a>
+                </div>
+
+                <div class="dash-group-label">Batches</div>
+                <div class="dash-grid">
+                    <a href="/engineering/batches" class="dash-card">
+                        <div class="dash-count @(_engBatchesPending > 0 ? "c-amber" : "c-green")">@_engBatchesPending</div>
+                        <div class="dash-label">Pending Release</div>
+                    </a>
+                    <a href="/engineering/batches" class="dash-card">
+                        <div class="dash-count c-green">@_engBatchesReleased</div>
+                        <div class="dash-label">Released</div>
+                    </a>
+                </div>
+
+                <div class="dash-group-label">Production Orders</div>
+                <div class="dash-grid">
+                    <a href="/engineering/orders" class="dash-card">
+                        <div class="dash-count c-green">@_engOrdersProcessed</div>
+                        <div class="dash-label">Completed</div>
+                    </a>
+                </div>
+            }
+
+            @* ── Production ────────────────────────────────────────────── *@
+            @if (_showProduction)
+            {
+                <div class="dash-section-title">Production</div>
+
+                <div class="dash-group-label">Schedules</div>
+                <div class="dash-grid">
+                    <a href="/production/orders" class="dash-card">
+                        <div class="dash-count">@_prodSchedsNotStarted</div>
+                        <div class="dash-label">Not Started</div>
+                    </a>
+                    <a href="/production/orders" class="dash-card">
+                        <div class="dash-count c-blue">@_prodSchedsPartial</div>
+                        <div class="dash-label">In Progress</div>
+                    </a>
+                    <a href="/production/orders" class="dash-card">
+                        <div class="dash-count c-green">@_prodSchedsDone</div>
+                        <div class="dash-label">Complete</div>
+                    </a>
+                </div>
+
+                <div class="dash-group-label">Batches</div>
+                <div class="dash-grid">
+                    <a href="/production/batches" class="dash-card">
+                        <div class="dash-count">@_prodBatchesNotStarted</div>
+                        <div class="dash-label">Not Started</div>
+                    </a>
+                    <a href="/production/batches" class="dash-card">
+                        <div class="dash-count c-blue">@_prodBatchesPartial</div>
+                        <div class="dash-label">In Progress</div>
+                    </a>
+                    <a href="/production/batches" class="dash-card">
+                        <div class="dash-count c-green">@_prodBatchesDone</div>
+                        <div class="dash-label">Complete</div>
+                    </a>
+                </div>
+
+                <div class="dash-group-label">Nesting</div>
+                <div class="dash-grid">
+                    @if (_stationId.HasValue)
+                    {
+                        <a href="/production/orders" class="dash-card">
+                            <div class="dash-count @(_partsInRadan > 0 ? "c-blue" : "")">@_partsInRadan</div>
+                            <div class="dash-label">Radan Items to nest</div>
+                        </a>
+                    }
+                    <div class="dash-card" style="grid-column: span 2; min-width: 0;">
+                        <div class="dash-count c-blue">@_totalPartsNested.ToString("N0")</div>
+                        <div class="dash-label">Total Parts Nested</div>
+                    </div>
+                </div>
+            }
+        }
     </Authorized>
 </AuthorizeView>
+
+@code {
+    private bool _loading = true;
+    private bool _showEngineering;
+    private bool _showProduction;
+    private int  _plantId;
+    private bool _isAdmin;
+    private int? _stationId;
+
+    // Engineering
+    private int _engSchedulesPending;
+    private int _engSchedulesReleased;
+    private int _engBatchesPending;
+    private int _engBatchesReleased;
+    private int _engOrdersProcessed;
+
+    // Production — Schedules (counted at the parent Schedule level)
+    private int _prodSchedsNotStarted;
+    private int _prodSchedsPartial;
+    private int _prodSchedsDone;
+
+    // Production — Batches
+    private int _prodBatchesNotStarted;
+    private int _prodBatchesPartial;
+    private int _prodBatchesDone;
+
+    // Production — Nesting
+    private int _totalPartsNested;
+    private int _partsInRadan;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user  = HttpContextAccessor.HttpContext?.User;
+        _isAdmin  = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
+        int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
+        if (int.TryParse(user?.FindFirst("StationId")?.Value, out var sid)) _stationId = sid;
+
+        _showEngineering = _isAdmin || (user?.HasClaim(ClaimTypes.Role, "Engineering") ?? false);
+        _showProduction  = _isAdmin
+                        || (user?.HasClaim(ClaimTypes.Role, "Nesting")   ?? false)
+                        || (user?.HasClaim(ClaimTypes.Role, "ShopFloor") ?? false);
+
+        bool filterByPlant = !_isAdmin && _plantId > 0;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        if (_showEngineering)
+        {
+            var schedQ = db.Schedules.AsQueryable();
+            var batchQ = db.Batches.AsQueryable();
+            if (filterByPlant)
+            {
+                schedQ = schedQ.Where(s => s.PlantId == _plantId);
+                batchQ = batchQ.Where(b => b.PlantId == _plantId);
+            }
+
+            _engSchedulesPending  = await schedQ.CountAsync(s => !s.ReadyForProduction);
+            _engSchedulesReleased = await schedQ.CountAsync(s =>  s.ReadyForProduction);
+            _engBatchesPending    = await batchQ.CountAsync(b => !b.ReadyForProduction);
+            _engBatchesReleased   = await batchQ.CountAsync(b =>  b.ReadyForProduction);
+
+            var nestOrdersQ = db.NestOrders.AsQueryable();
+            if (filterByPlant) nestOrdersQ = nestOrdersQ.Where(o => o.PlantId == _plantId);
+            _engOrdersProcessed = await nestOrdersQ.CountAsync(o => o.IsComplete);
+        }
+
+        if (_showProduction)
+        {
+            // ── Schedules ────────────────────────────────────────────────
+            // Count at the Schedule level (parent of ScheduleOrder → NestOrder).
+            // ScheduleOrder has no nav back to NestOrder, so we join via a small
+            // in-memory step: pull NestOrder stats keyed by their ScheduleOrder's
+            // ScheduleId, then group.
+            var releasedSchedsQ = db.Schedules.Where(s => s.ReadyForProduction);
+            if (filterByPlant) releasedSchedsQ = releasedSchedsQ.Where(s => s.PlantId == _plantId);
+            var releasedSchedIds = await releasedSchedsQ.Select(s => s.Id).ToListAsync();
+
+            if (releasedSchedIds.Count > 0)
+            {
+                var schedNestStats = await db.NestOrders
+                    .Where(no => releasedSchedIds.Contains(no.ScheduleOrder.ScheduleId))
+                    .Select(no => new
+                    {
+                        ScheduleId = no.ScheduleOrder.ScheduleId,
+                        no.IsComplete,
+                        HasNested  = no.Items.Any(i => i.QtyNested > 0)
+                    })
+                    .ToListAsync();
+
+                var bySchedule            = schedNestStats.GroupBy(x => x.ScheduleId).ToList();
+                var schedulesWithNestOrders = new HashSet<int>(bySchedule.Select(g => g.Key));
+
+                _prodSchedsDone       = bySchedule.Count(g => g.All(x => x.IsComplete));
+                _prodSchedsPartial    = bySchedule.Count(g => !g.All(x => x.IsComplete) && g.Any(x => x.HasNested));
+                _prodSchedsNotStarted = bySchedule.Count(g => !g.Any(x => x.HasNested))
+                                      + releasedSchedIds.Count(id => !schedulesWithNestOrders.Contains(id));
+            }
+
+            // ── Batches ───────────────────────────────────────────────────
+            var batchesQ = db.NestBatches.AsQueryable();
+            if (filterByPlant) batchesQ = batchesQ.Where(b => b.PlantId == _plantId);
+
+            _prodBatchesDone       = await batchesQ.CountAsync(b =>  b.IsComplete);
+            _prodBatchesPartial    = await batchesQ.CountAsync(b => !b.IsComplete && b.Items.Any(i => i.QtyNested > 0));
+            _prodBatchesNotStarted = await batchesQ.CountAsync(b => !b.IsComplete && !b.Items.Any(i => i.QtyNested > 0));
+
+            // ── Nesting ───────────────────────────────────────────────────
+            var orderItemsQ = db.OrderItems.AsQueryable();
+            var batchItemsQ = db.BatchItems.AsQueryable();
+            if (filterByPlant)
+            {
+                orderItemsQ = orderItemsQ.Where(i => i.NestOrder.PlantId  == _plantId);
+                batchItemsQ = batchItemsQ.Where(i => i.NestBatch.PlantId == _plantId);
+            }
+            _totalPartsNested = (await orderItemsQ.SumAsync(i => (int?)i.QtyNested) ?? 0)
+                              + (await batchItemsQ.SumAsync(i => (int?)i.QtyNested) ?? 0);
+
+            if (_stationId.HasValue)
+            {
+                // Extract to a non-nullable local so EF Core generates "= @p" not "IS NULL"
+                int stationIdVal = _stationId.Value;
+                _partsInRadan = await db.OrderItems.CountAsync(i => i.NestingStationId == stationIdVal && i.IsInRadanProject && !i.IsComplete)
+                              + await db.BatchItems.CountAsync(i => i.NestingStationId == stationIdVal && i.IsInRadanProject && !i.IsComplete);
+            }
+        }
+
+        _loading = false;
+    }
+}
