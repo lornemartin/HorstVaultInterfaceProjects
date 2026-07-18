@@ -55,18 +55,17 @@ public class BridgeHub : Hub
                   ?? httpCtx?.Request.Query["access_token"].FirstOrDefault()
                   ?? "";
 
-        if (string.IsNullOrEmpty(_expectedApiKey) ||
-            string.Equals(apiKey, _expectedApiKey, StringComparison.Ordinal))
+        if (!string.IsNullOrEmpty(_expectedApiKey) &&
+            !string.Equals(apiKey, _expectedApiKey, StringComparison.Ordinal))
         {
-            _authorized[Context.ConnectionId] = true;
-        }
-        else
-        {
-            _log.LogWarning("Bridge connection rejected — invalid API key (connId={ConnId})",
+            // Middleware should have blocked this already; abort as defence-in-depth.
+            _log.LogWarning("Bridge connection rejected by hub — invalid API key (connId={ConnId})",
                             Context.ConnectionId);
             Context.Abort();
+            return Task.CompletedTask;  // don't call base after Abort
         }
 
+        _authorized[Context.ConnectionId] = true;
         return base.OnConnectedAsync();
     }
 

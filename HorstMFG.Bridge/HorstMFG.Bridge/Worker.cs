@@ -64,7 +64,6 @@ public class Worker : BackgroundService
             try
             {
                 await ConnectAsync(stoppingToken);
-                await Task.Delay(Timeout.Infinite, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -81,12 +80,18 @@ public class Worker : BackgroundService
 
     private async Task ConnectAsync(CancellationToken ct)
     {
+        if (_hub != null)
+            await _hub.DisposeAsync();
+
+        using var hubCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        _log.LogInformation("Connecting to {Url}/hubs/bridge ...", _config.HorstMfgUrl);
+
         _hub = new HubConnectionBuilder()
             .WithUrl($"{_config.HorstMfgUrl}/hubs/bridge", opts =>
             {
                 opts.Headers.Add("X-Api-Key", _config.ApiKey);
             })
-            .WithAutomaticReconnect()
             .Build();
 
         // Hub method: HorstMFG sends a command to this bridge
@@ -104,10 +109,16 @@ public class Worker : BackgroundService
             _log.LogInformation("Active project set to {Path}", path);
         });
 
-        _hub.Reconnected += async _ =>
+        // When the server closes the connection, cancel the idle wait so the
+        // outer retry loop in ExecuteAsync can reconnect cleanly.
+        _hub.Closed += ex =>
         {
-            _log.LogInformation("Reconnected — re-registering station {Id}", _config.StationId);
-            await RegisterAsync();
+            if (!ct.IsCancellationRequested)
+            {
+                _log.LogWarning("Hub connection closed: {Reason}", ex?.Message ?? "server closed connection");
+                hubCts.Cancel();
+            }
+            return Task.CompletedTask;
         };
 
         await _hub.StartAsync(ct);
@@ -117,6 +128,16 @@ public class Worker : BackgroundService
             _bomExportWatcher.Attach(_hub, _config.StationId, _config.BomExportFilePath);
 
         _log.LogInformation("Connected to HorstMFG as station {Id}", _config.StationId);
+
+        try
+        {
+            await Task.Delay(Timeout.Infinite, hubCts.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // Hub closed (not a service stop) — propagate so ExecuteAsync retries.
+            throw new Exception("Hub connection closed unexpectedly");
+        }
     }
 
     private Task RegisterAsync()

@@ -295,6 +295,28 @@ try
         }).DisableAntiforgery();
     }
 
+    // Reject bad API keys before the WebSocket upgrade so the bridge's
+    // StartAsync throws an HTTP 401 rather than connecting then aborting.
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path.StartsWithSegments("/hubs/bridge"))
+        {
+            var expectedKey = builder.Configuration["Bridge:ApiKey"] ?? "";
+            var apiKey = context.Request.Headers["X-Api-Key"].FirstOrDefault()
+                      ?? context.Request.Query["access_token"].FirstOrDefault()
+                      ?? "";
+
+            if (!string.IsNullOrEmpty(expectedKey) &&
+                !string.Equals(apiKey, expectedKey, StringComparison.Ordinal))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Invalid Bridge API key");
+                return;
+            }
+        }
+        await next(context);
+    });
+
     app.MapHub<BridgeHub>("/hubs/bridge");
 
     app.MapRazorComponents<App>()
