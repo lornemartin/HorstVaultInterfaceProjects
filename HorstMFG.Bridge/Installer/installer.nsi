@@ -91,15 +91,15 @@ Page custom PagePaths   PagePathsLeave
 ; .onInit — default values shown in the config pages
 ;--------------------------------------------------------------------
 Function .onInit
-  StrCpy $StationId    "0"
+  StrCpy $StationId    "3"
   StrCpy $HorstMfgUrl  "https://hwvsweb01.hw.horst.com"
-  StrCpy $ApiKey       ""
+  StrCpy $ApiKey       "919FEEB68C68859CB6E49A269E2AEBD11C6CE77B82E9CA47BBBF1AFED31E31A1"
   StrCpy $VaultServer  "HWVSVT04"
   StrCpy $VaultName    "Vault"
-  StrCpy $VaultUsername ""
-  StrCpy $VaultPassword ""
-  StrCpy $RadanPath    "C:\Radan Projects"
-  StrCpy $SymPath      "S:\Radan Sym Files\Vault Sym Files"
+  StrCpy $VaultUsername "lorne"
+  StrCpy $VaultPassword "lorne"
+  StrCpy $RadanPath    "C:\Radan Projects Testing"
+  StrCpy $SymPath      "\\hwvsse01\Manufacturing\Radan Sym Files\Vault Sym Files"
   StrCpy $BomPath      "C:\ProgramData\VaultExtensions\VaultExportData.txt"
 FunctionEnd
 
