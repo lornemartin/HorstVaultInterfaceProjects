@@ -248,13 +248,10 @@ Section "Install" SecMain
   ;------------------------------------------------------------------
   ; Stop and remove any existing installation
   ;------------------------------------------------------------------
-  DetailPrint "Stopping existing service (if present)..."
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" stop "${SERVICE_NAME}"'
+  DetailPrint "Stopping existing task (if present)..."
+  nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Stop-ScheduledTask -TaskName '${SERVICE_NAME}' -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName '${SERVICE_NAME}' -Confirm:$$false -ErrorAction SilentlyContinue$\""
   Pop $0
-  Sleep 3000
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" delete "${SERVICE_NAME}"'
-  Pop $0
-  Sleep 1000
+  Sleep 500
 
   ;------------------------------------------------------------------
   ; Copy files
@@ -302,23 +299,20 @@ Section "Install" SecMain
   FileClose $9
 
   ;------------------------------------------------------------------
-  ; Register Windows Service (Automatic start)
+  ; Register as a Task Scheduler logon task (runs in the user's
+  ; interactive session so Radan COM is accessible).
   ;------------------------------------------------------------------
-  DetailPrint "Registering Windows service..."
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" create "${SERVICE_NAME}" binPath= "$INSTDIR\HorstMFG.Bridge.exe" DisplayName= "${SERVICE_DISPLAY}" start= auto'
+  DetailPrint "Registering logon task..."
+  nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Register-ScheduledTask -TaskName '${SERVICE_NAME}' -Action (New-ScheduledTaskAction -Execute '$INSTDIR\HorstMFG.Bridge.exe') -Trigger (New-ScheduledTaskTrigger -AtLogOn) -Settings (New-ScheduledTaskSettingsSet -ExecutionTimeLimit 0) -RunLevel Limited -Force$\""
   Pop $0
   ${If} $0 != 0
     MessageBox MB_OK|MB_ICONEXCLAMATION \
-      "Service registration failed (error $0).$\n$\nYou can register it manually:$\n  sc.exe create ${SERVICE_NAME} binPath= $\"$INSTDIR\HorstMFG.Bridge.exe$\" DisplayName= $\"${SERVICE_DISPLAY}$\" start= auto"
+      "Task registration failed (error $0).$\n$\nYou can register it manually via Task Scheduler: run '$INSTDIR\HorstMFG.Bridge.exe' at logon."
   ${Else}
     Sleep 500
-    DetailPrint "Starting service..."
-    nsExec::ExecToLog '"$SYSDIR\sc.exe" start "${SERVICE_NAME}"'
+    DetailPrint "Starting task..."
+    nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Start-ScheduledTask -TaskName '${SERVICE_NAME}'$\""
     Pop $0
-    ${If} $0 != 0
-      MessageBox MB_ICONINFORMATION|MB_OK \
-        "Service was registered but could not be started (error $0).$\nYou can start it from the Windows Services console."
-    ${EndIf}
   ${EndIf}
 
   ;------------------------------------------------------------------
@@ -342,15 +336,10 @@ SectionEnd
 ;====================================================================
 Section "Uninstall"
 
-  DetailPrint "Stopping service..."
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" stop "${SERVICE_NAME}"'
+  DetailPrint "Removing logon task..."
+  nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Stop-ScheduledTask -TaskName '${SERVICE_NAME}' -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName '${SERVICE_NAME}' -Confirm:$$false -ErrorAction SilentlyContinue$\""
   Pop $0
-  Sleep 3000
-
-  DetailPrint "Deleting service..."
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" delete "${SERVICE_NAME}"'
-  Pop $0
-  Sleep 1000
+  Sleep 500
 
   DetailPrint "Removing files..."
   RMDir /r "$INSTDIR"

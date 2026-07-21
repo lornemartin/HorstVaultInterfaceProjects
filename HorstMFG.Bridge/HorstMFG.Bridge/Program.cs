@@ -13,7 +13,9 @@ using System.IO;
 
 // Windows Services don't reliably run with the executable's folder as the working
 // directory, so relative paths here can silently resolve elsewhere (e.g. System32).
-var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "bridge-.log");
+var logPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+    "Horst Manufacturing", "Bridge", "logs", "bridge-.log");
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
