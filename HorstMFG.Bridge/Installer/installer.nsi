@@ -91,16 +91,61 @@ Page custom PagePaths   PagePathsLeave
 ; .onInit — default values shown in the config pages
 ;--------------------------------------------------------------------
 Function .onInit
-  StrCpy $StationId    "3"
-  StrCpy $HorstMfgUrl  "https://hwvsweb01.hw.horst.com"
-  StrCpy $ApiKey       "919FEEB68C68859CB6E49A269E2AEBD11C6CE77B82E9CA47BBBF1AFED31E31A1"
-  StrCpy $VaultServer  "HWVSVT04"
-  StrCpy $VaultName    "Vault"
-  StrCpy $VaultUsername "lorne"
-  StrCpy $VaultPassword "lorne"
-  StrCpy $RadanPath    "C:\Radan Projects Testing"
-  StrCpy $SymPath      "\\hwvsse01\Manufacturing\Radan Sym Files\Vault Sym Files"
-  StrCpy $BomPath      "C:\ProgramData\VaultExtensions\VaultExportData.txt"
+  StrCpy $StationId     ""
+  StrCpy $HorstMfgUrl   ""
+  StrCpy $ApiKey        ""
+  StrCpy $VaultServer   ""
+  StrCpy $VaultName     ""
+  StrCpy $VaultUsername ""
+  StrCpy $VaultPassword ""
+  StrCpy $RadanPath     ""
+  StrCpy $SymPath       ""
+  StrCpy $BomPath       ""
+
+  ; Pre-populate from an existing install's appsettings.json if present
+  IfFileExists "$INSTDIR\appsettings.json" +1 init_done
+
+  GetTempFileName $R9
+
+  ; Write a PS1 that parses the JSON and writes a temp INI NSIS can read
+  FileOpen $R8 "$R9.ps1" w
+  FileWrite $R8 "$$j = Get-Content '$INSTDIR\appsettings.json' | ConvertFrom-Json$\n"
+  FileWrite $R8 "$$out = '$R9.ini'$\n"
+  FileWrite $R8 "Set-Content  $$out '[S]' -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('sid=' + [string]$$j.Bridge.StationId)             -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('url=' + [string]$$j.Bridge.HorstMfgUrl)           -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('key=' + [string]$$j.Bridge.ApiKey)                -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('vs='  + [string]$$j.Vault.Server)                 -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('vn='  + [string]$$j.Vault.Vault)                  -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('vu='  + [string]$$j.Vault.Username)               -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('vp='  + [string]$$j.Vault.Password)               -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('rp='  + [string]$$j.Bridge.RadanProjectsRootPath) -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('sp='  + [string]$$j.Bridge.SymNetworkSharePath)   -Encoding ascii$\n"
+  FileWrite $R8 "Add-Content  $$out ('bp='  + [string]$$j.Bridge.BomExportFilePath)     -Encoding ascii$\n"
+  FileClose $R8
+
+  nsExec::ExecToStack 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$R9.ps1"'
+  Pop $0  ; return code  (discard)
+  Pop $0  ; stdout       (discard)
+
+  IfFileExists "$R9.ini" +1 init_cleanup
+  ReadINIStr $StationId     "$R9.ini" "S" "sid"
+  ReadINIStr $HorstMfgUrl   "$R9.ini" "S" "url"
+  ReadINIStr $ApiKey        "$R9.ini" "S" "key"
+  ReadINIStr $VaultServer   "$R9.ini" "S" "vs"
+  ReadINIStr $VaultName     "$R9.ini" "S" "vn"
+  ReadINIStr $VaultUsername "$R9.ini" "S" "vu"
+  ReadINIStr $VaultPassword "$R9.ini" "S" "vp"
+  ReadINIStr $RadanPath     "$R9.ini" "S" "rp"
+  ReadINIStr $SymPath       "$R9.ini" "S" "sp"
+  ReadINIStr $BomPath       "$R9.ini" "S" "bp"
+
+  init_cleanup:
+  Delete "$R9.ps1"
+  Delete "$R9.ini"
+  Delete "$R9"
+
+  init_done:
 FunctionEnd
 
 ;====================================================================
