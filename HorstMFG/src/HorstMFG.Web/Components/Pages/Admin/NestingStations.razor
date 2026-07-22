@@ -21,6 +21,7 @@
 <SfGrid TValue="StationRow" DataSource="_stations" AllowSorting="true" AllowResizing="true" Height="500">
     <GridEvents TValue="StationRow" OnRecordDoubleClick="OnRowDoubleClick" />
     <GridColumns>
+        <GridColumn Field="@nameof(StationRow.Id)"          HeaderText="ID"           Width="60"  />
         <GridColumn Field="@nameof(StationRow.Name)"        HeaderText="Station Name" Width="200" />
         <GridColumn Field="@nameof(StationRow.PlantName)"   HeaderText="Plant"        Width="160" />
         <GridColumn Field="@nameof(StationRow.ProjectName)" HeaderText="Active Project" Width="180" />
@@ -101,7 +102,7 @@
         var now = DateTime.UtcNow;
         var raw = await db.NestingStations
             .Include(s => s.Plant)
-            .OrderBy(s => s.Plant.Name).ThenBy(s => s.Name)
+            .OrderBy(s => s.Id)
             .ToListAsync();
 
         _stations = raw.Select(s => new StationRow
