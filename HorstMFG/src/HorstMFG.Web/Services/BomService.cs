@@ -219,8 +219,11 @@ public class BomService : IBomService
         // directory enumeration (which is expensive at 78k+ files on a network share)
         Parallel.ForEach(deduped, new ParallelOptions { MaxDegreeOfParallelism = 4 }, line =>
         {
-            line.HasPdf = File.Exists(Path.Combine(_pdfSharePath, line.Number + ".pdf"));
+            var pdfPath = Path.Combine(_pdfSharePath, line.Number + ".pdf");
+            line.HasPdf = File.Exists(pdfPath);
             line.SortOrder = line.Parent == "<top>" ? 0 : 1;
+            if (!line.HasPdf)
+                _log.LogInformation("PDF not found for {Number}: checked {Path}", line.Number, pdfPath);
         });
 
         _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",
