@@ -43,7 +43,8 @@ public class BomPdfCopyService
             new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct },
             async (partNumber, c) =>
             {
-                if (await Task.Run(() => File.Exists(Path.Combine(_pdfSharePath, partNumber + ".pdf")), c))
+                var pdfPath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
+                if (await Task.Run(() => BomFieldMappers.FileExistsWithRetry(pdfPath, _log), c))
                     found.Add(partNumber);
             });
         return new HashSet<string>(found, StringComparer.OrdinalIgnoreCase);
@@ -73,7 +74,7 @@ public class BomPdfCopyService
                 var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
                 try
                 {
-                    if (!await Task.Run(() => File.Exists(sourcePath), c)) return;
+                    if (!await Task.Run(() => BomFieldMappers.FileExistsWithRetry(sourcePath, _log), c)) return;
                     await Task.Run(() => File.Copy(sourcePath, destPath, overwrite: true), c);
                     Interlocked.Increment(ref copied);
                 }

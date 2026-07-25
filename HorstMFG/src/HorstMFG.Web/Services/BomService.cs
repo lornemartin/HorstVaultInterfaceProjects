@@ -220,10 +220,8 @@ public class BomService : IBomService
         Parallel.ForEach(deduped, new ParallelOptions { MaxDegreeOfParallelism = 4 }, line =>
         {
             var pdfPath = Path.Combine(_pdfSharePath, line.Number + ".pdf");
-            line.HasPdf = File.Exists(pdfPath);
+            line.HasPdf = BomFieldMappers.FileExistsWithRetry(pdfPath, _log);
             line.SortOrder = line.Parent == "<top>" ? 0 : 1;
-            if (!line.HasPdf)
-                _log.LogInformation("PDF not found for {Number}: checked {Path}", line.Number, pdfPath);
         });
 
         _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace HorstMFG.Web.Services;
 
 /// <summary>
@@ -56,5 +58,42 @@ internal static class BomFieldMappers
             return Path.GetFileNameWithoutExtension(number);
         }
         return number;
+    }
+
+    /// <summary>
+    /// File.Exists over the PDF share can spuriously return false: it swallows every
+    /// exception internally, and a batch of concurrent first-time UNC connections from
+    /// the service account (no persistent share mapping) has been observed to trigger
+    /// transient auth/connection failures that look identical to "file not found".
+    /// Falls back to an explicit open (which does throw) so real errors get logged
+    /// instead of silently counting as missing.
+    /// </summary>
+    public static bool FileExistsWithRetry(string path, ILogger log, int maxAttempts = 3, int delayMs = 150)
+    {
+        if (File.Exists(path)) return true;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            Thread.Sleep(delayMs);
+            try
+            {
+                using var stream = File.OpenRead(path);
+                return true;
+            }
+            catch (FileNotFoundException)
+            {
+                return false;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Transient error checking {Path} (attempt {Attempt}/{Max})",
+                    path, attempt, maxAttempts);
+            }
+        }
+        return false;
     }
 }
