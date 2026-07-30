@@ -434,6 +434,7 @@ public class BomService : IBomService
                 Qty = p.Qty,
                 IsStock = p.IsStock,
                 HasPdf = p.HasPdf,
+                RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
             })
             .ToListAsync();
@@ -486,6 +487,7 @@ public class BomService : IBomService
                 Qty                = 0,
                 IsStock            = false,
                 HasPdf             = false,
+                RequiresPdf        = false,
                 Notes              = so.Notes,
             })
             .ToListAsync();
@@ -534,6 +536,7 @@ public class BomService : IBomService
                 Qty = p.Qty,
                 IsStock = p.IsStock,
                 HasPdf = p.HasPdf,
+                RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
             })
             .ToListAsync();
@@ -569,6 +572,7 @@ public class BomService : IBomService
                 Qty              = 0,
                 IsStock          = false,
                 HasPdf           = false,
+                RequiresPdf      = false,
                 Notes            = bp.Notes,
             })
             .ToListAsync();
@@ -984,6 +988,42 @@ public class BomService : IBomService
         if (!File.Exists(path)) return;
         try { File.Delete(path); }
         catch (Exception ex) { _log.LogWarning(ex, "Could not delete PDF file {Path}", path); }
+    }
+
+    public async Task<bool> RefreshPartPdfAsync(int partLineItemId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>()
+            .Include(p => p.BatchProduct!).ThenInclude(bp => bp.Batch)
+            .Include(p => p.ScheduleOrder!).ThenInclude(so => so.Schedule)
+            .FirstOrDefaultAsync(p => p.Id == partLineItemId);
+        if (part is null) return false;
+
+        if (!PdfExistsOnShare(part.PartNumber)) return false;
+
+        if (part.BatchProductId.HasValue)
+        {
+            var batchId = part.BatchProduct!.BatchId;
+            await _pdfCopy.CopyForBatchAsync(part.BatchProduct.Batch.Name, new[] { part.PartNumber });
+            await db.Set<PartLineItem>()
+                .Where(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.HasPdf, true));
+        }
+        else if (part.ScheduleOrderId.HasValue)
+        {
+            var scheduleId = part.ScheduleOrder!.ScheduleId;
+            await _pdfCopy.CopyForScheduleAsync(part.ScheduleOrder.Schedule.Name, new[] { part.PartNumber });
+            await db.Set<PartLineItem>()
+                .Where(p => p.ScheduleOrder!.ScheduleId == scheduleId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.HasPdf, true));
+        }
+        else
+        {
+            return false;
+        }
+
+        _log.LogInformation("Refreshed PDF for part {PartNumber} (PartLineItemId={Id})", part.PartNumber, partLineItemId);
+        return true;
     }
 
     public bool PdfExistsOnShare(string partNumber)

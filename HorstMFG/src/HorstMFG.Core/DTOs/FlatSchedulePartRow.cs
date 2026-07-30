@@ -32,6 +32,7 @@ public class FlatSchedulePartRow
     public int Qty { get; set; }
     public bool IsStock { get; set; }
     public bool HasPdf { get; set; }
+    public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }
 
     // ── Import status ────────────────────────────────────────────────────────

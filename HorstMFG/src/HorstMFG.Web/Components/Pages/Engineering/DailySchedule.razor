@@ -108,6 +108,12 @@
                 <span style="margin-left: 0.75rem; color: #6b7280; font-size: 0.8rem;">
                     (@ctx.Count part@(ctx.Count != 1 ? "s" : ""))
                 </span>
+                @if (_scheduleMissingPdfCount.TryGetValue(sched.Id, out var scheduleMissing) && scheduleMissing > 0)
+                {
+                    <span style="margin-left: 0.5rem; color: #b91c1c; font-size: 0.75rem; font-weight: 600;">
+                        &#9888; @scheduleMissing missing PDF@(scheduleMissing != 1 ? "s" : "")
+                    </span>
+                }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
                     @if (!sched.IsReleased)
                     {
@@ -162,6 +168,12 @@
                 @if (order.ProductDescription is not null)
                 {
                     <span style="margin-left: 0.75rem; color: #6b7280; font-size: 0.85rem;">@order.ProductDescription</span>
+                }
+                @if (_orderMissingPdfCount.TryGetValue(order.Id, out var orderMissing) && orderMissing > 0)
+                {
+                    <span style="margin-left: 0.5rem; color: #b91c1c; font-size: 0.75rem; font-weight: 600;">
+                        &#9888; @orderMissing missing PDF@(orderMissing != 1 ? "s" : "")
+                    </span>
                 }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
                     <span style="font-size: 0.8rem; color: #6b7280;">Qty:</span>
@@ -236,6 +248,20 @@
                            style="margin-left: 0.4rem; color: #3b82f6; font-size: 0.75rem; text-decoration: none;"
                            title="View PDF">&#x1F4C4;</a>
                     }
+                    else if (row.RequiresPdf)
+                    {
+                        <span style="color: #b91c1c;" title="PDF required but missing">@row.PartNumber</span>
+                        @if (_refreshingPartIds.Contains(row.PartLineItemId))
+                        {
+                            <span style="margin-left: 0.4rem; font-size: 0.75rem;" title="Checking share…">&#8987;</span>
+                        }
+                        else
+                        {
+                            <button @onclick="@(async () => await OnRefreshPdf(row))" @onclick:stopPropagation="true"
+                                    style="margin-left: 0.4rem; border: none; background: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
+                                    title="Re-check the share for this PDF">&#x1F504;</button>
+                        }
+                    }
                     else
                     {
                         <span>@row.PartNumber</span>
@@ -302,6 +328,8 @@
     private List<FlatSchedulePartRow> _rows = new();
     private Dictionary<int, ScheduleCaption> _scheduleMeta = new();
     private Dictionary<int, OrderCaption> _orderMeta = new();
+    private Dictionary<int, int> _scheduleMissingPdfCount = new();
+    private Dictionary<int, int> _orderMissingPdfCount = new();
 
     private sealed record ScheduleCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
     private sealed record OrderCaption(int Id, int ScheduleId, string? OrderNumber, int Qty, bool IsReleased,
@@ -350,6 +378,9 @@
     // PDF thumbnail hover
     private string? _thumbNumber;
     private double _thumbX, _thumbY;
+
+    // PDF refresh
+    private HashSet<int> _refreshingPartIds = new();
 
     // Stock dialog
     private bool _showStockDialog;
@@ -440,6 +471,14 @@
                 g.First().ProductNumber,
                 g.First().ProductDescription,
                 g.First().VaultBomImported));
+
+        var missingRows = _rows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf);
+        _scheduleMissingPdfCount = missingRows
+            .GroupBy(r => r.ScheduleId)
+            .ToDictionary(g => g.Key, g => g.Count());
+        _orderMissingPdfCount = missingRows
+            .GroupBy(r => r.ScheduleOrderId)
+            .ToDictionary(g => g.Key, g => g.Count());
     }
 
     private async Task ApplyGridFilters()
@@ -590,11 +629,37 @@
 
     private void OnThumbLeave() => _thumbNumber = null;
 
+    // ── PDF refresh ───────────────────────────────────────────────────────────
+    private async Task OnRefreshPdf(FlatSchedulePartRow row)
+    {
+        _refreshingPartIds.Add(row.PartLineItemId);
+        StateHasChanged();
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v6");
+        try
+        {
+            var found = await BomService.RefreshPartPdfAsync(row.PartLineItemId);
+            _statusMessage = found
+                ? $"PDF found and copied for {row.PartNumber}."
+                : $"Still no PDF on the share for {row.PartNumber}.";
+            _statusIsError = !found;
+        }
+        finally
+        {
+            _refreshingPartIds.Remove(row.PartLineItemId);
+        }
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v6", scrollTop);
+    }
+
     // ── Schedule actions ──────────────────────────────────────────────────────
     private async Task OnReleaseSchedule(ScheduleCaption sched)
     {
+        var missingCount = _scheduleMissingPdfCount.GetValueOrDefault(sched.Id);
+        var warning = missingCount > 0
+            ? $"Warning: {missingCount} part{(missingCount != 1 ? "s" : "")} in this schedule require a PDF but are missing one.\n\n"
+            : "";
         var confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Release schedule '{sched.Name}' to production? This cannot be undone and the schedule will become read-only.");
+            $"{warning}Release schedule '{sched.Name}' to production? This cannot be undone and the schedule will become read-only.");
         if (!confirmed) return;
 
         var stationId = BridgeHub.GetAnyOnlineStationId();
