@@ -370,6 +370,52 @@ On first deploy, ensure the DB user has DDL rights. After initial schema creatio
 
 ---
 
+## VaultGateway Service (Scheduled Task, not a Windows Service)
+
+`HorstMFG.VaultGateway` (deployed to `C:\Services\VaultGateway` on `hwvsweb01`) is the local
+process that calls the Autodesk Vault SDK on `HorstMFG.Web`'s behalf — it listens on
+`http://127.0.0.1:5050` for BOM import jobs and logs into Vault via `VaultAccess.LoginHeadlessForItems`.
+
+**It must be registered as a Scheduled Task, not a native Windows Service.** A native Windows
+Service runs in Session 0 (no window station), and the Vault Connectivity SDK's login call hangs
+indefinitely in that context even though it works instantly run interactively — the same reason
+`HorstMFG.Bridge` runs as a logon scheduled task rather than a service (see
+`HorstMFG.Bridge/Installer/installer.nsi`). A scheduled task with a password-based logon gives
+the process a real interactive-equivalent token without requiring anyone to actually be logged in.
+
+```powershell
+$action   = New-ScheduledTaskAction -Execute "C:\Services\VaultGateway\HorstMFG.VaultGateway.exe" -WorkingDirectory "C:\Services\VaultGateway"
+$trigger  = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit 0 -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+
+Register-ScheduledTask -TaskName "HorstMFGVaultGateway" -Action $action -Trigger $trigger -Settings $settings -User "HW.HORST.COM\svc-horstmfg" -Password '<svc-horstmfg password>' -RunLevel Highest
+
+Start-ScheduledTask -TaskName "HorstMFGVaultGateway"
+```
+
+> **Use single quotes around `-Password`.** Double-quoted strings in PowerShell interpolate `$` as
+> variable expansion — a password containing `$SomeText` will silently have that portion stripped
+> in a double-quoted string, producing a corrupted password and a misleading "user name or
+> password is incorrect" error even when the password is actually correct. Single quotes are
+> fully literal. Do not commit the actual password to git — this file should only ever show a placeholder.
+
+To redeploy after a code change: stop the task, copy the new build output over (but do **not**
+overwrite `appsettings.json`, which holds the server's real `ListenUrl`/`CallbackApiKey`/`Vault`
+values), then restart the task:
+
+```powershell
+Stop-ScheduledTask -TaskName "HorstMFGVaultGateway"
+# copy new build output here, excluding appsettings.json
+Start-ScheduledTask -TaskName "HorstMFGVaultGateway"
+```
+
+Check logs at `C:\Services\VaultGateway\logs\gateway-<yyyyMMdd>.log`. If the task starts but the
+log stays empty and the Gateway never responds on port 5050, it's almost always stuck inside the
+Vault login call — confirm with `curl.exe -v http://127.0.0.1:5050/api/jobs/x` (connection refused
+means it's still stuck before the HTTP listener starts).
+
+---
+
 ## Sysadmin Checklist
 
 ```
@@ -385,4 +431,10 @@ On first deploy, ensure the DB user has DDL rights. After initial schema creatio
 [ ] Open ports 80 and 443 in Windows Firewall
 [ ] Bind SSL certificate to IIS site
 [ ] First deploy: app will auto-run DB migrations on startup
+[ ] Deploy HorstMFG.VaultGateway to C:\Services\VaultGateway and register it as a
+    Scheduled Task (AtStartup, password logon) — see "VaultGateway Service" above,
+    NOT as a Windows Service
+[ ] Ensure hwvsweb01 can resolve/reach the Vault server and PDF share over IPv4 —
+    check for stray link-local AAAA DNS records if HTTPS calls between internal
+    servers fail with TLS handshake resets
 ```
