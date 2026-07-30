@@ -238,29 +238,29 @@
                     var row = context as FlatSchedulePartRow;
                     if (row!.HasPdf)
                     {
+                        <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
+                           @onclick:stopPropagation="true"
+                           style="margin-right: 0.4rem; color: #3b82f6; font-size: 0.75rem; text-decoration: none;"
+                           title="View PDF">&#x1F4C4;</a>
                         <span @onmouseenter="@(e => OnThumbEnter(row.PartNumber, e))"
                               @onmouseleave="OnThumbLeave"
                               style="cursor: default;">
                             @row.PartNumber
                         </span>
-                        <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
-                           @onclick:stopPropagation="true"
-                           style="margin-left: 0.4rem; color: #3b82f6; font-size: 0.75rem; text-decoration: none;"
-                           title="View PDF">&#x1F4C4;</a>
                     }
                     else if (row.RequiresPdf)
                     {
-                        <span style="color: #b91c1c;" title="PDF required but missing">@row.PartNumber</span>
                         @if (_refreshingPartIds.Contains(row.PartLineItemId))
                         {
-                            <span style="margin-left: 0.4rem; font-size: 0.75rem;" title="Checking share…">&#8987;</span>
+                            <span style="margin-right: 0.4rem; font-size: 0.75rem;" title="Checking share…">&#8987;</span>
                         }
                         else
                         {
                             <button @onclick="@(async () => await OnRefreshPdf(row))" @onclick:stopPropagation="true"
-                                    style="margin-left: 0.4rem; border: none; background: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
+                                    style="margin-right: 0.4rem; border: none; background: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
                                     title="Re-check the share for this PDF">&#x1F504;</button>
                         }
+                        <span style="color: #b91c1c;" title="PDF required but missing">@row.PartNumber</span>
                     }
                     else
                     {
@@ -472,7 +472,15 @@
                 g.First().ProductDescription,
                 g.First().VaultBomImported));
 
-        var missingRows = _rows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf);
+        RecomputeMissingPdfCounts();
+    }
+
+    // Missing-PDF counts only include rows currently visible under the "Hide stock
+    // parts" filter — a part hidden from the grid shouldn't count toward the badge.
+    private void RecomputeMissingPdfCounts()
+    {
+        var missingRows = _rows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf
+                                         && (!_hideStock || !r.IsStock));
         _scheduleMissingPdfCount = missingRows
             .GroupBy(r => r.ScheduleId)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -523,6 +531,7 @@
 
     private async Task OnHideStockChanged()
     {
+        RecomputeMissingPdfCounts();
         await ApplyGridFilters();
         await RestoreExpansionAsync();
         await SaveStateAsync();
