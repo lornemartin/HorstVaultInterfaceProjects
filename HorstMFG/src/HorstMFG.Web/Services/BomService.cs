@@ -570,7 +570,9 @@ public class BomService : IBomService
                 Thickness        = "",
                 Operations       = "",
                 Qty              = 0,
-                IsStock          = false,
+                // IsStock = true so the "Hide non-stock parts" filter (which matches on this
+                // field) never hides a product that simply has no BOM imported yet.
+                IsStock          = true,
                 HasPdf           = false,
                 RequiresPdf      = false,
                 Notes            = bp.Notes,
