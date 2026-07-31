@@ -966,10 +966,17 @@
                 var ids = _importingProductIds.ToList();
                 var results = await db.BatchProducts
                     .Where(bp => ids.Contains(bp.Id))
-                    .Select(bp => new { bp.Id, bp.VaultBomImported })
+                    .Select(bp => new { bp.Id, bp.VaultBomImported, bp.LastImportError })
                     .ToListAsync(ct);
                 foreach (var r in results.Where(r => r.VaultBomImported))
                     _importingProductIds.Remove(r.Id);
+                // A failure (e.g. item not found in Vault) is terminal — no need to wait
+                // out the full timeout once the Gateway has already reported it.
+                foreach (var r in results.Where(r => !r.VaultBomImported && r.LastImportError is not null))
+                {
+                    _importingProductIds.Remove(r.Id);
+                    _importErrorByProductId[r.Id] = r.LastImportError!;
+                }
                 var found = results.Select(r => r.Id).ToHashSet();
                 foreach (var id in ids.Where(id => !found.Contains(id)))
                     _importingProductIds.Remove(id);

@@ -138,6 +138,10 @@ public class ExcelBatchImportService
             return new ExcelBatchImportResult(true, batchId, null, null,
                 0, 0, new() { "Nothing to retry." }, new());
 
+        foreach (var p in pending)
+            p.LastImportError = null;
+        await db.SaveChangesAsync(ct);
+
         try
         {
             var items = pending
@@ -172,6 +176,7 @@ public class ExcelBatchImportService
         // Reset so the poll loop waits for the new ingest rather than seeing the
         // still-true flag from a prior import and reporting done immediately.
         product.VaultBomImported = false;
+        product.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
         try

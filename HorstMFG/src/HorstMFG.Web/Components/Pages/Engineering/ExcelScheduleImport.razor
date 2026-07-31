@@ -157,7 +157,9 @@
         {
             await RefreshOrdersAsync();
             await InvokeAsync(StateHasChanged);
-            if (_orders is not null && _orders.All(o => o.VaultBomImported || string.IsNullOrEmpty(o.ProductNumber)))
+            if (_orders is not null && _orders.All(o => o.VaultBomImported
+                                                      || string.IsNullOrEmpty(o.ProductNumber)
+                                                      || o.LastImportError is not null))
             {
                 _pollTimer?.Dispose();
                 _pollTimer = null;
@@ -184,6 +186,7 @@
     {
         if (string.IsNullOrEmpty(o.ProductNumber)) return "No product (edit & retry)";
         if (o.VaultBomImported) return "Imported";
+        if (o.LastImportError is not null) return $"Failed: {o.LastImportError}";
         return "Pending";
     }
 

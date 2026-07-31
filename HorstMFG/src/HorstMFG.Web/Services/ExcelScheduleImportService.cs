@@ -136,6 +136,10 @@ public class ExcelScheduleImportService
             return new ExcelScheduleImportResult(true, scheduleId, null, null,
                 0, 0, 0, new() { "Nothing to retry." }, new());
 
+        foreach (var o in pending)
+            o.LastImportError = null;
+        await db.SaveChangesAsync(ct);
+
         try
         {
             var items = pending
@@ -175,6 +179,7 @@ public class ExcelScheduleImportService
         // Reset so the poll loop waits for the new ingest rather than seeing the
         // still-true flag from a prior import and reporting done immediately.
         order.VaultBomImported = false;
+        order.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
         try

@@ -66,6 +66,7 @@ public class VaultBomIngestService
         {
             order.Notes = AppendNote(order.Notes, $"Vault import failed: {payload.ErrorMessage}");
             order.VaultBomImported = false;
+            order.LastImportError = payload.ErrorMessage ?? "Item not found in Vault.";
             await db.SaveChangesAsync(ct);
             _log.LogInformation("ScheduleOrder {Id} ({Order}/{Product}) — Vault item not found: {Err}",
                 order.Id, order.OrderNumber, order.ProductNumber, payload.ErrorMessage);
@@ -86,6 +87,7 @@ public class VaultBomIngestService
             db.PartLineItems.Add(line);
         }
         order.VaultBomImported = true;
+        order.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
         var (copied, total) = await _pdfCopy.CopyForScheduleAsync(order.Schedule.Name, partNumbers, ct);
@@ -113,6 +115,7 @@ public class VaultBomIngestService
         {
             product.Notes = AppendNote(product.Notes, $"Vault import failed: {payload.ErrorMessage}");
             product.VaultBomImported = false;
+            product.LastImportError = payload.ErrorMessage ?? "Item not found in Vault.";
             await db.SaveChangesAsync(ct);
             _log.LogInformation("BatchProduct {Id} ({Product}) — Vault item not found: {Err}",
                 product.Id, product.ProductName, payload.ErrorMessage);
@@ -132,6 +135,7 @@ public class VaultBomIngestService
             db.PartLineItems.Add(line);
         }
         product.VaultBomImported = true;
+        product.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
         var (copied, total) = await _pdfCopy.CopyForBatchAsync(product.Batch.Name, partNumbers, ct);

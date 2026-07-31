@@ -87,7 +87,7 @@
                     <tr>
                         <td>@p.ProductName</td>
                         <td>@p.Qty</td>
-                        <td>@(p.VaultBomImported ? "Imported" : "Pending")</td>
+                        <td>@StatusLabel(p)</td>
                         <td>@(_partCounts.TryGetValue(p.Id, out var c) ? c : 0)</td>
                     </tr>
                 }
@@ -172,12 +172,19 @@
         {
             await RefreshProductsAsync();
             await InvokeAsync(StateHasChanged);
-            if (_products is not null && _products.All(p => p.VaultBomImported))
+            if (_products is not null && _products.All(p => p.VaultBomImported || p.LastImportError is not null))
             {
                 _pollTimer?.Dispose();
                 _pollTimer = null;
             }
         }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private static string StatusLabel(BatchProduct p)
+    {
+        if (p.VaultBomImported) return "Imported";
+        if (p.LastImportError is not null) return $"Failed: {p.LastImportError}";
+        return "Pending";
     }
 
     private async Task RefreshProductsAsync()

@@ -860,10 +860,17 @@
                 var ids = _importingOrderIds.ToList();
                 var results = await db.ScheduleOrders
                     .Where(so => ids.Contains(so.Id))
-                    .Select(so => new { so.Id, so.VaultBomImported })
+                    .Select(so => new { so.Id, so.VaultBomImported, so.LastImportError })
                     .ToListAsync(ct);
                 foreach (var r in results.Where(r => r.VaultBomImported))
                     _importingOrderIds.Remove(r.Id);
+                // A failure (e.g. item not found in Vault) is terminal — no need to wait
+                // out the full timeout once the Gateway has already reported it.
+                foreach (var r in results.Where(r => !r.VaultBomImported && r.LastImportError is not null))
+                {
+                    _importingOrderIds.Remove(r.Id);
+                    _importErrorByOrderId[r.Id] = r.LastImportError!;
+                }
                 var found = results.Select(r => r.Id).ToHashSet();
                 foreach (var id in ids.Where(id => !found.Contains(id)))
                     _importingOrderIds.Remove(id);
