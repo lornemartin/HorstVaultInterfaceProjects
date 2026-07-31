@@ -216,6 +216,17 @@
                             <button @onclick="@(async () => await OnRetryBatchProduct(product.Id))" @onclick:stopPropagation="true"
                                     style="@BtnStyle("e-primary")">Re-import BOM</button>
                         }
+                        else if (_forceReimportProductIds.Contains(product.Id))
+                        {
+                            <button @onclick="@(async () => await OnRetryBatchProduct(product.Id))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")">Re-import BOM</button>
+                        }
+                        else
+                        {
+                            <button @onclick="@(() => _forceReimportProductIds.Add(product.Id))" @onclick:stopPropagation="true"
+                                    style="border: none; background: none; padding: 0 4px; cursor: pointer; color: #9ca3af; font-size: 0.9rem;"
+                                    title="Show re-import option">&#8942;</button>
+                        }
                         <button @onclick="@(async () => await OnDeleteBatchProduct(product))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
                         <button @onclick="@(() => OnMarkAllAsStockClicked(product))" @onclick:stopPropagation="true"
@@ -400,6 +411,10 @@
     // Products currently being polled for VaultBomImported completion
     private HashSet<int> _importingProductIds = new();
     private Dictionary<int, string> _importErrorByProductId = new();
+
+    // Products where the user has manually revealed the Re-import BOM button
+    // (hidden by default once a product has successfully imported).
+    private HashSet<int> _forceReimportProductIds = new();
     private int? _activePartLineItemId;
 
     // Status message (retry feedback)
@@ -867,6 +882,7 @@
     private async Task OnRetryBatchProduct(int productId)
     {
         _activePartLineItemId = null;
+        _forceReimportProductIds.Remove(productId);
         var result = await BatchImportSvc.RetrySingleBatchProductAsync(productId);
         if (!string.IsNullOrEmpty(result.GatewayError))
         {

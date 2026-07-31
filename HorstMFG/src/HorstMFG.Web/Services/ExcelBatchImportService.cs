@@ -169,6 +169,11 @@ public class ExcelBatchImportService
             return new ExcelBatchImportResult(false, null, null, null, 0, 0,
                 new(), new() { $"Product {productId} not found." });
 
+        // Reset so the poll loop waits for the new ingest rather than seeing the
+        // still-true flag from a prior import and reporting done immediately.
+        product.VaultBomImported = false;
+        await db.SaveChangesAsync(ct);
+
         try
         {
             var items = new List<VaultGatewayClient.GatewayBatchItem>

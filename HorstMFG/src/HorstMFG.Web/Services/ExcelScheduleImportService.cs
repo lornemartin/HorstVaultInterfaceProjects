@@ -172,6 +172,11 @@ public class ExcelScheduleImportService
             return new ExcelScheduleImportResult(false, order.ScheduleId, null, null, 0, 1, 0,
                 new(), new() { "Order has no product number — set it before retrying." });
 
+        // Reset so the poll loop waits for the new ingest rather than seeing the
+        // still-true flag from a prior import and reporting done immediately.
+        order.VaultBomImported = false;
+        await db.SaveChangesAsync(ct);
+
         try
         {
             var items = new List<VaultGatewayClient.GatewayBatchItem>
