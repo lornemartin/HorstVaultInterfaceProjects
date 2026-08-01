@@ -28,7 +28,7 @@ public class ExcelBatchImportService
     private readonly VaultGatewayClient _gateway;
     private readonly BomImportJobTracker _jobs;
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
-    private readonly string _localPdfPath;
+    private readonly BomPdfCopyService _pdfCopy;
     private readonly ILogger<ExcelBatchImportService> _log;
 
     public ExcelBatchImportService(
@@ -37,7 +37,7 @@ public class ExcelBatchImportService
         VaultGatewayClient gateway,
         BomImportJobTracker jobs,
         IDbContextFactory<ApplicationDbContext> dbFactory,
-        IConfiguration config,
+        BomPdfCopyService pdfCopy,
         ILogger<ExcelBatchImportService> log)
     {
         _parser = parser;
@@ -45,7 +45,7 @@ public class ExcelBatchImportService
         _gateway = gateway;
         _jobs = jobs;
         _dbFactory = dbFactory;
-        _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
+        _pdfCopy = pdfCopy;
         _log = log;
     }
 
@@ -79,13 +79,15 @@ public class ExcelBatchImportService
         if (existing is not null)
             return Failure(new() { $"A batch named '{parsed.Name}' already exists in this plant." });
 
+        var plantName = await db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync(ct) ?? "UnknownPlant";
+
         var batch = new Batch
         {
             Name = parsed.Name,
             PlantId = plantId,
             ImportedByUserId = userId,
             ImportDate = DateTime.UtcNow,
-            LocalPdfFolder = Path.Combine(_localPdfPath, "Batches", parsed.Name),
+            LocalPdfFolder = _pdfCopy.GetBatchFolder(plantName, parsed.Name),
         };
         db.Batches.Add(batch);
         await db.SaveChangesAsync(ct);

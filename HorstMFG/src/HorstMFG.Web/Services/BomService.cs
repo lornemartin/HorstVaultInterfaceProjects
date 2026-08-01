@@ -16,7 +16,6 @@ public class BomService : IBomService
     private readonly BomPdfCopyService _pdfCopy;
     private readonly ILogger<BomService> _log;
     private readonly string _pdfSharePath;
-    private readonly string _localPdfPath;
     private readonly string _powerJobsScriptPath;
 
     public BomService(IDbContextFactory<ApplicationDbContext> dbFactory,
@@ -28,7 +27,6 @@ public class BomService : IBomService
         _pdfCopy = pdfCopy;
         _log = log;
         _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
-        _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
         _powerJobsScriptPath = config["PowerJobs:ScriptPath"] ?? @"\\HWVMWK02\Jobs\Horst.PrintOnDemand.ps1";
     }
 
@@ -252,7 +250,8 @@ public class BomService : IBomService
     public async Task<Batch> ImportBatchAsync(string name, int batchQty, int plantId, int userId, List<BomExportLine> lines)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
-        var localFolder = Path.Combine(_localPdfPath, "Batches", name);
+        var plantName = await _db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync() ?? "UnknownPlant";
+        var localFolder = _pdfCopy.GetBatchFolder(plantName, name);
 
         var batch = await _db.Batches
             .FirstOrDefaultAsync(b => b.Name == name && b.PlantId == plantId);
@@ -319,7 +318,7 @@ public class BomService : IBomService
 
         // Copy PDFs to local folder
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var (copied, total) = await _pdfCopy.CopyForBatchAsync(name, partNumbers);
+        var (copied, total) = await _pdfCopy.CopyForBatchAsync(plantName, name, partNumbers);
 
         _log.LogInformation(
             "Imported batch '{Name}' with {GroupCount} products. Copied {Copied}/{Total} PDFs to {Folder}",
@@ -331,7 +330,8 @@ public class BomService : IBomService
     public async Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int orderQty, int plantId, int userId, List<BomExportLine> lines)
     {
         await using var _db = await _dbFactory.CreateDbContextAsync();
-        var localFolder = Path.Combine(_localPdfPath, "Schedules", name);
+        var plantName = await _db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync() ?? "UnknownPlant";
+        var localFolder = _pdfCopy.GetScheduleFolder(plantName, name);
 
         var schedule = await _db.Schedules
             .FirstOrDefaultAsync(s => s.Name == name && s.PlantId == plantId);
@@ -384,7 +384,7 @@ public class BomService : IBomService
         await _db.SaveChangesAsync();
 
         var partNumbers = lines.Select(l => l.Number).Distinct().ToList();
-        var (copied, total) = await _pdfCopy.CopyForScheduleAsync(name, partNumbers);
+        var (copied, total) = await _pdfCopy.CopyForScheduleAsync(plantName, name, partNumbers);
 
         _log.LogInformation(
             "Imported schedule '{Name}' (order {OrderNumber}) with {Count} items. Copied {Copied}/{Total} PDFs to {Folder}",
@@ -996,8 +996,8 @@ public class BomService : IBomService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var part = await db.Set<PartLineItem>()
-            .Include(p => p.BatchProduct!).ThenInclude(bp => bp.Batch)
-            .Include(p => p.ScheduleOrder!).ThenInclude(so => so.Schedule)
+            .Include(p => p.BatchProduct!).ThenInclude(bp => bp.Batch).ThenInclude(b => b.Plant)
+            .Include(p => p.ScheduleOrder!).ThenInclude(so => so.Schedule).ThenInclude(s => s.Plant)
             .FirstOrDefaultAsync(p => p.Id == partLineItemId);
         if (part is null) return false;
 
@@ -1006,7 +1006,7 @@ public class BomService : IBomService
         if (part.BatchProductId.HasValue)
         {
             var batchId = part.BatchProduct!.BatchId;
-            await _pdfCopy.CopyForBatchAsync(part.BatchProduct.Batch.Name, new[] { part.PartNumber });
+            await _pdfCopy.CopyForBatchAsync(part.BatchProduct.Batch.Plant.Name, part.BatchProduct.Batch.Name, new[] { part.PartNumber });
             await db.Set<PartLineItem>()
                 .Where(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == part.PartNumber)
                 .ExecuteUpdateAsync(s => s.SetProperty(p => p.HasPdf, true));
@@ -1014,7 +1014,7 @@ public class BomService : IBomService
         else if (part.ScheduleOrderId.HasValue)
         {
             var scheduleId = part.ScheduleOrder!.ScheduleId;
-            await _pdfCopy.CopyForScheduleAsync(part.ScheduleOrder.Schedule.Name, new[] { part.PartNumber });
+            await _pdfCopy.CopyForScheduleAsync(part.ScheduleOrder.Schedule.Plant.Name, part.ScheduleOrder.Schedule.Name, new[] { part.PartNumber });
             await db.Set<PartLineItem>()
                 .Where(p => p.ScheduleOrder!.ScheduleId == scheduleId && p.PartNumber == part.PartNumber)
                 .ExecuteUpdateAsync(s => s.SetProperty(p => p.HasPdf, true));

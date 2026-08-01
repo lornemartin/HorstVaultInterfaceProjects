@@ -142,14 +142,18 @@ try
         return Results.File(path, "application/pdf");
     }).RequireAuthorization();
 
-    // Minimal API: serve local PDF copy (stored under Batches/{name}/ or Schedules/{name}/)
-    var localPdfPath = builder.Configuration["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
-    app.MapGet("/api/pdf-local/{number}", (string number) =>
+    // Minimal API: serve local PDF copy (stored under {DatabaseName}/{PlantName}/Batches/{name}/
+    // or Schedules/{name}/). Scoped to this database's root folder so a shared disk hosting
+    // multiple database instances can never cross-serve another database's PDF.
+    app.MapGet("/api/pdf-local/{number}", (string number, BomPdfCopyService pdfCopy) =>
     {
         if (number.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             return Results.BadRequest("Invalid file name");
 
-        var path = Directory.EnumerateFiles(localPdfPath, number + ".pdf", SearchOption.AllDirectories)
+        if (!Directory.Exists(pdfCopy.DatabaseRootFolder))
+            return Results.NotFound();
+
+        var path = Directory.EnumerateFiles(pdfCopy.DatabaseRootFolder, number + ".pdf", SearchOption.AllDirectories)
                             .FirstOrDefault();
         if (path is null)
             return Results.NotFound();
@@ -196,13 +200,16 @@ try
     }).RequireAuthorization();
 
     // Minimal API: PDF first-page thumbnail from local copy (cached alongside PDF)
-    app.MapGet("/api/pdf-thumbnail/{number}", async (string number) =>
+    app.MapGet("/api/pdf-thumbnail/{number}", async (string number, BomPdfCopyService pdfCopy) =>
     {
         if (number.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             return Results.BadRequest("Invalid file name");
 
-        // PDFs are stored in subdirectories (Batches/{name}/ or Schedules/{name}/)
-        var pdfPath = Directory.EnumerateFiles(localPdfPath, number + ".pdf", SearchOption.AllDirectories)
+        if (!Directory.Exists(pdfCopy.DatabaseRootFolder))
+            return Results.NotFound();
+
+        // PDFs are stored in subdirectories ({PlantName}/Batches/{name}/ or Schedules/{name}/)
+        var pdfPath = Directory.EnumerateFiles(pdfCopy.DatabaseRootFolder, number + ".pdf", SearchOption.AllDirectories)
                                .FirstOrDefault();
         if (pdfPath is null)
             return Results.NotFound();

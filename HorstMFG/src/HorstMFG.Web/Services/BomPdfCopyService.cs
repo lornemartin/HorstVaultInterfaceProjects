@@ -1,34 +1,65 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace HorstMFG.Web.Services;
 
 /// <summary>
 /// Copies referenced PDFs from the network share into the local
-/// <c>{LocalPdfPath}\Schedules\{name}\</c> or <c>\Batches\{name}\</c> folder.
-/// Extracted from <see cref="BomService"/> so the Vault-callback ingest path
-/// can reuse the same copy logic as the legacy TSV import.
+/// <c>{LocalPdfPath}\{DatabaseName}\{PlantName}\Schedules\{name}\</c> or
+/// <c>\Batches\{name}\</c> folder. Extracted from <see cref="BomService"/> so the
+/// Vault-callback ingest path can reuse the same copy logic as the legacy TSV import.
 /// </summary>
 public class BomPdfCopyService
 {
     private readonly string _pdfSharePath;
     private readonly string _localPdfPath;
+    private readonly string _databaseName;
     private readonly ILogger<BomPdfCopyService> _log;
 
     public BomPdfCopyService(IConfiguration config, ILogger<BomPdfCopyService> log)
     {
         _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
         _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
+        _databaseName = ResolveDatabaseName(config);
         _log = log;
     }
 
+    /// <summary>
+    /// Extracts the Postgres database name from the DefaultConnection connection string,
+    /// so the local PDF folder layout separates by database without any extra config.
+    /// </summary>
+    public static string ResolveDatabaseName(IConfiguration config)
+    {
+        var connectionString = config.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString)) return "UnknownDatabase";
+        try
+        {
+            var database = new NpgsqlConnectionStringBuilder(connectionString).Database;
+            return string.IsNullOrWhiteSpace(database) ? "UnknownDatabase" : database;
+        }
+        catch
+        {
+            return "UnknownDatabase";
+        }
+    }
+
+    /// <summary>Root folder for this database's local PDFs — {LocalPdfPath}\{DatabaseName}\.</summary>
+    public string DatabaseRootFolder => Path.Combine(_localPdfPath, _databaseName);
+
+    public string GetBatchFolder(string plantName, string batchName)
+        => Path.Combine(DatabaseRootFolder, plantName, "Batches", batchName);
+
+    public string GetScheduleFolder(string plantName, string scheduleName)
+        => Path.Combine(DatabaseRootFolder, plantName, "Schedules", scheduleName);
+
     public Task<(int Copied, int Total)> CopyForScheduleAsync(
-        string scheduleName, IEnumerable<string> partNumbers, CancellationToken ct = default)
-        => CopyAsync(Path.Combine(_localPdfPath, "Schedules", scheduleName), partNumbers, ct);
+        string plantName, string scheduleName, IEnumerable<string> partNumbers, CancellationToken ct = default)
+        => CopyAsync(GetScheduleFolder(plantName, scheduleName), partNumbers, ct);
 
     public Task<(int Copied, int Total)> CopyForBatchAsync(
-        string batchName, IEnumerable<string> partNumbers, CancellationToken ct = default)
-        => CopyAsync(Path.Combine(_localPdfPath, "Batches", batchName), partNumbers, ct);
+        string plantName, string batchName, IEnumerable<string> partNumbers, CancellationToken ct = default)
+        => CopyAsync(GetBatchFolder(plantName, batchName), partNumbers, ct);
 
     /// <summary>
     /// Parallel <c>File.Exists</c> probe on the share — returns the subset of

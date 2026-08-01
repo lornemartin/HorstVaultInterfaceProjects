@@ -32,7 +32,7 @@ public class ExcelScheduleImportService
     private readonly VaultGatewayClient _gateway;
     private readonly BomImportJobTracker _jobs;
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
-    private readonly string _localPdfPath;
+    private readonly BomPdfCopyService _pdfCopy;
     private readonly ILogger<ExcelScheduleImportService> _log;
 
     public ExcelScheduleImportService(
@@ -40,14 +40,14 @@ public class ExcelScheduleImportService
         VaultGatewayClient gateway,
         BomImportJobTracker jobs,
         IDbContextFactory<ApplicationDbContext> dbFactory,
-        IConfiguration config,
+        BomPdfCopyService pdfCopy,
         ILogger<ExcelScheduleImportService> log)
     {
         _parser = parser;
         _gateway = gateway;
         _jobs = jobs;
         _dbFactory = dbFactory;
-        _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
+        _pdfCopy = pdfCopy;
         _log = log;
     }
 
@@ -67,13 +67,15 @@ public class ExcelScheduleImportService
             return new ExcelScheduleImportResult(false, null, null, null, 0, 0, 0,
                 new(), new() { $"A schedule named '{parsed.Name}' already exists in this plant." });
 
+        var plantName = await db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync(ct) ?? "UnknownPlant";
+
         var schedule = new Schedule
         {
             Name = parsed.Name,
             PlantId = plantId,
             ImportedByUserId = userId,
             ImportDate = DateTime.UtcNow,
-            LocalPdfFolder = Path.Combine(_localPdfPath, "Schedules", parsed.Name),
+            LocalPdfFolder = _pdfCopy.GetScheduleFolder(plantName, parsed.Name),
         };
         db.Schedules.Add(schedule);
         await db.SaveChangesAsync(ct);

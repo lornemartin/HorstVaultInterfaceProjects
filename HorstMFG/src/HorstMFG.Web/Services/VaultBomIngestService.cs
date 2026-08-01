@@ -52,7 +52,7 @@ public class VaultBomIngestService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var order = await db.ScheduleOrders
-            .Include(so => so.Schedule)
+            .Include(so => so.Schedule).ThenInclude(s => s.Plant)
             .Include(so => so.Parts)
             .FirstOrDefaultAsync(so => so.Id == payload.TrackingId, ct);
 
@@ -90,7 +90,7 @@ public class VaultBomIngestService
         order.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
-        var (copied, total) = await _pdfCopy.CopyForScheduleAsync(order.Schedule.Name, partNumbers, ct);
+        var (copied, total) = await _pdfCopy.CopyForScheduleAsync(order.Schedule.Plant.Name, order.Schedule.Name, partNumbers, ct);
         _log.LogInformation(
             "Ingested ScheduleOrder {Id} ({Order}/{Product}) — {Lines} parts, copied {Copied}/{Total} PDFs",
             order.Id, order.OrderNumber, order.ProductNumber, partNumbers.Count, copied, total);
@@ -101,7 +101,7 @@ public class VaultBomIngestService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var product = await db.BatchProducts
-            .Include(bp => bp.Batch)
+            .Include(bp => bp.Batch).ThenInclude(b => b.Plant)
             .Include(bp => bp.Parts)
             .FirstOrDefaultAsync(bp => bp.Id == payload.TrackingId, ct);
 
@@ -138,7 +138,7 @@ public class VaultBomIngestService
         product.LastImportError = null;
         await db.SaveChangesAsync(ct);
 
-        var (copied, total) = await _pdfCopy.CopyForBatchAsync(product.Batch.Name, partNumbers, ct);
+        var (copied, total) = await _pdfCopy.CopyForBatchAsync(product.Batch.Plant.Name, product.Batch.Name, partNumbers, ct);
         _log.LogInformation(
             "Ingested BatchProduct {Id} ({Product}) — {Lines} parts, copied {Copied}/{Total} PDFs",
             product.Id, product.ProductName, partNumbers.Count, copied, total);
