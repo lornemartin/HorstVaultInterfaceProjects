@@ -18,7 +18,7 @@
 
 @if (_state == State.Upload)
 {
-    <p>Upload a schedule Excel file. The schedule name comes from cell A1; rows below define orders (Col A = Order #, Col D = Qty, Col E = Product #).</p>
+    <p>Upload a schedule Excel file. The schedule name comes from cell A1; rows below define orders (Col D = Order #, Col C = Qty, Col E = Product #).</p>
 
     <InputFile OnChange="OnFileSelected" accept=".xlsx" class="form-control" style="max-width: 480px;" />
 

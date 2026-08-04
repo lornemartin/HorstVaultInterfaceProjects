@@ -8,8 +8,8 @@ public record ParsedSchedule(string Name, List<ParsedScheduleRow> Rows, List<str
 /// <summary>
 /// Reads a schedule Excel workbook into <see cref="ParsedSchedule"/>.
 /// Schedule name is in cell A1; data rows start at row 2.
-/// Column A = OrderNumber (trim trailing whitespace),
-/// Column D = Qty,
+/// Column D = OrderNumber (trim trailing whitespace),
+/// Column C = Qty,
 /// Column E = ProductNumber. A product cell that is exactly "LA-" with nothing
 /// after the dash is a continuation row that supplies extra-info Notes for the
 /// preceding real product line in the same order.
@@ -30,8 +30,8 @@ public class ExcelScheduleParser
         var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
         for (int r = 2; r <= lastRow; r++)
         {
-            string orderNumber = sheet.Cell(r, 1).GetString().Trim();
-            string qtyRaw = sheet.Cell(r, 4).GetString().Trim();
+            string orderNumber = sheet.Cell(r, 4).GetString().Trim();
+            string qtyRaw = sheet.Cell(r, 3).GetString().Trim();
             string productNumber = sheet.Cell(r, 5).GetString().Trim();
 
             if (string.IsNullOrEmpty(orderNumber) && string.IsNullOrEmpty(productNumber))
