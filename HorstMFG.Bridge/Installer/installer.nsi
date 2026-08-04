@@ -345,10 +345,13 @@ Section "Install" SecMain
 
   ;------------------------------------------------------------------
   ; Register as a Task Scheduler logon task (runs in the user's
-  ; interactive session so Radan COM is accessible).
+  ; interactive session so Radan COM is accessible). RunLevel must be
+  ; Highest — at Limited, the Vault Connectivity SDK's COM interop hangs
+  ; indefinitely at startup instead of failing cleanly (same class of
+  ; issue as HorstMFG.VaultGateway, which needs -RunLevel Highest too).
   ;------------------------------------------------------------------
   DetailPrint "Registering logon task..."
-  nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Register-ScheduledTask -TaskName '${SERVICE_NAME}' -Action (New-ScheduledTaskAction -Execute '$INSTDIR\HorstMFG.Bridge.exe') -Trigger (New-ScheduledTaskTrigger -AtLogOn) -Settings (New-ScheduledTaskSettingsSet -ExecutionTimeLimit 0) -RunLevel Limited -Force$\""
+  nsExec::ExecToLog "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"Register-ScheduledTask -TaskName '${SERVICE_NAME}' -Action (New-ScheduledTaskAction -Execute '$INSTDIR\HorstMFG.Bridge.exe' -WorkingDirectory '$INSTDIR') -Trigger (New-ScheduledTaskTrigger -AtLogOn) -Settings (New-ScheduledTaskSettingsSet -ExecutionTimeLimit 0) -RunLevel Highest -Force$\""
   Pop $0
   ${If} $0 != 0
     MessageBox MB_OK|MB_ICONEXCLAMATION \
