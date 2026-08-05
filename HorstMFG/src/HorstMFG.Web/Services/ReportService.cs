@@ -79,6 +79,7 @@ public class ReportService
                     {
                         PartNumber     = g.Key,
                         Title          = g.First().Part.Title,
+                        Description    = g.First().Part.Description,
                         Thickness      = g.First().Part.Thickness,
                         Material       = g.First().Part.Material,
                         StructCode     = g.First().Part.StructCode,
@@ -96,11 +97,12 @@ public class ReportService
 
             products.Add(new TravellerProduct
             {
-                ProductKey      = pg.Key,
-                AssemblyTitle   = assemblyPart?.Title,
-                AssemblyPdfPath = asmPdfExists ? asmPath : null,
-                Orders          = orders,
-                Components      = components,
+                ProductKey         = pg.Key,
+                AssemblyTitle      = assemblyPart?.Title,
+                AssemblyDescription = assemblyPart?.Description,
+                AssemblyPdfPath    = asmPdfExists ? asmPath : null,
+                Orders             = orders,
+                Components         = components,
             });
         }
 
@@ -533,6 +535,7 @@ public class ReportService
                     new TravellerPageInfo(
                         PartNumber: product.ProductKey,
                         Title:      product.AssemblyTitle,
+                        Description: product.AssemblyDescription,
                         Thickness:  null, Material: null, StructCode: null,
                         TotalQty:   product.Orders.Sum(o => o.Qty),
                         Orders:     product.Orders,
@@ -548,6 +551,7 @@ public class ReportService
                 var info = new TravellerPageInfo(
                     PartNumber: comp.PartNumber,
                     Title:      comp.Title,
+                    Description: comp.Description,
                     Thickness:  comp.Thickness,
                     Material:   comp.Material,
                     StructCode: comp.StructCode,
@@ -724,6 +728,12 @@ public class ReportService
             g.DrawString(info.Title, fontReg10, black, new PointF(bx, by));
             by += 18f;
         }
+        if (!string.IsNullOrWhiteSpace(info.Description) &&
+            !info.Description.Trim().Equals(info.Title?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            g.DrawString(info.Description, fontReg10, black, new PointF(bx, by));
+            by += 18f;
+        }
         by += 8f;
 
         if (!string.IsNullOrWhiteSpace(info.StructCode))
@@ -816,6 +826,15 @@ public class ReportService
             cy += titleSize.Height + 16f;
         }
 
+        if (!string.IsNullOrWhiteSpace(product.AssemblyDescription) &&
+            !product.AssemblyDescription.Trim().Equals(product.AssemblyTitle?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            var descSize = fontReg10.MeasureString(product.AssemblyDescription);
+            g.DrawString(product.AssemblyDescription, fontReg10, darkBrush,
+                new PointF((pw - descSize.Width) / 2f, cy));
+            cy += descSize.Height + 16f;
+        }
+
         var schedText = "Schedule  " + scheduleName;
         var schedSize = fontReg10.MeasureString(schedText);
         g.DrawString(schedText, fontReg10, grayBrush,
@@ -850,9 +869,10 @@ public class ReportService
 
     private sealed class TravellerProduct
     {
-        public string  ProductKey       { get; init; } = "";
-        public string? AssemblyTitle    { get; init; }
-        public string? AssemblyPdfPath  { get; init; }
+        public string  ProductKey          { get; init; } = "";
+        public string? AssemblyTitle       { get; init; }
+        public string? AssemblyDescription { get; init; }
+        public string? AssemblyPdfPath     { get; init; }
         public List<(string OrderNumber, int Qty)> Orders     { get; init; } = new();
         public List<TravellerComponent>            Components { get; init; } = new();
     }
@@ -861,6 +881,7 @@ public class ReportService
     {
         public string  PartNumber     { get; init; } = "";
         public string? Title          { get; init; }
+        public string? Description    { get; init; }
         public string? Thickness      { get; init; }
         public string? Material       { get; init; }
         public string? StructCode     { get; init; }
@@ -873,6 +894,7 @@ public class ReportService
     private sealed record TravellerPageInfo(
         string PartNumber,
         string? Title,
+        string? Description,
         string? Thickness,
         string? Material,
         string? StructCode,
