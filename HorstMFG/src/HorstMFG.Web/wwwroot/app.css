@@ -207,6 +207,19 @@ h1:focus {
 #OrdersGrid_v6 .e-filterbar,
 #BatchesGrid_v6 .e-filterbar { display: none !important; }
 
+/* The group caption template on these grids packs in a name, badges, and several
+   action buttons — far more than Syncfusion's default single-line-text caption is
+   sized for. The theme's .e-groupcaption rule is `overflow:hidden; white-space:nowrap;
+   width:auto`, so its rendered width tracks the grid's total column width — when
+   columns are narrow, trailing buttons get silently clipped instead of wrapping.
+   Allow wrapping so nothing is ever hidden regardless of column widths. */
+#OrdersGrid_v6 .e-groupcaption,
+#BatchesGrid_v6 .e-groupcaption {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
+}
+
 /* Engineering grid row styles */
 .e-grid .e-row.row-active-part > td {
     background-color: #fefce8 !important;
