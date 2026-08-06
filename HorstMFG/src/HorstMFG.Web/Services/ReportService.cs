@@ -155,6 +155,7 @@ public class ReportService
             .GroupBy(x => x.Part.PartNumber)
             .Select(g => BuildGroup(g.Key,
                 g.First().Part.Title,
+                g.First().Part.Description,
                 g.First().Part.Thickness,
                 g.First().Part.Material,
                 g.First().Part.StructCode,
@@ -163,14 +164,13 @@ public class ReportService
                  .OrderBy(o => o.Key)
                  .ToList(),
                 Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .Where(g => File.Exists(g.PdfPath))
             .ToList();
 
         groups = SortGroups(groups, operation);
 
         if (groups.Count == 0)
         {
-            _log.LogWarning("No '{Op}' parts with local PDFs found for schedule '{Name}'", operation, scheduleName);
+            _log.LogWarning("No '{Op}' parts found for schedule '{Name}'", operation, scheduleName);
             return null;
         }
 
@@ -203,6 +203,7 @@ public class ReportService
             .GroupBy(x => x.Part.PartNumber)
             .Select(g => BuildGroup(g.Key,
                 g.First().Part.Title,
+                g.First().Part.Description,
                 g.First().Part.Thickness,
                 g.First().Part.Material,
                 g.First().Part.StructCode,
@@ -211,14 +212,13 @@ public class ReportService
                  .OrderBy(o => o.Key)
                  .ToList(),
                 Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .Where(g => File.Exists(g.PdfPath))
             .ToList();
 
         groups = SortGroups(groups, operation);
 
         if (groups.Count == 0)
         {
-            _log.LogWarning("No '{Op}' parts with local PDFs found for batch '{Name}'", operation, batchName);
+            _log.LogWarning("No '{Op}' parts found for batch '{Name}'", operation, batchName);
             return null;
         }
 
@@ -257,14 +257,20 @@ public class ReportService
 
         foreach (var part in parts)
         {
+            if (part.PdfPath is null)
+            {
+                AppendTextOnlyPage(output, part, sourceName, isSchedule, operation);
+                continue;
+            }
+
             byte[] srcBytes = File.ReadAllBytes(part.PdfPath);
             var srcDoc = new PdfLoadedDocument(srcBytes);
             try
             {
-                if (srcDoc.Pages.Count == 0) continue;
+                if (srcDoc.Pages.Count == 0) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); continue; }
 
                 var srcPage = srcDoc.Pages[0] as PdfLoadedPage;
-                if (srcPage == null) continue;
+                if (srcPage == null) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); continue; }
 
                 // Build template before importing so it can be drawn onto the cover page.
                 var template = srcPage.CreateTemplate();
@@ -294,6 +300,47 @@ public class ReportService
         output.Save(ms);
         output.Close();
         return ms.ToArray();
+    }
+
+    /// <summary>
+    /// Part has no local PDF — single page with a "No Drawing" placeholder box plus
+    /// the same details block, followed by a blank back for duplex alignment. Mirrors
+    /// TravellerAppendTextOnlyPage/TravellerDrawTextOnlyPage.
+    /// </summary>
+    private static void AppendTextOnlyPage(PdfDocument output, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
+    {
+        DrawTextOnlyPage(output.Pages.Add(), part, sourceName, isSchedule, operation);
+        output.Pages.Add(); // blank back for duplex alignment
+    }
+
+    private static void DrawTextOnlyPage(PdfPage page, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
+    {
+        var g      = page.Graphics;
+        float pw   = page.GetClientSize().Width;
+        float ph   = page.GetClientSize().Height;
+        float margin = 30f;
+        float boxW = pw * 0.44f;
+        float boxH = ph - margin * 2f;
+
+        // Grey "No Drawing" placeholder
+        g.DrawRectangle(
+            new PdfPen(new PdfColor(200, 200, 200), 0.5f),
+            new PdfSolidBrush(new PdfColor(245, 245, 245)),
+            new RectangleF(margin, margin, boxW, boxH));
+
+        var noDrawFont = new PdfStandardFont(PdfFontFamily.Helvetica, 13, PdfFontStyle.Italic);
+        var noDrawSize = noDrawFont.MeasureString("No Drawing");
+        g.DrawString("No Drawing", noDrawFont,
+            new PdfSolidBrush(new PdfColor(160, 160, 160)),
+            new PointF(margin + (boxW - noDrawSize.Width) / 2f,
+                       margin + (boxH - noDrawSize.Height) / 2f));
+
+        // Vertical divider
+        float divX = margin + boxW + 15f;
+        g.DrawLine(new PdfPen(new PdfColor(210, 210, 210), 1f),
+            new PointF(divX, margin), new PointF(divX, ph - margin));
+
+        DrawDetails(g, part, divX + 15f, margin + 30f, pw, margin, sourceName, isSchedule, operation);
     }
 
     private static void DrawCoverPage(PdfPage cover, PdfTemplate template,
@@ -429,6 +476,14 @@ public class ReportService
             g.DrawString(part.Title, fontReg10, black, new PointF(bx, by));
             by += 18f;
         }
+
+        // Description — only if it says something the title doesn't already say
+        if (!string.IsNullOrWhiteSpace(part.Description) &&
+            !part.Description.Trim().Equals(part.Title?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            g.DrawString(part.Description, fontReg10, black, new PointF(bx, by));
+            by += 18f;
+        }
         by += 10f;
 
         // Thickness, Material, and source name
@@ -477,6 +532,7 @@ public class ReportService
     private static LaserPartGroup BuildGroup(
         string partNumber,
         string? title,
+        string? description,
         string? thickness,
         string? material,
         string? structCode,
@@ -485,12 +541,13 @@ public class ReportService
     {
         PartNumber  = partNumber,
         Title       = title,
+        Description = description,
         Thickness   = thickness,
         Material    = material,
         StructCode  = structCode,
         TotalQty    = orders.Sum(o => o.Qty),
         Orders      = orders,
-        PdfPath     = pdfPath,
+        PdfPath     = File.Exists(pdfPath) ? pdfPath : null,
     };
 
     private static double ParseThickness(string? thickness)
@@ -504,14 +561,15 @@ public class ReportService
 
     private sealed class LaserPartGroup
     {
-        public string PartNumber  { get; init; } = "";
-        public string? Title      { get; init; }
-        public string? Thickness  { get; init; }
-        public string? Material   { get; init; }
-        public string? StructCode { get; init; }
-        public int TotalQty       { get; init; }
+        public string PartNumber   { get; init; } = "";
+        public string? Title       { get; init; }
+        public string? Description { get; init; }
+        public string? Thickness   { get; init; }
+        public string? Material    { get; init; }
+        public string? StructCode  { get; init; }
+        public int TotalQty        { get; init; }
         public List<(string Label, int Qty)> Orders { get; init; } = new();
-        public string PdfPath     { get; init; } = "";
+        public string? PdfPath     { get; init; }
     }
 
     // ── Traveller PDF builder ─────────────────────────────────────────────────
