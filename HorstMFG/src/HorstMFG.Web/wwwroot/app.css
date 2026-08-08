@@ -226,10 +226,21 @@ h1:focus {
     box-shadow: inset 3px 0 0 #d97706;
 }
 
-.e-grid .e-row.row-released td {
-    background-color: #dcfce7 !important;
-    font-weight: 600;
-    color: #166534 !important;
+/* Released state: a left accent bar + subtle tint only — text color/weight are left
+   untouched, since that's already how the grid tells stock from non-stock parts
+   (a condition that's reversed between Batches and Orders), so the two signals never
+   collide. Applied to part rows directly, and to the batch/schedule and product/order
+   caption rows via a hidden .released-marker child + :has() — captions are Syncfusion-
+   rendered cells we don't otherwise get a class hook into. */
+.e-grid .e-row.row-released > td {
+    background-color: #f3f5f8 !important;
+    box-shadow: inset 3px 0 0 #57667c;
+}
+
+#BatchesGrid_v6 .e-groupcaption:has(.released-marker),
+#OrdersGrid_v6 .e-groupcaption:has(.released-marker) {
+    background-color: #f3f5f8;
+    box-shadow: inset 3px 0 0 #57667c;
 }
 
 .e-grid .e-row.row-dimmed td {

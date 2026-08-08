@@ -109,6 +109,8 @@
                 <span data-group-key="@batch.Id" data-group-level="1" style="display:none;"></span>
                 @if (batch.IsReleased)
                 {
+                    <span class="released-marker" style="display:none;"></span>
+                    <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                     <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
                 }
                 else
@@ -167,6 +169,8 @@
                 <span data-group-key="@product.Id" data-group-level="2" style="display:none;"></span>
                 @if (product.IsReleased)
                 {
+                    <span class="released-marker" style="display:none;"></span>
+                    <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                     <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
                 }
                 else
@@ -258,7 +262,11 @@
             <Template>
                 @{
                     var row = context as FlatBatchPartRow;
-                    if (row!.HasPdf)
+                    if (row!.BatchReleased)
+                    {
+                        <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
+                    }
+                    if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
                            @onclick:stopPropagation="true"

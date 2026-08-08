@@ -101,6 +101,11 @@
             @if (ctx.Field == "ScheduleId" && _scheduleMeta.TryGetValue(key, out var sched))
             {
                 <span data-group-key="@sched.Id" data-group-level="1" style="display:none;"></span>
+                @if (sched.IsReleased)
+                {
+                    <span class="released-marker" style="display:none;"></span>
+                    <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
+                }
                 <span style="font-weight: 700; font-size: 1rem;">@sched.Name</span>
                 <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
                     @sched.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
@@ -147,6 +152,8 @@
                 <span data-group-key="@order.Id" data-group-level="2" style="display:none;"></span>
                 @if (order.IsReleased)
                 {
+                    <span class="released-marker" style="display:none;"></span>
+                    <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                     @if (order.ProductNumber is not null)
                     {
                         <span style="font-style: italic; color: #374151; margin-right: 0.5rem;">@order.ProductNumber</span>
@@ -247,7 +254,11 @@
             <Template>
                 @{
                     var row = context as FlatSchedulePartRow;
-                    if (row!.HasPdf)
+                    if (row!.ScheduleReleased)
+                    {
+                        <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
+                    }
+                    if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
                            @onclick:stopPropagation="true"
