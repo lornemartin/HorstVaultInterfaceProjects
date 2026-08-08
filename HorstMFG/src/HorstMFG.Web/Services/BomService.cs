@@ -587,10 +587,50 @@ public class BomService : IBomService
     {
         var trimmed = name.Trim();
         if (string.IsNullOrEmpty(trimmed)) return;
+
         await using var db = await _dbFactory.CreateDbContextAsync();
-        await db.Set<Batch>()
-            .Where(b => b.Id == batchId)
-            .ExecuteUpdateAsync(s => s.SetProperty(b => b.Name, trimmed));
+        var batch = await db.Set<Batch>()
+            .Include(b => b.Plant)
+            .FirstOrDefaultAsync(b => b.Id == batchId);
+        if (batch is null || batch.Name == trimmed) return;
+
+        var newFolder = _pdfCopy.GetBatchFolder(batch.Plant.Name, trimmed);
+        MoveLocalPdfFolder(batch.LocalPdfFolder, newFolder);
+
+        batch.Name = trimmed;
+        batch.LocalPdfFolder = newFolder;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Moves a batch/schedule's local PDF folder to match a rename, so LocalPdfFolder
+    /// never drifts from where the files actually are. If the destination already
+    /// exists (e.g. a later PDF copy/refresh already recreated it under the new name),
+    /// merges file-by-file instead of a straight directory move.
+    /// </summary>
+    private void MoveLocalPdfFolder(string? oldFolder, string newFolder)
+    {
+        if (string.IsNullOrEmpty(oldFolder) || !Directory.Exists(oldFolder)) return;
+        if (oldFolder.Equals(newFolder, StringComparison.OrdinalIgnoreCase)) return;
+
+        try
+        {
+            if (!Directory.Exists(newFolder))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(newFolder)!);
+                Directory.Move(oldFolder, newFolder);
+                return;
+            }
+
+            // Destination already exists — merge instead of a straight move.
+            foreach (var file in Directory.GetFiles(oldFolder))
+                File.Copy(file, Path.Combine(newFolder, Path.GetFileName(file)), overwrite: true);
+            Directory.Delete(oldFolder, recursive: true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Could not move PDF folder from {Old} to {New}", oldFolder, newFolder);
+        }
     }
 
     public async Task UpdateBatchProductQtyAsync(int batchProductId, int qty)

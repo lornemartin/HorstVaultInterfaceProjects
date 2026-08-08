@@ -7,6 +7,9 @@ namespace HorstMFG.Web.Services;
 /// Reads a Purchase Order batch workbook (.xls or .xlsx).
 /// Reads the "Purchase Order" sheet: batch name from E15,
 /// data rows from row 18 onward with Qty in col D (4) and product in col F (6).
+/// Some vendor PO templates (e.g. outsourced-work orders) repurpose E12:E15 for
+/// vendor Name/Address/City/Phone instead, leaving E15 blank — those put the batch
+/// label in F18 instead, so we fall back there when E15 is empty.
 /// </summary>
 public class PoBatchParser
 {
@@ -27,6 +30,8 @@ public class PoBatchParser
             ?? throw new InvalidOperationException("Workbook has no 'Purchase Order' sheet.");
 
         var name = GetCell(table, 14, 4); // E15
+        if (string.IsNullOrEmpty(name))
+            name = GetCell(table, 17, 5); // fallback: F18
 
         var rows = new List<ParsedBatchRow>();
         var errors = new List<string>();
@@ -67,7 +72,7 @@ public class PoBatchParser
         }
 
         if (string.IsNullOrEmpty(name))
-            errors.Add("Batch name (cell E15) is empty.");
+            errors.Add("Batch name is empty (checked cell E15 and fallback cell F18).");
 
         return new ParsedBatch(name, rows, errors);
     }
