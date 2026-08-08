@@ -156,10 +156,8 @@ public class VaultBomIngestService
     /// </summary>
     private static List<PartLineItem> BuildPartLineItems(IEnumerable<VaultBomLine> lines)
     {
-        var levelToNumber = new Dictionary<string, string>();
+        var levelToQty = new Dictionary<string, int>();
         var dedupedByNumber = new Dictionary<string, PartLineItem>(StringComparer.OrdinalIgnoreCase);
-        var seenPairs = new HashSet<(string Number, string Parent)>();
-        var pairCounts = new Dictionary<(string Number, string Parent), int>();
 
         foreach (var l in lines)
         {
@@ -169,56 +167,46 @@ public class VaultBomIngestService
                 ? BomFieldMappers.StripCadExtension(l.Number)
                 : l.StockName;
 
-            // Determine parent from BOM level structure ("1.1.2" → parent at level "1.1").
-            string parent = "";
-            if (l.Level == "1") parent = "<top>";
+            // Vault reports each line's Qty relative to its own immediate parent, not
+            // pre-multiplied through the whole assembly chain — so a part nested under a
+            // sub-assembly that's itself needed multiple times must have its raw Qty
+            // multiplied by that parent's own (already-resolved) absolute qty. Tracked by
+            // BOM Level (e.g. "1.2.3") rather than part number: a level uniquely identifies
+            // one placement in the tree, so — unlike the legacy TSV path's number-based
+            // lookup — this needs no order-dependent "divide to undo double counting" hack.
+            int rawQty = l.Qty < 1 ? 1 : l.Qty;
+            int parentQty = 1;
             if (l.Level.Contains('.'))
             {
                 var parentLevel = l.Level[..l.Level.LastIndexOf('.')];
-                if (levelToNumber.TryGetValue(parentLevel, out var p)) parent = p;
+                if (levelToQty.TryGetValue(parentLevel, out var pq)) parentQty = pq;
             }
-            if (!levelToNumber.ContainsKey(l.Level)) levelToNumber[l.Level] = number;
+            int qty = rawQty * parentQty;
+            levelToQty[l.Level] = qty;
 
-            int qty = l.Qty < 1 ? 1 : l.Qty;
-            var key = (number, parent);
-            bool isDuplicatePair = seenPairs.Contains(key);
-            seenPairs.Add(key);
-            pairCounts[key] = pairCounts.GetValueOrDefault(key) + 1;
-
-            if (!isDuplicatePair)
+            if (dedupedByNumber.TryGetValue(number, out var existing))
             {
-                if (dedupedByNumber.TryGetValue(number, out var existing))
-                {
-                    // Same part under a different parent — sum quantities.
-                    existing.Qty += qty;
-                }
-                else
-                {
-                    var thickness = BomFieldMappers.DeriveThicknessForLaser(l.Operations, l.Thickness, l.StructCode);
-                    var item = new PartLineItem
-                    {
-                        PartNumber  = number,
-                        Title       = l.Title,
-                        Description = l.ItemDescription,
-                        Category    = l.Category,
-                        Qty         = qty,
-                        Material    = l.Material,
-                        Thickness   = thickness,
-                        StructCode  = l.StructCode,
-                        Operations  = l.Operations,
-                        IsStock     = l.IsStock,
-                        RequiresPdf = l.RequiresPdf,
-                        Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
-                    };
-                    dedupedByNumber[number] = item;
-                }
+                existing.Qty += qty;
             }
             else
             {
-                // Same (part, parent) pair appearing again — divide qty by occurrence count.
-                int relationCount = pairCounts[key];
-                if (dedupedByNumber.TryGetValue(number, out var existing))
-                    existing.Qty += qty / relationCount;
+                var thickness = BomFieldMappers.DeriveThicknessForLaser(l.Operations, l.Thickness, l.StructCode);
+                var item = new PartLineItem
+                {
+                    PartNumber  = number,
+                    Title       = l.Title,
+                    Description = l.ItemDescription,
+                    Category    = l.Category,
+                    Qty         = qty,
+                    Material    = l.Material,
+                    Thickness   = thickness,
+                    StructCode  = l.StructCode,
+                    Operations  = l.Operations,
+                    IsStock     = l.IsStock,
+                    RequiresPdf = l.RequiresPdf,
+                    Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
+                };
+                dedupedByNumber[number] = item;
             }
         }
 
