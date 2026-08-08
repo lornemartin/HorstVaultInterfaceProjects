@@ -528,11 +528,13 @@
     }
 
     // Missing-PDF counts only include rows currently visible under the "Hide non-stock
-    // parts" filter — a part hidden from the grid shouldn't count toward the badge.
+    // parts" and "Hide assemblies" filters — a part hidden from the grid shouldn't count
+    // toward the badge.
     private void RecomputeMissingPdfCounts()
     {
         var missingRows = _rows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf
-                                         && (!_hideNonStock || r.IsStock));
+                                         && (!_hideNonStock || r.IsStock)
+                                         && (!_hideAssemblies || r.CategoryOrder != 1));
         _batchMissingPdfCount = missingRows
             .GroupBy(r => r.BatchId)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -580,6 +582,7 @@
 
     private async Task OnHideAssembliesChanged()
     {
+        RecomputeMissingPdfCounts();
         await ApplyGridFilters();
         await RestoreExpansionAsync();
         await SaveStateAsync();
