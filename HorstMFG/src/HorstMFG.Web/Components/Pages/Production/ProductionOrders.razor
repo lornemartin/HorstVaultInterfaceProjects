@@ -415,6 +415,12 @@
         _thumbnailVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await LoadAsync();
         StateHasChanged();
+        // QueryCellInfo-applied classes (the Remaining-column nesting-progress colors)
+        // can go stale after the DataSource reference is swapped for a new list — an
+        // explicit Refresh forces Syncfusion to re-run cell binding rather than reuse
+        // stale rendering from the previous data set.
+        if (_grid is not null)
+            await _grid.Refresh();
         await RestoreExpansionAsync();
     }
 
