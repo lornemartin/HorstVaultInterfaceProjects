@@ -811,12 +811,24 @@
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
 
-            // Preload all existing NestedParts so we can calculate per-item remaining capacity
-            // without hitting the DB per row, and keep the list in sync as we process each nest.
-            var orderItemIds = items.Select(i => i.Id).ToList();
+            // Every RadanIdNumber referenced anywhere in this sync — used to see ALL items sharing
+            // one of these numbers, not just the ones currently tracked at this station. A sibling
+            // item may already have been retrieved/finalized and dropped its station tracking, but
+            // its existing NestedPart rows still represent a real claim that must not be re-handed
+            // to a currently-visible item on the same nest.
+            var syncedRadanIds = sync.Nests.SelectMany(n => n.Parts)
+                .Select(p => (int)p.RadanIdNumber).Distinct().ToList();
+            var allSharingItemIds = await db.OrderItems
+                .Where(i => i.RadanIdNumber != null && syncedRadanIds.Contains(i.RadanIdNumber.Value))
+                .Select(i => i.Id).ToListAsync();
+
+            // Preload existing NestedParts for every item that could share a RadanIdNumber in this
+            // sync (tracked or not), so capacity/claim checks below see the full picture.
             var allNestedParts = await db.NestedParts
-                .Where(np => np.OrderItemId.HasValue && orderItemIds.Contains(np.OrderItemId.Value))
+                .Where(np => np.OrderItemId.HasValue && allSharingItemIds.Contains(np.OrderItemId.Value))
                 .ToListAsync();
+
+            var touchedNestIds = new HashSet<int>();
 
             foreach (var syncNest in sync.Nests)
             {
@@ -833,12 +845,22 @@
                     if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
                     if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
                 }
+                touchedNestIds.Add(nest.Id);
 
                 foreach (var entry in syncNest.Parts)
                 {
                     var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
                                            .OrderBy(i => i.Id).ToList();
-                    int remaining = entry.Qty;
+
+                    // Qty on THIS nest already claimed by sibling items sharing this RadanIdNumber
+                    // that aren't in the currently-tracked pool — never re-claim it for a visible item.
+                    var claimedByUntrackedSiblings = allNestedParts
+                        .Where(np => np.NestId == nest.Id
+                                  && np.OrderItemId.HasValue
+                                  && !sharedItems.Any(si => si.Id == np.OrderItemId.Value))
+                        .Sum(np => np.Qty);
+
+                    int remaining = Math.Max(0, entry.Qty - claimedByUntrackedSiblings);
                     for (int idx = 0; idx < sharedItems.Count; idx++)
                     {
                         var item = sharedItems[idx];
@@ -872,6 +894,20 @@
                 }
             }
 
+            // A sync payload is authoritative for every nest a tracked item's RadanIdNumber
+            // currently appears in. Any leftover NestedPart for a tracked item on a nest this sync
+            // didn't touch means that nest no longer exists in the live Radan project — clean it up.
+            var staleTrackedParts = allNestedParts
+                .Where(np => np.OrderItemId.HasValue
+                          && items.Any(i => i.Id == np.OrderItemId.Value)
+                          && !touchedNestIds.Contains(np.NestId))
+                .ToList();
+            foreach (var stale in staleTrackedParts)
+            {
+                db.NestedParts.Remove(stale);
+                allNestedParts.Remove(stale);
+            }
+
             foreach (var item in items)
                 item.QtyNested = allNestedParts.Where(np => np.OrderItemId == item.Id).Sum(np => np.Qty);
         }
@@ -881,10 +917,17 @@
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
                 .ToListAsync();
 
-            var batchItemIds = items.Select(i => i.Id).ToList();
+            var syncedRadanIds = sync.Nests.SelectMany(n => n.Parts)
+                .Select(p => (int)p.RadanIdNumber).Distinct().ToList();
+            var allSharingItemIds = await db.BatchItems
+                .Where(i => i.RadanIdNumber != null && syncedRadanIds.Contains(i.RadanIdNumber.Value))
+                .Select(i => i.Id).ToListAsync();
+
             var allNestedParts = await db.NestedParts
-                .Where(np => np.BatchItemId.HasValue && batchItemIds.Contains(np.BatchItemId.Value))
+                .Where(np => np.BatchItemId.HasValue && allSharingItemIds.Contains(np.BatchItemId.Value))
                 .ToListAsync();
+
+            var touchedNestIds = new HashSet<int>();
 
             foreach (var syncNest in sync.Nests)
             {
@@ -901,12 +944,20 @@
                     if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
                     if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
                 }
+                touchedNestIds.Add(nest.Id);
 
                 foreach (var entry in syncNest.Parts)
                 {
                     var sharedItems = items.Where(i => i.RadanIdNumber == (int)entry.RadanIdNumber)
                                            .OrderBy(i => i.Id).ToList();
-                    int remaining = entry.Qty;
+
+                    var claimedByUntrackedSiblings = allNestedParts
+                        .Where(np => np.NestId == nest.Id
+                                  && np.BatchItemId.HasValue
+                                  && !sharedItems.Any(si => si.Id == np.BatchItemId.Value))
+                        .Sum(np => np.Qty);
+
+                    int remaining = Math.Max(0, entry.Qty - claimedByUntrackedSiblings);
                     for (int idx = 0; idx < sharedItems.Count; idx++)
                     {
                         var item = sharedItems[idx];
@@ -936,6 +987,17 @@
                         }
                     }
                 }
+            }
+
+            var staleTrackedParts = allNestedParts
+                .Where(np => np.BatchItemId.HasValue
+                          && items.Any(i => i.Id == np.BatchItemId.Value)
+                          && !touchedNestIds.Contains(np.NestId))
+                .ToList();
+            foreach (var stale in staleTrackedParts)
+            {
+                db.NestedParts.Remove(stale);
+                allNestedParts.Remove(stale);
             }
 
             foreach (var item in items)
