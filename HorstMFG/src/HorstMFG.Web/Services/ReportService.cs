@@ -106,20 +106,24 @@ public class ReportService
             });
         }
 
-        // Cross-references: partNumber → all product keys that use it
-        var partToProducts = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        // Cross-references: partNumber → all (product, component) pairs that use it
+        var partToComponents = new Dictionary<string, List<(TravellerProduct Product, TravellerComponent Component)>>(StringComparer.OrdinalIgnoreCase);
         foreach (var product in products)
             foreach (var comp in product.Components)
             {
-                if (!partToProducts.TryGetValue(comp.PartNumber, out var list))
-                    partToProducts[comp.PartNumber] = list = [];
-                list.Add(product.ProductKey);
+                if (!partToComponents.TryGetValue(comp.PartNumber, out var list))
+                    partToComponents[comp.PartNumber] = list = [];
+                list.Add((product, comp));
             }
 
         foreach (var product in products)
             foreach (var comp in product.Components)
-                if (partToProducts.TryGetValue(comp.PartNumber, out var keys))
-                    comp.AlsoInProducts = keys.Where(k => k != product.ProductKey).ToList();
+                if (partToComponents.TryGetValue(comp.PartNumber, out var entries))
+                    comp.AlsoInProducts = entries
+                        .Where(e => e.Product.ProductKey != product.ProductKey)
+                        .SelectMany(e => e.Component.OrderBreakdown.Select(ob =>
+                            new AlsoInEntry(BuildProductLabel(e.Product), ob.OrderNumber, ob.Qty)))
+                        .ToList();
 
         if (!products.Any())
         {
@@ -572,6 +576,11 @@ public class ReportService
         public string? PdfPath     { get; init; }
     }
 
+    private static string BuildProductLabel(TravellerProduct product) =>
+        string.IsNullOrWhiteSpace(product.AssemblyTitle)
+            ? product.ProductKey
+            : $"{product.ProductKey} ({product.AssemblyTitle})";
+
     // ── Traveller PDF builder ─────────────────────────────────────────────────
 
     private static byte[] BuildTravellerPdf(List<TravellerProduct> products, string scheduleName, ILogger log)
@@ -834,8 +843,14 @@ public class ReportService
             by += 10f;
             g.DrawLine(grayPen, new PointF(bx, by), new PointF(pw - margin, by));
             by += 8f;
-            g.DrawString("Also in:  " + string.Join(", ", info.AlsoIn),
-                fontItal9, grayBrush, new PointF(bx, by));
+            g.DrawString("Also in:", fontItal9, grayBrush, new PointF(bx, by));
+            by += 13f;
+            foreach (var entry in info.AlsoIn)
+            {
+                g.DrawString($"{entry.ProductLabel} — {entry.OrderNumber}, {entry.Qty} pcs",
+                    fontItal9, grayBrush, new PointF(bx + 8f, by));
+                by += 13f;
+            }
         }
     }
 
@@ -946,8 +961,10 @@ public class ReportService
         public int     TotalQty       { get; init; }
         public List<(string OrderNumber, int Qty)> OrderBreakdown { get; init; } = new();
         public string? PdfPath        { get; init; }
-        public List<string> AlsoInProducts { get; set; } = new();
+        public List<AlsoInEntry> AlsoInProducts { get; set; } = new();
     }
+
+    private readonly record struct AlsoInEntry(string ProductLabel, string OrderNumber, int Qty);
 
     private sealed record TravellerPageInfo(
         string PartNumber,
@@ -960,5 +977,5 @@ public class ReportService
         List<(string OrderNumber, int Qty)> Orders,
         string SourceName,
         bool IsAssembly,
-        IReadOnlyList<string> AlsoIn);
+        IReadOnlyList<AlsoInEntry> AlsoIn);
 }
