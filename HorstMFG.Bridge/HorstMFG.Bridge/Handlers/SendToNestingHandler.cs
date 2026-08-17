@@ -32,80 +32,67 @@ public class SendToNestingHandler
         var projectFolder = Path.GetDirectoryName(projectPath)!;
         var projectName   = Path.GetFileNameWithoutExtension(projectPath);
 
-        // Group by FileName — identical parts become one Radan entry with combined qty
-        var groups = items
-            .GroupBy(i => i.FileName, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        for (int g = 0; g < groups.Count; g++)
+        // One DB item = one Radan part. Even when several items share a FileName
+        // (same part number needed by different orders), each gets its own Radan entry
+        // so sync/retrieve/finalize never have to split a combined qty back across items.
+        for (int idx = 0; idx < items.Count; idx++)
         {
-            var group    = groups[g].ToList();
-            var rep      = group[0];  // representative for sym copy and attribute writing
-            var totalQty = group.Sum(i => i.QtyRequired);
+            var item = items[idx];
 
-            reportProgress($"Sending {rep.FileName} ({g + 1}/{groups.Count})",
-                           (g + 1) * 100 / groups.Count);
+            reportProgress($"Sending {item.FileName} ({idx + 1}/{items.Count})",
+                           (idx + 1) * 100 / items.Count);
 
-            var symSharePath   = Path.Combine(_config.SymNetworkSharePath, rep.FileName + ".sym");
+            var symSharePath   = Path.Combine(_config.SymNetworkSharePath, item.FileName + ".sym");
             var missingSymFile = !File.Exists(symSharePath);
 
             _log.LogInformation(
-                "Group {Index}/{Total}: FileName={FileName} count={Count} totalQty={Qty} symExists={Exists}",
-                g + 1, groups.Count, rep.FileName, group.Count, totalQty, !missingSymFile);
+                "Item {Index}/{Total}: FileName={FileName} qty={Qty} symExists={Exists}",
+                idx + 1, items.Count, item.FileName, item.QtyRequired, !missingSymFile);
 
             var destDir = Path.Combine(projectFolder, "Symbols",
-                                       rep.OrderNumber ?? "Unknown",
+                                       item.OrderNumber ?? "Unknown",
                                        projectName,
-                                       rep.FileName);
-            var destSym = Path.Combine(destDir, rep.FileName + ".sym");
+                                       item.FileName);
+            var destSym = Path.Combine(destDir, item.FileName + ".sym");
 
             if (!missingSymFile)
             {
                 Directory.CreateDirectory(destDir);
                 File.Copy(symSharePath, destSym, overwrite: true);
-                var orderNumber = rep.ItemType == "Order"
-                    ? string.Join(", ", group.Select(i => i.OrderNumber)
-                                            .Where(o => !string.IsNullOrEmpty(o))
-                                            .Distinct())
-                    : null;
-                _nesting.SetPartAttributes(destSym, rep.Material, rep.Thickness,
-                    rep.Description, orderNumber, rep.ScheduleName, rep.BatchName, rep.HasBends);
-                _log.LogInformation("Copied {Sym} to project", rep.FileName);
+                var orderNumber = item.ItemType == "Order" ? item.OrderNumber : null;
+                _nesting.SetPartAttributes(destSym, item.Material, item.Thickness,
+                    item.Description, orderNumber, item.ScheduleName, item.BatchName, item.HasBends);
+                _log.LogInformation("Copied {Sym} to project", item.FileName);
             }
             else
             {
-                _log.LogWarning("Symbol file not found for {FileName} — adding without sym", rep.FileName);
+                _log.LogWarning("Symbol file not found for {FileName} — adding without sym", item.FileName);
             }
 
-            // If any item in the group already has a RadanIdNumber, try to reuse it.
-            // The ID may not exist in the current project (e.g. carried over from a previous project),
-            // in which case we fall through and add the part as new.
-            var existingId = group.Select(i => i.RadanIdNumber).FirstOrDefault(id => id.HasValue);
-
+            // Reuse this item's own existing RadanIdNumber if it's still present in the project.
+            // The ID may not exist (e.g. carried over from a previous project), in which case we
+            // fall through and add the part as new.
             long partId;
-            if (existingId.HasValue && _nesting.UpdatePartQty(project, existingId.Value, totalQty))
+            if (item.RadanIdNumber.HasValue &&
+                _nesting.UpdatePartQty(project, item.RadanIdNumber.Value, item.QtyRequired))
             {
-                partId = existingId.Value;
-                _log.LogInformation("Updated qty for existing Radan ID {Id} to {Qty}", partId, totalQty);
+                partId = item.RadanIdNumber.Value;
+                _log.LogInformation("Updated qty for existing Radan ID {Id} to {Qty}", partId, item.QtyRequired);
             }
             else
             {
                 partId = _nesting.GetNextId(project);
-                _nesting.AddPart(project, destSym, partId, totalQty, rep.Material, rep.Thickness);
+                _nesting.AddPart(project, destSym, partId, item.QtyRequired, item.Material, item.Thickness);
                 _log.LogInformation("Added new Radan part ID {Id} qty {Qty} (existingId={ExistingId} not in project)",
-                    partId, totalQty, existingId?.ToString() ?? "none");
+                    partId, item.QtyRequired, item.RadanIdNumber?.ToString() ?? "none");
             }
 
-            // All items in the group share the same RadanIdNumber
-            foreach (var item in group)
+            results.Add(new SendToNestingResult
             {
-                results.Add(new SendToNestingResult
-                {
-                    ItemId         = item.ItemId,
-                    RadanIdNumber  = partId,
-                    MissingSymFile = missingSymFile,
-                });
-            }
+                ItemId         = item.ItemId,
+                RadanIdNumber  = partId,
+                MissingSymFile = missingSymFile,
+            });
         }
 
         _nesting.SaveProject(project, projectPath);
