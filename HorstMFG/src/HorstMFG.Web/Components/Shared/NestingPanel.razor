@@ -732,13 +732,17 @@
         if (sync.Parts.Count == 0 || _stationId == null) return;
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
+        var station = await db.NestingStations.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == _stationId);
+
         // Resolve plant ID from the station so admin users (PlantId==0) work correctly.
-        var nestPlantId = PlantId > 0
-            ? PlantId
-            : (await db.NestingStations.AsNoTracking()
-                   .Where(s => s.Id == _stationId)
-                   .Select(s => s.PlantId)
-                   .FirstOrDefaultAsync());
+        var nestPlantId = PlantId > 0 ? PlantId : (station?.PlantId ?? 0);
+
+        // Project folder the station is currently pointed at (parent of the .rpd file). Used to
+        // scope stale-nest cleanup below to nests that could plausibly appear in this payload —
+        // a nest from an earlier, already-finalized project never will, so it must never be
+        // treated as "stale" just because this payload doesn't mention it.
+        var currentProjectDir = station?.ProjectPath != null ? Path.GetDirectoryName(station.ProjectPath) : null;
 
         // One DB item = one Radan part (see SendToNestingHandler), so every RadanIdNumber maps
         // to exactly one tracked item — no cross-item qty splitting needed.
@@ -800,9 +804,11 @@
             }
 
             // A sync payload is authoritative for every nest a tracked item's RadanIdNumber
-            // currently appears in. Any leftover NestedPart on a nest this sync didn't touch
-            // means that nest no longer exists in the live Radan project — clean it up.
-            var staleParts = allNestedParts.Where(np => !touchedNestIds.Contains(np.NestId)).ToList();
+            // currently appears in — but only within the CURRENT project. Any leftover NestedPart
+            // on a nest this sync didn't touch means that nest no longer exists in the live Radan
+            // project, UNLESS the nest belongs to an earlier (already-finalized) project, which
+            // will never appear in any future payload and must be preserved as history.
+            var staleParts = await FilterStaleAsync(db, allNestedParts, touchedNestIds, currentProjectDir);
             foreach (var stale in staleParts)
             {
                 db.NestedParts.Remove(stale);
@@ -867,7 +873,7 @@
                 }
             }
 
-            var staleParts = allNestedParts.Where(np => !touchedNestIds.Contains(np.NestId)).ToList();
+            var staleParts = await FilterStaleAsync(db, allNestedParts, touchedNestIds, currentProjectDir);
             foreach (var stale in staleParts)
             {
                 db.NestedParts.Remove(stale);
@@ -879,6 +885,34 @@
         }
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Of the given NestedParts not touched by this sync, returns only the ones whose Nest
+    /// belongs to the currently active project — those are truly stale (removed from the live
+    /// project). NestedParts on nests from a different (older, already-finalized) project are
+    /// left alone, since that project will never appear in a future payload to "confirm" them.
+    /// A nest whose project can't be determined (unresolved NestPath) is also left alone —
+    /// safer to leave a rare leftover row than risk deleting real history.
+    /// </summary>
+    private static async Task<List<NestedPart>> FilterStaleAsync(
+        ApplicationDbContext db, List<NestedPart> allNestedParts, HashSet<int> touchedNestIds, string? currentProjectDir)
+    {
+        var untouched = allNestedParts.Where(np => !touchedNestIds.Contains(np.NestId)).ToList();
+        if (untouched.Count == 0 || currentProjectDir == null) return new List<NestedPart>();
+
+        var nestIds = untouched.Select(np => np.NestId).Distinct().ToList();
+        var nestPaths = await db.Nests.AsNoTracking()
+            .Where(n => nestIds.Contains(n.Id))
+            .Select(n => new { n.Id, n.NestPath })
+            .ToDictionaryAsync(n => n.Id, n => n.NestPath);
+
+        return untouched.Where(np =>
+        {
+            if (!nestPaths.TryGetValue(np.NestId, out var nestPath) || nestPath == null) return false;
+            var nestProjectDir = Path.GetDirectoryName(Path.GetDirectoryName(nestPath));
+            return string.Equals(nestProjectDir, currentProjectDir, StringComparison.OrdinalIgnoreCase);
+        }).ToList();
     }
 
     private void Log(string text, string css = "") =>
