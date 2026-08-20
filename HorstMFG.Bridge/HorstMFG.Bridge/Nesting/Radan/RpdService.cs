@@ -51,10 +51,14 @@ internal static class RpdService
             part.Number = part.Made;
     }
 
-    public static bool UpdatePartQty(RadanProject project, long nestingId, int qty)
+    public static bool UpdatePartQty(RadanProject project, long nestingId, int qty, string expectedSymPath)
     {
         var part = project.Parts.Part.FirstOrDefault(p => p.ID == nestingId);
         if (part == null) return false;
+        // Radan Part IDs restart at 1 on every new project (see CreateNewProject), so a numeric ID
+        // match alone doesn't prove this part is actually the item we think it is — a leftover
+        // RadanIdNumber from an old project could otherwise collide with an unrelated part here.
+        if (!string.Equals(part.Symbol, expectedSymPath, StringComparison.OrdinalIgnoreCase)) return false;
         part.Number = qty;
         return true;
     }

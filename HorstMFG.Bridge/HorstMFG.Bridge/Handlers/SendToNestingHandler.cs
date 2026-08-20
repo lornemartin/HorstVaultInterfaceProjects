@@ -74,7 +74,7 @@ public class SendToNestingHandler
             // fall through and add the part as new.
             long partId;
             if (item.RadanIdNumber.HasValue &&
-                _nesting.UpdatePartQty(project, item.RadanIdNumber.Value, item.QtyRequired))
+                _nesting.UpdatePartQty(project, item.RadanIdNumber.Value, item.QtyRequired, destSym))
             {
                 partId = item.RadanIdNumber.Value;
                 _log.LogInformation("Updated qty for existing Radan ID {Id} to {Qty}", partId, item.QtyRequired);

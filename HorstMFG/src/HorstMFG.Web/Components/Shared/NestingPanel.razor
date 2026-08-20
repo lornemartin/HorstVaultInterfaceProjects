@@ -749,7 +749,7 @@
         if (ItemType == "Order")
         {
             var items = await db.OrderItems
-                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
                 .ToListAsync();
             var itemIds = items.Select(i => i.Id).ToList();
             // GroupBy/First instead of ToDictionary: tolerate leftover legacy items that still
@@ -821,7 +821,7 @@
         else
         {
             var items = await db.BatchItems
-                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null)
+                .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
                 .ToListAsync();
             var itemIds = items.Select(i => i.Id).ToList();
             var itemsByRadanId = items.GroupBy(i => i.RadanIdNumber!.Value).ToDictionary(g => g.Key, g => g.First());

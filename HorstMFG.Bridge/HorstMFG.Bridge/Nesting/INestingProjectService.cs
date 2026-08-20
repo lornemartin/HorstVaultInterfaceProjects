@@ -19,8 +19,13 @@ public interface INestingProjectService
     void               RemoveParts(NestingProjectData project, long[] nestingIds);
     /// <summary>Sets each matching part's required quantity to its already-nested quantity.</summary>
     void               AdjustPartsQtyToMade(NestingProjectData project, long[] nestingIds);
-    /// <summary>Updates the required quantity of an existing part in the project. Returns false if the part was not found.</summary>
-    bool               UpdatePartQty(NestingProjectData project, long nestingId, int qty);
+    /// <summary>
+    /// Updates the required quantity of an existing part in the project. Returns false if the part
+    /// was not found, or if a part with that ID exists but its symbol doesn't match expectedSymPath
+    /// (Radan Part IDs restart at 1 on every new project, so a numeric match alone doesn't prove
+    /// the found part is actually this item — a stale RadanIdNumber can collide with an unrelated part).
+    /// </summary>
+    bool               UpdatePartQty(NestingProjectData project, long nestingId, int qty, string expectedSymPath);
     SyncPayload        ReadSyncData(NestingProjectData project);
     string             CreateNewProject(string currentPath, DateTime date);
     /// <summary>

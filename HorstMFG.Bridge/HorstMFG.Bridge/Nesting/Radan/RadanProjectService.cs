@@ -52,8 +52,8 @@ public class RadanProjectService : INestingProjectService
     public void AdjustPartsQtyToMade(NestingProjectData project, long[] nestingIds)
         => RpdService.AdjustPartQtyToMade(Native(project), nestingIds);
 
-    public bool UpdatePartQty(NestingProjectData project, long nestingId, int qty)
-        => RpdService.UpdatePartQty(Native(project), nestingId, qty);
+    public bool UpdatePartQty(NestingProjectData project, long nestingId, int qty, string expectedSymPath)
+        => RpdService.UpdatePartQty(Native(project), nestingId, qty, expectedSymPath);
 
     public SyncPayload ReadSyncData(NestingProjectData project)
     {
