@@ -746,7 +746,13 @@
 
         // One DB item = one Radan part (see SendToNestingHandler), so every RadanIdNumber maps
         // to exactly one tracked item — no cross-item qty splitting needed.
-        if (ItemType == "Order")
+        //
+        // A sync payload always describes the WHOLE shared Radan project — both order and batch
+        // parts together — regardless of which panel (Order or Batch page) happened to trigger it.
+        // Both blocks below therefore always run, unconditionally: each only ever touches its own
+        // table, so running both from either panel is safe, and it's required — Finalize in
+        // particular clears tracking for both item types unconditionally right after this call, so
+        // skipping either branch here would permanently lose that type's final nested quantities.
         {
             var items = await db.OrderItems
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
@@ -818,7 +824,6 @@
             foreach (var item in items)
                 item.QtyNested = allNestedParts.Where(np => np.OrderItemId == item.Id).Sum(np => np.Qty);
         }
-        else
         {
             var items = await db.BatchItems
                 .Where(i => i.NestingStationId == _stationId && i.RadanIdNumber != null && i.IsInRadanProject)
