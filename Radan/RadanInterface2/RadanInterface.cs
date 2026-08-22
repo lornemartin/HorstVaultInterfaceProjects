@@ -53,13 +53,19 @@ namespace RadanInterface2
         {
             try
             {
+                // GetActiveComObject's P/Invoke calls can transiently fail to find the object in
+                // the ROT (e.g. under momentary load) without throwing — obj comes back null. Only
+                // overwrite rApp when the lookup actually succeeded, so a single flaky poll from
+                // RadanConnectionService can't clobber a previously-good static reference with null
+                // out from under a handler that's mid-operation (rApp is shared across all instances).
                 object obj = GetActiveComObject("Radraft.Application");
-                rApp = (Radraft.Interop.Application)obj;
-                return true;
+                if (obj != null)
+                    rApp = (Radraft.Interop.Application)obj;
+                return rApp != null;
             }
             catch (Exception)
             {
-                return false;
+                return rApp != null;
             }
         }
 
