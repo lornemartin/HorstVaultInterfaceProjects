@@ -22,6 +22,11 @@ public class VaultService : IVaultService
     {
         try
         {
+            // Release the old session before replacing it — otherwise the server-side
+            // connection/license seat from a dead connection is never freed, and repeated
+            // reconnects can exhaust the account's concurrent-session limit over time.
+            try { _va?.CloseVaultConnection(); } catch { /* best-effort */ }
+
             _va = new VaultAccess.VaultAccess();
             var error = _va.LoginHeadless(_config.Username, _config.Password, _config.Server, _config.Vault);
             if (string.IsNullOrEmpty(error))
