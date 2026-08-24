@@ -537,7 +537,8 @@
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         if (result == null) return;
 
-        await ApplySyncPayloadAsync(result.Sync);
+        var rejection = await ApplySyncPayloadAsync(result.Sync);
+        if (rejection != null) { Log(rejection, "text-danger"); return; }
 
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
@@ -574,7 +575,8 @@
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         if (sync == null) return;
 
-        await ApplySyncPayloadAsync(sync);
+        var rejection = await ApplySyncPayloadAsync(sync);
+        if (rejection != null) { Log(rejection, "text-danger"); return; }
         Log($"Synced {sync.Parts.Count} part(s).");
     }
 
@@ -587,7 +589,8 @@
         // Delegate to the shared service — BridgeHub calls the same method directly (see
         // BridgeHub.CommandResult) so this always applies even if this panel isn't the one
         // that receives the result. Calling it again here is a harmless no-op in that case.
-        await SyncService.ApplyFinalizeAsync(_stationId.Value, PlantId, result);
+        var rejection = await SyncService.ApplyFinalizeAsync(_stationId.Value, PlantId, result);
+        if (rejection != null) { Log(rejection, "text-danger"); return; }
 
         _projectPath = result.NewProjectPath;
         Log($"Finalized. New project: {result.NewProjectName}");
@@ -687,14 +690,14 @@
         return Task.CompletedTask;
     }
 
-    private async Task ApplySyncPayloadAsync(SyncPayloadDto sync)
+    private async Task<string?> ApplySyncPayloadAsync(SyncPayloadDto sync)
     {
-        if (_stationId == null) return;
+        if (_stationId == null) return null;
 
         // Delegate to the shared service — BridgeHub.AutoSync calls the same method directly so
         // this always applies even if no panel is open to receive the broadcast. Calling it again
         // here (when a panel IS open, for manual Sync/Retrieve) is a harmless no-op re-application.
-        await SyncService.ApplySyncPayloadAsync(_stationId.Value, PlantId, sync);
+        return await SyncService.ApplySyncPayloadAsync(_stationId.Value, PlantId, sync);
     }
 
     private void Log(string text, string css = "") =>

@@ -17,6 +17,9 @@ public class SyncPayload
 {
     public List<SyncPart> Parts { get; set; } = new();
     public List<SyncNest> Nests { get; set; } = new();
+    /// <summary>The .rpd path this payload was actually read from — lets HorstMFG reject a sync
+    /// that's for a different project than the station's recorded active one.</summary>
+    public string? ProjectPath { get; set; }
 }
 
 public class SyncPart

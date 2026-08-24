@@ -59,7 +59,9 @@ public class RadanProjectService : INestingProjectService
     {
         var prj        = Native(project);
         var nestFolder = RpdService.GetNestFolder(prj);
-        return RpdService.BuildSyncPayload(prj, nestFolder);
+        var payload    = RpdService.BuildSyncPayload(prj, nestFolder);
+        payload.ProjectPath = project.Path;
+        return payload;
     }
 
     public void NotifyProjectChanged(string path)

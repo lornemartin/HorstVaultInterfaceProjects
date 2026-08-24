@@ -29,6 +29,11 @@ public class SyncPayloadDto
 {
     public List<SyncPartDto> Parts { get; set; } = new();
     public List<SyncNestDto> Nests { get; set; } = new();
+    /// <summary>
+    /// The .rpd path the bridge actually read this payload from. Null on payloads from a
+    /// not-yet-updated bridge (pre-dating this field) — treated as "unknown, can't verify."
+    /// </summary>
+    public string? ProjectPath { get; set; }
 }
 
 public class FinalizeResultDto
@@ -57,13 +62,29 @@ public class NestingSyncService
         _dbFactory = dbFactory;
     }
 
-    public async Task ApplySyncPayloadAsync(int stationId, int plantIdOverride, SyncPayloadDto sync)
+    /// <returns>Null if applied. A human-readable rejection reason if the payload's project
+    /// didn't match the station's recorded active project and was refused.</returns>
+    public async Task<string?> ApplySyncPayloadAsync(int stationId, int plantIdOverride, SyncPayloadDto sync)
     {
-        if (sync.Parts.Count == 0) return;
+        if (sync.Parts.Count == 0) return null;
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var station = await db.NestingStations.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == stationId);
+
+        // Refuse a payload for a project other than what the station currently thinks is active —
+        // applying it would scope item matching and stale-nest cleanup to the wrong project,
+        // which is exactly how a deleted nest's cleanup silently broke previously. Fail OPEN
+        // (allow) when either side's project path is unknown/blank — a not-yet-updated bridge
+        // (pre-dating this field), or a station that's never had its active project recorded yet —
+        // since there's nothing meaningful to compare against in that case.
+        if (!string.IsNullOrEmpty(sync.ProjectPath) && !string.IsNullOrEmpty(station?.ProjectPath) &&
+            !string.Equals(sync.ProjectPath, station.ProjectPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Sync rejected: payload is for project '{sync.ProjectPath}' but this station's " +
+                   $"recorded active project is '{station.ProjectPath}'. Use \"Set Active Project\" " +
+                   "if the project was changed outside of Finalize.";
+        }
 
         // Resolve plant ID from the station so admin users (plantIdOverride==0) work correctly.
         var nestPlantId = plantIdOverride > 0 ? plantIdOverride : (station?.PlantId ?? 0);
@@ -220,6 +241,7 @@ public class NestingSyncService
         }
 
         await db.SaveChangesAsync();
+        return null;
     }
 
     /// <summary>
@@ -230,9 +252,14 @@ public class NestingSyncService
     /// rotating to a new project) is irreversible, so the DB bookkeeping can't be allowed to
     /// silently no-op just because nobody's browser tab was open to catch the result.
     /// </summary>
-    public async Task ApplyFinalizeAsync(int stationId, int plantIdOverride, FinalizeResultDto result)
+    /// <returns>Null if applied. A rejection reason if the embedded sync's project didn't match
+    /// (in which case tracking is NOT cleared and the station's project is NOT advanced — a
+    /// mismatch here means something unexpected sent this result, so it's safer to do nothing
+    /// than to rotate the project based on data for the wrong one).</returns>
+    public async Task<string?> ApplyFinalizeAsync(int stationId, int plantIdOverride, FinalizeResultDto result)
     {
-        await ApplySyncPayloadAsync(stationId, plantIdOverride, result.Sync);
+        var rejection = await ApplySyncPayloadAsync(stationId, plantIdOverride, result.Sync);
+        if (rejection != null) return rejection;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -270,6 +297,7 @@ public class NestingSyncService
         }
 
         await db.SaveChangesAsync();
+        return null;
     }
 
     /// <summary>
