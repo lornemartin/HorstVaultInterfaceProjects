@@ -62,6 +62,7 @@ try
 
     // Bridge SignalR
     builder.Services.AddSingleton<BridgeNotificationService>();
+    builder.Services.AddScoped<NestingSyncService>();
     builder.Services.AddSignalR(options =>
     {
         options.MaximumReceiveMessageSize = 16 * 1024 * 1024; // 16 MB — accommodates large thumbnail batches from Bridge

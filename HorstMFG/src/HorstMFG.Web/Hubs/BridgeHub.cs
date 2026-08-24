@@ -31,16 +31,19 @@ public class BridgeHub : Hub
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly BridgeNotificationService _notifications;
+    private readonly NestingSyncService _syncService;
     private readonly string _expectedApiKey;
     private readonly ILogger<BridgeHub> _log;
 
     public BridgeHub(IDbContextFactory<ApplicationDbContext> dbFactory,
                      BridgeNotificationService notifications,
+                     NestingSyncService syncService,
                      IConfiguration config,
                      ILogger<BridgeHub> log)
     {
         _dbFactory      = dbFactory;
         _notifications  = notifications;
+        _syncService    = syncService;
         _expectedApiKey = config["Bridge:ApiKey"] ?? "";
         _log            = log;
     }
@@ -111,7 +114,36 @@ public class BridgeHub : Hub
                             stationId, commandId, commandType ?? "(null)", success);
         if (commandType == "UpdateThumbnail" && success)
             await HandleThumbnailResultAsync(payload);
+        if (commandType == "Finalize" && success)
+            await HandleFinalizeResultAsync(stationId, payload);
         _notifications.OnCommandCompleted(stationId, commandId, success, payload);
+    }
+
+    /// <summary>
+    /// Applies the Finalize result here, server-side, rather than relying on whichever browser
+    /// panel dispatched the command to still be connected when this arrives. Finalize's real-world
+    /// effect (Radan rotating to a new project) is irreversible; the DB bookkeeping — new project
+    /// path, clearing tracking, final NestedPart rows — must not silently no-op just because a
+    /// browser tab closed/refreshed/disconnected in the meantime. NestingPanel.razor still applies
+    /// the same result if it's connected to receive it (via OnCommandCompleted below), which is a
+    /// harmless no-op re-application in that case.
+    /// </summary>
+    private async Task HandleFinalizeResultAsync(int stationId, string payload)
+    {
+        try
+        {
+            var result = JsonSerializer.Deserialize<FinalizeResultDto>(payload,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (result == null) { _log.LogWarning("HandleFinalizeResult: payload deserialized to null"); return; }
+
+            await _syncService.ApplyFinalizeAsync(stationId, 0, result);
+            _log.LogInformation("Finalize applied server-side for station {StationId} — new project {Project}",
+                stationId, result.NewProjectName);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to apply Finalize result server-side for station {StationId}", stationId);
+        }
     }
 
     private async Task HandleThumbnailResultAsync(string payload)
@@ -172,10 +204,23 @@ public class BridgeHub : Hub
     /// Called by the FileWatcher when the RPD file changes on disk.
     /// Treated as a spontaneous Sync result so the UI updates automatically.
     /// </summary>
-    public Task AutoSync(int stationId, string syncPayloadJson)
+    public async Task AutoSync(int stationId, string syncPayloadJson)
     {
+        // Applied here, server-side, so it lands in the database whether or not any browser
+        // panel happens to be open to catch the broadcast below (which is UI-refresh only now).
+        try
+        {
+            var sync = JsonSerializer.Deserialize<SyncPayloadDto>(syncPayloadJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (sync != null)
+                await _syncService.ApplySyncPayloadAsync(stationId, 0, sync);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to apply AutoSync payload server-side for station {StationId}", stationId);
+        }
+
         _notifications.OnAutoSync(stationId, syncPayloadJson);
-        return Task.CompletedTask;
     }
 
     /// <summary>
