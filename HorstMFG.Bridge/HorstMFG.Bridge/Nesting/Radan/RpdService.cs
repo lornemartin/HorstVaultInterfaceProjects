@@ -59,7 +59,12 @@ internal static class RpdService
         // match alone doesn't prove this part is actually the item we think it is — a leftover
         // RadanIdNumber from an old project could otherwise collide with an unrelated part here.
         if (!string.Equals(part.Symbol, expectedSymPath, StringComparison.OrdinalIgnoreCase)) return false;
-        part.Number = qty;
+        // qty is always "how many MORE HorstMFG wants nested" (QtyRequired - QtyNested), never a
+        // total — but Number is Radan's TOTAL target (its own remaining-to-nest is Number - Made,
+        // same convention AdjustPartQtyToMade above relies on). If this part still has Made > 0
+        // from an earlier partial nest that was retrieved, overwriting Number with just qty would
+        // undercount the true remaining amount by whatever's already Made.
+        part.Number = part.Made + qty;
         return true;
     }
 
