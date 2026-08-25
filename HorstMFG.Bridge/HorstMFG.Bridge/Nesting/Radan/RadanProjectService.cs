@@ -26,6 +26,22 @@ public class RadanProjectService : INestingProjectService
 
     public NestingProjectData LoadProject(string path)
     {
+        // Every caller (Send, Retrieve, Sync/AutoSync, Finalize) funnels through here, so
+        // enforcing the live-Radan check in this one place covers all of them without
+        // duplicating it at each call site. Refuse to proceed if Radan's actual open project
+        // doesn't match — otherwise we'd read/write whatever's on disk at `path` regardless of
+        // what the operator actually has open, which can silently produce stale or misdirected
+        // data (see SendToNestingHandler's original guard for the incident this was built for).
+        // Note: CreateNewProject's own use of RpdService.Load (a template-copy step that runs
+        // AFTER this check has already passed for the project being closed) bypasses this
+        // intentionally — it doesn't call this method.
+        var openProject = GetOpenProjectPath();
+        if (openProject == null || !string.Equals(openProject, path, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                $"Radan's currently open project ('{openProject ?? "none"}') does not match " +
+                $"the requested project ('{path}'). Open the correct project in Radan, or update " +
+                "the active project in HorstMFG, before continuing.");
+
         var prj = RpdService.Load(path);
         return new NestingProjectData { Path = path, Native = prj };
     }
@@ -62,6 +78,22 @@ public class RadanProjectService : INestingProjectService
         var payload    = RpdService.BuildSyncPayload(prj, nestFolder);
         payload.ProjectPath = project.Path;
         return payload;
+    }
+
+    public string? GetOpenProjectPath()
+    {
+        try
+        {
+            var ri     = new RadanInterface();
+            var errMsg = "";
+            if (!ri.IsActive()) return null;
+            var path = ri.getOpenProjectName(ref errMsg);
+            return string.IsNullOrEmpty(path) ? null : path;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public void NotifyProjectChanged(string path)

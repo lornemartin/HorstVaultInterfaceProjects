@@ -27,6 +27,8 @@ public class SendToNestingHandler
                                              Action<string, int> reportProgress)
     {
         _nesting.FlushCurrentState();
+        // LoadProject itself refuses to proceed if Radan's live GUI isn't actually pointed at
+        // this project — see RadanProjectService.LoadProject.
         var project = _nesting.LoadProject(projectPath);
         var results = new List<SendToNestingResult>();
         var projectFolder = Path.GetDirectoryName(projectPath)!;

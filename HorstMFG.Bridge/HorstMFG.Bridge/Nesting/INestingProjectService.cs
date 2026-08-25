@@ -29,6 +29,13 @@ public interface INestingProjectService
     SyncPayload        ReadSyncData(NestingProjectData project);
     string             CreateNewProject(string currentPath, DateTime date);
     /// <summary>
+    /// The project path currently open in the live nesting software GUI, or null if none is open
+    /// or the software isn't running. Used to guard against operating on a project other than
+    /// what's actually loaded — e.g. an operator manually switched projects in Radan's own UI
+    /// without going through HorstMFG's "Set Active Project"/Finalize flow.
+    /// </summary>
+    string?            GetOpenProjectPath();
+    /// <summary>
     /// Writes Radan attributes (material, thickness, description, order/batch context) into the .sym file.
     /// Must be called after the sym file exists on disk.
     /// </summary>

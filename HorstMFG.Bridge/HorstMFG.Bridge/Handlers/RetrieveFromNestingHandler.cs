@@ -1,5 +1,6 @@
 using HorstMFG.Bridge.Nesting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,6 +22,8 @@ public class RetrieveFromNestingHandler
         string projectPath, List<RetrieveFromNestingItem> items)
     {
         _nesting.FlushCurrentState();
+        // LoadProject itself refuses to proceed if Radan's live GUI isn't actually pointed at
+        // this project — see RadanProjectService.LoadProject.
         var project = _nesting.LoadProject(projectPath);
 
         // Sync first to capture latest nested quantities before modifying the project
