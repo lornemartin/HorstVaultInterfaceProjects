@@ -580,20 +580,22 @@
         Log($"Synced {sync.Parts.Count} part(s).");
     }
 
-    private async Task ProcessFinalizeAsync(string payload)
+    private Task ProcessFinalizeAsync(string payload)
     {
         var result = JsonSerializer.Deserialize<FinalizeResultDto>(payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        if (result == null || _stationId == null) return;
+        if (result == null || _stationId == null) return Task.CompletedTask;
 
-        // Delegate to the shared service — BridgeHub calls the same method directly (see
-        // BridgeHub.CommandResult) so this always applies even if this panel isn't the one
-        // that receives the result. Calling it again here is a harmless no-op in that case.
-        var rejection = await SyncService.ApplyFinalizeAsync(_stationId.Value, PlantId, result);
-        if (rejection != null) { Log(rejection, "text-danger"); return; }
-
+        // BridgeHub.CommandResult already applies this authoritatively, server-side, BEFORE
+        // broadcasting the result out to any connected panel (see HandleFinalizeResultAsync) —
+        // so by the time this runs, station.ProjectPath is already the new project. Re-applying
+        // here would compare this result's now-stale embedded ProjectPath against that
+        // already-updated value and get spuriously rejected by the same mismatch guard that's
+        // supposed to catch real problems. This just reflects the (already-applied) result in
+        // the UI.
         _projectPath = result.NewProjectPath;
         Log($"Finalized. New project: {result.NewProjectName}");
+        return Task.CompletedTask;
     }
 
     private async Task ProcessRetrieveFromVaultAsync(string payload)
