@@ -42,9 +42,9 @@ try
     builder.Services.AddAuthorizationBuilder()
         .AddPolicy("Admin",            policy => policy.RequireClaim(ClaimTypes.Role, "Admin"))
         .AddPolicy("EngineeringOnly",  policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Engineering"))
-        .AddPolicy("Engineering",      policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Engineering", "ShopFloor"))
+        .AddPolicy("Engineering",      policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Engineering", "ShopFloor", "Nesting"))
         .AddPolicy("ShopFloor",        policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "ShopFloor"))
-        .AddPolicy("Nesting",          policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Nesting"));
+        .AddPolicy("Nesting",          policy => policy.RequireClaim(ClaimTypes.Role, "Admin", "Nesting", "Engineering"));
 
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
