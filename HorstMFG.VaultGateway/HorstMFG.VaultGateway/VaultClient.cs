@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VA = VaultAccess;
@@ -9,6 +10,17 @@ public class VaultClient
 {
     private readonly VaultConfig _config;
     private readonly ILogger<VaultClient> _log;
+
+    // ImportJobRunner fires one job per submitted import batch with no queueing — two users
+    // importing at the same time means two threads calling GetItemBom concurrently on this one
+    // shared connection. That's unsafe: UpdateItem's promote-components sequence
+    // (UpdatePromoteComponents -> GetPromoteComponentOrder -> PromoteComponents ->
+    // GetPromoteComponentsResults) is scoped to the connection/session on Vault's server side,
+    // not to an individual call, so interleaving it across threads can mix up two different
+    // items' promoted data instead of just failing loudly. This also protects EnsureConnected's
+    // reconnect-on-demand path, which otherwise has its own race if two threads find the
+    // connection dead at the same time.
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     private VA.VaultAccess? _va;
     private VA.VaultBomQueryService? _bomService;
@@ -49,8 +61,16 @@ public class VaultClient
 
     public VA.VaultBomResult? GetItemBom(string itemNumber, bool refreshFromSource)
     {
-        EnsureConnected();
-        return _bomService!.GetItemBom(itemNumber, refreshFromSource);
+        _lock.Wait();
+        try
+        {
+            EnsureConnected();
+            return _bomService!.GetItemBom(itemNumber, refreshFromSource);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     private void EnsureConnected()
