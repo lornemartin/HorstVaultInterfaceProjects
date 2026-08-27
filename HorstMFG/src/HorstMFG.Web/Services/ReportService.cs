@@ -185,7 +185,7 @@ public class ReportService
 
     // ── Per-order category reports (one ScheduleOrder's own Sub-Assembly / Part rows) ──
 
-    public async Task<byte[]?> GenerateOrderSubAssembliesReportAsync(int scheduleOrderId)
+    public async Task<byte[]?> GenerateOrderSubAssembliesReportAsync(int scheduleOrderId, bool hideStock)
     {
         var order = await _db.ScheduleOrders
             .Include(so => so.Schedule)
@@ -197,7 +197,8 @@ public class ReportService
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
         var groups = BuildGridOrderedGroups(
-            order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase)),
+            order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase)
+                                 && (!hideStock || !p.IsStock)),
             order.OrderNumber, pdfFolder);
 
         if (groups.Count == 0)
@@ -210,7 +211,7 @@ public class ReportService
         return BuildReport(groups, order.OrderNumber, isSchedule: true, "Sub-Assemblies", _log);
     }
 
-    public async Task<byte[]?> GenerateOrderAssembliesAndPartsReportAsync(int scheduleOrderId)
+    public async Task<byte[]?> GenerateOrderAssembliesAndPartsReportAsync(int scheduleOrderId, bool hideStock)
     {
         var order = await _db.ScheduleOrders
             .Include(so => so.Schedule)
@@ -222,8 +223,9 @@ public class ReportService
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
         var groups = BuildGridOrderedGroups(
-            order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
-                                    p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase)),
+            order.Parts.Where(p => (p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
+                                     p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase))
+                                 && (!hideStock || !p.IsStock)),
             order.OrderNumber, pdfFolder);
 
         if (groups.Count == 0)

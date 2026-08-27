@@ -923,7 +923,7 @@
 
     private async Task OpenOrderReport(string type, int orderId)
     {
-        await JS.InvokeVoidAsync("window.open", $"/api/reports/{type}/{orderId}", "_blank");
+        await JS.InvokeVoidAsync("window.open", $"/api/reports/{type}/{orderId}?hideStock={_hideStock}", "_blank");
     }
 
     // ── Stock checkbox ────────────────────────────────────────────────────────
