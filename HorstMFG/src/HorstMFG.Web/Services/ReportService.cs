@@ -1,4 +1,5 @@
 using System.Globalization;
+using HorstMFG.Core.Entities;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Drawing;
@@ -195,15 +196,9 @@ public class ReportService
         var pdfFolder = order.Schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
-        var groups = order.Parts
-            .Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase))
-            .GroupBy(p => p.PartNumber)
-            .Select(g => BuildGroup(g.Key,
-                g.First().Title, g.First().Description, g.First().Thickness, g.First().Material, g.First().StructCode,
-                new List<(string Label, int Qty)> { (order.OrderNumber, g.Sum(p => p.Qty)) },
-                Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .OrderBy(g => g.PartNumber)
-            .ToList();
+        var groups = BuildGridOrderedGroups(
+            order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase)),
+            order.OrderNumber, pdfFolder);
 
         if (groups.Count == 0)
         {
@@ -226,21 +221,10 @@ public class ReportService
         var pdfFolder = order.Schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
-        var groups = order.Parts
-            .Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
-                        p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase))
-            .GroupBy(p => p.PartNumber)
-            .Select(g => new
-            {
-                CategoryRank = g.First().Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ? 0 : 1,
-                Group = BuildGroup(g.Key,
-                    g.First().Title, g.First().Description, g.First().Thickness, g.First().Material, g.First().StructCode,
-                    new List<(string Label, int Qty)> { (order.OrderNumber, g.Sum(p => p.Qty)) },
-                    Path.Combine(pdfFolder, g.Key + ".pdf")),
-            })
-            .OrderBy(x => x.CategoryRank).ThenBy(x => x.Group.PartNumber)
-            .Select(x => x.Group)
-            .ToList();
+        var groups = BuildGridOrderedGroups(
+            order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
+                                    p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase)),
+            order.OrderNumber, pdfFolder);
 
         if (groups.Count == 0)
         {
@@ -250,6 +234,60 @@ public class ReportService
 
         _log.LogInformation("Generating Assemblies & Parts report for order '{Order}': {Count} parts", order.OrderNumber, groups.Count);
         return BuildReport(groups, order.OrderNumber, isSchedule: true, "Assemblies & Parts", _log);
+    }
+
+    /// <summary>
+    /// Groups/sorts the same way the Orders grid does on screen (FlatSchedulePartRow's
+    /// CategoryOrder/ThicknessOrder + the grid's GridSortColumns: CategoryOrder, IsStock,
+    /// Operations, ThicknessOrder) so a printed report matches what the user sees.
+    /// </summary>
+    private static List<LaserPartGroup> BuildGridOrderedGroups(
+        IEnumerable<PartLineItem> parts, string orderLabel, string pdfFolder)
+    {
+        return parts
+            .GroupBy(p => p.PartNumber)
+            .Select(g =>
+            {
+                var first = g.First();
+                return new
+                {
+                    CategoryOrder = first.Category.ToLowerInvariant() switch
+                    {
+                        "product"  => 0,
+                        "assembly" => 1,
+                        "part"     => 2,
+                        _          => 3,
+                    },
+                    first.IsStock,
+                    first.Operations,
+                    ThicknessOrder = ParseThicknessOrder(first.Thickness),
+                    Group = BuildGroup(g.Key,
+                        first.Title, first.Description, first.Thickness, first.Material, first.StructCode,
+                        new List<(string Label, int Qty)> { (orderLabel, g.Sum(p => p.Qty)) },
+                        Path.Combine(pdfFolder, g.Key + ".pdf")),
+                };
+            })
+            .OrderBy(x => x.CategoryOrder)
+            .ThenBy(x => x.IsStock)
+            .ThenBy(x => x.Operations, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.ThicknessOrder)
+            .Select(x => x.Group)
+            .ToList();
+    }
+
+    /// <summary>Mirrors FlatSchedulePartRow.ThicknessOrder — handles plain numbers and "num/den" fractions.</summary>
+    private static double ParseThicknessOrder(string? thickness)
+    {
+        if (string.IsNullOrWhiteSpace(thickness)) return double.MaxValue;
+        if (double.TryParse(thickness, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+            return d;
+        var slash = thickness.IndexOf('/');
+        if (slash > 0
+            && double.TryParse(thickness.AsSpan(0, slash).Trim(), out var num)
+            && double.TryParse(thickness.AsSpan(slash + 1).Trim(), out var den)
+            && den != 0)
+            return num / den;
+        return double.MaxValue;
     }
 
     // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
