@@ -182,6 +182,76 @@ public class ReportService
         return BuildReport(groups, scheduleName, isSchedule: true, operation, _log);
     }
 
+    // ── Per-order category reports (one ScheduleOrder's own Sub-Assembly / Part rows) ──
+
+    public async Task<byte[]?> GenerateOrderSubAssembliesReportAsync(int scheduleOrderId)
+    {
+        var order = await _db.ScheduleOrders
+            .Include(so => so.Schedule)
+            .Include(so => so.Parts)
+            .FirstOrDefaultAsync(so => so.Id == scheduleOrderId);
+        if (order == null) return null;
+
+        var pdfFolder = order.Schedule.LocalPdfFolder
+            ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
+
+        var groups = order.Parts
+            .Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(p => p.PartNumber)
+            .Select(g => BuildGroup(g.Key,
+                g.First().Title, g.First().Description, g.First().Thickness, g.First().Material, g.First().StructCode,
+                new List<(string Label, int Qty)> { (order.OrderNumber, g.Sum(p => p.Qty)) },
+                Path.Combine(pdfFolder, g.Key + ".pdf")))
+            .OrderBy(g => g.PartNumber)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            _log.LogWarning("No sub-assemblies found for order '{Order}'", order.OrderNumber);
+            return null;
+        }
+
+        _log.LogInformation("Generating Sub-Assemblies report for order '{Order}': {Count} parts", order.OrderNumber, groups.Count);
+        return BuildReport(groups, order.OrderNumber, isSchedule: true, "Sub-Assemblies", _log);
+    }
+
+    public async Task<byte[]?> GenerateOrderAssembliesAndPartsReportAsync(int scheduleOrderId)
+    {
+        var order = await _db.ScheduleOrders
+            .Include(so => so.Schedule)
+            .Include(so => so.Parts)
+            .FirstOrDefaultAsync(so => so.Id == scheduleOrderId);
+        if (order == null) return null;
+
+        var pdfFolder = order.Schedule.LocalPdfFolder
+            ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
+
+        var groups = order.Parts
+            .Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
+                        p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(p => p.PartNumber)
+            .Select(g => new
+            {
+                CategoryRank = g.First().Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ? 0 : 1,
+                Group = BuildGroup(g.Key,
+                    g.First().Title, g.First().Description, g.First().Thickness, g.First().Material, g.First().StructCode,
+                    new List<(string Label, int Qty)> { (order.OrderNumber, g.Sum(p => p.Qty)) },
+                    Path.Combine(pdfFolder, g.Key + ".pdf")),
+            })
+            .OrderBy(x => x.CategoryRank).ThenBy(x => x.Group.PartNumber)
+            .Select(x => x.Group)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            _log.LogWarning("No assemblies/parts found for order '{Order}'", order.OrderNumber);
+            return null;
+        }
+
+        _log.LogInformation("Generating Assemblies & Parts report for order '{Order}': {Count} parts", order.OrderNumber, groups.Count);
+        return BuildReport(groups, order.OrderNumber, isSchedule: true, "Assemblies & Parts", _log);
+    }
+
     // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
 
     public async Task<byte[]?> GenerateBatchOperationReportAsync(string batchName, string operation)

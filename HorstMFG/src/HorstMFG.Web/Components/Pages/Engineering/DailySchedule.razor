@@ -176,6 +176,12 @@
                 {
                     <span style="margin-left: 0.75rem; color: #6b7280; font-size: 0.85rem;">@order.ProductDescription</span>
                 }
+                <span style="margin-left: 0.75rem; display: inline-flex; gap: 0.35rem;">
+                    <button @onclick="@(async () => await OpenOrderReport("order-subassemblies", order.Id))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")" title="Print all sub-assemblies for this order">Sub-Assemblies</button>
+                    <button @onclick="@(async () => await OpenOrderReport("order-assemblies-parts", order.Id))" @onclick:stopPropagation="true"
+                            style="@BtnStyle("")" title="Print all assemblies and parts for this order">Assemblies + Parts</button>
+                </span>
                 @if (_orderMissingPdfCount.TryGetValue(order.Id, out var orderMissing) && orderMissing > 0)
                 {
                     <span style="margin-left: 0.5rem; color: #b91c1c; font-size: 0.75rem; font-weight: 600;">
@@ -913,6 +919,11 @@
             ? $"/api/reports/{type}/{Uri.EscapeDataString(name)}"
             : $"/api/reports/{type}/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(operation)}";
         await JS.InvokeVoidAsync("window.open", url, "_blank");
+    }
+
+    private async Task OpenOrderReport(string type, int orderId)
+    {
+        await JS.InvokeVoidAsync("window.open", $"/api/reports/{type}/{orderId}", "_blank");
     }
 
     // ── Stock checkbox ────────────────────────────────────────────────────────

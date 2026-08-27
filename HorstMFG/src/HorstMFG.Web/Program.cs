@@ -118,6 +118,22 @@ try
         return Results.File(bytes, "application/pdf");
     }).RequireAuthorization();
 
+    app.MapGet("/api/reports/order-subassemblies/{orderId:int}", async (int orderId, ReportService reports, HttpResponse response) =>
+    {
+        var bytes = await reports.GenerateOrderSubAssembliesReportAsync(orderId);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"SubAssemblies-Order{orderId}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
+    app.MapGet("/api/reports/order-assemblies-parts/{orderId:int}", async (int orderId, ReportService reports, HttpResponse response) =>
+    {
+        var bytes = await reports.GenerateOrderAssembliesAndPartsReportAsync(orderId);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"AssembliesAndParts-Order{orderId}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
     app.MapGet("/api/reports/batch-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
     {
         var n  = Uri.UnescapeDataString(name);
