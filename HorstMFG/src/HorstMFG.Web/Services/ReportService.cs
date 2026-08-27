@@ -381,26 +381,32 @@ public class ReportService
             {
                 if (srcDoc.Pages.Count == 0) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); continue; }
 
-                var srcPage = srcDoc.Pages[0] as PdfLoadedPage;
-                if (srcPage == null) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); continue; }
-
-                // Build template before importing so it can be drawn onto the cover page.
-                var template = srcPage.CreateTemplate();
-
-                // /Rotate is NOT incorporated into the template dimensions, so we must
-                // swap width/height when the page is stored rotated 90° or 270°.
-                bool rotated = srcPage.Rotation == PdfPageRotateAngle.RotateAngle90 ||
-                               srcPage.Rotation == PdfPageRotateAngle.RotateAngle270;
-                bool isLandscape = rotated ? template.Height > template.Width
-                                           : template.Width  > template.Height;
-
-                // Page 1: full-size drawing (front of sheet when duplex printing)
+                // Each source page becomes its own duplex sheet: drawing (front) + cover (back).
+                // A multi-page drawing (e.g. a two-sheet assembly) needs one cover PER page, not
+                // one cover after all pages — otherwise duplex printing pairs the wrong pages
+                // together. Mirrors TravellerAppendDrawingPages.
                 for (int i = 0; i < srcDoc.Pages.Count; i++)
+                {
+                    var srcPage = srcDoc.Pages[i] as PdfLoadedPage;
+                    if (srcPage == null) continue;
+
+                    // Build template before importing so it can be drawn onto the cover page.
+                    var template = srcPage.CreateTemplate();
+
+                    // /Rotate is NOT incorporated into the template dimensions, so we must
+                    // swap width/height when the page is stored rotated 90° or 270°.
+                    bool rotated = srcPage.Rotation == PdfPageRotateAngle.RotateAngle90 ||
+                                   srcPage.Rotation == PdfPageRotateAngle.RotateAngle270;
+                    bool isLandscape = rotated ? template.Height > template.Width
+                                               : template.Width  > template.Height;
+
+                    // Front: full-size drawing page
                     output.ImportPage(srcDoc, i);
 
-                // Page 2: cover page with thumbnail + qty breakdown (back of sheet)
-                var cover = output.Pages.Add();
-                DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule, operation);
+                    // Back: cover page with thumbnail + qty breakdown
+                    var cover = output.Pages.Add();
+                    DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule, operation);
+                }
             }
             finally
             {
