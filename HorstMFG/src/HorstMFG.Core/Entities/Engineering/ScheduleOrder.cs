@@ -4,6 +4,8 @@ public class ScheduleOrder
 {
     public int Id { get; set; }
     public int ScheduleId { get; set; }
+    /// <summary>Inherited from the parent Schedule at creation time.</summary>
+    public int PlantId { get; set; }
     public string OrderNumber { get; set; } = string.Empty;
     public int Qty { get; set; } = 1;
     public string? ProductNumber { get; set; }
@@ -18,5 +20,6 @@ public class ScheduleOrder
     public string? LastImportError { get; set; }
 
     public Schedule Schedule { get; set; } = null!;
+    public Plant Plant { get; set; } = null!;
     public ICollection<PartLineItem> Parts { get; set; } = new List<PartLineItem>();
 }

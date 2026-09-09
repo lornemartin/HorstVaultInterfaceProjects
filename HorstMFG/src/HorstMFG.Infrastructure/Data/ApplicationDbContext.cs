@@ -93,6 +93,7 @@ public class ApplicationDbContext : DbContext
             e.Property(bp => bp.Qty).HasColumnName("qty").HasDefaultValue(1);
             e.Property(bp => bp.Notes).HasMaxLength(2000);
             e.HasOne(bp => bp.Batch).WithMany(b => b.BatchProducts).HasForeignKey(bp => bp.BatchId);
+            e.HasOne(bp => bp.Plant).WithMany(p => p.BatchProducts).HasForeignKey(bp => bp.PlantId);
         });
 
         // Schedule
@@ -117,6 +118,7 @@ public class ApplicationDbContext : DbContext
             e.Property(so => so.ProductNumber).HasMaxLength(200);
             e.Property(so => so.Notes).HasMaxLength(2000);
             e.HasOne(so => so.Schedule).WithMany(s => s.ScheduleOrders).HasForeignKey(so => so.ScheduleId);
+            e.HasOne(so => so.Plant).WithMany(p => p.ScheduleOrders).HasForeignKey(so => so.PlantId);
         });
 
         // PartLineItem
@@ -133,8 +135,10 @@ public class ApplicationDbContext : DbContext
             e.Property(p => p.StructCode).HasMaxLength(200);
             e.Property(p => p.Operations).HasMaxLength(500);
             e.Property(p => p.Notes).HasMaxLength(2000);
+            e.Property(p => p.PlantIdRaw).HasMaxLength(50);
             e.HasOne(p => p.BatchProduct).WithMany(bp => bp.Parts).HasForeignKey(p => p.BatchProductId).IsRequired(false);
             e.HasOne(p => p.ScheduleOrder).WithMany(so => so.Parts).HasForeignKey(p => p.ScheduleOrderId).IsRequired(false);
+            e.HasOne(p => p.Plant).WithMany(pl => pl.PartLineItems).HasForeignKey(p => p.PlantId).IsRequired(false);
         });
 
         // NestBatch

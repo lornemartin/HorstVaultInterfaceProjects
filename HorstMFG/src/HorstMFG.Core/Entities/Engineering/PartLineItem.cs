@@ -17,9 +17,17 @@ public class PartLineItem
     public string? Notes { get; set; }
     public bool HasPdf { get; set; }
 
+    /// <summary>Resolved from PlantIdRaw via a Vault-string-to-Plant.Code lookup. Null when
+    /// Vault's value is blank, unrecognized, or "Plant 1&amp;2" (ambiguous — a single FK can't
+    /// represent both plants; PlantIdRaw still preserves that Vault flagged it as shared).</summary>
+    public int? PlantId { get; set; }
+    /// <summary>Vault's raw "Plant ID" custom-property text for this line, verbatim.</summary>
+    public string? PlantIdRaw { get; set; }
+
     public int? BatchProductId { get; set; }
     public int? ScheduleOrderId { get; set; }
 
     public BatchProduct? BatchProduct { get; set; }
     public ScheduleOrder? ScheduleOrder { get; set; }
+    public Plant? Plant { get; set; }
 }

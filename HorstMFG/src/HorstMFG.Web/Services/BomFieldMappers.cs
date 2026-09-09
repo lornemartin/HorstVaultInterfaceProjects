@@ -47,6 +47,25 @@ internal static class BomFieldMappers
     }
 
     /// <summary>
+    /// Vault's raw "Plant ID" custom-property text, mapped to our own Plant.Code. Vault can also
+    /// send "Plant 1&amp;2" (a part shared between both plants) or blank — both intentionally
+    /// return null here, since a single PartLineItem.PlantId FK can't represent "both plants".
+    /// Callers should still store the raw string (PartLineItem.PlantIdRaw) so that case stays
+    /// distinguishable from a genuine blank.
+    /// </summary>
+    private static readonly Dictionary<string, string> VaultPlantCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Plant 1"] = "P1",
+        ["Plant 2"] = "P2",
+        ["Plant 3"] = "P3",
+    };
+
+    public static string? MapVaultPlantCode(string? raw)
+        => !string.IsNullOrWhiteSpace(raw) && VaultPlantCodes.TryGetValue(raw.Trim(), out var code)
+            ? code
+            : null;
+
+    /// <summary>
     /// Strip <c>.ipt</c> or <c>.iam</c> extension if present (case-insensitive).
     /// </summary>
     public static string StripCadExtension(string number)

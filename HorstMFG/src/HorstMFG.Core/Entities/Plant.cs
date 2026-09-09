@@ -14,4 +14,7 @@ public class Plant
     public ICollection<NestingStation> NestingStations { get; set; } = new List<NestingStation>();
     public ICollection<Batch> Batches { get; set; } = new List<Batch>();
     public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+    public ICollection<BatchProduct> BatchProducts { get; set; } = new List<BatchProduct>();
+    public ICollection<ScheduleOrder> ScheduleOrders { get; set; } = new List<ScheduleOrder>();
+    public ICollection<PartLineItem> PartLineItems { get; set; } = new List<PartLineItem>();
 }

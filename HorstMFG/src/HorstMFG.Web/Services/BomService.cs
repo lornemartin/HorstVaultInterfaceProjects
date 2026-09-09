@@ -252,6 +252,8 @@ public class BomService : IBomService
         await using var _db = await _dbFactory.CreateDbContextAsync();
         var plantName = await _db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync() ?? "UnknownPlant";
         var localFolder = _pdfCopy.GetBatchFolder(plantName, name);
+        var plantCodeToId = await _db.Plants.AsNoTracking()
+            .ToDictionaryAsync(p => p.Code, p => p.Id, StringComparer.OrdinalIgnoreCase);
 
         var batch = await _db.Batches
             .FirstOrDefaultAsync(b => b.Name == name && b.PlantId == plantId);
@@ -283,6 +285,7 @@ public class BomService : IBomService
             var product = new BatchProduct
             {
                 BatchId = batch.Id,
+                PlantId = plantId,
                 ProductName = productName,
                 Qty = (level1Line?.Qty ?? 1) * (batchQty < 1 ? 1 : batchQty),
             };
@@ -293,6 +296,7 @@ public class BomService : IBomService
             var childLines = group.Where(l => l.Level.Contains('.')).ToList();
             foreach (var line in childLines)
             {
+                var linePlantCode = BomFieldMappers.MapVaultPlantCode(line.PlantId);
                 var item = new PartLineItem
                 {
                     BatchProductId = product.Id,
@@ -309,6 +313,8 @@ public class BomService : IBomService
                     RequiresPdf = line.RequiresPdf,
                     Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                     HasPdf = line.HasPdf,
+                    PlantIdRaw = string.IsNullOrWhiteSpace(line.PlantId) ? null : line.PlantId,
+                    PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
                 };
                 _db.PartLineItems.Add(item);
             }
@@ -332,6 +338,8 @@ public class BomService : IBomService
         await using var _db = await _dbFactory.CreateDbContextAsync();
         var plantName = await _db.Plants.Where(p => p.Id == plantId).Select(p => p.Name).FirstOrDefaultAsync() ?? "UnknownPlant";
         var localFolder = _pdfCopy.GetScheduleFolder(plantName, name);
+        var plantCodeToId = await _db.Plants.AsNoTracking()
+            .ToDictionaryAsync(p => p.Code, p => p.Id, StringComparer.OrdinalIgnoreCase);
 
         var schedule = await _db.Schedules
             .FirstOrDefaultAsync(s => s.Name == name && s.PlantId == plantId);
@@ -353,6 +361,7 @@ public class BomService : IBomService
         var order = new ScheduleOrder
         {
             ScheduleId = schedule.Id,
+            PlantId = plantId,
             OrderNumber = orderNumber,
             Qty = orderQty < 1 ? 1 : orderQty,
         };
@@ -361,6 +370,7 @@ public class BomService : IBomService
 
         foreach (var line in lines)
         {
+            var linePlantCode = BomFieldMappers.MapVaultPlantCode(line.PlantId);
             var item = new PartLineItem
             {
                 ScheduleOrderId = order.Id,
@@ -377,6 +387,8 @@ public class BomService : IBomService
                 RequiresPdf = line.RequiresPdf,
                 Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                 HasPdf = line.HasPdf,
+                PlantIdRaw = string.IsNullOrWhiteSpace(line.PlantId) ? null : line.PlantId,
+                PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
             };
             _db.PartLineItems.Add(item);
         }

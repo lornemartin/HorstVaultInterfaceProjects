@@ -78,6 +78,7 @@ public class VaultBomIngestService
             db.PartLineItems.RemoveRange(order.Parts);
 
         var newItems = BuildPartLineItems(payload.Lines).ToList();
+        await ResolvePlantIdsAsync(db, newItems, ct);
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
         foreach (var line in newItems)
@@ -126,6 +127,7 @@ public class VaultBomIngestService
             db.PartLineItems.RemoveRange(product.Parts);
 
         var newItems = BuildPartLineItems(payload.Lines).ToList();
+        await ResolvePlantIdsAsync(db, newItems, ct);
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
         foreach (var line in newItems)
@@ -142,6 +144,24 @@ public class VaultBomIngestService
         _log.LogInformation(
             "Ingested BatchProduct {Id} ({Product}) — {Lines} parts, copied {Copied}/{Total} PDFs",
             product.Id, product.ProductName, partNumbers.Count, copied, total);
+    }
+
+    /// <summary>
+    /// Resolves each item's PlantIdRaw (Vault's raw "Plant ID" text) to our own Plant.Id via
+    /// BomFieldMappers.MapVaultPlantCode + Plant.Code. Left null when Vault's value is blank,
+    /// unrecognized, or "Plant 1&amp;2" — PlantIdRaw still preserves the raw text either way.
+    /// </summary>
+    private static async Task ResolvePlantIdsAsync(ApplicationDbContext db, List<PartLineItem> items, CancellationToken ct)
+    {
+        if (items.Count == 0) return;
+        var codeToId = await db.Plants.AsNoTracking()
+            .ToDictionaryAsync(p => p.Code, p => p.Id, StringComparer.OrdinalIgnoreCase, ct);
+        foreach (var item in items)
+        {
+            var code = BomFieldMappers.MapVaultPlantCode(item.PlantIdRaw);
+            if (code != null && codeToId.TryGetValue(code, out var id))
+                item.PlantId = id;
+        }
     }
 
     /// <summary>
@@ -205,6 +225,7 @@ public class VaultBomIngestService
                     IsStock     = l.IsStock,
                     RequiresPdf = l.RequiresPdf,
                     Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
+                    PlantIdRaw  = string.IsNullOrWhiteSpace(l.PlantId) ? null : l.PlantId,
                 };
                 dedupedByNumber[number] = item;
             }

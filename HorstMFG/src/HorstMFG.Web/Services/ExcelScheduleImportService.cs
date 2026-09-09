@@ -80,7 +80,7 @@ public class ExcelScheduleImportService
         db.Schedules.Add(schedule);
         await db.SaveChangesAsync(ct);
 
-        var (orders, warnings) = BuildOrders(parsed.Rows, schedule.Id);
+        var (orders, warnings) = BuildOrders(parsed.Rows, schedule.Id, plantId);
         db.ScheduleOrders.AddRange(orders);
         await db.SaveChangesAsync(ct);
 
@@ -213,7 +213,7 @@ public class ExcelScheduleImportService
     /// ProductNumber=null and the LA- info aggregated in Notes.
     /// </summary>
     private static (List<ScheduleOrder> Orders, List<string> Warnings) BuildOrders(
-        IEnumerable<ParsedScheduleRow> rows, int scheduleId)
+        IEnumerable<ParsedScheduleRow> rows, int scheduleId, int plantId)
     {
         var orders = new List<ScheduleOrder>();
         var warnings = new List<string>();
@@ -240,6 +240,7 @@ public class ExcelScheduleImportService
                         placeholder = new ScheduleOrder
                         {
                             ScheduleId = scheduleId,
+                            PlantId = plantId,
                             OrderNumber = row.OrderNumber,
                             Qty = 1,
                             ProductNumber = null,
@@ -278,6 +279,7 @@ public class ExcelScheduleImportService
             var order = new ScheduleOrder
             {
                 ScheduleId = scheduleId,
+                PlantId = plantId,
                 OrderNumber = suffixedNumber,
                 Qty = row.Qty,
                 ProductNumber = row.ProductNumber,

@@ -92,7 +92,7 @@ public class ExcelBatchImportService
         db.Batches.Add(batch);
         await db.SaveChangesAsync(ct);
 
-        var (products, warnings) = BuildProducts(parsed.Rows, batch.Id);
+        var (products, warnings) = BuildProducts(parsed.Rows, batch.Id, plantId);
         db.BatchProducts.AddRange(products);
         await db.SaveChangesAsync(ct);
 
@@ -208,7 +208,7 @@ public class ExcelBatchImportService
     /// merge is recorded in Notes + warnings (per "merge with a warning" decision).
     /// </summary>
     private static (List<BatchProduct> Products, List<string> Warnings) BuildProducts(
-        IEnumerable<ParsedBatchRow> rows, int batchId)
+        IEnumerable<ParsedBatchRow> rows, int batchId, int plantId)
     {
         var byProduct = new Dictionary<string, BatchProduct>(StringComparer.OrdinalIgnoreCase);
         var firstRowIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -228,6 +228,7 @@ public class ExcelBatchImportService
                 var product = new BatchProduct
                 {
                     BatchId = batchId,
+                    PlantId = plantId,
                     ProductName = row.ProductNumber,
                     Qty = row.Qty,
                     VaultBomImported = false,
