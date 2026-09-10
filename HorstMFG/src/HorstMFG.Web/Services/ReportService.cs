@@ -34,6 +34,8 @@ public class ReportService
 
         if (schedules.Count == 0) return null;
 
+        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var pdfFolder = schedules[0].LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
 
@@ -84,6 +86,8 @@ public class ReportService
                         Thickness      = g.First().Part.Thickness,
                         Material       = g.First().Part.Material,
                         StructCode     = g.First().Part.StructCode,
+                        IsStock        = g.First().Part.IsStock,
+                        PlantDisplay   = ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
                         TotalQty       = g.Sum(x => x.Part.Qty * x.Qty),
                         OrderBreakdown = g.GroupBy(x => x.OrderNumber)
                                           .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
@@ -102,6 +106,8 @@ public class ReportService
                 AssemblyTitle      = assemblyPart?.Title,
                 AssemblyDescription = assemblyPart?.Description,
                 AssemblyPdfPath    = asmPdfExists ? asmPath : null,
+                AssemblyIsStock    = assemblyPart?.IsStock ?? false,
+                AssemblyPlantDisplay = assemblyPart is null ? null : ResolvePlantDisplay(assemblyPart.PlantId, assemblyPart.PlantIdRaw, plantNames),
                 Orders             = orders,
                 Components         = components,
             });
@@ -147,6 +153,8 @@ public class ReportService
 
         if (schedules.Count == 0) return null;
 
+        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var pdfFolder = schedules[0].LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
 
@@ -164,6 +172,8 @@ public class ReportService
                 g.First().Part.Thickness,
                 g.First().Part.Material,
                 g.First().Part.StructCode,
+                g.First().Part.IsStock,
+                ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
                 g.GroupBy(x => x.Label)
                  .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
                  .OrderBy(o => o.Key)
@@ -193,13 +203,15 @@ public class ReportService
             .FirstOrDefaultAsync(so => so.Id == scheduleOrderId);
         if (order == null) return null;
 
+        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var pdfFolder = order.Schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
         var groups = BuildGridOrderedGroups(
             order.Parts.Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase)
                                  && (!hideStock || !p.IsStock)),
-            order.OrderNumber, pdfFolder);
+            order.OrderNumber, pdfFolder, plantNames);
 
         if (groups.Count == 0)
         {
@@ -219,6 +231,8 @@ public class ReportService
             .FirstOrDefaultAsync(so => so.Id == scheduleOrderId);
         if (order == null) return null;
 
+        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var pdfFolder = order.Schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", order.Schedule.Name);
 
@@ -226,7 +240,7 @@ public class ReportService
             order.Parts.Where(p => (p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) ||
                                      p.Category.Equals("Part", StringComparison.OrdinalIgnoreCase))
                                  && (!hideStock || !p.IsStock)),
-            order.OrderNumber, pdfFolder);
+            order.OrderNumber, pdfFolder, plantNames);
 
         if (groups.Count == 0)
         {
@@ -244,7 +258,8 @@ public class ReportService
     /// Operations, ThicknessOrder) so a printed report matches what the user sees.
     /// </summary>
     private static List<LaserPartGroup> BuildGridOrderedGroups(
-        IEnumerable<PartLineItem> parts, string orderLabel, string pdfFolder)
+        IEnumerable<PartLineItem> parts, string orderLabel, string pdfFolder,
+        IReadOnlyDictionary<int, string> plantNames)
     {
         return parts
             .GroupBy(p => p.PartNumber)
@@ -265,6 +280,7 @@ public class ReportService
                     ThicknessOrder = ParseThicknessOrder(first.Thickness),
                     Group = BuildGroup(g.Key,
                         first.Title, first.Description, first.Thickness, first.Material, first.StructCode,
+                        first.IsStock, ResolvePlantDisplay(first.PlantId, first.PlantIdRaw, plantNames),
                         new List<(string Label, int Qty)> { (orderLabel, g.Sum(p => p.Qty)) },
                         Path.Combine(pdfFolder, g.Key + ".pdf")),
                 };
@@ -304,6 +320,8 @@ public class ReportService
 
         if (batches.Count == 0) return null;
 
+        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var pdfFolder = batches[0].LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Batches", batchName);
 
@@ -321,6 +339,8 @@ public class ReportService
                 g.First().Part.Thickness,
                 g.First().Part.Material,
                 g.First().Part.StructCode,
+                g.First().Part.IsStock,
+                ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
                 g.GroupBy(x => x.Label)
                  .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
                  .OrderBy(o => o.Key)
@@ -619,6 +639,15 @@ public class ReportService
             g.DrawString(part.Material, fontReg10, black, new PointF(bx + 62f, by));
             by += 17f;
         }
+        g.DrawString("Type", fontReg9, grayBrush, new PointF(bx, by));
+        g.DrawString(StockLabel(part.IsStock), fontReg10, black, new PointF(bx + 62f, by));
+        by += 17f;
+        if (!string.IsNullOrWhiteSpace(part.PlantDisplay))
+        {
+            g.DrawString("Plant", fontReg9, grayBrush, new PointF(bx, by));
+            g.DrawString(part.PlantDisplay, fontReg10, black, new PointF(bx + 62f, by));
+            by += 17f;
+        }
         g.DrawString("Operation", fontReg9, grayBrush, new PointF(bx, by));
         g.DrawString(operation,   fontReg10, black,    new PointF(bx + 62f, by));
         by += 17f;
@@ -656,19 +685,36 @@ public class ReportService
         string? thickness,
         string? material,
         string? structCode,
+        bool isStock,
+        string? plantDisplay,
         List<(string Label, int Qty)> orders,
         string pdfPath) => new()
     {
-        PartNumber  = partNumber,
-        Title       = title,
-        Description = description,
-        Thickness   = thickness,
-        Material    = material,
-        StructCode  = structCode,
-        TotalQty    = orders.Sum(o => o.Qty),
-        Orders      = orders,
-        PdfPath     = File.Exists(pdfPath) ? pdfPath : null,
+        PartNumber   = partNumber,
+        Title        = title,
+        Description  = description,
+        Thickness    = thickness,
+        Material     = material,
+        StructCode   = structCode,
+        IsStock      = isStock,
+        PlantDisplay = plantDisplay,
+        TotalQty     = orders.Sum(o => o.Qty),
+        Orders       = orders,
+        PdfPath      = File.Exists(pdfPath) ? pdfPath : null,
     };
+
+    /// <summary>
+    /// Resolves the Plant label to print on a report: the matched Plant's name if PlantId
+    /// resolves to a known plant, otherwise the free-typed PlantIdRaw value (if any), so
+    /// custom/unmatched plant text still shows up on drawings.
+    /// </summary>
+    private static string? ResolvePlantDisplay(int? plantId, string? plantIdRaw, IReadOnlyDictionary<int, string> plantNames)
+    {
+        if (plantId is int id && plantNames.TryGetValue(id, out var name)) return name;
+        return string.IsNullOrWhiteSpace(plantIdRaw) ? null : plantIdRaw;
+    }
+
+    private static string StockLabel(bool isStock) => isStock ? "Make to Stock" : "Make to Order";
 
     private static double ParseThickness(string? thickness)
     {
@@ -687,6 +733,8 @@ public class ReportService
         public string? Thickness   { get; init; }
         public string? Material    { get; init; }
         public string? StructCode  { get; init; }
+        public bool IsStock        { get; init; }
+        public string? PlantDisplay { get; init; }
         public int TotalQty        { get; init; }
         public List<(string Label, int Qty)> Orders { get; init; } = new();
         public string? PdfPath     { get; init; }
@@ -720,6 +768,8 @@ public class ReportService
                         Title:      product.AssemblyTitle,
                         Description: product.AssemblyDescription,
                         Thickness:  null, Material: null, StructCode: null,
+                        IsStock:    product.AssemblyIsStock,
+                        PlantDisplay: product.AssemblyPlantDisplay,
                         TotalQty:   product.Orders.Sum(o => o.Qty),
                         Orders:     product.Orders,
                         SourceName: scheduleName,
@@ -738,6 +788,8 @@ public class ReportService
                     Thickness:  comp.Thickness,
                     Material:   comp.Material,
                     StructCode: comp.StructCode,
+                    IsStock:    comp.IsStock,
+                    PlantDisplay: comp.PlantDisplay,
                     TotalQty:   comp.TotalQty,
                     Orders:     comp.OrderBreakdown,
                     SourceName: scheduleName,
@@ -937,6 +989,15 @@ public class ReportService
             g.DrawString(info.Material, fontReg10, black,   new PointF(bx + 72f, by));
             by += 17f;
         }
+        g.DrawString("Type",          fontReg9, grayBrush, new PointF(bx, by));
+        g.DrawString(StockLabel(info.IsStock), fontReg10, black, new PointF(bx + 72f, by));
+        by += 17f;
+        if (!string.IsNullOrWhiteSpace(info.PlantDisplay))
+        {
+            g.DrawString("Plant",       fontReg9, grayBrush, new PointF(bx, by));
+            g.DrawString(info.PlantDisplay, fontReg10, black, new PointF(bx + 72f, by));
+            by += 17f;
+        }
         g.DrawString("Schedule",      fontReg9,  grayBrush, new PointF(bx, by));
         g.DrawString(info.SourceName, fontReg10, black,     new PointF(bx + 72f, by));
         by += 24f;
@@ -1062,6 +1123,8 @@ public class ReportService
         public string? AssemblyTitle       { get; init; }
         public string? AssemblyDescription { get; init; }
         public string? AssemblyPdfPath     { get; init; }
+        public bool    AssemblyIsStock     { get; init; }
+        public string? AssemblyPlantDisplay { get; init; }
         public List<(string OrderNumber, int Qty)> Orders     { get; init; } = new();
         public List<TravellerComponent>            Components { get; init; } = new();
     }
@@ -1074,6 +1137,8 @@ public class ReportService
         public string? Thickness      { get; init; }
         public string? Material       { get; init; }
         public string? StructCode     { get; init; }
+        public bool    IsStock        { get; init; }
+        public string? PlantDisplay   { get; init; }
         public int     TotalQty       { get; init; }
         public List<(string OrderNumber, int Qty)> OrderBreakdown { get; init; } = new();
         public string? PdfPath        { get; init; }
@@ -1089,6 +1154,8 @@ public class ReportService
         string? Thickness,
         string? Material,
         string? StructCode,
+        bool IsStock,
+        string? PlantDisplay,
         int TotalQty,
         List<(string OrderNumber, int Qty)> Orders,
         string SourceName,
