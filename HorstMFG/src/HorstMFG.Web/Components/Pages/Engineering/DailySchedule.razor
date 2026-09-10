@@ -326,16 +326,34 @@
             <Template>
                 @{
                     var row = context as FlatSchedulePartRow;
-                    <select value="@row!.PlantId"
-                            @onchange="@(async e => await OnPartPlantChanged(row, e.Value?.ToString() ?? ""))"
+                }
+                @if (_customPlantEditIds.Contains(row!.PartLineItemId))
+                {
+                    <input type="text" value="@(row.PlantIdRaw ?? "")"
+                           @onchange="@(async e => await OnPartPlantRawChanged(row, e.Value?.ToString() ?? ""))"
+                           @onclick:stopPropagation="true"
+                           disabled="@row.ScheduleReleased"
+                           placeholder="Custom plant…"
+                           style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px;" />
+                }
+                else
+                {
+                    var currentValue = row.PlantId?.ToString() ?? (row.PlantIdRaw is not null ? "__custom__" : "");
+                    <select value="@currentValue"
+                            @onchange="@(async e => await OnPartPlantSelectChanged(row, e.Value?.ToString() ?? ""))"
                             @onclick:stopPropagation="true"
                             disabled="@row.ScheduleReleased"
                             style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px;">
-                        <option value="">—</option>
+                        <option value="" selected="@(currentValue == "")">—</option>
                         @foreach (var opt in _plantOptions.Where(o => o.Id.HasValue))
                         {
-                            <option value="@opt.Id" selected="@(opt.Id == row.PlantId)">@opt.Name</option>
+                            <option value="@opt.Id" selected="@(currentValue == opt.Id.ToString())">@opt.Name</option>
                         }
+                        @if (row.PlantIdRaw is not null && row.PlantId is null)
+                        {
+                            <option value="__custom__" selected="true">@row.PlantIdRaw</option>
+                        }
+                        <option value="__other__">Other…</option>
                     </select>
                 }
             </Template>
@@ -439,6 +457,9 @@
     // (hidden by default once an order has successfully imported).
     private HashSet<int> _forceReimportOrderIds = new();
     private int? _activePartLineItemId;
+
+    // Part rows where the user clicked "Other…" to type a custom Plant value
+    private HashSet<int> _customPlantEditIds = new();
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -823,11 +844,34 @@
         await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
     }
 
-    private async Task OnPartPlantChanged(FlatSchedulePartRow row, string rawValue)
+    private async Task OnPartPlantSelectChanged(FlatSchedulePartRow row, string rawValue)
     {
+        if (rawValue == "__other__")
+        {
+            _customPlantEditIds.Add(row.PartLineItemId);
+            StateHasChanged();
+            return;
+        }
+        if (rawValue == "__custom__") return;
+
         int? plantId = int.TryParse(rawValue, out var parsed) ? parsed : null;
         _activePartLineItemId = row.PartLineItemId;
-        await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId);
+        await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, null);
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+    }
+
+    private async Task OnPartPlantRawChanged(FlatSchedulePartRow row, string rawValue)
+    {
+        var trimmed = rawValue.Trim();
+        var match = _plantOptions.FirstOrDefault(o => o.Id.HasValue
+            && string.Equals(o.Name, trimmed, StringComparison.OrdinalIgnoreCase));
+        int? plantId = match?.Id;
+        string? plantIdRaw = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        _customPlantEditIds.Remove(row.PartLineItemId);
+        _activePartLineItemId = row.PartLineItemId;
+        await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, plantIdRaw);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
         await LoadData();
         await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);

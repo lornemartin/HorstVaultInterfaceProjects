@@ -82,9 +82,11 @@ public interface IBomService
     Task UpdateScheduleOrderPlantAsync(int scheduleOrderId, int plantId);
 
     /// <summary>
-    /// Update PlantId on a single PartLineItem, independent of its parent BatchProduct/ScheduleOrder.
+    /// Update PlantId and/or PlantIdRaw on a single PartLineItem, independent of its parent
+    /// BatchProduct/ScheduleOrder. plantIdRaw preserves free-typed text that doesn't match a
+    /// known Plant; it is shown in the UI whenever plantId is null.
     /// </summary>
-    Task UpdatePartPlantAsync(int partLineItemId, int? plantId);
+    Task UpdatePartPlantAsync(int partLineItemId, int? plantId, string? plantIdRaw);
 
     /// <summary>
     /// Count how many PartLineItems share the same PartNumber within the same Batch or Schedule

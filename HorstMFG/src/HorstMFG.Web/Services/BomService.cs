@@ -450,6 +450,7 @@ public class BomService : IBomService
                 RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
                 PlantId = p.PlantId,
+                PlantIdRaw = p.PlantIdRaw,
             })
             .ToListAsync();
 
@@ -555,6 +556,7 @@ public class BomService : IBomService
                 RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
                 PlantId = p.PlantId,
+                PlantIdRaw = p.PlantIdRaw,
             })
             .ToListAsync();
 
@@ -708,7 +710,9 @@ public class BomService : IBomService
             .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.PlantId, plantId));
         await db.Set<PartLineItem>()
             .Where(p => p.BatchProductId == batchProductId)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.PlantId, plantId)
+                .SetProperty(p => p.PlantIdRaw, (string?)null));
     }
 
     public async Task UpdateScheduleOrderPlantAsync(int scheduleOrderId, int plantId)
@@ -719,15 +723,19 @@ public class BomService : IBomService
             .ExecuteUpdateAsync(s => s.SetProperty(so => so.PlantId, plantId));
         await db.Set<PartLineItem>()
             .Where(p => p.ScheduleOrderId == scheduleOrderId)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.PlantId, plantId)
+                .SetProperty(p => p.PlantIdRaw, (string?)null));
     }
 
-    public async Task UpdatePartPlantAsync(int partLineItemId, int? plantId)
+    public async Task UpdatePartPlantAsync(int partLineItemId, int? plantId, string? plantIdRaw)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         await db.Set<PartLineItem>()
             .Where(p => p.Id == partLineItemId)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.PlantId, plantId)
+                .SetProperty(p => p.PlantIdRaw, plantIdRaw));
     }
 
     public async Task<int> CountSiblingsByPartNumberAsync(int partLineItemId)

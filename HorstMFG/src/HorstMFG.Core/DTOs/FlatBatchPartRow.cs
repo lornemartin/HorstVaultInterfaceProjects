@@ -34,6 +34,7 @@ public class FlatBatchPartRow
     public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }
     public int? PlantId { get; set; }
+    public string? PlantIdRaw { get; set; }
 
     // ── Import status ────────────────────────────────────────────────────────
     public bool VaultBomImported { get; set; }
