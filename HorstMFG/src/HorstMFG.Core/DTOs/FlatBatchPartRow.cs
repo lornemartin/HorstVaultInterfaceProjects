@@ -18,6 +18,7 @@ public class FlatBatchPartRow
     public int BatchProductId { get; set; }
     public string? ProductName { get; set; }
     public int ProductQty { get; set; }
+    public int BatchProductPlantId { get; set; }
 
     // ── Part row ─────────────────────────────────────────────────────────────
     public int PartLineItemId { get; set; }
@@ -32,6 +33,7 @@ public class FlatBatchPartRow
     public bool HasPdf { get; set; }
     public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }
+    public int? PlantId { get; set; }
 
     // ── Import status ────────────────────────────────────────────────────────
     public bool VaultBomImported { get; set; }

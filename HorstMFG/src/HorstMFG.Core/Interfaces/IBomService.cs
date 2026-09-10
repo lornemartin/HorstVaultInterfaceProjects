@@ -70,6 +70,23 @@ public interface IBomService
     Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);
 
     /// <summary>
+    /// Update PlantId on a BatchProduct and cascade the same value to every PartLineItem
+    /// belonging to it, overwriting their individual (Vault-derived) PlantId.
+    /// </summary>
+    Task UpdateBatchProductPlantAsync(int batchProductId, int plantId);
+
+    /// <summary>
+    /// Update PlantId on a ScheduleOrder and cascade the same value to every PartLineItem
+    /// belonging to it, overwriting their individual (Vault-derived) PlantId.
+    /// </summary>
+    Task UpdateScheduleOrderPlantAsync(int scheduleOrderId, int plantId);
+
+    /// <summary>
+    /// Update PlantId on a single PartLineItem, independent of its parent BatchProduct/ScheduleOrder.
+    /// </summary>
+    Task UpdatePartPlantAsync(int partLineItemId, int? plantId);
+
+    /// <summary>
     /// Count how many PartLineItems share the same PartNumber within the same Batch or Schedule
     /// as the given partLineItemId.
     /// </summary>

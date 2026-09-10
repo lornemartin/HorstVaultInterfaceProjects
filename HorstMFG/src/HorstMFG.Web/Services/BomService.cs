@@ -435,6 +435,7 @@ public class BomService : IBomService
                 OrderNumber = p.ScheduleOrder!.OrderNumber,
                 OrderQty = p.ScheduleOrder!.Qty,
                 ProductNumber = p.ScheduleOrder!.ProductNumber,
+                ScheduleOrderPlantId = p.ScheduleOrder!.PlantId,
                 VaultBomImported = p.ScheduleOrder!.VaultBomImported,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
@@ -448,6 +449,7 @@ public class BomService : IBomService
                 HasPdf = p.HasPdf,
                 RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
+                PlantId = p.PlantId,
             })
             .ToListAsync();
 
@@ -487,6 +489,7 @@ public class BomService : IBomService
                 OrderNumber        = so.OrderNumber,
                 OrderQty           = so.Qty,
                 ProductNumber      = so.ProductNumber,
+                ScheduleOrderPlantId = so.PlantId,
                 ProductDescription = null,
                 VaultBomImported   = so.VaultBomImported,
                 PartLineItemId     = 0,
@@ -537,6 +540,7 @@ public class BomService : IBomService
                 BatchProductId = p.BatchProductId!.Value,
                 ProductName = p.BatchProduct!.ProductName,
                 ProductQty = p.BatchProduct!.Qty,
+                BatchProductPlantId = p.BatchProduct!.PlantId,
                 VaultBomImported = p.BatchProduct!.VaultBomImported,
                 PartLineItemId = p.Id,
                 PartNumber = p.PartNumber,
@@ -550,6 +554,7 @@ public class BomService : IBomService
                 HasPdf = p.HasPdf,
                 RequiresPdf = p.RequiresPdf,
                 Notes = p.Notes,
+                PlantId = p.PlantId,
             })
             .ToListAsync();
 
@@ -573,6 +578,7 @@ public class BomService : IBomService
                 BatchProductId   = bp.Id,
                 ProductName      = bp.ProductName,
                 ProductQty       = bp.Qty,
+                BatchProductPlantId = bp.PlantId,
                 VaultBomImported = bp.VaultBomImported,
                 PartLineItemId   = 0,
                 PartNumber       = "",
@@ -692,6 +698,36 @@ public class BomService : IBomService
         if (part is null) return;
         part.IsStock = isStock;
         await db.SaveChangesAsync();
+    }
+
+    public async Task UpdateBatchProductPlantAsync(int batchProductId, int plantId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.Id == batchProductId)
+            .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.PlantId, plantId));
+        await db.Set<PartLineItem>()
+            .Where(p => p.BatchProductId == batchProductId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
+    }
+
+    public async Task UpdateScheduleOrderPlantAsync(int scheduleOrderId, int plantId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.Id == scheduleOrderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(so => so.PlantId, plantId));
+        await db.Set<PartLineItem>()
+            .Where(p => p.ScheduleOrderId == scheduleOrderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
+    }
+
+    public async Task UpdatePartPlantAsync(int partLineItemId, int? plantId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.Id == partLineItemId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PlantId, plantId));
     }
 
     public async Task<int> CountSiblingsByPartNumberAsync(int partLineItemId)

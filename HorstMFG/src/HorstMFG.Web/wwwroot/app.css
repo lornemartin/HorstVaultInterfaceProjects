@@ -204,8 +204,8 @@ h1:focus {
 }
 
 /* Hide the filter input bar on grids that use programmatic filtering only */
-#OrdersGrid_v6 .e-filterbar,
-#BatchesGrid_v6 .e-filterbar { display: none !important; }
+#OrdersGrid_v7 .e-filterbar,
+#BatchesGrid_v7 .e-filterbar { display: none !important; }
 
 /* The group caption template on these grids packs in a name, badges, and several
    action buttons — far more than Syncfusion's default single-line-text caption is
@@ -213,8 +213,8 @@ h1:focus {
    width:auto`, so its rendered width tracks the grid's total column width — when
    columns are narrow, trailing buttons get silently clipped instead of wrapping.
    Allow wrapping so nothing is ever hidden regardless of column widths. */
-#OrdersGrid_v6 .e-groupcaption,
-#BatchesGrid_v6 .e-groupcaption {
+#OrdersGrid_v7 .e-groupcaption,
+#BatchesGrid_v7 .e-groupcaption {
     overflow: visible;
     white-space: normal;
     text-overflow: unset;
@@ -237,8 +237,8 @@ h1:focus {
     box-shadow: inset 3px 0 0 #57667c;
 }
 
-#BatchesGrid_v6 .e-groupcaption:has(.released-marker),
-#OrdersGrid_v6 .e-groupcaption:has(.released-marker) {
+#BatchesGrid_v7 .e-groupcaption:has(.released-marker),
+#OrdersGrid_v7 .e-groupcaption:has(.released-marker) {
     background-color: #f3f5f8;
     box-shadow: inset 3px 0 0 #57667c;
 }

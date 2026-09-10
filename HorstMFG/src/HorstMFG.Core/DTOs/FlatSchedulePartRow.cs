@@ -20,6 +20,7 @@ public class FlatSchedulePartRow
     public int OrderQty { get; set; }
     public string? ProductNumber { get; set; }      // from the "Product" category part
     public string? ProductDescription { get; set; } // from the "Product" category part
+    public int ScheduleOrderPlantId { get; set; }
 
     // ── Part row ────────────────────────────────────────────────────────────
     public int PartLineItemId { get; set; }
@@ -34,6 +35,7 @@ public class FlatSchedulePartRow
     public bool HasPdf { get; set; }
     public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }
+    public int? PlantId { get; set; }
 
     // ── Import status ────────────────────────────────────────────────────────
     public bool VaultBomImported { get; set; }
