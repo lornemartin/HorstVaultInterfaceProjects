@@ -39,13 +39,18 @@ public class ReportService
         var pdfFolder = schedules[0].LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
 
-        // Flatten schedule orders; group by the assembly PartNumber (= product key)
+        // Flatten schedule orders; group by the assembly PartNumber (= product key).
+        // This grouping/lookup drives which physical drawing gets attached — left exactly
+        // as-is (it's the proven-working path). Only the COVER PAGE's displayed number/title/
+        // description is resolved separately below, from the true top-level item.
         var allOrders = schedules
             .SelectMany(s => s.ScheduleOrders)
             .Select(so => new
             {
                 so.OrderNumber,
                 Qty   = so.Qty,
+                ProductNumber = so.ProductNumber,
+                ProductPart = so.Parts.FirstOrDefault(p => p.Category.Equals("Product", StringComparison.OrdinalIgnoreCase)),
                 Parts = so.Parts.Where(p => !p.IsStock).ToList(),
             })
             .ToList();
@@ -65,6 +70,35 @@ public class ReportService
                 ? Path.Combine(pdfFolder, assemblyPart.PartNumber + ".pdf")
                 : null;
             var asmPdfExists = asmPath != null && File.Exists(asmPath);
+
+            // Cover page identity: prefer the explicit "Product" category row (the true
+            // top-level item), then ScheduleOrder.ProductNumber for at least the number,
+            // and only fall back to the attached sub-assembly's own info as a last resort
+            // when neither is available.
+            var topLevelPart = pg.Select(o => o.ProductPart).FirstOrDefault(p => p != null);
+            var topLevelNumber = pg.Select(o => o.ProductNumber).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
+
+            string coverNumber;
+            string? coverTitle;
+            string? coverDescription;
+            if (topLevelPart != null)
+            {
+                coverNumber      = topLevelNumber ?? topLevelPart.PartNumber;
+                coverTitle       = topLevelPart.Title;
+                coverDescription = topLevelPart.Description;
+            }
+            else if (topLevelNumber != null)
+            {
+                coverNumber      = topLevelNumber;
+                coverTitle       = null;
+                coverDescription = null;
+            }
+            else
+            {
+                coverNumber      = pg.Key;
+                coverTitle       = assemblyPart?.Title;
+                coverDescription = assemblyPart?.Description;
+            }
 
             var orders = pg.Select(o => (o.OrderNumber, o.Qty)).ToList();
 
@@ -108,6 +142,9 @@ public class ReportService
                 AssemblyPdfPath    = asmPdfExists ? asmPath : null,
                 AssemblyIsStock    = assemblyPart?.IsStock ?? false,
                 AssemblyPlantDisplay = assemblyPart is null ? null : ResolvePlantDisplay(assemblyPart.PlantId, assemblyPart.PlantIdRaw, plantNames),
+                CoverNumber        = coverNumber,
+                CoverTitle         = coverTitle,
+                CoverDescription   = coverDescription,
                 Orders             = orders,
                 Components         = components,
             });
@@ -741,9 +778,9 @@ public class ReportService
     }
 
     private static string BuildProductLabel(TravellerProduct product) =>
-        string.IsNullOrWhiteSpace(product.AssemblyTitle)
-            ? product.ProductKey
-            : $"{product.ProductKey} ({product.AssemblyTitle})";
+        string.IsNullOrWhiteSpace(product.CoverTitle)
+            ? product.CoverNumber
+            : $"{product.CoverNumber} ({product.CoverTitle})";
 
     // ── Traveller PDF builder ─────────────────────────────────────────────────
 
@@ -1063,24 +1100,24 @@ public class ReportService
         // Centered block ~32% from top
         float cy = ph * 0.32f;
 
-        var pnSize = fontLarge.MeasureString(product.ProductKey);
-        g.DrawString(product.ProductKey, fontLarge, black,
+        var pnSize = fontLarge.MeasureString(product.CoverNumber);
+        g.DrawString(product.CoverNumber, fontLarge, black,
             new PointF((pw - pnSize.Width) / 2f, cy));
         cy += pnSize.Height + 10f;
 
-        if (!string.IsNullOrWhiteSpace(product.AssemblyTitle))
+        if (!string.IsNullOrWhiteSpace(product.CoverTitle))
         {
-            var titleSize = fontTitle.MeasureString(product.AssemblyTitle);
-            g.DrawString(product.AssemblyTitle, fontTitle, darkBrush,
+            var titleSize = fontTitle.MeasureString(product.CoverTitle);
+            g.DrawString(product.CoverTitle, fontTitle, darkBrush,
                 new PointF((pw - titleSize.Width) / 2f, cy));
             cy += titleSize.Height + 16f;
         }
 
-        if (!string.IsNullOrWhiteSpace(product.AssemblyDescription) &&
-            !product.AssemblyDescription.Trim().Equals(product.AssemblyTitle?.Trim(), StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(product.CoverDescription) &&
+            !product.CoverDescription.Trim().Equals(product.CoverTitle?.Trim(), StringComparison.OrdinalIgnoreCase))
         {
-            var descSize = fontReg10.MeasureString(product.AssemblyDescription);
-            g.DrawString(product.AssemblyDescription, fontReg10, darkBrush,
+            var descSize = fontReg10.MeasureString(product.CoverDescription);
+            g.DrawString(product.CoverDescription, fontReg10, darkBrush,
                 new PointF((pw - descSize.Width) / 2f, cy));
             cy += descSize.Height + 16f;
         }
@@ -1125,6 +1162,11 @@ public class ReportService
         public string? AssemblyPdfPath     { get; init; }
         public bool    AssemblyIsStock     { get; init; }
         public string? AssemblyPlantDisplay { get; init; }
+        // Top-level item identity shown on the standalone cover page — independent of
+        // whichever sub-assembly's drawing/description is attached above.
+        public string  CoverNumber         { get; init; } = "";
+        public string? CoverTitle          { get; init; }
+        public string? CoverDescription    { get; init; }
         public List<(string OrderNumber, int Qty)> Orders     { get; init; } = new();
         public List<TravellerComponent>            Components { get; init; } = new();
     }
