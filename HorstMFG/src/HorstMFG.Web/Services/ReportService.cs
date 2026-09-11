@@ -66,11 +66,6 @@ public class ReportService
                 .SelectMany(o => o.Parts)
                 .FirstOrDefault(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase));
 
-            var asmPath = assemblyPart != null
-                ? Path.Combine(pdfFolder, assemblyPart.PartNumber + ".pdf")
-                : null;
-            var asmPdfExists = asmPath != null && File.Exists(asmPath);
-
             // Cover page identity: prefer the explicit "Product" category row (the true
             // top-level item), then ScheduleOrder.ProductNumber for at least the number,
             // and only fall back to the attached sub-assembly's own info as a last resort
@@ -102,58 +97,53 @@ public class ReportService
 
             var orders = pg.Select(o => (o.OrderNumber, o.Qty)).ToList();
 
+            // Every Category="Assembly" row gets its own drawing page — an order commonly has
+            // several (a top assembly plus nested sub-assemblies), and previously only the
+            // first one found ever got printed, silently dropping the rest.
+            var assemblies = pg
+                .SelectMany(o => o.Parts
+                    .Where(p => p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase))
+                    .Select(p => new PartOrderQty(p, o.OrderNumber, o.Qty)))
+                .GroupBy(x => x.Part.PartNumber)
+                // Preserve BOM order: PartLineItem.Id is assigned in the same sequence the
+                // Vault BOM lines were ingested in, since no separate BOM-position column is
+                // persisted. Using each group's earliest Id keeps drawings in BOM order rather
+                // than alphabetical.
+                .OrderBy(g => g.Min(x => x.Part.Id))
+                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames))
+                .ToList();
+
             var components = pg
                 .SelectMany(o => o.Parts
-                    .Where(p => p.Operations != null &&
+                    .Where(p => !p.Category.Equals("Assembly", StringComparison.OrdinalIgnoreCase) &&
+                                p.Operations != null &&
                                 (p.Operations.Contains("bandsaw",     StringComparison.OrdinalIgnoreCase) ||
                                  p.Operations.Contains("iron worker", StringComparison.OrdinalIgnoreCase)))
-                    .Select(p => new { Part = p, o.OrderNumber, o.Qty }))
+                    .Select(p => new PartOrderQty(p, o.OrderNumber, o.Qty)))
                 .GroupBy(x => x.Part.PartNumber)
-                .Select(g =>
-                {
-                    var path = Path.Combine(pdfFolder, g.Key + ".pdf");
-                    return new TravellerComponent
-                    {
-                        PartNumber     = g.Key,
-                        Title          = g.First().Part.Title,
-                        Description    = g.First().Part.Description,
-                        Thickness      = g.First().Part.Thickness,
-                        Material       = g.First().Part.Material,
-                        StructCode     = g.First().Part.StructCode,
-                        IsStock        = g.First().Part.IsStock,
-                        PlantDisplay   = ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
-                        TotalQty       = g.Sum(x => x.Part.Qty * x.Qty),
-                        OrderBreakdown = g.GroupBy(x => x.OrderNumber)
-                                          .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
-                                          .ToList(),
-                        PdfPath        = File.Exists(path) ? path : null,
-                    };
-                })
+                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames))
                 .OrderBy(c => c.StructCode).ThenBy(c => c.Material)
                 .ToList();
 
-            if (!asmPdfExists && !components.Any()) continue;
+            if (!assemblies.Any() && !components.Any()) continue;
 
             products.Add(new TravellerProduct
             {
                 ProductKey         = pg.Key,
-                AssemblyTitle      = assemblyPart?.Title,
-                AssemblyDescription = assemblyPart?.Description,
-                AssemblyPdfPath    = asmPdfExists ? asmPath : null,
-                AssemblyIsStock    = assemblyPart?.IsStock ?? false,
-                AssemblyPlantDisplay = assemblyPart is null ? null : ResolvePlantDisplay(assemblyPart.PlantId, assemblyPart.PlantIdRaw, plantNames),
                 CoverNumber        = coverNumber,
                 CoverTitle         = coverTitle,
                 CoverDescription   = coverDescription,
                 Orders             = orders,
+                Assemblies         = assemblies,
                 Components         = components,
             });
         }
 
         // Cross-references: partNumber → all (product, component) pairs that use it
+        // (covers both assembly drawings and fabricated components).
         var partToComponents = new Dictionary<string, List<(TravellerProduct Product, TravellerComponent Component)>>(StringComparer.OrdinalIgnoreCase);
         foreach (var product in products)
-            foreach (var comp in product.Components)
+            foreach (var comp in product.Assemblies.Concat(product.Components))
             {
                 if (!partToComponents.TryGetValue(comp.PartNumber, out var list))
                     partToComponents[comp.PartNumber] = list = [];
@@ -161,7 +151,7 @@ public class ReportService
             }
 
         foreach (var product in products)
-            foreach (var comp in product.Components)
+            foreach (var comp in product.Assemblies.Concat(product.Components))
                 if (partToComponents.TryGetValue(comp.PartNumber, out var entries))
                     comp.AlsoInProducts = entries
                         .Where(e => e.Product.ProductKey != product.ProductKey)
@@ -782,6 +772,35 @@ public class ReportService
             ? product.CoverNumber
             : $"{product.CoverNumber} ({product.CoverTitle})";
 
+    private readonly record struct PartOrderQty(PartLineItem Part, string OrderNumber, int Qty);
+
+    /// <summary>
+    /// Builds one printable drawing entry (assembly or fabricated component) from all
+    /// PartLineItem rows sharing a PartNumber within a product group, summing quantity
+    /// across every order/parent that references it.
+    /// </summary>
+    private static TravellerComponent BuildTravellerComponent(
+        IGrouping<string, PartOrderQty> g, string pdfFolder, IReadOnlyDictionary<int, string> plantNames)
+    {
+        var path = Path.Combine(pdfFolder, g.Key + ".pdf");
+        return new TravellerComponent
+        {
+            PartNumber     = g.Key,
+            Title          = g.First().Part.Title,
+            Description    = g.First().Part.Description,
+            Thickness      = g.First().Part.Thickness,
+            Material       = g.First().Part.Material,
+            StructCode     = g.First().Part.StructCode,
+            IsStock        = g.First().Part.IsStock,
+            PlantDisplay   = ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
+            TotalQty       = g.Sum(x => x.Part.Qty * x.Qty),
+            OrderBreakdown = g.GroupBy(x => x.OrderNumber)
+                              .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
+                              .ToList(),
+            PdfPath        = File.Exists(path) ? path : null,
+        };
+    }
+
     // ── Traveller PDF builder ─────────────────────────────────────────────────
 
     private static byte[] BuildTravellerPdf(List<TravellerProduct> products, string scheduleName, ILogger log)
@@ -795,24 +814,29 @@ public class ReportService
             // Product cover page (front) + blank back for duplex
             TravellerAppendProductCoverPage(output, product, scheduleName);
 
-            // Assembly drawing first
-            if (product.AssemblyPdfPath != null)
+            // Assembly drawings first — one page (or "No Drawing" placeholder) per distinct
+            // Category="Assembly" row, not just the first one found.
+            foreach (var asm in product.Assemblies)
             {
-                TravellerAppendDrawingPages(output,
-                    product.AssemblyPdfPath,
-                    new TravellerPageInfo(
-                        PartNumber: product.ProductKey,
-                        Title:      product.AssemblyTitle,
-                        Description: product.AssemblyDescription,
-                        Thickness:  null, Material: null, StructCode: null,
-                        IsStock:    product.AssemblyIsStock,
-                        PlantDisplay: product.AssemblyPlantDisplay,
-                        TotalQty:   product.Orders.Sum(o => o.Qty),
-                        Orders:     product.Orders,
-                        SourceName: scheduleName,
-                        IsAssembly: true,
-                        AlsoIn:     []),
-                    log);
+                var asmInfo = new TravellerPageInfo(
+                    PartNumber: asm.PartNumber,
+                    Title:      asm.Title,
+                    Description: asm.Description,
+                    Thickness:  asm.Thickness,
+                    Material:   asm.Material,
+                    StructCode: asm.StructCode,
+                    IsStock:    asm.IsStock,
+                    PlantDisplay: asm.PlantDisplay,
+                    TotalQty:   asm.TotalQty,
+                    Orders:     asm.OrderBreakdown,
+                    SourceName: scheduleName,
+                    IsAssembly: true,
+                    AlsoIn:     asm.AlsoInProducts);
+
+                if (asm.PdfPath != null)
+                    TravellerAppendDrawingPages(output, asm.PdfPath, asmInfo, log);
+                else
+                    TravellerAppendTextOnlyPage(output, asmInfo);
             }
 
             // Fabricated components (bandsaw / iron worker)
@@ -1157,17 +1181,15 @@ public class ReportService
     private sealed class TravellerProduct
     {
         public string  ProductKey          { get; init; } = "";
-        public string? AssemblyTitle       { get; init; }
-        public string? AssemblyDescription { get; init; }
-        public string? AssemblyPdfPath     { get; init; }
-        public bool    AssemblyIsStock     { get; init; }
-        public string? AssemblyPlantDisplay { get; init; }
         // Top-level item identity shown on the standalone cover page — independent of
-        // whichever sub-assembly's drawing/description is attached above.
+        // whichever sub-assembly drawings are attached below.
         public string  CoverNumber         { get; init; } = "";
         public string? CoverTitle          { get; init; }
         public string? CoverDescription    { get; init; }
         public List<(string OrderNumber, int Qty)> Orders     { get; init; } = new();
+        // Every Category="Assembly" row in this product's orders — each gets its own
+        // drawing page (or "No Drawing" placeholder), printed right after the cover.
+        public List<TravellerComponent>            Assemblies { get; init; } = new();
         public List<TravellerComponent>            Components { get; init; } = new();
     }
 
