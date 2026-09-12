@@ -387,6 +387,58 @@ public class ReportService
         return BuildReport(groups, batchName, isSchedule: false, operation, _log);
     }
 
+    /// <summary>
+    /// Prints every part across a schedule whose Plant value is a custom, unresolved entry
+    /// (typed via the "Other…" option on the Orders grid rather than picked from the Plant
+    /// list) matching the given raw text exactly — e.g. "Order From Plant 2". Spans every
+    /// category/operation, sorted by part number.
+    /// </summary>
+    public async Task<byte[]?> GenerateScheduleCustomPlantReportAsync(string scheduleName, string plantValue, bool hideStock)
+    {
+        var schedules = await _db.Schedules
+            .Where(s => s.Name == scheduleName)
+            .Include(s => s.ScheduleOrders)
+                .ThenInclude(so => so.Parts)
+            .ToListAsync();
+
+        if (schedules.Count == 0) return null;
+
+        var pdfFolder = schedules[0].LocalPdfFolder
+            ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
+
+        var groups = schedules
+            .SelectMany(s => s.ScheduleOrders)
+            .SelectMany(so => so.Parts
+                .Where(p => p.PlantId == null && p.PlantIdRaw == plantValue && (!hideStock || !p.IsStock))
+                .Select(p => new { Part = p, Label = so.OrderNumber, ParentQty = so.Qty }))
+            .GroupBy(x => x.Part.PartNumber)
+            .Select(g => BuildGroup(g.Key,
+                g.First().Part.Title,
+                g.First().Part.Description,
+                g.First().Part.Thickness,
+                g.First().Part.Material,
+                g.First().Part.StructCode,
+                g.First().Part.IsStock,
+                plantValue,
+                g.GroupBy(x => x.Label)
+                 .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
+                 .OrderBy(o => o.Key)
+                 .ToList(),
+                Path.Combine(pdfFolder, g.Key + ".pdf")))
+            .OrderBy(g => g.PartNumber)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            _log.LogWarning("No parts with custom plant '{Plant}' found for schedule '{Name}'", plantValue, scheduleName);
+            return null;
+        }
+
+        _log.LogInformation("Generating custom-plant report for schedule '{Name}', plant '{Plant}': {Count} parts",
+            scheduleName, plantValue, groups.Count);
+        return BuildReport(groups, scheduleName, isSchedule: true, "Custom Report", _log);
+    }
+
     // ── Per-operation sort ────────────────────────────────────────────────────
 
     private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)

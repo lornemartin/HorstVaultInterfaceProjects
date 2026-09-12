@@ -145,6 +145,20 @@
                             style="@BtnStyle("")">Bandsaw</button>
                     <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "Purchased"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Purchased</button>
+                    @if (_scheduleCustomPlantValues.TryGetValue(sched.Id, out var customPlantValues) && customPlantValues.Count > 0)
+                    {
+                        <select @bind:get="GetCustomPlantSelection(sched.Id)"
+                                @bind:set="@((string v) => OnCustomPlantReportSelected(sched.Id, sched.Name, v))"
+                                @onclick:stopPropagation="true"
+                                title="Print a report of just the parts marked with a custom Plant value"
+                                style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px; font-size: 0.8rem;">
+                            <option value="">Custom Report…</option>
+                            @foreach (var val in customPlantValues)
+                            {
+                                <option value="@val">@val</option>
+                            }
+                        </select>
+                    }
                 </span>
             }
             else if (ctx.Field == "ScheduleOrderId" && _orderMeta.TryGetValue(key, out var order))
@@ -413,6 +427,8 @@
     private Dictionary<int, OrderCaption> _orderMeta = new();
     private Dictionary<int, int> _scheduleMissingPdfCount = new();
     private Dictionary<int, int> _orderMissingPdfCount = new();
+    private Dictionary<int, List<string>> _scheduleCustomPlantValues = new();
+    private Dictionary<int, string> _customPlantReportSelection = new();
 
     private sealed record ScheduleCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
     private sealed record OrderCaption(int Id, int ScheduleId, string? OrderNumber, int Qty, bool IsReleased,
@@ -566,18 +582,28 @@
         RecomputeMissingPdfCounts();
     }
 
-    // Missing-PDF counts only include rows currently visible under the "Hide stock
-    // parts" filter — a part hidden from the grid shouldn't count toward the badge.
+    // Missing-PDF counts and the custom-plant dropdown options only include rows currently
+    // visible under the "Hide stock parts" filter — a part hidden from the grid shouldn't
+    // count toward the badge or appear as a printable custom-plant value.
     private void RecomputeMissingPdfCounts()
     {
-        var missingRows = _rows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf
-                                         && (!_hideStock || !r.IsStock));
+        var visibleRows = _rows.Where(r => !_hideStock || !r.IsStock);
+
+        var missingRows = visibleRows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf);
         _scheduleMissingPdfCount = missingRows
             .GroupBy(r => r.ScheduleId)
             .ToDictionary(g => g.Key, g => g.Count());
         _orderMissingPdfCount = missingRows
             .GroupBy(r => r.ScheduleOrderId)
             .ToDictionary(g => g.Key, g => g.Count());
+
+        _scheduleCustomPlantValues = visibleRows
+            .Where(r => r.PlantId is null && !string.IsNullOrWhiteSpace(r.PlantIdRaw))
+            .GroupBy(r => r.ScheduleId)
+            .ToDictionary(g => g.Key, g => g.Select(r => r.PlantIdRaw!)
+                                             .Distinct(StringComparer.OrdinalIgnoreCase)
+                                             .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+                                             .ToList());
     }
 
     private async Task ApplyGridFilters()
@@ -1026,6 +1052,17 @@
     private async Task OpenOrderReport(string type, int orderId)
     {
         await JS.InvokeVoidAsync("window.open", $"/api/reports/{type}/{orderId}?hideStock={_hideStock}", "_blank");
+    }
+
+    private string GetCustomPlantSelection(int scheduleId) => _customPlantReportSelection.GetValueOrDefault(scheduleId, "");
+
+    private async Task OnCustomPlantReportSelected(int scheduleId, string scheduleName, string plantValue)
+    {
+        if (string.IsNullOrEmpty(plantValue)) return;
+        var url = $"/api/reports/schedule-custom-plant/{Uri.EscapeDataString(scheduleName)}/{Uri.EscapeDataString(plantValue)}?hideStock={_hideStock}";
+        await JS.InvokeVoidAsync("window.open", url, "_blank");
+        _customPlantReportSelection[scheduleId] = "";
+        StateHasChanged();
     }
 
     // ── Stock checkbox ────────────────────────────────────────────────────────

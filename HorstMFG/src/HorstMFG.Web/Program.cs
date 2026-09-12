@@ -144,6 +144,16 @@ try
         return Results.File(bytes, "application/pdf");
     }).RequireAuthorization();
 
+    app.MapGet("/api/reports/schedule-custom-plant/{name}/{plantValue}", async (string name, string plantValue, bool hideStock, ReportService reports, HttpResponse response) =>
+    {
+        var n  = Uri.UnescapeDataString(name);
+        var pv = Uri.UnescapeDataString(plantValue);
+        var bytes = await reports.GenerateScheduleCustomPlantReportAsync(n, pv, hideStock);
+        if (bytes is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"CustomPlant-{pv}-Schedule-{n}.pdf\"";
+        return Results.File(bytes, "application/pdf");
+    }).RequireAuthorization();
+
     // Minimal API: serve PDFs from the share
     var pdfSharePath = builder.Configuration["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
     app.MapGet("/api/pdf/{fileName}", (string fileName) =>
