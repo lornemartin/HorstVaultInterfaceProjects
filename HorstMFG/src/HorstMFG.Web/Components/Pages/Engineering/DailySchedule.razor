@@ -352,20 +352,22 @@
                 }
                 else
                 {
-                    var currentValue = row.PlantId?.ToString() ?? (row.PlantIdRaw is not null ? "__custom__" : "");
+                    var currentValue = row.PlantId?.ToString() ?? (row.PlantIdRaw is not null ? "custom:" + row.PlantIdRaw : "");
                     <select value="@currentValue"
                             @onchange="@(async e => await OnPartPlantSelectChanged(row, e.Value?.ToString() ?? ""))"
                             @onclick:stopPropagation="true"
                             disabled="@row.ScheduleReleased"
                             style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px;">
-                        <option value="" selected="@(currentValue == "")">—</option>
                         @foreach (var opt in _plantOptions.Where(o => o.Id.HasValue))
                         {
                             <option value="@opt.Id" selected="@(currentValue == opt.Id.ToString())">@opt.Name</option>
                         }
-                        @if (row.PlantIdRaw is not null && row.PlantId is null)
+                        @if (_scheduleCustomPlantValues.TryGetValue(row.ScheduleId, out var customVals))
                         {
-                            <option value="__custom__" selected="true">@row.PlantIdRaw</option>
+                            @foreach (var cv in customVals)
+                            {
+                                <option value="@("custom:" + cv)" selected="@(currentValue == "custom:" + cv)">@cv</option>
+                            }
                         }
                         <option value="__other__">Other…</option>
                     </select>
@@ -878,11 +880,16 @@
             StateHasChanged();
             return;
         }
-        if (rawValue == "__custom__") return;
 
-        int? plantId = int.TryParse(rawValue, out var parsed) ? parsed : null;
+        int? plantId = null;
+        string? plantIdRaw = null;
+        if (rawValue.StartsWith("custom:"))
+            plantIdRaw = rawValue["custom:".Length..];
+        else if (int.TryParse(rawValue, out var parsed))
+            plantId = parsed;
+
         _activePartLineItemId = row.PartLineItemId;
-        await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, null);
+        await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, plantIdRaw);
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
         await LoadData();
         await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
