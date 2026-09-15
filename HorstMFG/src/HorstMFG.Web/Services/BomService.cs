@@ -789,6 +789,36 @@ public class BomService : IBomService
         }
     }
 
+    public async Task UpdatePartPlantForAllSiblingsAsync(int partLineItemId, int? plantId, string? plantIdRaw)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var part = await db.Set<PartLineItem>()
+            .AsNoTracking()
+            .Include(p => p.BatchProduct)
+            .Include(p => p.ScheduleOrder)
+            .FirstOrDefaultAsync(p => p.Id == partLineItemId);
+        if (part is null) return;
+
+        if (part.BatchProductId.HasValue)
+        {
+            var batchId = part.BatchProduct!.BatchId;
+            await db.Set<PartLineItem>()
+                .Where(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.PlantId, plantId)
+                    .SetProperty(p => p.PlantIdRaw, plantIdRaw));
+        }
+        else if (part.ScheduleOrderId.HasValue)
+        {
+            var schedId = part.ScheduleOrder!.ScheduleId;
+            await db.Set<PartLineItem>()
+                .Where(p => p.ScheduleOrder!.ScheduleId == schedId && p.PartNumber == part.PartNumber)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.PlantId, plantId)
+                    .SetProperty(p => p.PlantIdRaw, plantIdRaw));
+        }
+    }
+
     public async Task MarkAllPartsAsStockForBatchProductAsync(int batchProductId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

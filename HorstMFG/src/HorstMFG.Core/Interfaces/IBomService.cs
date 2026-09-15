@@ -101,6 +101,12 @@ public interface IBomService
     Task UpdatePartIsStockForAllSiblingsAsync(int partLineItemId, bool isStock);
 
     /// <summary>
+    /// Update PlantId/PlantIdRaw for every PartLineItem that shares the same PartNumber within
+    /// the same Batch or Schedule as the given partLineItemId.
+    /// </summary>
+    Task UpdatePartPlantForAllSiblingsAsync(int partLineItemId, int? plantId, string? plantIdRaw);
+
+    /// <summary>
     /// Set IsStock = true for every PartLineItem belonging to the given BatchProduct.
     /// </summary>
     Task MarkAllPartsAsStockForBatchProductAsync(int batchProductId);
