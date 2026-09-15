@@ -994,10 +994,21 @@ public class BomService : IBomService
         db.NestBatches.Add(nestBatch);
         await db.SaveChangesAsync(); // get nestBatch.Id
 
-        // Aggregate qty across all products — same part number in multiple products becomes one BatchItem
+        // Aggregate qty across all products — same part number in multiple products becomes one BatchItem.
+        // Parts whose own Plant differs from the batch's overall Plant are excluded — they're not
+        // meant to be built here, and NestBatch/BatchItem have no per-part Plant to route them by.
+        var allLaserStockParts = batch.BatchProducts
+            .SelectMany(bp => bp.Parts.Where(p => p.Operations == "Laser" && p.IsStock))
+            .ToList();
+        var skippedCount = allLaserStockParts.Count(p => !PartMatchesParentPlant(p, batch.PlantId));
+        if (skippedCount > 0)
+            _log.LogInformation(
+                "Batch '{Name}': {Count} part line(s) skipped at release — Plant differs from the batch's Plant {PlantId}",
+                batch.Name, skippedCount, batch.PlantId);
+
         var batchPartQtys = batch.BatchProducts
             .SelectMany(bp => bp.Parts
-                .Where(p => p.Operations == "Laser" && p.IsStock)
+                .Where(p => p.Operations == "Laser" && p.IsStock && PartMatchesParentPlant(p, batch.PlantId))
                 .Select(p => (Line: p, TotalQty: p.Qty * bp.Qty)))
             .GroupBy(x => x.Line.PartNumber, StringComparer.OrdinalIgnoreCase)
             .Select(g => (Sample: g.First().Line, TotalQty: g.Sum(x => x.TotalQty)));
@@ -1016,6 +1027,15 @@ public class BomService : IBomService
         await db.SaveChangesAsync();
         _log.LogInformation("Batch '{Name}' (Id={Id}) released to production.", batch.Name, batch.Id);
     }
+
+    /// <summary>
+    /// True when a part has no Plant override (inherits the parent's) or its resolved PlantId
+    /// matches the parent Schedule/Batch's own PlantId. False for any explicit mismatch or an
+    /// unresolved custom PlantIdRaw — such parts are excluded when releasing to production,
+    /// since NestOrder/NestBatch only carry a single Plant for the whole release.
+    /// </summary>
+    private static bool PartMatchesParentPlant(PartLineItem part, int parentPlantId) =>
+        (part.PlantId is null && part.PlantIdRaw is null) || part.PlantId == parentPlantId;
 
     public async Task ReleaseScheduleToProductionAsync(int scheduleId)
     {
@@ -1044,9 +1064,18 @@ public class BomService : IBomService
             db.NestOrders.Add(nestOrder);
             await db.SaveChangesAsync(); // get nestOrder.Id
 
-            // Aggregate qty within the order — same part number appearing multiple times becomes one OrderItem
+            // Aggregate qty within the order — same part number appearing multiple times becomes one OrderItem.
+            // Parts whose own Plant differs from the schedule's overall Plant are excluded — see
+            // PartMatchesParentPlant.
+            var skippedCount = order.Parts.Count(p => p.Operations == "Laser" && !p.IsStock
+                && !PartMatchesParentPlant(p, schedule.PlantId));
+            if (skippedCount > 0)
+                _log.LogInformation(
+                    "Schedule '{Name}' order {Order}: {Count} part line(s) skipped at release — Plant differs from the schedule's Plant {PlantId}",
+                    schedule.Name, order.OrderNumber, skippedCount, schedule.PlantId);
+
             var orderPartQtys = order.Parts
-                .Where(p => p.Operations == "Laser" && !p.IsStock)
+                .Where(p => p.Operations == "Laser" && !p.IsStock && PartMatchesParentPlant(p, schedule.PlantId))
                 .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
                 .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * order.Qty));
 
