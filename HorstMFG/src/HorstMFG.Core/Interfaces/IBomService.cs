@@ -25,17 +25,23 @@ public interface IBomService
 
     /// <summary>
     /// Get a flat list of all PartLineItems (with denormalized Schedule/Order context) for the
-    /// Orders page SfGrid grouped by ScheduleId → ScheduleOrderId.
+    /// Orders page SfGrid grouped by ScheduleId → ScheduleOrderId. When <paramref name="releasedOnly"/>
+    /// is true, Schedules not yet released to production (ReadyForProduction == false) are excluded
+    /// entirely — used to hide unreleased work from ShopFloor-only users.
     /// </summary>
     Task<List<FlatSchedulePartRow>> GetFlatSchedulePartsAsync(
-        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null,
+        bool releasedOnly = false);
 
     /// <summary>
     /// Get a flat list of all PartLineItems (with denormalized Batch/Product context) for the
-    /// Batches page SfGrid grouped by BatchId → BatchProductId.
+    /// Batches page SfGrid grouped by BatchId → BatchProductId. When <paramref name="releasedOnly"/>
+    /// is true, Batches not yet released to production (ReadyForProduction == false) are excluded
+    /// entirely — used to hide unreleased work from ShopFloor-only users.
     /// </summary>
     Task<List<FlatBatchPartRow>> GetFlatBatchPartsAsync(
-        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null);
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null,
+        bool releasedOnly = false);
 
     /// <summary>
     /// Rename a Batch (top-level group in the Batches grid).

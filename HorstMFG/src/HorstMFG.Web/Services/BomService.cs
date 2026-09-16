@@ -406,7 +406,8 @@ public class BomService : IBomService
     }
 
     public async Task<List<FlatSchedulePartRow>> GetFlatSchedulePartsAsync(
-        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null,
+        bool releasedOnly = false)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
@@ -417,6 +418,7 @@ public class BomService : IBomService
             .Where(p => !plantId.HasValue || p.ScheduleOrder!.Schedule.PlantId == plantId.Value)
             .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(p => !releasedOnly || p.ScheduleOrder!.Schedule.ReadyForProduction)
             .Where(p => term == null ||
                 EF.Functions.ILike(p.ScheduleOrder!.Schedule.Name, $"%{term}%") ||
                 EF.Functions.ILike(p.ScheduleOrder!.OrderNumber, $"%{term}%") ||
@@ -476,6 +478,7 @@ public class BomService : IBomService
             .Where(so => !plantId.HasValue || so.Schedule.PlantId == plantId.Value)
             .Where(so => !fromDate.HasValue || so.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(so => !toDate.HasValue || so.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(so => !releasedOnly || so.Schedule.ReadyForProduction)
             .Where(so => term == null ||
                 EF.Functions.ILike(so.Schedule.Name, $"%{term}%") ||
                 EF.Functions.ILike(so.OrderNumber, $"%{term}%") ||
@@ -513,7 +516,8 @@ public class BomService : IBomService
     }
 
     public async Task<List<FlatBatchPartRow>> GetFlatBatchPartsAsync(
-        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null)
+        int? plantId = null, DateTime? fromDate = null, DateTime? toDate = null, string? searchTerm = null,
+        bool releasedOnly = false)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
@@ -524,6 +528,7 @@ public class BomService : IBomService
             .Where(p => !plantId.HasValue || p.BatchProduct!.Batch.PlantId == plantId.Value)
             .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.BatchProduct!.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(p => !releasedOnly || p.BatchProduct!.Batch.ReadyForProduction)
             .Where(p => term == null ||
                 EF.Functions.ILike(p.BatchProduct!.Batch.Name, $"%{term}%") ||
                 EF.Functions.ILike(p.BatchProduct!.ProductName, $"%{term}%") ||
@@ -568,6 +573,7 @@ public class BomService : IBomService
             .Where(bp => !plantId.HasValue || bp.Batch.PlantId == plantId.Value)
             .Where(bp => !fromDate.HasValue || bp.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(bp => !toDate.HasValue || bp.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Where(bp => !releasedOnly || bp.Batch.ReadyForProduction)
             .Where(bp => term == null ||
                 EF.Functions.ILike(bp.Batch.Name, $"%{term}%") ||
                 EF.Functions.ILike(bp.ProductName, $"%{term}%"))

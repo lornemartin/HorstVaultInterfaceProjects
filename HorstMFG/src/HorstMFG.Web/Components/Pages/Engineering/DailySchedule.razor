@@ -473,6 +473,7 @@
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
     private bool _isAdmin;
+    private bool _releasedOnly;
     private bool _releasing;
     private bool _loading;
     private int?      _dateRangeDays = 30;
@@ -553,6 +554,12 @@
                 if (int.TryParse(plantIdClaim, out var pid))
                     _selectedPlantId = pid;
             }
+
+            // ShopFloor and Nesting users reach this page via the "Engineering" policy (Admin,
+            // Engineering, Nesting, ShopFloor all share it), but only Admin/Engineering should
+            // see work that hasn't been released to production yet.
+            _releasedOnly = !_isAdmin
+                         && !httpContext.User.HasClaim(ClaimTypes.Role, "Engineering");
         }
     }
 
@@ -578,7 +585,7 @@
         _importErrorByOrderId.Clear();
         StateHasChanged();
         var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
-        _rows = await BomService.GetFlatSchedulePartsAsync(_selectedPlantId, _fromDate, _toDate, term);
+        _rows = await BomService.GetFlatSchedulePartsAsync(_selectedPlantId, _fromDate, _toDate, term, _releasedOnly);
         BuildMeta();
         _loading = false;
         StateHasChanged();
