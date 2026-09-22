@@ -358,11 +358,13 @@ public class BomService : IBomService
             await _db.SaveChangesAsync();
         }
 
+        var level1Line = lines.FirstOrDefault(l => !l.Level.Contains('.'));
         var order = new ScheduleOrder
         {
             ScheduleId = schedule.Id,
             PlantId = plantId,
             OrderNumber = orderNumber,
+            ProductNumber = level1Line?.Number,
             Qty = orderQty < 1 ? 1 : orderQty,
         };
         _db.ScheduleOrders.Add(order);
