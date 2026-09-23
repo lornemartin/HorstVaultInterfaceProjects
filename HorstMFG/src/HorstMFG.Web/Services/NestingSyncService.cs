@@ -66,7 +66,10 @@ public class NestingSyncService
     /// didn't match the station's recorded active project and was refused.</returns>
     public async Task<string?> ApplySyncPayloadAsync(int stationId, int plantIdOverride, SyncPayloadDto sync)
     {
-        if (sync.Parts.Count == 0) return null;
+        // NOTE: sync.Parts.Count == 0 is NOT a no-op — it's the live Radan project reporting it
+        // now has zero parts at all (e.g. every part in the project was deleted). That must still
+        // flow through below so stale NestedPart rows get cleaned up and QtyNested gets recomputed
+        // down to 0; an early return here previously left both permanently stuck at their last value.
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var station = await db.NestingStations.AsNoTracking()
