@@ -1,8 +1,12 @@
 @rendermode InteractiveServer
 @inject BridgeNotificationService BridgeEvents
 @inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDbContextFactory<HorstMFG.Infrastructure.Data.ApplicationDbContext> DbContextFactory
 @implements IDisposable
+@using System.Security.Claims
 @using HorstMFG.Web.Services
+@using Microsoft.EntityFrameworkCore
 
 @if (_showBanner)
 {
@@ -25,11 +29,22 @@
 
 @code {
     private bool _showBanner;
+    private bool _isAdmin;
+    private int? _myStationId;
+    private int _myPlantId;
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
+            var user = HttpContextAccessor.HttpContext?.User;
+            _isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
+            if (int.TryParse(user?.FindFirst("StationId")?.Value, out var sid))
+                _myStationId = sid;
+            int.TryParse(user?.FindFirst("PlantId")?.Value, out _myPlantId);
+
             BridgeEvents.BomExportReceived += OnBomExportReceived;
+        }
         return Task.CompletedTask;
     }
 
@@ -43,8 +58,30 @@
         var path = new Uri(Nav.Uri).AbsolutePath;
         if (path.Equals("/bom-import", StringComparison.OrdinalIgnoreCase)) return;
 
-        _ = InvokeAsync(() =>
+        _ = InvokeAsync(async () =>
         {
+            // This event is a global broadcast (BridgeNotificationService is a singleton, and every
+            // logged-in user's layout subscribes). A user assigned to a specific station only sees
+            // exports from THAT station. A user with no station assigned (StationId is optional,
+            // unlike PlantId which every user has) falls back to their own plant, so they still see
+            // only exports relevant to them rather than either everything or nothing.
+            if (!_isAdmin)
+            {
+                if (_myStationId.HasValue)
+                {
+                    if (stationId != _myStationId.Value) return;
+                }
+                else
+                {
+                    await using var db = await DbContextFactory.CreateDbContextAsync();
+                    var stationPlantId = await db.NestingStations
+                        .Where(s => s.Id == stationId)
+                        .Select(s => (int?)s.PlantId)
+                        .FirstOrDefaultAsync();
+                    if (stationPlantId != _myPlantId) return;
+                }
+            }
+
             _showBanner = true;
             StateHasChanged();
         });
