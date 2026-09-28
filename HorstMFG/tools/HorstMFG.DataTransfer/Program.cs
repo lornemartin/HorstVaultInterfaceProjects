@@ -458,7 +458,7 @@ async Task<int> RunAsync(string plant, DateTime? sinceDate)
     var newSOPairs = new List<((int, string) Key, ScheduleOrder Entity)>(neededSchedOrders.Count);
     foreach (var (schedId, orderNum) in neededSchedOrders)
     {
-        var so = new ScheduleOrder { ScheduleId = schedId, OrderNumber = orderNum, Qty = 1 };
+        var so = new ScheduleOrder { ScheduleId = schedId, PlantId = targetPlant.Id, OrderNumber = orderNum, Qty = 1 };
         db.Set<ScheduleOrder>().Add(so);
         newSOPairs.Add(((schedId, orderNum), so));
 
