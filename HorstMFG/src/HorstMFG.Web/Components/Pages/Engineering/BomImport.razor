@@ -202,6 +202,8 @@ else
     private bool _importComplete;
     private bool _isAdmin;
     private int _userId;
+    private int _myPlantId;
+    private int? _myStationId;
     private string? _message;
     private bool _isError;
     private int _missingPdfCount;
@@ -232,6 +234,10 @@ else
             var plantIdClaim = httpContext.User.FindFirst("PlantId")?.Value;
             if (int.TryParse(plantIdClaim, out var pid))
                 _selectedPlantId = pid;
+            _myPlantId = pid;
+
+            if (int.TryParse(httpContext.User.FindFirst("StationId")?.Value, out var sid))
+                _myStationId = sid;
 
             _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
         }
@@ -254,7 +260,10 @@ else
             // Pre-populate if the user navigated here after clicking the banner.
             // Must be here (not OnInitializedAsync) to avoid SSR pre-render consuming
             // and clearing PendingBomExport before the interactive phase runs.
-            if (!string.IsNullOrEmpty(BridgeEvents.PendingBomExport))
+            // Scoped the same way as the banner: PendingBomExport is a single global slot
+            // shared by every user, so only auto-load it if it's actually relevant to me.
+            if (!string.IsNullOrEmpty(BridgeEvents.PendingBomExport) &&
+                await IsRelevantToMeAsync(BridgeEvents.PendingBomExportStationId))
                 await LoadPendingBomExportAsync();
 
             var savedBomType = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_bomType");
@@ -283,7 +292,35 @@ else
 
     private void OnBomExportReceived(int stationId, string fileContents)
     {
-        _ = InvokeAsync(async () => await LoadPendingBomExportAsync());
+        _ = InvokeAsync(async () =>
+        {
+            if (await IsRelevantToMeAsync(stationId))
+                await LoadPendingBomExportAsync();
+        });
+    }
+
+    /// <summary>
+    /// Same plant/station scoping as BomExportBanner: a user assigned to a specific station
+    /// only auto-loads exports from THAT station; a user with no station assigned falls back
+    /// to their own plant. Admins see everything. Without this, BomExportReceived/
+    /// PendingBomExport (a single global slot on the singleton BridgeNotificationService)
+    /// would auto-populate this grid with ANY plant's export for ANY user who has this page
+    /// open or navigates to it.
+    /// </summary>
+    private async Task<bool> IsRelevantToMeAsync(int? stationId)
+    {
+        if (_isAdmin) return true;
+        if (stationId is null) return false;
+
+        if (_myStationId.HasValue)
+            return stationId.Value == _myStationId.Value;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var stationPlantId = await db.NestingStations
+            .Where(s => s.Id == stationId.Value)
+            .Select(s => (int?)s.PlantId)
+            .FirstOrDefaultAsync();
+        return stationPlantId == _myPlantId;
     }
 
     private async Task LoadPendingBomExportAsync()

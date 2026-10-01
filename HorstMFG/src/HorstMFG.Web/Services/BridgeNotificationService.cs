@@ -26,7 +26,16 @@ public class BridgeNotificationService
     /// </summary>
     public string? PendingBomExport { get; private set; }
 
-    public void ClearPendingBomExport() => PendingBomExport = null;
+    /// <summary>The station that produced <see cref="PendingBomExport"/> — lets a consumer
+    /// decide whether this pending export is actually relevant to the viewing user before
+    /// auto-loading it (same plant/station scoping as the export-detected banner/event).</summary>
+    public int? PendingBomExportStationId { get; private set; }
+
+    public void ClearPendingBomExport()
+    {
+        PendingBomExport = null;
+        PendingBomExportStationId = null;
+    }
 
     /// <summary>stationId, projectName, projectPath</summary>
     public event Action<int, string?, string?>? StationProjectChanged;
@@ -43,6 +52,7 @@ public class BridgeNotificationService
     internal void OnBomExportDetected(int stationId, string fileContents)
     {
         PendingBomExport = fileContents;
+        PendingBomExportStationId = stationId;
         BomExportReceived?.Invoke(stationId, fileContents);
     }
 
