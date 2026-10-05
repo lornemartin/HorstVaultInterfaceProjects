@@ -439,6 +439,58 @@ public class ReportService
         return BuildReport(groups, scheduleName, isSchedule: true, "Custom Report", _log);
     }
 
+    /// <summary>
+    /// Prints every part across a batch whose Plant value is a custom, unresolved entry
+    /// (typed via the "Other…" option on the Batches grid rather than picked from the Plant
+    /// list) matching the given raw text exactly — e.g. "Order From Plant 2". Spans every
+    /// category/operation, sorted by part number.
+    /// </summary>
+    public async Task<byte[]?> GenerateBatchCustomPlantReportAsync(string batchName, string plantValue, bool hideNonStock)
+    {
+        var batches = await _db.Batches
+            .Where(b => b.Name == batchName)
+            .Include(b => b.BatchProducts)
+                .ThenInclude(bp => bp.Parts)
+            .ToListAsync();
+
+        if (batches.Count == 0) return null;
+
+        var pdfFolder = batches[0].LocalPdfFolder
+            ?? Path.Combine(_localPdfPath, "Batches", batchName);
+
+        var groups = batches
+            .SelectMany(b => b.BatchProducts)
+            .SelectMany(bp => bp.Parts
+                .Where(p => p.PlantId == null && p.PlantIdRaw == plantValue && (!hideNonStock || p.IsStock))
+                .Select(p => new { Part = p, Label = bp.ProductName, ParentQty = bp.Qty }))
+            .GroupBy(x => x.Part.PartNumber)
+            .Select(g => BuildGroup(g.Key,
+                g.First().Part.Title,
+                g.First().Part.Description,
+                g.First().Part.Thickness,
+                g.First().Part.Material,
+                g.First().Part.StructCode,
+                g.First().Part.IsStock,
+                plantValue,
+                g.GroupBy(x => x.Label)
+                 .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
+                 .OrderBy(o => o.Key)
+                 .ToList(),
+                Path.Combine(pdfFolder, g.Key + ".pdf")))
+            .OrderBy(g => g.PartNumber)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            _log.LogWarning("No parts with custom plant '{Plant}' found for batch '{Name}'", plantValue, batchName);
+            return null;
+        }
+
+        _log.LogInformation("Generating custom-plant report for batch '{Name}', plant '{Plant}': {Count} parts",
+            batchName, plantValue, groups.Count);
+        return BuildReport(groups, batchName, isSchedule: false, "Custom Report", _log);
+    }
+
     // ── Per-operation sort ────────────────────────────────────────────────────
 
     private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)
