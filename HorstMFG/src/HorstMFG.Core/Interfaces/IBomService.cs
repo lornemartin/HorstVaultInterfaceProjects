@@ -154,16 +154,56 @@ public interface IBomService
     Task DeleteScheduleOrderAsync(int scheduleOrderId);
 
     /// <summary>
-    /// Release a Batch to production: populates NestBatch and BatchItems.
-    /// Throws InvalidOperationException if already released.
+    /// Release a Batch to production: populates NestBatch and BatchItems. Only includes
+    /// cross-plant parts whose BatchProductHandoff for the destination plant is Accepted;
+    /// anything still Pending/Rejected is skipped and logged. Throws InvalidOperationException
+    /// if already released.
     /// </summary>
     Task ReleaseBatchToProductionAsync(int batchId);
 
     /// <summary>
-    /// Release a Schedule to production: populates NestOrders and OrderItems.
-    /// Throws InvalidOperationException if already released.
+    /// Release a Schedule to production: populates NestOrders and OrderItems. Only includes
+    /// cross-plant parts whose ScheduleOrderHandoff for the destination plant is Accepted;
+    /// anything still Pending/Rejected is skipped and logged. Throws InvalidOperationException
+    /// if already released.
     /// </summary>
     Task ReleaseScheduleToProductionAsync(int scheduleId);
+
+    /// <summary>
+    /// Accept a cross-plant BatchProductHandoff: sets Status to Accepted.
+    /// </summary>
+    Task AcceptBatchProductHandoffAsync(int handoffId, int userId);
+
+    /// <summary>
+    /// Reject a cross-plant BatchProductHandoff: sets Status to Rejected with a reason.
+    /// The row is left in place as a permanent record.
+    /// </summary>
+    Task RejectBatchProductHandoffAsync(int handoffId, int userId, string? reason);
+
+    /// <summary>
+    /// Creates a fresh Pending BatchProductHandoff for (batchProductId, destinationPlantId) if
+    /// the most recent row for that pair is Rejected and at least one live part still resolves
+    /// to that destination plant. Returns 1 if a new row was created, 0 otherwise.
+    /// </summary>
+    Task<int> ResubmitBatchProductHandoffAsync(int batchProductId, int destinationPlantId);
+
+    /// <summary>
+    /// Accept a cross-plant ScheduleOrderHandoff: sets Status to Accepted.
+    /// </summary>
+    Task AcceptScheduleOrderHandoffAsync(int handoffId, int userId);
+
+    /// <summary>
+    /// Reject a cross-plant ScheduleOrderHandoff: sets Status to Rejected with a reason.
+    /// The row is left in place as a permanent record.
+    /// </summary>
+    Task RejectScheduleOrderHandoffAsync(int handoffId, int userId, string? reason);
+
+    /// <summary>
+    /// Creates a fresh Pending ScheduleOrderHandoff for (scheduleOrderId, destinationPlantId) if
+    /// the most recent row for that pair is Rejected and at least one live part still resolves
+    /// to that destination plant. Returns 1 if a new row was created, 0 otherwise.
+    /// </summary>
+    Task<int> ResubmitScheduleOrderHandoffAsync(int scheduleOrderId, int destinationPlantId);
 
     /// <summary>
     /// Check if a PDF exists on the share for the given part number.

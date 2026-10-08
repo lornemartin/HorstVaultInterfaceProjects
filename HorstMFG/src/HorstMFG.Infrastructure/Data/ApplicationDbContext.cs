@@ -18,6 +18,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<PartLineItem> PartLineItems => Set<PartLineItem>();
     public DbSet<NestOrder> NestOrders => Set<NestOrder>();
     public DbSet<NestBatch> NestBatches => Set<NestBatch>();
+    public DbSet<BatchProductHandoff> BatchProductHandoffs => Set<BatchProductHandoff>();
+    public DbSet<ScheduleOrderHandoff> ScheduleOrderHandoffs => Set<ScheduleOrderHandoff>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<BatchItem> BatchItems => Set<BatchItem>();
     public DbSet<Nest> Nests => Set<Nest>();
@@ -157,6 +159,30 @@ public class ApplicationDbContext : DbContext
             e.HasKey(o => o.Id);
             e.HasOne(o => o.ScheduleOrder).WithMany().HasForeignKey(o => o.ScheduleOrderId);
             e.HasOne(o => o.Plant).WithMany(p => p.NestOrders).HasForeignKey(o => o.PlantId);
+        });
+
+        // BatchProductHandoff
+        modelBuilder.Entity<BatchProductHandoff>(e =>
+        {
+            e.ToTable("batch_product_handoffs");
+            e.HasKey(h => h.Id);
+            e.Property(h => h.RejectionReason).HasMaxLength(2000);
+            e.HasOne(h => h.BatchProduct).WithMany().HasForeignKey(h => h.BatchProductId);
+            e.HasOne(h => h.DestinationPlant).WithMany().HasForeignKey(h => h.DestinationPlantId);
+            e.HasOne(h => h.AcceptedByUser).WithMany().HasForeignKey(h => h.AcceptedByUserId).IsRequired(false);
+            e.HasOne(h => h.RejectedByUser).WithMany().HasForeignKey(h => h.RejectedByUserId).IsRequired(false);
+        });
+
+        // ScheduleOrderHandoff
+        modelBuilder.Entity<ScheduleOrderHandoff>(e =>
+        {
+            e.ToTable("schedule_order_handoffs");
+            e.HasKey(h => h.Id);
+            e.Property(h => h.RejectionReason).HasMaxLength(2000);
+            e.HasOne(h => h.ScheduleOrder).WithMany().HasForeignKey(h => h.ScheduleOrderId);
+            e.HasOne(h => h.DestinationPlant).WithMany().HasForeignKey(h => h.DestinationPlantId);
+            e.HasOne(h => h.AcceptedByUser).WithMany().HasForeignKey(h => h.AcceptedByUserId).IsRequired(false);
+            e.HasOne(h => h.RejectedByUser).WithMany().HasForeignKey(h => h.RejectedByUserId).IsRequired(false);
         });
 
         // OrderItem

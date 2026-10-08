@@ -137,7 +137,7 @@
                     </span>
                 }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
-                    @if (!batch.IsReleased)
+                    @if (!batch.IsReleased && batch.PlantId == _selectedPlantId)
                     {
                         @if (_productMeta.Values.Any(p => p.BatchId == batch.Id && !p.VaultBomImported))
                         {
@@ -207,7 +207,7 @@
                 }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
                     <span style="font-size: 0.8rem; color: #6b7280;">Plant:</span>
-                    @if (product.IsReleased)
+                    @if (product.IsReleased || !IsSenderForBatch(product.BatchId))
                     {
                         <strong>@(_plantOptions.FirstOrDefault(o => o.Id == product.PlantId)?.Name ?? "—")</strong>
                     }
@@ -226,7 +226,7 @@
                 </span>
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
                     <span style="font-size: 0.8rem; color: #6b7280;">Qty:</span>
-                    @if (product.IsReleased)
+                    @if (product.IsReleased || !IsSenderForBatch(product.BatchId))
                     {
                         <strong>@product.Qty</strong>
                     }
@@ -270,6 +270,44 @@
                                 style="@BtnStyle("")">Mark all as stock</button>
                     }
                 </span>
+                @if (_batchProductHandoffs.TryGetValue(product.Id, out var handoff))
+                {
+                    <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center; font-size: 0.8rem;">
+                        @if (IsSenderForBatch(product.BatchId))
+                        {
+                            <span style="color: #6b7280;">&#8594; @handoff.DestinationPlantName:</span>
+                            @if (handoff.Status == HandoffStatus.Pending)
+                            {
+                                <span style="color: #92400e;">Pending</span>
+                            }
+                            else if (handoff.Status == HandoffStatus.Accepted)
+                            {
+                                <span style="color: #166534;">Accepted by @handoff.AcceptedByUserName</span>
+                            }
+                            else if (handoff.Status == HandoffStatus.Rejected)
+                            {
+                                <span style="color: #991b1b;">Rejected by @handoff.RejectedByUserName: @handoff.RejectionReason</span>
+                                <button @onclick="@(async () => await OnResubmitBatchProductHandoff(product.Id, handoff.DestinationPlantId, handoff.DestinationPlantName))"
+                                        @onclick:stopPropagation="true" style="@BtnStyle("e-primary")">Resubmit</button>
+                            }
+                        }
+                        else
+                        {
+                            <span style="color: #6b7280;">(from @OriginPlantNameForBatch(product.BatchId))</span>
+                            @if (handoff.Status == HandoffStatus.Pending)
+                            {
+                                <button @onclick="@(async () => await OnAcceptBatchProductHandoff(handoff.Id))" @onclick:stopPropagation="true"
+                                        style="@BtnStyle("e-primary")">Accept</button>
+                                <button @onclick="@(() => OnRejectBatchProductHandoffClicked(handoff.Id, product.ProductName))" @onclick:stopPropagation="true"
+                                        style="@BtnStyle("danger")">Reject</button>
+                            }
+                            else if (handoff.Status == HandoffStatus.Accepted)
+                            {
+                                <span style="color: #166534;">Accepted</span>
+                            }
+                        }
+                    </span>
+                }
             }
             else
             {
@@ -348,7 +386,6 @@
                     <input type="text" value="@(row.PlantIdRaw ?? "")"
                            @onchange="@(async e => await OnPartPlantRawChanged(row, e.Value?.ToString() ?? ""))"
                            @onclick:stopPropagation="true"
-                           disabled="@row.BatchReleased"
                            placeholder="Custom plant…"
                            style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px;" />
                 }
@@ -358,7 +395,6 @@
                     <select value="@currentValue"
                             @onchange="@(async e => await OnPartPlantSelectChanged(row, e.Value?.ToString() ?? ""))"
                             @onclick:stopPropagation="true"
-                            disabled="@row.BatchReleased"
                             style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px;">
                         @foreach (var opt in _plantOptions.Where(o => o.Id.HasValue))
                         {
@@ -464,6 +500,26 @@
     </DialogTemplates>
 </SfDialog>
 
+<SfDialog @bind-Visible="_showRejectHandoffDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
+          Header="Reject Cross-Plant Handoff" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            @if (_rejectHandoffProductName is not null)
+            {
+                <p>Reject the handoff of <strong>@_rejectHandoffProductName</strong>?</p>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Reason</label>
+                <textarea @bind="_rejectReason" rows="3"
+                          style="width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 0.4rem;"
+                          placeholder="Why is this being rejected?"></textarea>
+            }
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnRejectHandoffCancel">Cancel</SfButton>
+            <SfButton OnClick="OnRejectHandoffConfirm" CssClass="e-primary" style="margin-left: 8px;">Reject</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
 @code {
     // ── Data ─────────────────────────────────────────────────────────────────
     private List<FlatBatchPartRow> _rows = new();
@@ -474,8 +530,11 @@
     private Dictionary<int, List<string>> _batchCustomPlantValues = new();
     private Dictionary<int, string> _customPlantReportSelection = new();
 
-    private sealed record BatchCaption(int Id, string Name, DateTime ImportDate, bool IsReleased);
+    private sealed record BatchCaption(int Id, string Name, DateTime ImportDate, bool IsReleased, int PlantId);
     private sealed record ProductCaption(int Id, int BatchId, string? ProductName, int Qty, bool IsReleased, bool VaultBomImported, int PlantId);
+
+    private sealed record HandoffCaptionInfo(int Id, int DestinationPlantId, string DestinationPlantName, HandoffStatus Status,
+        DateTime? AcceptedDate, string? AcceptedByUserName, DateTime? RejectedDate, string? RejectedByUserName, string? RejectionReason);
 
     // ── Persisted state ───────────────────────────────────────────────────────
     private sealed class BatchesGridState
@@ -493,6 +552,7 @@
     private SfGrid<FlatBatchPartRow>? _batchGrid;
     private List<PlantOption> _plantOptions = new();
     private int? _selectedPlantId;
+    private int? _userId;
     private bool _isAdmin;
     private bool _releasedOnly;
     private bool _releasing;
@@ -556,7 +616,24 @@
 
     private record PlantOption(int? Id, string Name);
 
+    // Cross-plant handoffs — latest row per BatchProductId, for any pair relevant to this viewer
+    // (either this is the sender's own product, or it's destined for this viewer).
+    private Dictionary<int, HandoffCaptionInfo> _batchProductHandoffs = new();
+    private bool _showRejectHandoffDialog;
+    private int? _rejectHandoffId;
+    private string? _rejectHandoffProductName;
+    private string _rejectReason = "";
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+    private bool IsSenderForBatch(int batchId) =>
+        _batchMeta.TryGetValue(batchId, out var batch) && batch.PlantId == _selectedPlantId;
+
+    private string OriginPlantNameForBatch(int batchId)
+    {
+        if (!_batchMeta.TryGetValue(batchId, out var batch)) return "?";
+        return _plantOptions.FirstOrDefault(o => o.Id == batch.PlantId)?.Name ?? "?";
+    }
+
     private static string BtnStyle(string variant) => variant switch
     {
         "e-primary" => "padding: 2px 8px; font-size: 0.75rem; border-radius: 3px; border: 1px solid #3b82f6; background: #3b82f6; color: white; cursor: pointer;",
@@ -575,6 +652,10 @@
         var httpContext = HttpContextAccessor.HttpContext;
         if (httpContext?.User.Identity?.IsAuthenticated == true)
         {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var uid))
+                _userId = uid;
+
             _isAdmin = httpContext.User.HasClaim(ClaimTypes.Role, "Admin");
             if (!_isAdmin)
             {
@@ -618,10 +699,85 @@
         var term = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
         _rows = await BomService.GetFlatBatchPartsAsync(_selectedPlantId, _fromDate, _toDate, term, _releasedOnly);
         BuildMeta();
+        await LoadHandoffsAsync();
         _loading = false;
         StateHasChanged();
         await ApplyGridFilters();
         await RestoreExpansionAsync();
+    }
+
+    // ── Cross-plant handoffs — inline on the BatchProduct caption, no separate banner ────────
+    private async Task LoadHandoffsAsync()
+    {
+        _batchProductHandoffs.Clear();
+        if (_selectedPlantId is not { } myPlantId) return;
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+
+        var relevant = await db.BatchProductHandoffs
+            .Where(h => h.BatchProduct.Batch.PlantId == myPlantId || h.DestinationPlantId == myPlantId)
+            .OrderByDescending(h => h.Id)
+            .Select(h => new
+            {
+                h.Id, h.BatchProductId, h.DestinationPlantId, h.Status,
+                h.AcceptedDate, AcceptedByUserName = h.AcceptedByUser == null ? null : h.AcceptedByUser.FullName,
+                h.RejectedDate, RejectedByUserName = h.RejectedByUser == null ? null : h.RejectedByUser.FullName, h.RejectionReason
+            })
+            .ToListAsync();
+
+        _batchProductHandoffs = relevant
+            .GroupBy(h => h.BatchProductId)
+            .ToDictionary(g => g.Key, g =>
+            {
+                var h = g.First(); // latest, since the query is already ordered newest-first
+                return new HandoffCaptionInfo(
+                    h.Id, h.DestinationPlantId,
+                    _plantOptions.FirstOrDefault(o => o.Id == h.DestinationPlantId)?.Name ?? "Plant " + h.DestinationPlantId,
+                    h.Status, h.AcceptedDate, h.AcceptedByUserName, h.RejectedDate, h.RejectedByUserName, h.RejectionReason);
+            });
+    }
+
+    private async Task OnAcceptBatchProductHandoff(int handoffId)
+    {
+        if (_userId is not { } userId) return;
+        await BomService.AcceptBatchProductHandoffAsync(handoffId, userId);
+        await LoadData();
+    }
+
+    private void OnRejectBatchProductHandoffClicked(int handoffId, string? productName)
+    {
+        _rejectHandoffId = handoffId;
+        _rejectHandoffProductName = productName;
+        _rejectReason = "";
+        _showRejectHandoffDialog = true;
+        StateHasChanged();
+    }
+
+    private async Task OnRejectHandoffConfirm()
+    {
+        _showRejectHandoffDialog = false;
+        if (_rejectHandoffId is not { } handoffId || _userId is not { } userId) return;
+        await BomService.RejectBatchProductHandoffAsync(handoffId, userId, _rejectReason);
+        _rejectHandoffId = null;
+        _rejectHandoffProductName = null;
+        await LoadData();
+    }
+
+    private void OnRejectHandoffCancel()
+    {
+        _showRejectHandoffDialog = false;
+        _rejectHandoffId = null;
+        _rejectHandoffProductName = null;
+    }
+
+    private async Task OnResubmitBatchProductHandoff(int batchProductId, int destinationPlantId, string destinationPlantName)
+    {
+        var count = await BomService.ResubmitBatchProductHandoffAsync(batchProductId, destinationPlantId);
+        _statusMessage = count > 0
+            ? $"Resubmitted handoff to {destinationPlantName}."
+            : "Nothing to resubmit — the Plant field hasn't been changed back to this destination yet.";
+        _statusIsError = count == 0;
+        await LoadData();
     }
 
     private void BuildMeta()
@@ -632,7 +788,8 @@
                 g.Key,
                 g.First().BatchName,
                 g.First().BatchImportDate,
-                g.First().BatchReleased));
+                g.First().BatchReleased,
+                g.First().BatchPlantId));
 
         _productMeta = _rows
             .GroupBy(r => r.BatchProductId)

@@ -195,6 +195,55 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("batch_products", (string)null);
                 });
 
+            modelBuilder.Entity("HorstMFG.Core.Entities.BatchProductHandoff", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AcceptedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AcceptedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("BatchProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DestinationPlantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RejectedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByUserId");
+
+                    b.HasIndex("BatchProductId");
+
+                    b.HasIndex("DestinationPlantId");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.ToTable("batch_product_handoffs", (string)null);
+                });
+
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
                 {
                     b.Property<int>("Id")
@@ -650,6 +699,55 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("schedule_orders", (string)null);
                 });
 
+            modelBuilder.Entity("HorstMFG.Core.Entities.ScheduleOrderHandoff", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AcceptedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AcceptedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DestinationPlantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RejectedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("ScheduleOrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByUserId");
+
+                    b.HasIndex("DestinationPlantId");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("ScheduleOrderId");
+
+                    b.ToTable("schedule_order_handoffs", (string)null);
+                });
+
             modelBuilder.Entity("HorstMFG.Core.Entities.SystemConfiguration", b =>
                 {
                     b.Property<int>("Id")
@@ -776,6 +874,37 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Batch");
 
                     b.Navigation("Plant");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.BatchProductHandoff", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "AcceptedByUser")
+                        .WithMany()
+                        .HasForeignKey("AcceptedByUserId");
+
+                    b.HasOne("HorstMFG.Core.Entities.BatchProduct", "BatchProduct")
+                        .WithMany()
+                        .HasForeignKey("BatchProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HorstMFG.Core.Entities.Plant", "DestinationPlant")
+                        .WithMany()
+                        .HasForeignKey("DestinationPlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId");
+
+                    b.Navigation("AcceptedByUser");
+
+                    b.Navigation("BatchProduct");
+
+                    b.Navigation("DestinationPlant");
+
+                    b.Navigation("RejectedByUser");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
@@ -943,6 +1072,37 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Plant");
 
                     b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.ScheduleOrderHandoff", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "AcceptedByUser")
+                        .WithMany()
+                        .HasForeignKey("AcceptedByUserId");
+
+                    b.HasOne("HorstMFG.Core.Entities.Plant", "DestinationPlant")
+                        .WithMany()
+                        .HasForeignKey("DestinationPlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId");
+
+                    b.HasOne("HorstMFG.Core.Entities.ScheduleOrder", "ScheduleOrder")
+                        .WithMany()
+                        .HasForeignKey("ScheduleOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AcceptedByUser");
+
+                    b.Navigation("DestinationPlant");
+
+                    b.Navigation("RejectedByUser");
+
+                    b.Navigation("ScheduleOrder");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.UserRole", b =>

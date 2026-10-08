@@ -13,6 +13,7 @@ public class FlatBatchPartRow
     public string BatchName { get; set; } = string.Empty;
     public DateTime BatchImportDate { get; set; }
     public bool BatchReleased { get; set; }
+    public int BatchPlantId { get; set; }
 
     // ── Level-2 group (BatchProduct) ─────────────────────────────────────────
     public int BatchProductId { get; set; }

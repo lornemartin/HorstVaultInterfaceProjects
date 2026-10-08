@@ -13,6 +13,7 @@ public class FlatSchedulePartRow
     public string ScheduleName { get; set; } = string.Empty;
     public DateTime ScheduleImportDate { get; set; }
     public bool ScheduleReleased { get; set; }
+    public int SchedulePlantId { get; set; }
 
     // ── Level-2 group (ScheduleOrder) ───────────────────────────────────────
     public int ScheduleOrderId { get; set; }
