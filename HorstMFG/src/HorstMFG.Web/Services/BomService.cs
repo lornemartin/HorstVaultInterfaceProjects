@@ -414,6 +414,13 @@ public class BomService : IBomService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
 
+        // Self-healing: a cross-plant PlantId can land on a PartLineItem through paths that
+        // don't go through the Update*PlantAsync methods below (BOM import pulling the plant
+        // straight from Vault metadata, Excel re-import, etc.). Sweep this plant's own
+        // schedules on every load so a missed handoff row still gets created.
+        if (plantId.HasValue)
+            await EnsureHandoffsForPlantSchedulesAsync(db, plantId.Value, fromDate, toDate);
+
         // Direct projection: single SQL JOIN, no tracked entities, no in-memory mapping
         var rows = await db.Set<PartLineItem>()
             .Where(p => p.ScheduleOrderId != null)
@@ -530,6 +537,13 @@ public class BomService : IBomService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
+
+        // Self-healing: a cross-plant PlantId can land on a PartLineItem through paths that
+        // don't go through the Update*PlantAsync methods below (BOM import pulling the plant
+        // straight from Vault metadata, Excel re-import, etc.). Sweep this plant's own
+        // batches on every load so a missed handoff row still gets created.
+        if (plantId.HasValue)
+            await EnsureHandoffsForPlantBatchesAsync(db, plantId.Value, fromDate, toDate);
 
         // Direct projection: single SQL JOIN, no tracked entities, no in-memory mapping
         var rows = await db.Set<PartLineItem>()
@@ -1159,6 +1173,81 @@ public class BomService : IBomService
                 Status = HandoffStatus.Pending,
             });
         }
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Self-healing sweep called from <see cref="GetFlatBatchPartsAsync"/>, scoped to the same
+    /// plant + date range the grid itself is about to show (not the plant's entire history).
+    /// Two set-based queries instead of a per-batch entity-graph load, so it stays cheap even
+    /// when a plant has a large batch history.
+    /// </summary>
+    private async Task EnsureHandoffsForPlantBatchesAsync(ApplicationDbContext db, int plantId, DateTime? fromDate, DateTime? toDate)
+    {
+        var otherPlantId = await GetOtherNestingCapablePlantIdAsync(db, plantId);
+        if (otherPlantId is null) return;
+
+        var candidateBatchProductIds = await db.Set<PartLineItem>()
+            .Where(p => p.BatchProductId != null && p.PlantId == otherPlantId.Value)
+            .Where(p => p.BatchProduct!.Batch.PlantId == plantId)
+            .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(p => !toDate.HasValue || p.BatchProduct!.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Select(p => p.BatchProductId!.Value)
+            .Distinct()
+            .ToListAsync();
+        if (candidateBatchProductIds.Count == 0) return;
+
+        var existingIds = await db.BatchProductHandoffs
+            .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateBatchProductIds.Contains(h.BatchProductId))
+            .Select(h => h.BatchProductId)
+            .ToListAsync();
+
+        var missingIds = candidateBatchProductIds.Except(existingIds).ToList();
+        if (missingIds.Count == 0) return;
+
+        foreach (var id in missingIds)
+            db.BatchProductHandoffs.Add(new BatchProductHandoff
+            {
+                BatchProductId = id,
+                DestinationPlantId = otherPlantId.Value,
+                Status = HandoffStatus.Pending,
+            });
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// ScheduleOrder equivalent of <see cref="EnsureHandoffsForPlantBatchesAsync"/>.
+    /// </summary>
+    private async Task EnsureHandoffsForPlantSchedulesAsync(ApplicationDbContext db, int plantId, DateTime? fromDate, DateTime? toDate)
+    {
+        var otherPlantId = await GetOtherNestingCapablePlantIdAsync(db, plantId);
+        if (otherPlantId is null) return;
+
+        var candidateScheduleOrderIds = await db.Set<PartLineItem>()
+            .Where(p => p.ScheduleOrderId != null && p.PlantId == otherPlantId.Value)
+            .Where(p => p.ScheduleOrder!.Schedule.PlantId == plantId)
+            .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
+            .Where(p => !toDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
+            .Select(p => p.ScheduleOrderId!.Value)
+            .Distinct()
+            .ToListAsync();
+        if (candidateScheduleOrderIds.Count == 0) return;
+
+        var existingIds = await db.ScheduleOrderHandoffs
+            .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateScheduleOrderIds.Contains(h.ScheduleOrderId))
+            .Select(h => h.ScheduleOrderId)
+            .ToListAsync();
+
+        var missingIds = candidateScheduleOrderIds.Except(existingIds).ToList();
+        if (missingIds.Count == 0) return;
+
+        foreach (var id in missingIds)
+            db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
+            {
+                ScheduleOrderId = id,
+                DestinationPlantId = otherPlantId.Value,
+                Status = HandoffStatus.Pending,
+            });
         await db.SaveChangesAsync();
     }
 
