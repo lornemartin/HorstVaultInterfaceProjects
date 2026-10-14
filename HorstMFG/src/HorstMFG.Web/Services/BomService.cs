@@ -426,7 +426,7 @@ public class BomService : IBomService
             .Where(p => p.ScheduleOrderId != null)
             .Where(p => !plantId.HasValue
                      || p.ScheduleOrder!.Schedule.PlantId == plantId.Value
-                     || (p.PlantId == plantId.Value
+                     || (p.PlantId == plantId.Value && !p.IsStock
                          && db.ScheduleOrderHandoffs.Any(h => h.ScheduleOrderId == p.ScheduleOrderId
                                                             && h.DestinationPlantId == plantId.Value
                                                             && (h.Status == HandoffStatus.Pending || h.Status == HandoffStatus.Accepted))))
@@ -550,7 +550,7 @@ public class BomService : IBomService
             .Where(p => p.BatchProductId != null)
             .Where(p => !plantId.HasValue
                      || p.BatchProduct!.Batch.PlantId == plantId.Value
-                     || (p.PlantId == plantId.Value
+                     || (p.PlantId == plantId.Value && p.IsStock
                          && db.BatchProductHandoffs.Any(h => h.BatchProductId == p.BatchProductId
                                                            && h.DestinationPlantId == plantId.Value
                                                            && (h.Status == HandoffStatus.Pending || h.Status == HandoffStatus.Accepted))))
@@ -1116,10 +1116,14 @@ public class BomService : IBomService
     }
 
     /// <summary>
-    /// Scans every BatchProduct in the given Batch for parts resolving to the other
-    /// nesting-capable plant, and creates a Pending BatchProductHandoff for any
-    /// (BatchProduct, otherPlant) pair that doesn't already have one. Called after
-    /// any part-plant mutation so the handoff review surfaces pre-release.
+    /// Scans every BatchProduct in the given Batch for *stock* parts (only stock parts are
+    /// ever released for a Batch — see ReleaseBatchToProductionAsync) resolving to the other
+    /// nesting-capable plant: creates a Draft BatchProductHandoff for any (BatchProduct,
+    /// otherPlant) pair that doesn't already have one, and retires (deletes) any live
+    /// Draft/Pending/Accepted-unreleased row that no longer has a matching part — e.g. the
+    /// user switched the part(s) back to the home plant before ever notifying the other
+    /// plant. Rejected and already-Released rows are permanent records and never retired.
+    /// Called after any part-plant mutation so the handoff review surfaces pre-release.
     /// </summary>
     private async Task EnsureBatchHandoffsAsync(ApplicationDbContext db, int batchId)
     {
@@ -1133,22 +1137,34 @@ public class BomService : IBomService
 
         foreach (var bp in batch.BatchProducts)
         {
-            if (!bp.Parts.Any(p => p.PlantId == otherPlantId.Value)) continue;
-            var exists = await db.BatchProductHandoffs
-                .AnyAsync(h => h.BatchProductId == bp.Id && h.DestinationPlantId == otherPlantId.Value);
-            if (exists) continue;
-            db.BatchProductHandoffs.Add(new BatchProductHandoff
+            var hasMatch = bp.Parts.Any(p => p.PlantId == otherPlantId.Value && p.IsStock);
+            var existing = await db.BatchProductHandoffs
+                .Where(h => h.BatchProductId == bp.Id && h.DestinationPlantId == otherPlantId.Value)
+                .OrderByDescending(h => h.Id)
+                .FirstOrDefaultAsync();
+
+            if (!hasMatch)
             {
-                BatchProductId = bp.Id,
-                DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Draft,
-            });
+                if (existing is not null && existing.Status != HandoffStatus.Rejected && existing.ReleasedDate is null)
+                    db.BatchProductHandoffs.Remove(existing);
+                continue;
+            }
+
+            if (existing is null)
+                db.BatchProductHandoffs.Add(new BatchProductHandoff
+                {
+                    BatchProductId = bp.Id,
+                    DestinationPlantId = otherPlantId.Value,
+                    Status = HandoffStatus.Draft,
+                });
         }
         await db.SaveChangesAsync();
     }
 
     /// <summary>
-    /// ScheduleOrder equivalent of <see cref="EnsureBatchHandoffsAsync"/>.
+    /// ScheduleOrder equivalent of <see cref="EnsureBatchHandoffsAsync"/> — but for a
+    /// ScheduleOrder, it's the *non-stock* ("make to order") parts that are ever released
+    /// (see ReleaseScheduleToProductionAsync), so those are the ones considered here.
     /// </summary>
     private async Task EnsureScheduleHandoffsAsync(ApplicationDbContext db, int scheduleId)
     {
@@ -1162,16 +1178,26 @@ public class BomService : IBomService
 
         foreach (var so in schedule.ScheduleOrders)
         {
-            if (!so.Parts.Any(p => p.PlantId == otherPlantId.Value)) continue;
-            var exists = await db.ScheduleOrderHandoffs
-                .AnyAsync(h => h.ScheduleOrderId == so.Id && h.DestinationPlantId == otherPlantId.Value);
-            if (exists) continue;
-            db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
+            var hasMatch = so.Parts.Any(p => p.PlantId == otherPlantId.Value && !p.IsStock);
+            var existing = await db.ScheduleOrderHandoffs
+                .Where(h => h.ScheduleOrderId == so.Id && h.DestinationPlantId == otherPlantId.Value)
+                .OrderByDescending(h => h.Id)
+                .FirstOrDefaultAsync();
+
+            if (!hasMatch)
             {
-                ScheduleOrderId = so.Id,
-                DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Draft,
-            });
+                if (existing is not null && existing.Status != HandoffStatus.Rejected && existing.ReleasedDate is null)
+                    db.ScheduleOrderHandoffs.Remove(existing);
+                continue;
+            }
+
+            if (existing is null)
+                db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
+                {
+                    ScheduleOrderId = so.Id,
+                    DestinationPlantId = otherPlantId.Value,
+                    Status = HandoffStatus.Draft,
+                });
         }
         await db.SaveChangesAsync();
     }
@@ -1179,8 +1205,9 @@ public class BomService : IBomService
     /// <summary>
     /// Self-healing sweep called from <see cref="GetFlatBatchPartsAsync"/>, scoped to the same
     /// plant + date range the grid itself is about to show (not the plant's entire history).
-    /// Two set-based queries instead of a per-batch entity-graph load, so it stays cheap even
-    /// when a plant has a large batch history.
+    /// Set-based queries instead of a per-batch entity-graph load, so it stays cheap even when
+    /// a plant has a large batch history. Only *stock* parts count (see
+    /// <see cref="EnsureBatchHandoffsAsync"/>), and stale live rows are retired the same way.
     /// </summary>
     private async Task EnsureHandoffsForPlantBatchesAsync(ApplicationDbContext db, int plantId, DateTime? fromDate, DateTime? toDate)
     {
@@ -1188,35 +1215,53 @@ public class BomService : IBomService
         if (otherPlantId is null) return;
 
         var candidateBatchProductIds = await db.Set<PartLineItem>()
-            .Where(p => p.BatchProductId != null && p.PlantId == otherPlantId.Value)
+            .Where(p => p.BatchProductId != null && p.PlantId == otherPlantId.Value && p.IsStock)
             .Where(p => p.BatchProduct!.Batch.PlantId == plantId)
             .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.BatchProduct!.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
             .Select(p => p.BatchProductId!.Value)
             .Distinct()
             .ToListAsync();
-        if (candidateBatchProductIds.Count == 0) return;
+        var candidateSet = candidateBatchProductIds.ToHashSet();
 
-        var existingIds = await db.BatchProductHandoffs
-            .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateBatchProductIds.Contains(h.BatchProductId))
-            .Select(h => h.BatchProductId)
+        // Retire: live (not Rejected, not Released) rows in view whose BatchProduct no longer
+        // has a matching stock part destined for the other plant.
+        var liveHandoffs = await db.BatchProductHandoffs
+            .Where(h => h.DestinationPlantId == otherPlantId.Value
+                     && h.Status != HandoffStatus.Rejected && h.ReleasedDate == null
+                     && h.BatchProduct.Batch.PlantId == plantId
+                     && (!fromDate.HasValue || h.BatchProduct.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
+                     && (!toDate.HasValue || h.BatchProduct.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1)))
             .ToListAsync();
+        var toRetire = liveHandoffs.Where(h => !candidateSet.Contains(h.BatchProductId)).ToList();
+        if (toRetire.Count > 0)
+            db.BatchProductHandoffs.RemoveRange(toRetire);
 
-        var missingIds = candidateBatchProductIds.Except(existingIds).ToList();
-        if (missingIds.Count == 0) return;
+        // Create: candidates with no existing row at all (any status) for this pair.
+        List<int> missingIds = new();
+        if (candidateBatchProductIds.Count > 0)
+        {
+            var existingIds = await db.BatchProductHandoffs
+                .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateBatchProductIds.Contains(h.BatchProductId))
+                .Select(h => h.BatchProductId)
+                .ToListAsync();
+            missingIds = candidateBatchProductIds.Except(existingIds).ToList();
+            foreach (var id in missingIds)
+                db.BatchProductHandoffs.Add(new BatchProductHandoff
+                {
+                    BatchProductId = id,
+                    DestinationPlantId = otherPlantId.Value,
+                    Status = HandoffStatus.Draft,
+                });
+        }
 
-        foreach (var id in missingIds)
-            db.BatchProductHandoffs.Add(new BatchProductHandoff
-            {
-                BatchProductId = id,
-                DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Draft,
-            });
-        await db.SaveChangesAsync();
+        if (toRetire.Count > 0 || missingIds.Count > 0)
+            await db.SaveChangesAsync();
     }
 
     /// <summary>
-    /// ScheduleOrder equivalent of <see cref="EnsureHandoffsForPlantBatchesAsync"/>.
+    /// ScheduleOrder equivalent of <see cref="EnsureHandoffsForPlantBatchesAsync"/> — only
+    /// *non-stock* ("make to order") parts count, matching <see cref="EnsureScheduleHandoffsAsync"/>.
     /// </summary>
     private async Task EnsureHandoffsForPlantSchedulesAsync(ApplicationDbContext db, int plantId, DateTime? fromDate, DateTime? toDate)
     {
@@ -1224,31 +1269,45 @@ public class BomService : IBomService
         if (otherPlantId is null) return;
 
         var candidateScheduleOrderIds = await db.Set<PartLineItem>()
-            .Where(p => p.ScheduleOrderId != null && p.PlantId == otherPlantId.Value)
+            .Where(p => p.ScheduleOrderId != null && p.PlantId == otherPlantId.Value && !p.IsStock)
             .Where(p => p.ScheduleOrder!.Schedule.PlantId == plantId)
             .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
             .Select(p => p.ScheduleOrderId!.Value)
             .Distinct()
             .ToListAsync();
-        if (candidateScheduleOrderIds.Count == 0) return;
+        var candidateSet = candidateScheduleOrderIds.ToHashSet();
 
-        var existingIds = await db.ScheduleOrderHandoffs
-            .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateScheduleOrderIds.Contains(h.ScheduleOrderId))
-            .Select(h => h.ScheduleOrderId)
+        var liveHandoffs = await db.ScheduleOrderHandoffs
+            .Where(h => h.DestinationPlantId == otherPlantId.Value
+                     && h.Status != HandoffStatus.Rejected && h.ReleasedDate == null
+                     && h.ScheduleOrder.Schedule.PlantId == plantId
+                     && (!fromDate.HasValue || h.ScheduleOrder.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
+                     && (!toDate.HasValue || h.ScheduleOrder.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1)))
             .ToListAsync();
+        var toRetire = liveHandoffs.Where(h => !candidateSet.Contains(h.ScheduleOrderId)).ToList();
+        if (toRetire.Count > 0)
+            db.ScheduleOrderHandoffs.RemoveRange(toRetire);
 
-        var missingIds = candidateScheduleOrderIds.Except(existingIds).ToList();
-        if (missingIds.Count == 0) return;
+        List<int> missingIds = new();
+        if (candidateScheduleOrderIds.Count > 0)
+        {
+            var existingIds = await db.ScheduleOrderHandoffs
+                .Where(h => h.DestinationPlantId == otherPlantId.Value && candidateScheduleOrderIds.Contains(h.ScheduleOrderId))
+                .Select(h => h.ScheduleOrderId)
+                .ToListAsync();
+            missingIds = candidateScheduleOrderIds.Except(existingIds).ToList();
+            foreach (var id in missingIds)
+                db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
+                {
+                    ScheduleOrderId = id,
+                    DestinationPlantId = otherPlantId.Value,
+                    Status = HandoffStatus.Draft,
+                });
+        }
 
-        foreach (var id in missingIds)
-            db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
-            {
-                ScheduleOrderId = id,
-                DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Draft,
-            });
-        await db.SaveChangesAsync();
+        if (toRetire.Count > 0 || missingIds.Count > 0)
+            await db.SaveChangesAsync();
     }
 
     public async Task AcceptBatchProductHandoffAsync(int handoffId, int userId)
@@ -1284,7 +1343,7 @@ public class BomService : IBomService
         if (latest is null || latest.Status != HandoffStatus.Rejected) return 0;
 
         var hasLiveParts = await db.Set<PartLineItem>()
-            .AnyAsync(p => p.BatchProductId == batchProductId && p.PlantId == destinationPlantId);
+            .AnyAsync(p => p.BatchProductId == batchProductId && p.PlantId == destinationPlantId && p.IsStock);
         if (!hasLiveParts) return 0;
 
         db.BatchProductHandoffs.Add(new BatchProductHandoff
@@ -1330,7 +1389,7 @@ public class BomService : IBomService
         if (latest is null || latest.Status != HandoffStatus.Rejected) return 0;
 
         var hasLiveParts = await db.Set<PartLineItem>()
-            .AnyAsync(p => p.ScheduleOrderId == scheduleOrderId && p.PlantId == destinationPlantId);
+            .AnyAsync(p => p.ScheduleOrderId == scheduleOrderId && p.PlantId == destinationPlantId && !p.IsStock);
         if (!hasLiveParts) return 0;
 
         db.ScheduleOrderHandoffs.Add(new ScheduleOrderHandoff
