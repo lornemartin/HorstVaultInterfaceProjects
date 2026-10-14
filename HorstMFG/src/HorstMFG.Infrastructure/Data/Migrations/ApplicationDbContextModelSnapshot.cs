@@ -228,6 +228,12 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<int?>("ReleasedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReleasedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -240,6 +246,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.HasIndex("DestinationPlantId");
 
                     b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("ReleasedByUserId");
 
                     b.ToTable("batch_product_handoffs", (string)null);
                 });
@@ -729,6 +737,12 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<int?>("ReleasedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReleasedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ScheduleOrderId")
                         .HasColumnType("integer");
 
@@ -742,6 +756,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.HasIndex("DestinationPlantId");
 
                     b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("ReleasedByUserId");
 
                     b.HasIndex("ScheduleOrderId");
 
@@ -898,6 +914,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RejectedByUserId");
 
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "ReleasedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReleasedByUserId");
+
                     b.Navigation("AcceptedByUser");
 
                     b.Navigation("BatchProduct");
@@ -905,6 +925,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("DestinationPlant");
 
                     b.Navigation("RejectedByUser");
+
+                    b.Navigation("ReleasedByUser");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Nest", b =>
@@ -1090,6 +1112,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RejectedByUserId");
 
+                    b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "ReleasedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReleasedByUserId");
+
                     b.HasOne("HorstMFG.Core.Entities.ScheduleOrder", "ScheduleOrder")
                         .WithMany()
                         .HasForeignKey("ScheduleOrderId")
@@ -1101,6 +1127,8 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("DestinationPlant");
 
                     b.Navigation("RejectedByUser");
+
+                    b.Navigation("ReleasedByUser");
 
                     b.Navigation("ScheduleOrder");
                 });

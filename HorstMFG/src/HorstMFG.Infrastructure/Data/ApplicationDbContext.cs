@@ -171,6 +171,7 @@ public class ApplicationDbContext : DbContext
             e.HasOne(h => h.DestinationPlant).WithMany().HasForeignKey(h => h.DestinationPlantId);
             e.HasOne(h => h.AcceptedByUser).WithMany().HasForeignKey(h => h.AcceptedByUserId).IsRequired(false);
             e.HasOne(h => h.RejectedByUser).WithMany().HasForeignKey(h => h.RejectedByUserId).IsRequired(false);
+            e.HasOne(h => h.ReleasedByUser).WithMany().HasForeignKey(h => h.ReleasedByUserId).IsRequired(false);
         });
 
         // ScheduleOrderHandoff
@@ -183,6 +184,7 @@ public class ApplicationDbContext : DbContext
             e.HasOne(h => h.DestinationPlant).WithMany().HasForeignKey(h => h.DestinationPlantId);
             e.HasOne(h => h.AcceptedByUser).WithMany().HasForeignKey(h => h.AcceptedByUserId).IsRequired(false);
             e.HasOne(h => h.RejectedByUser).WithMany().HasForeignKey(h => h.RejectedByUserId).IsRequired(false);
+            e.HasOne(h => h.ReleasedByUser).WithMany().HasForeignKey(h => h.ReleasedByUserId).IsRequired(false);
         });
 
         // OrderItem

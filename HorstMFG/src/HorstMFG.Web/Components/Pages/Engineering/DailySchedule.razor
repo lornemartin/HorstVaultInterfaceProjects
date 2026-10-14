@@ -131,6 +131,13 @@
                                 style="@BtnStyle("e-primary")">Release to Production</button>
                         <button @onclick="@(async () => await OnDeleteSchedule(sched))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("danger")">Delete</button>
+                        @if (DraftHandoffCountForSchedule(sched.Id) is var draftCount && draftCount > 0)
+                        {
+                            <button @onclick="@(async () => await OnNotifyScheduleHandoffs(sched))" @onclick:stopPropagation="true"
+                                    style="@BtnStyle("e-primary")" title="Send @draftCount queued cross-plant item(s) to @DraftHandoffPlantNameForSchedule(sched.Id)">
+                                Notify @DraftHandoffPlantNameForSchedule(sched.Id) (@draftCount)
+                            </button>
+                        }
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
                     <button @onclick="@(async () => await OpenReport("schedule-traveller", sched.Name))" @onclick:stopPropagation="true"
@@ -271,13 +278,21 @@
                         @if (IsSenderForSchedule(order.ScheduleId))
                         {
                             <span style="color: #6b7280;">&#8594; @handoff.DestinationPlantName:</span>
-                            @if (handoff.Status == HandoffStatus.Pending)
+                            @if (handoff.Status == HandoffStatus.Draft)
+                            {
+                                <span style="color: #6b7280;">Draft (not yet sent)</span>
+                            }
+                            else if (handoff.Status == HandoffStatus.Pending)
                             {
                                 <span style="color: #92400e;">Pending</span>
                             }
-                            else if (handoff.Status == HandoffStatus.Accepted)
+                            else if (handoff.Status == HandoffStatus.Accepted && !handoff.ReleasedDate.HasValue)
                             {
                                 <span style="color: #166534;">Accepted by @handoff.AcceptedByUserName</span>
+                            }
+                            else if (handoff.Status == HandoffStatus.Accepted && handoff.ReleasedDate.HasValue)
+                            {
+                                <span style="color: #166534;">Accepted by @handoff.AcceptedByUserName — released by @handoff.ReleasedByUserName</span>
                             }
                             else if (handoff.Status == HandoffStatus.Rejected)
                             {
@@ -296,9 +311,15 @@
                                 <button @onclick="@(() => OnRejectScheduleOrderHandoffClicked(handoff.Id, order.OrderNumber))" @onclick:stopPropagation="true"
                                         style="@BtnStyle("danger")">Reject</button>
                             }
-                            else if (handoff.Status == HandoffStatus.Accepted)
+                            else if (handoff.Status == HandoffStatus.Accepted && !handoff.ReleasedDate.HasValue)
                             {
                                 <span style="color: #166534;">Accepted</span>
+                                <button @onclick="@(async () => await OnReleaseScheduleOrderHandoff(handoff.Id))" @onclick:stopPropagation="true"
+                                        style="@BtnStyle("e-primary")">Release to Production</button>
+                            }
+                            else if (handoff.Status == HandoffStatus.Accepted && handoff.ReleasedDate.HasValue)
+                            {
+                                <span style="color: #166534;">Released</span>
                             }
                         }
                     </span>
@@ -414,10 +435,11 @@
             <Template>
                 @{
                     var row = context as FlatSchedulePartRow;
-                    <input type="checkbox" checked="@row!.IsStock"
+                    var stockLocked = row!.ScheduleReleased || IsHandoffReleasedForRow(row);
+                    <input type="checkbox" checked="@row.IsStock"
                            @onchange="@(async e => await OnIsStockChanged(row, (bool)e.Value!))"
-                           disabled="@row.ScheduleReleased"
-                           style="cursor: @(row.ScheduleReleased ? "default" : "pointer"); width: 16px; height: 16px;" />
+                           disabled="@stockLocked"
+                           style="cursor: @(stockLocked ? "default" : "pointer"); width: 16px; height: 16px;" />
                 }
             </Template>
         </GridColumn>
@@ -514,7 +536,8 @@
                                        string? ProductNumber, string? ProductDescription, bool VaultBomImported, int PlantId);
 
     private sealed record HandoffCaptionInfo(int Id, int DestinationPlantId, string DestinationPlantName, HandoffStatus Status,
-        DateTime? AcceptedDate, string? AcceptedByUserName, DateTime? RejectedDate, string? RejectedByUserName, string? RejectionReason);
+        DateTime? AcceptedDate, string? AcceptedByUserName, DateTime? RejectedDate, string? RejectedByUserName, string? RejectionReason,
+        DateTime? ReleasedDate, string? ReleasedByUserName);
 
     // ── Persisted state ───────────────────────────────────────────────────────
     private sealed class OrdersGridState
@@ -606,6 +629,32 @@
         return _plantOptions.FirstOrDefault(o => o.Id == schedule.PlantId)?.Name ?? "?";
     }
 
+    // Count of still-queued (Draft) handoffs across every order in this schedule.
+    private int DraftHandoffCountForSchedule(int scheduleId) => DraftHandoffsForSchedule(scheduleId).Count;
+
+    // The destination plant's name for this schedule's Draft handoffs (only one possible
+    // "other" plant at a time, so any Draft row's name works).
+    private string DraftHandoffPlantNameForSchedule(int scheduleId)
+    {
+        var drafts = DraftHandoffsForSchedule(scheduleId);
+        return drafts.Count > 0 ? drafts[0].DestinationPlantName : "";
+    }
+
+    private List<HandoffCaptionInfo> DraftHandoffsForSchedule(int scheduleId) =>
+        _orderMeta.Values
+            .Where(o => o.ScheduleId == scheduleId)
+            .Select(o => _scheduleOrderHandoffs.GetValueOrDefault(o.Id))
+            .Where(h => h is not null && h.Status == HandoffStatus.Draft)
+            .Select(h => h!)
+            .ToList();
+
+    // A receiver-visible row is locked for editing once its handoff has been released —
+    // the destination plant has already nested it, so it shouldn't change out from under them.
+    private bool IsHandoffReleasedForRow(FlatSchedulePartRow row) =>
+        !IsSenderForSchedule(row.ScheduleId)
+        && _scheduleOrderHandoffs.TryGetValue(row.ScheduleOrderId, out var h)
+        && h.ReleasedDate.HasValue;
+
     private static string BtnStyle(string variant) => variant switch
     {
         "e-primary" => "padding: 2px 8px; font-size: 0.75rem; border-radius: 3px; border: 1px solid #3b82f6; background: #3b82f6; color: white; cursor: pointer;",
@@ -690,7 +739,8 @@
             {
                 h.Id, h.ScheduleOrderId, h.DestinationPlantId, h.Status,
                 h.AcceptedDate, AcceptedByUserName = h.AcceptedByUser == null ? null : h.AcceptedByUser.FullName,
-                h.RejectedDate, RejectedByUserName = h.RejectedByUser == null ? null : h.RejectedByUser.FullName, h.RejectionReason
+                h.RejectedDate, RejectedByUserName = h.RejectedByUser == null ? null : h.RejectedByUser.FullName, h.RejectionReason,
+                h.ReleasedDate, ReleasedByUserName = h.ReleasedByUser == null ? null : h.ReleasedByUser.FullName
             })
             .ToListAsync();
 
@@ -702,7 +752,8 @@
                 return new HandoffCaptionInfo(
                     h.Id, h.DestinationPlantId,
                     _plantOptions.FirstOrDefault(o => o.Id == h.DestinationPlantId)?.Name ?? "Plant " + h.DestinationPlantId,
-                    h.Status, h.AcceptedDate, h.AcceptedByUserName, h.RejectedDate, h.RejectedByUserName, h.RejectionReason);
+                    h.Status, h.AcceptedDate, h.AcceptedByUserName, h.RejectedDate, h.RejectedByUserName, h.RejectionReason,
+                    h.ReleasedDate, h.ReleasedByUserName);
             });
     }
 
@@ -747,6 +798,62 @@
             : "Nothing to resubmit — the Plant field hasn't been changed back to this destination yet.";
         _statusIsError = count == 0;
         await LoadData();
+    }
+
+    private async Task OnNotifyScheduleHandoffs(ScheduleCaption sched)
+    {
+        var count = await BomService.NotifyScheduleHandoffsAsync(sched.Id);
+        _statusMessage = count > 0
+            ? $"Notified — {count} item(s) sent for review."
+            : "Nothing queued to send.";
+        _statusIsError = false;
+        await LoadData();
+    }
+
+    private async Task OnReleaseScheduleOrderHandoff(int handoffId)
+    {
+        if (_userId is not { } userId) return;
+        var stationId = BridgeHub.GetAnyOnlineStationId();
+        if (stationId == null)
+        {
+            await JS.InvokeVoidAsync("alert",
+                "No bridge connection is active. A bridge must be connected to release to production.");
+            return;
+        }
+
+        _releasing = true;
+        StateHasChanged();
+        try
+        {
+            var nestOrderId = await BomService.ReleaseScheduleOrderHandoffAsync(handoffId, userId);
+
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var thumbItems = await db.OrderItems
+                .Where(i => i.NestOrderId == nestOrderId
+                         && i.Part.Thumbnail == null
+                         && i.Part.FileName != null)
+                .Select(i => new { i.PartId, i.Part.FileName })
+                .Distinct()
+                .ToListAsync();
+            if (thumbItems.Any())
+            {
+                var payload = JsonSerializer.Serialize(
+                    thumbItems.Select(t => new { PartId = t.PartId, FileName = t.FileName }));
+                BridgeHub.TrySendCommand(HubContext, stationId.Value,
+                    Guid.NewGuid().ToString(), "UpdateThumbnail", payload);
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            _releasing = false;
+            StateHasChanged();
+        }
     }
 
     private void BuildMeta()

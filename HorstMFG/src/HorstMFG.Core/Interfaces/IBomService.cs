@@ -154,20 +154,32 @@ public interface IBomService
     Task DeleteScheduleOrderAsync(int scheduleOrderId);
 
     /// <summary>
-    /// Release a Batch to production: populates NestBatch and BatchItems. Only includes
-    /// cross-plant parts whose BatchProductHandoff for the destination plant is Accepted;
-    /// anything still Pending/Rejected is skipped and logged. Throws InvalidOperationException
+    /// Release a Batch to production: populates NestBatch and BatchItems for the batch's own
+    /// home-plant parts only. Cross-plant accepted parts are released independently by the
+    /// destination plant via ReleaseBatchProductHandoffAsync. Throws InvalidOperationException
     /// if already released.
     /// </summary>
     Task ReleaseBatchToProductionAsync(int batchId);
 
     /// <summary>
-    /// Release a Schedule to production: populates NestOrders and OrderItems. Only includes
-    /// cross-plant parts whose ScheduleOrderHandoff for the destination plant is Accepted;
-    /// anything still Pending/Rejected is skipped and logged. Throws InvalidOperationException
+    /// Release a Schedule to production: populates NestOrders and OrderItems for the schedule's
+    /// own home-plant parts only. Cross-plant accepted parts are released independently by the
+    /// destination plant via ReleaseScheduleOrderHandoffAsync. Throws InvalidOperationException
     /// if already released.
     /// </summary>
     Task ReleaseScheduleToProductionAsync(int scheduleId);
+
+    /// <summary>
+    /// Flips every Draft BatchProductHandoff under the given Batch to Pending, making them
+    /// visible/actionable to the destination plant. Returns the number of rows flipped.
+    /// </summary>
+    Task<int> NotifyBatchHandoffsAsync(int batchId);
+
+    /// <summary>
+    /// Flips every Draft ScheduleOrderHandoff under the given Schedule to Pending, making them
+    /// visible/actionable to the destination plant. Returns the number of rows flipped.
+    /// </summary>
+    Task<int> NotifyScheduleHandoffsAsync(int scheduleId);
 
     /// <summary>
     /// Accept a cross-plant BatchProductHandoff: sets Status to Accepted.
@@ -188,6 +200,14 @@ public interface IBomService
     Task<int> ResubmitBatchProductHandoffAsync(int batchProductId, int destinationPlantId);
 
     /// <summary>
+    /// Independently releases an Accepted BatchProductHandoff to production: populates a new
+    /// NestBatch/BatchItems at the destination plant for just this handoff's accepted parts,
+    /// and sets ReleasedDate/ReleasedByUser. Returns the new NestBatch's Id. Throws if the
+    /// handoff isn't Accepted or has already been released.
+    /// </summary>
+    Task<int> ReleaseBatchProductHandoffAsync(int handoffId, int userId);
+
+    /// <summary>
     /// Accept a cross-plant ScheduleOrderHandoff: sets Status to Accepted.
     /// </summary>
     Task AcceptScheduleOrderHandoffAsync(int handoffId, int userId);
@@ -204,6 +224,14 @@ public interface IBomService
     /// to that destination plant. Returns 1 if a new row was created, 0 otherwise.
     /// </summary>
     Task<int> ResubmitScheduleOrderHandoffAsync(int scheduleOrderId, int destinationPlantId);
+
+    /// <summary>
+    /// Independently releases an Accepted ScheduleOrderHandoff to production: populates a new
+    /// NestOrder/OrderItems at the destination plant for just this handoff's accepted parts,
+    /// and sets ReleasedDate/ReleasedByUser. Returns the new NestOrder's Id. Throws if the
+    /// handoff isn't Accepted or has already been released.
+    /// </summary>
+    Task<int> ReleaseScheduleOrderHandoffAsync(int handoffId, int userId);
 
     /// <summary>
     /// Check if a PDF exists on the share for the given part number.

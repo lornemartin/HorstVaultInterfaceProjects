@@ -429,7 +429,7 @@ public class BomService : IBomService
                      || (p.PlantId == plantId.Value
                          && db.ScheduleOrderHandoffs.Any(h => h.ScheduleOrderId == p.ScheduleOrderId
                                                             && h.DestinationPlantId == plantId.Value
-                                                            && h.Status != HandoffStatus.Rejected)))
+                                                            && (h.Status == HandoffStatus.Pending || h.Status == HandoffStatus.Accepted))))
             .Where(p => !fromDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.ScheduleOrder!.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
             .Where(p => !releasedOnly || p.ScheduleOrder!.Schedule.ReadyForProduction)
@@ -553,7 +553,7 @@ public class BomService : IBomService
                      || (p.PlantId == plantId.Value
                          && db.BatchProductHandoffs.Any(h => h.BatchProductId == p.BatchProductId
                                                            && h.DestinationPlantId == plantId.Value
-                                                           && h.Status != HandoffStatus.Rejected)))
+                                                           && (h.Status == HandoffStatus.Pending || h.Status == HandoffStatus.Accepted))))
             .Where(p => !fromDate.HasValue || p.BatchProduct!.Batch.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(p => !toDate.HasValue || p.BatchProduct!.Batch.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
             .Where(p => !releasedOnly || p.BatchProduct!.Batch.ReadyForProduction)
@@ -1141,7 +1141,7 @@ public class BomService : IBomService
             {
                 BatchProductId = bp.Id,
                 DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Pending,
+                Status = HandoffStatus.Draft,
             });
         }
         await db.SaveChangesAsync();
@@ -1170,7 +1170,7 @@ public class BomService : IBomService
             {
                 ScheduleOrderId = so.Id,
                 DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Pending,
+                Status = HandoffStatus.Draft,
             });
         }
         await db.SaveChangesAsync();
@@ -1210,7 +1210,7 @@ public class BomService : IBomService
             {
                 BatchProductId = id,
                 DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Pending,
+                Status = HandoffStatus.Draft,
             });
         await db.SaveChangesAsync();
     }
@@ -1246,7 +1246,7 @@ public class BomService : IBomService
             {
                 ScheduleOrderId = id,
                 DestinationPlantId = otherPlantId.Value,
-                Status = HandoffStatus.Pending,
+                Status = HandoffStatus.Draft,
             });
         await db.SaveChangesAsync();
     }
@@ -1367,21 +1367,10 @@ public class BomService : IBomService
         db.NestBatches.Add(nestBatch);
         await db.SaveChangesAsync(); // get nestBatch.Id
 
-        var otherPlantId = await GetOtherNestingCapablePlantIdAsync(db, batch.PlantId);
-        var latestHandoffs = otherPlantId.HasValue
-            ? (await db.BatchProductHandoffs
-                .Where(h => batch.BatchProducts.Select(bp => bp.Id).Contains(h.BatchProductId)
-                         && h.DestinationPlantId == otherPlantId.Value)
-                .OrderByDescending(h => h.Id)
-                .ToListAsync())
-                .GroupBy(h => h.BatchProductId)
-                .ToDictionary(g => g.Key, g => g.First())
-            : new Dictionary<int, BatchProductHandoff>();
-
+        // Home-plant parts only — the other plant's accepted handoff parts are released
+        // independently, whenever that plant is ready, via ReleaseBatchProductHandoffAsync.
         var homeBucket = new List<(PartLineItem Sample, int TotalQty)>();
-        var otherBucket = new List<(PartLineItem Sample, int TotalQty)>();
         int skippedCount = 0;
-        int awaitingAcceptanceCount = 0;
 
         foreach (var bp in batch.BatchProducts)
         {
@@ -1389,44 +1378,17 @@ public class BomService : IBomService
                 .Where(p => p.Operations == "Laser" && p.IsStock)
                 .Select(p => (Part: p, ParentQty: bp.Qty));
 
-            var (home, other, skipped) = BucketPartsByPlant(laserStockParts, batch.PlantId, otherPlantId);
+            var (home, _, skipped) = BucketPartsByPlant(laserStockParts, batch.PlantId, otherPlantId: null);
             homeBucket.AddRange(home);
             skippedCount += skipped;
-
-            if (other.Count == 0) continue;
-            var isAccepted = latestHandoffs.TryGetValue(bp.Id, out var h) && h.Status == HandoffStatus.Accepted;
-            if (isAccepted)
-                otherBucket.AddRange(other);
-            else
-                awaitingAcceptanceCount += other.Count;
         }
 
         if (skippedCount > 0)
             _log.LogInformation(
-                "Batch '{Name}': {Count} part line(s) skipped at release — Plant differs from the batch's Plant {PlantId} and isn't a nesting-capable destination",
+                "Batch '{Name}': {Count} part line(s) skipped at release — Plant differs from the batch's own Plant {PlantId}",
                 batch.Name, skippedCount, batch.PlantId);
-        if (awaitingAcceptanceCount > 0)
-            _log.LogInformation(
-                "Batch '{Name}': {Count} part line(s) skipped at release — awaiting acceptance by Plant {PlantId}",
-                batch.Name, awaitingAcceptanceCount, otherPlantId);
 
         await AddBatchItemsAsync(db, nestBatch.Id, homeBucket);
-
-        if (otherBucket.Count > 0 && otherPlantId.HasValue)
-        {
-            var handoffBatch = new NestBatch
-            {
-                BatchId   = batch.Id,
-                PlantId   = otherPlantId.Value,
-                EntryDate = DateTime.UtcNow,
-            };
-            db.NestBatches.Add(handoffBatch);
-            await db.SaveChangesAsync(); // get handoffBatch.Id
-            await AddBatchItemsAsync(db, handoffBatch.Id, otherBucket);
-            _log.LogInformation(
-                "Batch '{Name}': {Count} part line(s) released to Plant {PlantId}",
-                batch.Name, otherBucket.Count, otherPlantId.Value);
-        }
 
         await db.SaveChangesAsync();
         _log.LogInformation("Batch '{Name}' (Id={Id}) released to production.", batch.Name, batch.Id);
@@ -1448,8 +1410,8 @@ public class BomService : IBomService
         schedule.ReadyForProduction = true;
         await db.SaveChangesAsync();
 
-        var otherPlantId = await GetOtherNestingCapablePlantIdAsync(db, schedule.PlantId);
-
+        // Home-plant parts only — the other plant's accepted handoff parts are released
+        // independently, whenever that plant is ready, via ReleaseScheduleOrderHandoffAsync.
         foreach (var order in schedule.ScheduleOrders)
         {
             var nestOrder = new NestOrder
@@ -1465,48 +1427,114 @@ public class BomService : IBomService
                 .Where(p => p.Operations == "Laser" && !p.IsStock)
                 .Select(p => (Part: p, ParentQty: order.Qty));
 
-            var (home, other, skipped) = BucketPartsByPlant(laserParts, schedule.PlantId, otherPlantId);
+            var (home, _, skipped) = BucketPartsByPlant(laserParts, schedule.PlantId, otherPlantId: null);
 
             if (skipped > 0)
                 _log.LogInformation(
-                    "Schedule '{Name}' order {Order}: {Count} part line(s) skipped at release — Plant differs from the schedule's Plant {PlantId} and isn't a nesting-capable destination",
+                    "Schedule '{Name}' order {Order}: {Count} part line(s) skipped at release — Plant differs from the schedule's own Plant {PlantId}",
                     schedule.Name, order.OrderNumber, skipped, schedule.PlantId);
 
             await AddOrderItemsAsync(db, nestOrder.Id, home);
-
-            if (other.Count > 0 && otherPlantId.HasValue)
-            {
-                var latest = await db.ScheduleOrderHandoffs
-                    .Where(h => h.ScheduleOrderId == order.Id && h.DestinationPlantId == otherPlantId.Value)
-                    .OrderByDescending(h => h.Id)
-                    .FirstOrDefaultAsync();
-
-                if (latest?.Status == HandoffStatus.Accepted)
-                {
-                    var handoffOrder = new NestOrder
-                    {
-                        ScheduleOrderId = order.Id,
-                        PlantId         = otherPlantId.Value,
-                        EntryDate       = DateTime.UtcNow,
-                    };
-                    db.NestOrders.Add(handoffOrder);
-                    await db.SaveChangesAsync(); // get handoffOrder.Id
-                    await AddOrderItemsAsync(db, handoffOrder.Id, other);
-                    _log.LogInformation(
-                        "Schedule '{Name}' order {Order}: {Count} part line(s) released to Plant {PlantId}",
-                        schedule.Name, order.OrderNumber, other.Count, otherPlantId.Value);
-                }
-                else
-                {
-                    _log.LogInformation(
-                        "Schedule '{Name}' order {Order}: {Count} part line(s) skipped at release — awaiting acceptance by Plant {PlantId}",
-                        schedule.Name, order.OrderNumber, other.Count, otherPlantId.Value);
-                }
-            }
         }
 
         await db.SaveChangesAsync();
         _log.LogInformation("Schedule '{Name}' (Id={Id}) released to production.", schedule.Name, schedule.Id);
+    }
+
+    public async Task<int> NotifyBatchHandoffsAsync(int batchId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.BatchProductHandoffs
+            .Where(h => h.BatchProduct.BatchId == batchId && h.Status == HandoffStatus.Draft)
+            .ExecuteUpdateAsync(s => s.SetProperty(h => h.Status, HandoffStatus.Pending));
+    }
+
+    public async Task<int> NotifyScheduleHandoffsAsync(int scheduleId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.ScheduleOrderHandoffs
+            .Where(h => h.ScheduleOrder.ScheduleId == scheduleId && h.Status == HandoffStatus.Draft)
+            .ExecuteUpdateAsync(s => s.SetProperty(h => h.Status, HandoffStatus.Pending));
+    }
+
+    public async Task<int> ReleaseBatchProductHandoffAsync(int handoffId, int userId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var handoff = await db.BatchProductHandoffs
+            .Include(h => h.BatchProduct).ThenInclude(bp => bp.Parts)
+            .FirstOrDefaultAsync(h => h.Id == handoffId)
+            ?? throw new InvalidOperationException($"BatchProductHandoff {handoffId} not found.");
+
+        if (handoff.Status != HandoffStatus.Accepted)
+            throw new InvalidOperationException("This handoff must be accepted before it can be released to production.");
+        if (handoff.ReleasedDate.HasValue)
+            throw new InvalidOperationException("This handoff has already been released to production.");
+
+        var matchingParts = handoff.BatchProduct.Parts
+            .Where(p => p.Operations == "Laser" && p.IsStock && p.PlantId == handoff.DestinationPlantId)
+            .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * handoff.BatchProduct.Qty))
+            .ToList();
+
+        var nestBatch = new NestBatch
+        {
+            BatchId   = handoff.BatchProduct.BatchId,
+            PlantId   = handoff.DestinationPlantId,
+            EntryDate = DateTime.UtcNow,
+        };
+        db.NestBatches.Add(nestBatch);
+        await db.SaveChangesAsync(); // get nestBatch.Id
+        await AddBatchItemsAsync(db, nestBatch.Id, matchingParts);
+
+        handoff.ReleasedDate = DateTime.UtcNow;
+        handoff.ReleasedByUserId = userId;
+        await db.SaveChangesAsync();
+
+        _log.LogInformation(
+            "BatchProductHandoff {Id}: {Count} part line(s) released to Plant {PlantId}",
+            handoffId, matchingParts.Count, handoff.DestinationPlantId);
+        return nestBatch.Id;
+    }
+
+    public async Task<int> ReleaseScheduleOrderHandoffAsync(int handoffId, int userId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var handoff = await db.ScheduleOrderHandoffs
+            .Include(h => h.ScheduleOrder).ThenInclude(so => so.Parts)
+            .FirstOrDefaultAsync(h => h.Id == handoffId)
+            ?? throw new InvalidOperationException($"ScheduleOrderHandoff {handoffId} not found.");
+
+        if (handoff.Status != HandoffStatus.Accepted)
+            throw new InvalidOperationException("This handoff must be accepted before it can be released to production.");
+        if (handoff.ReleasedDate.HasValue)
+            throw new InvalidOperationException("This handoff has already been released to production.");
+
+        var matchingParts = handoff.ScheduleOrder.Parts
+            .Where(p => p.Operations == "Laser" && !p.IsStock && p.PlantId == handoff.DestinationPlantId)
+            .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * handoff.ScheduleOrder.Qty))
+            .ToList();
+
+        var nestOrder = new NestOrder
+        {
+            ScheduleOrderId = handoff.ScheduleOrderId,
+            PlantId         = handoff.DestinationPlantId,
+            EntryDate       = DateTime.UtcNow,
+        };
+        db.NestOrders.Add(nestOrder);
+        await db.SaveChangesAsync(); // get nestOrder.Id
+        await AddOrderItemsAsync(db, nestOrder.Id, matchingParts);
+
+        handoff.ReleasedDate = DateTime.UtcNow;
+        handoff.ReleasedByUserId = userId;
+        await db.SaveChangesAsync();
+
+        _log.LogInformation(
+            "ScheduleOrderHandoff {Id}: {Count} part line(s) released to Plant {PlantId}",
+            handoffId, matchingParts.Count, handoff.DestinationPlantId);
+        return nestOrder.Id;
     }
 
     private static decimal? ParseThickness(string? raw)
