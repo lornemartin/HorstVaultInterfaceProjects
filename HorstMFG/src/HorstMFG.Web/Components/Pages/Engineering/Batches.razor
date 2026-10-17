@@ -159,6 +159,14 @@
                         }
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
+                    else if (AcceptedUnreleasedCountForBatch(batch.Id) is var acceptedCount && acceptedCount > 0)
+                    {
+                        <button @onclick="@(async () => await OnReleaseBatchHandoffs(batch))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("e-primary")" title="Release @acceptedCount accepted item(s) to production">
+                            Release to Production (@acceptedCount)
+                        </button>
+                        <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
+                    }
                     <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "laser"))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Laser</button>
                     <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Iron Worker"))" @onclick:stopPropagation="true"
@@ -319,8 +327,6 @@
                             else if (handoff.Status == HandoffStatus.Accepted && !handoff.ReleasedDate.HasValue)
                             {
                                 <span style="color: #166534;">Accepted</span>
-                                <button @onclick="@(async () => await OnReleaseBatchProductHandoff(handoff.Id))" @onclick:stopPropagation="true"
-                                        style="@BtnStyle("e-primary")">Release to Production</button>
                             }
                             else if (handoff.Status == HandoffStatus.Accepted && handoff.ReleasedDate.HasValue)
                             {
@@ -676,6 +682,14 @@
             .Select(h => h!)
             .ToList();
 
+    // Count of Accepted-but-not-yet-released handoffs destined to this viewer within this
+    // batch — only meaningful when the viewer is the receiving plant, not the sender.
+    private int AcceptedUnreleasedCountForBatch(int batchId) =>
+        _productMeta.Values
+            .Where(p => p.BatchId == batchId)
+            .Select(p => _batchProductHandoffs.GetValueOrDefault(p.Id))
+            .Count(h => h is not null && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
+
     // A receiver-visible row is locked for editing once its handoff has been released —
     // the destination plant has already nested it, so it shouldn't change out from under them.
     private bool IsHandoffReleasedForRow(FlatBatchPartRow row) =>
@@ -841,9 +855,9 @@
         await LoadData();
     }
 
-    private async Task OnReleaseBatchProductHandoff(int handoffId)
+    private async Task OnReleaseBatchHandoffs(BatchCaption batch)
     {
-        if (_userId is not { } userId) return;
+        if (_userId is not { } userId || _selectedPlantId is not { } myPlantId) return;
         var stationId = BridgeHub.GetAnyOnlineStationId();
         if (stationId == null)
         {
@@ -856,7 +870,7 @@
         StateHasChanged();
         try
         {
-            var nestBatchId = await BomService.ReleaseBatchProductHandoffAsync(handoffId, userId);
+            var nestBatchId = await BomService.ReleaseBatchHandoffsAsync(batch.Id, myPlantId, userId);
 
             await using var db = await DbContextFactory.CreateDbContextAsync();
             var thumbItems = await db.BatchItems
@@ -868,14 +882,14 @@
                 .ToListAsync();
             if (thumbItems.Any())
             {
-                Logger.LogInformation("BatchProductHandoff {Id} release: sending UpdateThumbnail for {Count} part(s)",
-                    handoffId, thumbItems.Count);
+                Logger.LogInformation("Batch {Id} handoff release: sending UpdateThumbnail for {Count} part(s)",
+                    batch.Id, thumbItems.Count);
                 var payload = JsonSerializer.Serialize(
                     thumbItems.Select(t => new { PartId = t.PartId, FileName = t.FileName }));
                 var sent = BridgeHub.TrySendCommand(HubContext, stationId.Value,
                     Guid.NewGuid().ToString(), "UpdateThumbnail", payload);
                 if (!sent)
-                    Logger.LogWarning("BatchProductHandoff {Id} release: TrySendCommand returned false", handoffId);
+                    Logger.LogWarning("Batch {Id} handoff release: TrySendCommand returned false", batch.Id);
             }
 
             await LoadData();

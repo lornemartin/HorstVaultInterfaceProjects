@@ -1516,84 +1516,104 @@ public class BomService : IBomService
             .ExecuteUpdateAsync(s => s.SetProperty(h => h.Status, HandoffStatus.Pending));
     }
 
-    public async Task<int> ReleaseBatchProductHandoffAsync(int handoffId, int userId)
+    /// <summary>
+    /// Releases every Accepted, not-yet-released BatchProductHandoff for (batchId,
+    /// destinationPlantId) in one action — matching the existing "one release click per
+    /// container" pattern (ReleaseBatchToProductionAsync creates a single NestBatch covering
+    /// every BatchProduct; this does the same, just for the destination plant's accepted
+    /// slice instead of the home plant's). Throws if nothing qualifies.
+    /// </summary>
+    public async Task<int> ReleaseBatchHandoffsAsync(int batchId, int destinationPlantId, int userId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var handoff = await db.BatchProductHandoffs
+        var handoffs = await db.BatchProductHandoffs
             .Include(h => h.BatchProduct).ThenInclude(bp => bp.Parts)
-            .FirstOrDefaultAsync(h => h.Id == handoffId)
-            ?? throw new InvalidOperationException($"BatchProductHandoff {handoffId} not found.");
+            .Where(h => h.BatchProduct.BatchId == batchId && h.DestinationPlantId == destinationPlantId
+                     && h.Status == HandoffStatus.Accepted && h.ReleasedDate == null)
+            .ToListAsync();
+        if (handoffs.Count == 0)
+            throw new InvalidOperationException("Nothing accepted and ready to release for this plant.");
 
-        if (handoff.Status != HandoffStatus.Accepted)
-            throw new InvalidOperationException("This handoff must be accepted before it can be released to production.");
-        if (handoff.ReleasedDate.HasValue)
-            throw new InvalidOperationException("This handoff has already been released to production.");
-
-        var matchingParts = handoff.BatchProduct.Parts
-            .Where(p => p.Operations == "Laser" && p.IsStock && p.PlantId == handoff.DestinationPlantId)
-            .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
-            .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * handoff.BatchProduct.Qty))
+        var combined = handoffs
+            .SelectMany(h => h.BatchProduct.Parts
+                .Where(p => p.Operations == "Laser" && p.IsStock && p.PlantId == destinationPlantId)
+                .Select(p => (Part: p, ParentQty: h.BatchProduct.Qty)))
+            .GroupBy(x => x.Part.PartNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Sample: g.First().Part, TotalQty: g.Sum(x => x.Part.Qty * x.ParentQty)))
             .ToList();
 
         var nestBatch = new NestBatch
         {
-            BatchId   = handoff.BatchProduct.BatchId,
-            PlantId   = handoff.DestinationPlantId,
+            BatchId   = batchId,
+            PlantId   = destinationPlantId,
             EntryDate = DateTime.UtcNow,
         };
         db.NestBatches.Add(nestBatch);
         await db.SaveChangesAsync(); // get nestBatch.Id
-        await AddBatchItemsAsync(db, nestBatch.Id, matchingParts);
+        await AddBatchItemsAsync(db, nestBatch.Id, combined);
 
-        handoff.ReleasedDate = DateTime.UtcNow;
-        handoff.ReleasedByUserId = userId;
+        foreach (var h in handoffs)
+        {
+            h.ReleasedDate = DateTime.UtcNow;
+            h.ReleasedByUserId = userId;
+        }
         await db.SaveChangesAsync();
 
         _log.LogInformation(
-            "BatchProductHandoff {Id}: {Count} part line(s) released to Plant {PlantId}",
-            handoffId, matchingParts.Count, handoff.DestinationPlantId);
+            "Batch {BatchId}: released {HandoffCount} accepted handoff(s) ({PartCount} part line(s)) to Plant {PlantId}",
+            batchId, handoffs.Count, combined.Count, destinationPlantId);
         return nestBatch.Id;
     }
 
-    public async Task<int> ReleaseScheduleOrderHandoffAsync(int handoffId, int userId)
+    /// <summary>
+    /// Releases every Accepted, not-yet-released ScheduleOrderHandoff for (scheduleId,
+    /// destinationPlantId) in one action — matching the existing "one release click per
+    /// container" pattern (ReleaseScheduleToProductionAsync creates one NestOrder per
+    /// ScheduleOrder in a single click; this does the same for the destination plant's
+    /// accepted slice). Returns the new NestOrder ids. Throws if nothing qualifies.
+    /// </summary>
+    public async Task<List<int>> ReleaseScheduleHandoffsAsync(int scheduleId, int destinationPlantId, int userId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var handoff = await db.ScheduleOrderHandoffs
+        var handoffs = await db.ScheduleOrderHandoffs
             .Include(h => h.ScheduleOrder).ThenInclude(so => so.Parts)
-            .FirstOrDefaultAsync(h => h.Id == handoffId)
-            ?? throw new InvalidOperationException($"ScheduleOrderHandoff {handoffId} not found.");
+            .Where(h => h.ScheduleOrder.ScheduleId == scheduleId && h.DestinationPlantId == destinationPlantId
+                     && h.Status == HandoffStatus.Accepted && h.ReleasedDate == null)
+            .ToListAsync();
+        if (handoffs.Count == 0)
+            throw new InvalidOperationException("Nothing accepted and ready to release for this plant.");
 
-        if (handoff.Status != HandoffStatus.Accepted)
-            throw new InvalidOperationException("This handoff must be accepted before it can be released to production.");
-        if (handoff.ReleasedDate.HasValue)
-            throw new InvalidOperationException("This handoff has already been released to production.");
-
-        var matchingParts = handoff.ScheduleOrder.Parts
-            .Where(p => p.Operations == "Laser" && !p.IsStock && p.PlantId == handoff.DestinationPlantId)
-            .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
-            .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * handoff.ScheduleOrder.Qty))
-            .ToList();
-
-        var nestOrder = new NestOrder
+        var newIds = new List<int>();
+        foreach (var h in handoffs)
         {
-            ScheduleOrderId = handoff.ScheduleOrderId,
-            PlantId         = handoff.DestinationPlantId,
-            EntryDate       = DateTime.UtcNow,
-        };
-        db.NestOrders.Add(nestOrder);
-        await db.SaveChangesAsync(); // get nestOrder.Id
-        await AddOrderItemsAsync(db, nestOrder.Id, matchingParts);
+            var matchingParts = h.ScheduleOrder.Parts
+                .Where(p => p.Operations == "Laser" && !p.IsStock && p.PlantId == destinationPlantId)
+                .GroupBy(p => p.PartNumber, StringComparer.OrdinalIgnoreCase)
+                .Select(g => (Sample: g.First(), TotalQty: g.Sum(p => p.Qty) * h.ScheduleOrder.Qty))
+                .ToList();
 
-        handoff.ReleasedDate = DateTime.UtcNow;
-        handoff.ReleasedByUserId = userId;
+            var nestOrder = new NestOrder
+            {
+                ScheduleOrderId = h.ScheduleOrderId,
+                PlantId         = destinationPlantId,
+                EntryDate       = DateTime.UtcNow,
+            };
+            db.NestOrders.Add(nestOrder);
+            await db.SaveChangesAsync(); // get nestOrder.Id
+            await AddOrderItemsAsync(db, nestOrder.Id, matchingParts);
+            newIds.Add(nestOrder.Id);
+
+            h.ReleasedDate = DateTime.UtcNow;
+            h.ReleasedByUserId = userId;
+        }
         await db.SaveChangesAsync();
 
         _log.LogInformation(
-            "ScheduleOrderHandoff {Id}: {Count} part line(s) released to Plant {PlantId}",
-            handoffId, matchingParts.Count, handoff.DestinationPlantId);
-        return nestOrder.Id;
+            "Schedule {ScheduleId}: released {HandoffCount} accepted handoff(s) to Plant {PlantId}",
+            scheduleId, handoffs.Count, destinationPlantId);
+        return newIds;
     }
 
     private static decimal? ParseThickness(string? raw)

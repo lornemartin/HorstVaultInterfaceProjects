@@ -200,12 +200,13 @@ public interface IBomService
     Task<int> ResubmitBatchProductHandoffAsync(int batchProductId, int destinationPlantId);
 
     /// <summary>
-    /// Independently releases an Accepted BatchProductHandoff to production: populates a new
-    /// NestBatch/BatchItems at the destination plant for just this handoff's accepted parts,
-    /// and sets ReleasedDate/ReleasedByUser. Returns the new NestBatch's Id. Throws if the
-    /// handoff isn't Accepted or has already been released.
+    /// Independently releases every Accepted, not-yet-released BatchProductHandoff for
+    /// (batchId, destinationPlantId) in one action — the destination plant's equivalent of
+    /// ReleaseBatchToProductionAsync, producing a single NestBatch. Sets ReleasedDate/
+    /// ReleasedByUser on each handoff released. Returns the new NestBatch's Id. Throws if
+    /// nothing qualifies.
     /// </summary>
-    Task<int> ReleaseBatchProductHandoffAsync(int handoffId, int userId);
+    Task<int> ReleaseBatchHandoffsAsync(int batchId, int destinationPlantId, int userId);
 
     /// <summary>
     /// Accept a cross-plant ScheduleOrderHandoff: sets Status to Accepted.
@@ -226,12 +227,13 @@ public interface IBomService
     Task<int> ResubmitScheduleOrderHandoffAsync(int scheduleOrderId, int destinationPlantId);
 
     /// <summary>
-    /// Independently releases an Accepted ScheduleOrderHandoff to production: populates a new
-    /// NestOrder/OrderItems at the destination plant for just this handoff's accepted parts,
-    /// and sets ReleasedDate/ReleasedByUser. Returns the new NestOrder's Id. Throws if the
-    /// handoff isn't Accepted or has already been released.
+    /// Independently releases every Accepted, not-yet-released ScheduleOrderHandoff for
+    /// (scheduleId, destinationPlantId) in one action — the destination plant's equivalent of
+    /// ReleaseScheduleToProductionAsync, producing one NestOrder per ScheduleOrder. Sets
+    /// ReleasedDate/ReleasedByUser on each handoff released. Returns the new NestOrder ids.
+    /// Throws if nothing qualifies.
     /// </summary>
-    Task<int> ReleaseScheduleOrderHandoffAsync(int handoffId, int userId);
+    Task<List<int>> ReleaseScheduleHandoffsAsync(int scheduleId, int destinationPlantId, int userId);
 
     /// <summary>
     /// Check if a PDF exists on the share for the given part number.

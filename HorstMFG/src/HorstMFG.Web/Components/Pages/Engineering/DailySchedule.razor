@@ -140,6 +140,14 @@
                         }
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
+                    else if (AcceptedUnreleasedCountForSchedule(sched.Id) is var acceptedCount && acceptedCount > 0)
+                    {
+                        <button @onclick="@(async () => await OnReleaseScheduleHandoffs(sched))" @onclick:stopPropagation="true"
+                                style="@BtnStyle("e-primary")" title="Release @acceptedCount accepted item(s) to production">
+                            Release to Production (@acceptedCount)
+                        </button>
+                        <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
+                    }
                     <button @onclick="@(async () => await OpenReport("schedule-traveller", sched.Name))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Shop Traveller</button>
                     <button @onclick="@(async () => await OpenReport("schedule-op", sched.Name, "laser"))" @onclick:stopPropagation="true"
@@ -314,8 +322,6 @@
                             else if (handoff.Status == HandoffStatus.Accepted && !handoff.ReleasedDate.HasValue)
                             {
                                 <span style="color: #166534;">Accepted</span>
-                                <button @onclick="@(async () => await OnReleaseScheduleOrderHandoff(handoff.Id))" @onclick:stopPropagation="true"
-                                        style="@BtnStyle("e-primary")">Release to Production</button>
                             }
                             else if (handoff.Status == HandoffStatus.Accepted && handoff.ReleasedDate.HasValue)
                             {
@@ -648,6 +654,14 @@
             .Select(h => h!)
             .ToList();
 
+    // Count of Accepted-but-not-yet-released handoffs destined to this viewer within this
+    // schedule — only meaningful when the viewer is the receiving plant, not the sender.
+    private int AcceptedUnreleasedCountForSchedule(int scheduleId) =>
+        _orderMeta.Values
+            .Where(o => o.ScheduleId == scheduleId)
+            .Select(o => _scheduleOrderHandoffs.GetValueOrDefault(o.Id))
+            .Count(h => h is not null && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
+
     // A receiver-visible row is locked for editing once its handoff has been released —
     // the destination plant has already nested it, so it shouldn't change out from under them.
     private bool IsHandoffReleasedForRow(FlatSchedulePartRow row) =>
@@ -810,9 +824,9 @@
         await LoadData();
     }
 
-    private async Task OnReleaseScheduleOrderHandoff(int handoffId)
+    private async Task OnReleaseScheduleHandoffs(ScheduleCaption sched)
     {
-        if (_userId is not { } userId) return;
+        if (_userId is not { } userId || _selectedPlantId is not { } myPlantId) return;
         var stationId = BridgeHub.GetAnyOnlineStationId();
         if (stationId == null)
         {
@@ -825,11 +839,11 @@
         StateHasChanged();
         try
         {
-            var nestOrderId = await BomService.ReleaseScheduleOrderHandoffAsync(handoffId, userId);
+            var nestOrderIds = await BomService.ReleaseScheduleHandoffsAsync(sched.Id, myPlantId, userId);
 
             await using var db = await DbContextFactory.CreateDbContextAsync();
             var thumbItems = await db.OrderItems
-                .Where(i => i.NestOrderId == nestOrderId
+                .Where(i => nestOrderIds.Contains(i.NestOrderId)
                          && i.Part.Thumbnail == null
                          && i.Part.FileName != null)
                 .Select(i => new { i.PartId, i.Part.FileName })
