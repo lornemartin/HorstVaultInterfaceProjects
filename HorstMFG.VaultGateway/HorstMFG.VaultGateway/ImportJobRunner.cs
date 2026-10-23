@@ -170,5 +170,11 @@ public class ImportJobRunner
         Keywords        = src.Keywords,
         Notes           = src.Notes,
         Revision        = src.Revision,
+        P2PlantId        = src.P2PlantId,
+        P2IsStock        = src.P2IsStock,
+        P1StockException = src.P1StockException,
+        P2StockException = src.P2StockException,
+        SecondOperation  = src.SecondOperation,
+        FinishOps        = src.FinishOps,
     };
 }

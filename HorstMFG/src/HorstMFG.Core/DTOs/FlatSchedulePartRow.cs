@@ -31,6 +31,8 @@ public class FlatSchedulePartRow
     public string Material { get; set; } = string.Empty;
     public string Thickness { get; set; } = string.Empty;
     public string Operations { get; set; } = string.Empty;
+    public string SecondOperation { get; set; } = string.Empty;
+    public string FinishOps { get; set; } = string.Empty;
     public int Qty { get; set; }
     public bool IsStock { get; set; }
     public bool HasPdf { get; set; }

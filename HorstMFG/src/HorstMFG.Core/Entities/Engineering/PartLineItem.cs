@@ -12,6 +12,9 @@ public class PartLineItem
     public string Thickness { get; set; } = string.Empty;
     public string StructCode { get; set; } = string.Empty;
     public string Operations { get; set; } = string.Empty;
+    public string SecondOperation { get; set; } = string.Empty;
+    /// <summary>Outside finishing, e.g. "zinc" or "powder". Blank when none.</summary>
+    public string FinishOps { get; set; } = string.Empty;
     public bool IsStock { get; set; }
     public bool RequiresPdf { get; set; }
     public string? Notes { get; set; }

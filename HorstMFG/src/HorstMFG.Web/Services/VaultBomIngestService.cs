@@ -77,7 +77,7 @@ public class VaultBomIngestService
         if (order.Parts.Count > 0)
             db.PartLineItems.RemoveRange(order.Parts);
 
-        var newItems = BuildPartLineItems(payload.Lines).ToList();
+        var newItems = BuildPartLineItems(payload.Lines, order.Schedule.Plant, order.ProductNumber).ToList();
         await ResolvePlantIdsAsync(db, newItems, ct);
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
@@ -126,7 +126,7 @@ public class VaultBomIngestService
         if (product.Parts.Count > 0)
             db.PartLineItems.RemoveRange(product.Parts);
 
-        var newItems = BuildPartLineItems(payload.Lines).ToList();
+        var newItems = BuildPartLineItems(payload.Lines, product.Batch.Plant, product.ProductName).ToList();
         await ResolvePlantIdsAsync(db, newItems, ct);
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
@@ -173,9 +173,14 @@ public class VaultBomIngestService
     /// under multiple parents into a single row with summed Qty. The Level=1 row
     /// (the product itself) is preserved as a Category="Product" PartLineItem so
     /// the schedule grid can render the order header.
+    /// Plant ID and Is Stock come from the importing plant's own Vault properties (P2 … for
+    /// Plant 2, the originals for Plant 1), with Is Stock adjusted by that plant's Stock
+    /// Exception list for this top-level product. A blank Plant ID defaults to the importing plant.
     /// </summary>
-    private static List<PartLineItem> BuildPartLineItems(IEnumerable<VaultBomLine> lines)
+    private static List<PartLineItem> BuildPartLineItems(IEnumerable<VaultBomLine> lines, Plant importingPlant, string? productName)
     {
+        bool isPlant2 = importingPlant.Code.Equals("P2", StringComparison.OrdinalIgnoreCase);
+        string defaultPlantIdRaw = isPlant2 ? "Plant 2" : "Plant 1";
         var levelToQty = new Dictionary<string, int>();
         var dedupedByNumber = new Dictionary<string, PartLineItem>(StringComparer.OrdinalIgnoreCase);
 
@@ -211,6 +216,11 @@ public class VaultBomIngestService
             else
             {
                 var thickness = BomFieldMappers.DeriveThicknessForLaser(l.Operations, l.Thickness, l.StructCode);
+                var plantIdRaw = isPlant2 ? l.P2PlantId : l.PlantId;
+                var isStock = BomFieldMappers.ResolveIsStock(
+                    isPlant2 ? l.P2IsStock : l.IsStock,
+                    isPlant2 ? l.P2StockException : l.P1StockException,
+                    productName);
                 var item = new PartLineItem
                 {
                     PartNumber  = number,
@@ -222,10 +232,12 @@ public class VaultBomIngestService
                     Thickness   = thickness,
                     StructCode  = l.StructCode,
                     Operations  = l.Operations,
-                    IsStock     = l.IsStock,
+                    SecondOperation = l.SecondOperation,
+                    FinishOps   = l.FinishOps,
+                    IsStock     = isStock,
                     RequiresPdf = l.RequiresPdf,
                     Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
-                    PlantIdRaw  = string.IsNullOrWhiteSpace(l.PlantId) ? null : l.PlantId,
+                    PlantIdRaw  = string.IsNullOrWhiteSpace(plantIdRaw) ? defaultPlantIdRaw : plantIdRaw.Trim(),
                 };
                 dedupedByNumber[number] = item;
             }

@@ -29,6 +29,12 @@ namespace VaultAccess
         public string Keywords { get; set; } = "";
         public string Notes { get; set; } = "";
         public string Revision { get; set; } = "";
+        public string P2PlantId { get; set; } = "";
+        public bool P2IsStock { get; set; }
+        public string P1StockException { get; set; } = "";
+        public string P2StockException { get; set; } = "";
+        public string SecondOperation { get; set; } = "";
+        public string FinishOps { get; set; } = "";
     }
 
     public class VaultBomResult
@@ -109,32 +115,49 @@ namespace VaultAccess
             };
         }
 
+        // these are new properties added to Vault in October 2026
+        private const string P2PlantIdSysName        = "96db4673-45b2-4b4b-97d9-f824c62cfc23";
+        private const string P2IsStockSysName        = "364f1fa4-d93c-40fa-a306-b2e712afd96a";
+        private const string P1StockExceptionSysName = "fc3cce57-4042-4bf2-9ac6-05cb9456f0ac";
+        private const string P2StockExceptionSysName = "976d4ffa-00a4-4e92-b31d-72d3c5b1f900";
+        private const string SecondOperationSysName  = "b0744c34-80e9-4b93-b417-88ce708b4949";
+        private const string FinishOpsSysName        = "902e0a0b-f905-4f58-8a82-f254eec4df35";
+
         // Field mappings mirror ExportVaultItemsByBatch in VaultAccess.cs — keep in sync.
+        // (The plant-2 / stock-exception / 2nd-op / finish-ops columns are gateway-only for now.)
         private static ACW.MapPair[] BuildBomMappings()
         {
-            return new ACW.MapPair[]
+            var mappings = new List<ACW.MapPair>
             {
-                new ACW.MapPair { ToName = "Parent",           FromName = "BOMStructure-41FF056B-8EEF-47E2-8F9E-490BC0C52C71" },
-                new ACW.MapPair { ToName = "Number",           FromName = "Number" },
-                new ACW.MapPair { ToName = "Title (Item,CO)",  FromName = "Title(Item,CO)" },
-                new ACW.MapPair { ToName = "Item Description", FromName = "Description(Item,CO)" },
-                new ACW.MapPair { ToName = "CategoryName",     FromName = "CategoryName" },
-                new ACW.MapPair { ToName = "Thickness",        FromName = "7c5169ad-9081-4aa7-b1a3-4670edae0b8c" },
-                new ACW.MapPair { ToName = "Material",         FromName = "Material" },
-                new ACW.MapPair { ToName = "Operations",       FromName = "794d5b7d-49b5-49ba-938a-7e341a7ff8e4" },
-                new ACW.MapPair { ToName = "Quantity",         FromName = "Quantity-41FF056B-8EEF-47E2-8F9E-490BC0C52C71" },
-                new ACW.MapPair { ToName = "Structural Code",  FromName = "e3811c7a-a3ee-4f67-b34e-cbc892640616" },
-                new ACW.MapPair { ToName = "Plant ID",         FromName = "eff195ae-da71-4929-b3df-2d6fd1e25f53" },
-                new ACW.MapPair { ToName = "Is Stock",         FromName = "f78c17cd-86d1-4728-96b5-8001fb58b67f" },
-                new ACW.MapPair { ToName = "Requires PDF",     FromName = "6df4ae8b-fbd9-4e62-b801-a46097d4f9c5" },
-                new ACW.MapPair { ToName = "Comment",          FromName = "Comment" },
-                new ACW.MapPair { ToName = "Date Modified",    FromName = "ModDate" },
-                new ACW.MapPair { ToName = "State",            FromName = "State" },
-                new ACW.MapPair { ToName = "Stock Name",       FromName = "a42ca550-c503-4835-99dd-8c4d4ff6dbaf" },
-                new ACW.MapPair { ToName = "Keywords",         FromName = "Keywords" },
-                new ACW.MapPair { ToName = "Notes",            FromName = "0d012a5c-cc28-443c-b44e-735372eee117" },
-                new ACW.MapPair { ToName = "Revision",         FromName = "Revision" },
+                new ACW.MapPair { ToName = "Parent",             FromName = "BOMStructure-41FF056B-8EEF-47E2-8F9E-490BC0C52C71" },
+                new ACW.MapPair { ToName = "Number",             FromName = "Number" },
+                new ACW.MapPair { ToName = "Title (Item,CO)",    FromName = "Title(Item,CO)" },
+                new ACW.MapPair { ToName = "Item Description",   FromName = "Description(Item,CO)" },
+                new ACW.MapPair { ToName = "CategoryName",       FromName = "CategoryName" },
+                new ACW.MapPair { ToName = "Thickness",          FromName = "7c5169ad-9081-4aa7-b1a3-4670edae0b8c" },
+                new ACW.MapPair { ToName = "Material",           FromName = "Material" },
+                new ACW.MapPair { ToName = "Operations",         FromName = "794d5b7d-49b5-49ba-938a-7e341a7ff8e4" },
+                new ACW.MapPair { ToName = "Quantity",           FromName = "Quantity-41FF056B-8EEF-47E2-8F9E-490BC0C52C71" },
+                new ACW.MapPair { ToName = "Structural Code",    FromName = "e3811c7a-a3ee-4f67-b34e-cbc892640616" },
+                new ACW.MapPair { ToName = "Plant ID",           FromName = "eff195ae-da71-4929-b3df-2d6fd1e25f53" },
+                new ACW.MapPair { ToName = "Is Stock",           FromName = "f78c17cd-86d1-4728-96b5-8001fb58b67f" },
+                new ACW.MapPair { ToName = "Requires PDF",       FromName = "6df4ae8b-fbd9-4e62-b801-a46097d4f9c5" },
+                new ACW.MapPair { ToName = "Comment",            FromName = "Comment" },
+                new ACW.MapPair { ToName = "Date Modified",      FromName = "ModDate" },
+                new ACW.MapPair { ToName = "State",              FromName = "State" },
+                new ACW.MapPair { ToName = "Stock Name",         FromName = "a42ca550-c503-4835-99dd-8c4d4ff6dbaf" },
+                new ACW.MapPair { ToName = "Keywords",           FromName = "Keywords" },
+                new ACW.MapPair { ToName = "Notes",              FromName = "0d012a5c-cc28-443c-b44e-735372eee117" },
+                new ACW.MapPair { ToName = "Revision",           FromName = "Revision" },
+                new ACW.MapPair { ToName = "P2 Plant ID",        FromName = P2PlantIdSysName },
+                new ACW.MapPair { ToName = "P2 Is Stock",        FromName = P2IsStockSysName },
+                new ACW.MapPair { ToName = "P1 Stock Exception", FromName = P1StockExceptionSysName },
+                new ACW.MapPair { ToName = "P2 Stock Exception", FromName = P2StockExceptionSysName },
+                new ACW.MapPair { ToName = "2nd Operation",      FromName = SecondOperationSysName },
+                new ACW.MapPair { ToName = "FinishOps",          FromName = FinishOpsSysName },
             };
+
+            return mappings.ToArray();
         }
 
         private static byte[] DownloadAllBytes(ACW.PackageService pkgSvc, ACW.FileNameAndURL fileNameAndUrl)
@@ -203,7 +226,8 @@ namespace VaultAccess
 
         // Column order matches BuildBomMappings: Parent, Number, Title, Description, Category,
         // Thickness, Material, Operations, Qty, StructCode, PlantId, IsStock, RequiresPdf,
-        // Comment, ModDate, State, StockName, Keywords, Notes, Revision.
+        // Comment, ModDate, State, StockName, Keywords, Notes, Revision, P2PlantId, P2IsStock,
+        // P1StockException, P2StockException, SecondOperation, FinishOps.
         private static List<VaultBomItem> ParseTsv(byte[] tsvBytes, Dictionary<string, string> fileNameByItemNum)
         {
             var result = new List<VaultBomItem>();
@@ -248,6 +272,12 @@ namespace VaultAccess
                         Keywords        = cols[17],
                         Notes           = cols[18],
                         Revision        = cols.Length > 19 ? cols[19] : "",
+                        P2PlantId        = cols.Length > 20 ? cols[20] : "",
+                        P2IsStock        = cols.Length > 21 && cols[21].Equals("True", StringComparison.OrdinalIgnoreCase),
+                        P1StockException = cols.Length > 22 ? cols[22] : "",
+                        P2StockException = cols.Length > 23 ? cols[23] : "",
+                        SecondOperation  = cols.Length > 24 ? cols[24] : "",
+                        FinishOps        = cols.Length > 25 ? cols[25] : "",
                     });
                 }
             }

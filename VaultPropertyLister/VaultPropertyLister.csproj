@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>VaultPropertyLister</RootNamespace>
+    <AssemblyName>VaultPropertyLister</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VaultAccess\VaultAccess.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Autodesk.Connectivity.WebServices">
+      <HintPath>..\Vault 2026 SDK Binaries\Autodesk.Connectivity.WebServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Autodesk.DataManagement.Client.Framework.Vault">
+      <HintPath>..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Vault 2026 SDK runtime DLLs — must be alongside the executable -->
+    <None Include="..\Vault 2026 SDK Binaries\AdskLicensingSDK_9.dll">             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>AdskLicensingSDK_9.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\AdskIdentitySDK.dll">                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>AdskIdentitySDK.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.Connectivity.WebServices.WCF.dll">      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.Connectivity.WebServices.WCF.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.Connectivity.LicenseWrapper.dll">       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.Connectivity.LicenseWrapper.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.Connectivity.IDServicesWrapper.dll">    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.Connectivity.IDServicesWrapper.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.Connectivity.Extensibility.Framework.dll"> <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.Connectivity.Extensibility.Framework.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.dll">        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Forms.dll">       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.Forms.dll</Link></None>
+    <None Include="..\Vault 2026 SDK Binaries\Autodesk.DataManagement.Client.Framework.Vault.Forms.dll"> <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><Link>Autodesk.DataManagement.Client.Framework.Vault.Forms.dll</Link></None>
+  </ItemGroup>
+
+</Project>

@@ -523,6 +523,11 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("FinishOps")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<bool>("HasPdf")
                         .HasColumnType("boolean");
 
@@ -563,6 +568,11 @@ namespace HorstMFG.Infrastructure.Data.Migrations
 
                     b.Property<int?>("ScheduleOrderId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("SecondOperation")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("StructCode")
                         .IsRequired()

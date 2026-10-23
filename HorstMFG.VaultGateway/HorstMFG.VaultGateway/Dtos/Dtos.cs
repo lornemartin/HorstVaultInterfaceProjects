@@ -59,4 +59,10 @@ public class VaultBomLine
     public string Keywords { get; set; } = "";
     public string Notes { get; set; } = "";
     public string Revision { get; set; } = "";
+    public string P2PlantId { get; set; } = "";
+    public bool P2IsStock { get; set; }
+    public string P1StockException { get; set; } = "";
+    public string P2StockException { get; set; } = "";
+    public string SecondOperation { get; set; } = "";
+    public string FinishOps { get; set; } = "";
 }

@@ -136,6 +136,8 @@ public class ApplicationDbContext : DbContext
             e.Property(p => p.Thickness).HasMaxLength(50);
             e.Property(p => p.StructCode).HasMaxLength(200);
             e.Property(p => p.Operations).HasMaxLength(500);
+            e.Property(p => p.SecondOperation).HasMaxLength(500);
+            e.Property(p => p.FinishOps).HasMaxLength(200);
             e.Property(p => p.Notes).HasMaxLength(2000);
             e.Property(p => p.PlantIdRaw).HasMaxLength(50);
             e.HasOne(p => p.BatchProduct).WithMany(bp => bp.Parts).HasForeignKey(p => p.BatchProductId).IsRequired(false);

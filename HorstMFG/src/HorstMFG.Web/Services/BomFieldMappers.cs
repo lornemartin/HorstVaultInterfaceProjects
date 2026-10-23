@@ -66,6 +66,23 @@ internal static class BomFieldMappers
             : null;
 
     /// <summary>
+    /// Applies a plant's Vault "Stock Exception" list (pipe-delimited top-level product names)
+    /// to the part's base Is Stock flag. A listed product flips the flag: a stock part becomes
+    /// make-to-order for that product, and a make-to-order part becomes stock for it.
+    /// </summary>
+    public static bool ResolveIsStock(bool baseIsStock, string? stockExceptions, string? productName)
+    {
+        if (string.IsNullOrWhiteSpace(stockExceptions) || string.IsNullOrWhiteSpace(productName))
+            return baseIsStock;
+
+        var product = StripCadExtension(productName.Trim());
+        var listed = stockExceptions
+            .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(p => StripCadExtension(p).Equals(product, StringComparison.OrdinalIgnoreCase));
+        return listed ? !baseIsStock : baseIsStock;
+    }
+
+    /// <summary>
     /// Strip <c>.ipt</c> or <c>.iam</c> extension if present (case-insensitive).
     /// </summary>
     public static string StripCadExtension(string number)
