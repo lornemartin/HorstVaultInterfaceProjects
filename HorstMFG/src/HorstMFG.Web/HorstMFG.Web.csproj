@@ -35,4 +35,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="HorstMFG.Web.Tests" />
+  </ItemGroup>
+
 </Project>
