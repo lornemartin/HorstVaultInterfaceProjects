@@ -154,6 +154,18 @@ public class VaultBomIngestServiceTests : IDisposable
         Assert.True(part.IsStock);
     }
 
+    [Fact]
+    public async Task WildcardException_MatchingProduct_FlipsStockFlag()
+    {
+        var part = await IngestSinglePartAsync(BomType.MakeToOrder, Plant2Id, l =>
+        {
+            l.P2IsStock = true;
+            l.P2StockException = "OTHER|PROD-*";
+        });
+
+        Assert.False(part.IsStock);
+    }
+
     // ── New columns ──────────────────────────────────────────────────────────
 
     [Theory]

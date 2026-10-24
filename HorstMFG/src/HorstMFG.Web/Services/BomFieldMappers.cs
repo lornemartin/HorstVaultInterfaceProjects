@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
 namespace HorstMFG.Web.Services;
@@ -69,6 +70,7 @@ internal static class BomFieldMappers
     /// Applies a plant's Vault "Stock Exception" list (pipe-delimited top-level product names)
     /// to the part's base Is Stock flag. A listed product flips the flag: a stock part becomes
     /// make-to-order for that product, and a make-to-order part becomes stock for it.
+    /// Entries may use '*' as a wildcard (e.g. "LA-SB1000*").
     /// </summary>
     public static bool ResolveIsStock(bool baseIsStock, string? stockExceptions, string? productName)
     {
@@ -78,8 +80,22 @@ internal static class BomFieldMappers
         var product = StripCadExtension(productName.Trim());
         var listed = stockExceptions
             .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Any(p => StripCadExtension(p).Equals(product, StringComparison.OrdinalIgnoreCase));
+            .Any(p => MatchesExceptionPattern(StripCadExtension(p), product));
         return listed ? !baseIsStock : baseIsStock;
+    }
+
+    /// <summary>
+    /// Whole-name, case-insensitive match where '*' in the pattern matches any run of
+    /// characters (including none), e.g. "LA-SB1000*" matches "LA-SB100054" and "LA-SB1000".
+    /// Every other character is literal.
+    /// </summary>
+    private static bool MatchesExceptionPattern(string pattern, string productName)
+    {
+        if (!pattern.Contains('*'))
+            return pattern.Equals(productName, StringComparison.OrdinalIgnoreCase);
+
+        var regex = "^" + Regex.Escape(pattern).Replace(@"\*", ".*") + "$";
+        return Regex.IsMatch(productName, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
     /// <summary>
