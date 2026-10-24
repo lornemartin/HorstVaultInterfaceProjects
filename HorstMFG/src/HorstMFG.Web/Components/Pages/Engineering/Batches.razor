@@ -18,6 +18,7 @@
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Popups
+@using HorstMFG.Web.Components.Shared
 @implements IAsyncDisposable
 
 <PageTitle>Batches - HorstMFG</PageTitle>
@@ -91,10 +92,14 @@
             <input type="checkbox" @bind="_hideNonStock" @bind:after="OnHideNonStockChanged" />
             Hide non-stock parts
         </label>
+        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" @bind="_crossPlantOnly" @bind:after="OnCrossPlantOnlyChanged" />
+            Cross-plant only
+        </label>
     </div>
 </div>
 
-<SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="BatchesGrid_v7"
+<SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="true" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" Height="600">
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
@@ -356,6 +361,7 @@
         <GridColumn Field="PartLineItemId" IsPrimaryKey="true" Visible="false" Width="0" />
         <GridColumn Field="CategoryOrder"  Visible="false" Width="0" />
         <GridColumn Field="BatchReleased"  Visible="false" Width="0" />
+        <GridColumn Field="IsCrossPlant"   Visible="false" Width="0" />
         <GridColumn Field="PartNumber" HeaderText="Number" Width="300">
             <Template>
                 @{
@@ -364,6 +370,9 @@
                     {
                         <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                     }
+                    <CrossPlantMarker PartPlantId="row.PlantId" ParentPlantId="row.BatchPlantId"
+                                      ViewerPlantId="_selectedPlantId" Plants="_plantLabels" ParentKind="batch"
+                                      Status="_batchProductHandoffs.GetValueOrDefault(row.BatchProductId)?.Status" />
                     if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
@@ -574,14 +583,19 @@
         public bool      HideReleased       { get; set; } = false;
         public bool      HideAssemblies     { get; set; } = true;
         public bool      HideNonStock       { get; set; } = true;
+        public bool      CrossPlantOnly     { get; set; } = false;
         public List<int> ExpandedBatchIds   { get; set; } = new();
         public List<int> ExpandedProductIds { get; set; } = new();
     }
     private const string StateKey = "horstmfg.batches.grid.state";
+    // Bump the version whenever the grid's columns change — Syncfusion persists column layout
+    // under this ID, and restoring a stale layout over a changed column set scrambles the order.
+    private const string GridId = "BatchesGrid_v8";
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatBatchPartRow>? _batchGrid;
     private List<PlantOption> _plantOptions = new();
+    private Dictionary<int, (string Code, string Name)> _plantLabels = new();
     private int? _selectedPlantId;
     private int? _userId;
     private bool _isAdmin;
@@ -595,6 +609,7 @@
     private bool _hideReleased    = false;
     private bool _hideAssemblies  = true;
     private bool _hideNonStock    = true;
+    private bool _crossPlantOnly  = false;
     private HashSet<int> _expandedBatchIds   = new();
     private HashSet<int> _expandedProductIds = new();
     private CancellationTokenSource? _searchCts;
@@ -713,6 +728,7 @@
         var plants = await db.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         _plantOptions = new List<PlantOption> { new(null, "All Plants") };
         _plantOptions.AddRange(plants.Select(p => new PlantOption(p.Id, p.Name)));
+        _plantLabels = plants.ToDictionary(p => p.Id, p => (p.Code, p.Name));
 
         var httpContext = HttpContextAccessor.HttpContext;
         if (httpContext?.User.Identity?.IsAuthenticated == true)
@@ -745,7 +761,7 @@
                    || user?.HasClaim(ClaimTypes.Role, "Engineering") == true;
         await JS.InvokeVoidAsync("setUserCanEdit", canEdit);
         _dotNetRef = DotNetObjectReference.Create(this);
-        try { await JS.InvokeVoidAsync("horstGrid.watchExpansion", "BatchesGrid_v7", _dotNetRef); }
+        try { await JS.InvokeVoidAsync("horstGrid.watchExpansion", GridId, _dotNetRef); }
         catch (JSException) { /* app.js not yet available (stale cache); expansion tracking inactive */ }
         await LoadStateAsync();
         await LoadData();
@@ -933,12 +949,13 @@
     }
 
     // Missing-PDF counts and the custom-plant dropdown options only include rows currently
-    // visible under the "Hide non-stock parts" and "Hide assemblies" filters — a part hidden
-    // from the grid shouldn't count toward the badge or appear as a printable custom-plant value.
+    // visible under the "Hide non-stock parts", "Hide assemblies" and "Cross-plant only" filters — a
+    // part hidden from the grid shouldn't count toward the badge or appear as a printable custom-plant value.
     private void RecomputeMissingPdfCounts()
     {
         var visibleRows = _rows.Where(r => (!_hideNonStock || r.IsStock)
-                                         && (!_hideAssemblies || r.CategoryOrder != 1));
+                                         && (!_hideAssemblies || r.CategoryOrder != 1)
+                                         && (!_crossPlantOnly || r.IsCrossPlant));
 
         var missingRows = visibleRows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf);
         _batchMissingPdfCount = missingRows
@@ -1010,6 +1027,14 @@
         await SaveStateAsync();
     }
 
+    private async Task OnCrossPlantOnlyChanged()
+    {
+        RecomputeMissingPdfCounts();
+        await ApplyGridFilters();
+        await RestoreExpansionAsync();
+        await SaveStateAsync();
+    }
+
     private async Task ApplyGridFilters()
     {
         if (_batchGrid is null) return;
@@ -1021,6 +1046,8 @@
             await _batchGrid.FilterByColumnAsync("CategoryOrder", "notequal", 1);
         if (_hideNonStock)
             await _batchGrid.FilterByColumnAsync("IsStock", "equal", true);
+        if (_crossPlantOnly)
+            await _batchGrid.FilterByColumnAsync("IsCrossPlant", "equal", true);
     }
 
     // ── Sort interception — keep CategoryOrder as permanent primary sort ─────
@@ -1063,6 +1090,7 @@
         _hideReleased    = state.HideReleased;
         _hideAssemblies  = state.HideAssemblies;
         _hideNonStock    = state.HideNonStock;
+        _crossPlantOnly  = state.CrossPlantOnly;
         _expandedBatchIds   = state.ExpandedBatchIds.ToHashSet();
         _expandedProductIds = state.ExpandedProductIds.ToHashSet();
     }
@@ -1075,6 +1103,7 @@
             HideReleased       = _hideReleased,
             HideAssemblies     = _hideAssemblies,
             HideNonStock       = _hideNonStock,
+            CrossPlantOnly     = _crossPlantOnly,
             ExpandedBatchIds   = _expandedBatchIds.ToList(),
             ExpandedProductIds = _expandedProductIds.ToList(),
         });
@@ -1129,7 +1158,7 @@
         _ = Task.Delay(2500).ContinueWith(_ => InvokeAsync(() => { _restoringExpansion = false; }));
         try
         {
-            await JS.InvokeVoidAsync("horstGrid.restoreExpansion", "BatchesGrid_v7",
+            await JS.InvokeVoidAsync("horstGrid.restoreExpansion", GridId,
                 _expandedBatchIds.ToList(), _expandedProductIds.ToList());
         }
         catch (JSException) { }
@@ -1163,7 +1192,7 @@
     {
         _refreshingPartIds.Add(row.PartLineItemId);
         StateHasChanged();
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         try
         {
             var found = await BomService.RefreshPartPdfAsync(row.PartLineItemId);
@@ -1177,7 +1206,7 @@
             _refreshingPartIds.Remove(row.PartLineItemId);
         }
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     // ── Batch actions ─────────────────────────────────────────────────────────
@@ -1266,10 +1295,10 @@
         var trimmed = rawValue.Trim();
         if (string.IsNullOrEmpty(trimmed)) return;
         if (_batchMeta.TryGetValue(batchId, out var current) && current.Name == trimmed) return;
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdateBatchNameAsync(batchId, trimmed);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnBatchProductQtyChanged(int productId, string rawValue)
@@ -1277,9 +1306,9 @@
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
         _activePartLineItemId = null;
         await BomService.UpdateBatchProductQtyAsync(productId, qty);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnBatchProductPlantChanged(int productId, string rawValue)
@@ -1287,9 +1316,9 @@
         if (!int.TryParse(rawValue, out var plantId)) return;
         _activePartLineItemId = null;
         await BomService.UpdateBatchProductPlantAsync(productId, plantId);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnPartPlantSelectChanged(FlatBatchPartRow row, string rawValue)
@@ -1331,7 +1360,7 @@
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {
-            _plantDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+            _plantDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             _plantDialogRow = row;
             _plantDialogNewPlantId = plantId;
             _plantDialogNewPlantIdRaw = plantIdRaw;
@@ -1340,10 +1369,10 @@
             StateHasChanged();
             return;
         }
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, plantIdRaw);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnPlantDialogThisOnly()
@@ -1353,7 +1382,7 @@
         await BomService.UpdatePartPlantAsync(_plantDialogRow.PartLineItemId, _plantDialogNewPlantId, _plantDialogNewPlantIdRaw);
         _plantDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", _plantDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _plantDialogScrollTop);
     }
 
     private async Task OnPlantDialogAll()
@@ -1363,7 +1392,7 @@
         await BomService.UpdatePartPlantForAllSiblingsAsync(_plantDialogRow.PartLineItemId, _plantDialogNewPlantId, _plantDialogNewPlantIdRaw);
         _plantDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", _plantDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _plantDialogScrollTop);
     }
 
     private void OnPlantDialogCancel()
@@ -1389,12 +1418,12 @@
         if (string.IsNullOrEmpty(trimmed)) return;
         _activePartLineItemId = null;
         await BomService.UpdateBatchProductNameAsync(productId, trimmed);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
         _statusMessage = $"Product name set to '{trimmed}'. Click Re-import BOM to fetch the BOM.";
         _statusIsError = false;
         StateHasChanged();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnRetryBatchProduct(int productId)
@@ -1510,12 +1539,12 @@
 
         await InvokeAsync(async () =>
         {
-            var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+            var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             await LoadData();
             foreach (var id in timedOutIds)
                 _importErrorByProductId[id] = "Timed out";
             StateHasChanged();
-            await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+            await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
         });
     }
 
@@ -1535,7 +1564,7 @@
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {
-            _stockDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+            _stockDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             _stockDialogRow = row;
             _stockDialogNewValue = newValue;
             _stockDialogSiblingCount = count;
@@ -1543,10 +1572,10 @@
             StateHasChanged();
             return;
         }
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdatePartIsStockAsync(row.PartLineItemId, newValue);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnStockDialogThisOnly()
@@ -1556,7 +1585,7 @@
         await BomService.UpdatePartIsStockAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
         _stockDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", _stockDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _stockDialogScrollTop);
     }
 
     private async Task OnStockDialogAll()
@@ -1566,7 +1595,7 @@
         await BomService.UpdatePartIsStockForAllSiblingsAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
         _stockDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", _stockDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _stockDialogScrollTop);
     }
 
     private void OnStockDialogCancel()
@@ -1599,10 +1628,10 @@
         var productId = _markAllStockProduct.Id;
         _markAllStockProduct = null;
         _markAllStockBatch = null;
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.MarkAllPartsAsStockForBatchProductAsync(productId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnMarkAllStockEntireBatch()
@@ -1612,10 +1641,10 @@
         var productId = _markAllStockProduct.Id;
         _markAllStockProduct = null;
         _markAllStockBatch = null;
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.MarkMatchingPartsAsStockAcrossBatchAsync(productId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnMarkAllStockBatchLevel(BatchCaption batch)
@@ -1623,10 +1652,10 @@
         var confirmed = await JS.InvokeAsync<bool>("confirm",
             $"Mark all parts in every batch item of '{batch.Name}' as stock?");
         if (!confirmed) return;
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "BatchesGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.MarkAllPartsAsStockForBatchAsync(batch.Id);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "BatchesGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────

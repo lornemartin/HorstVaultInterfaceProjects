@@ -45,6 +45,9 @@ public class FlatSchedulePartRow
     public bool VaultBomImported { get; set; }
 
     // ── Sort helpers ─────────────────────────────────────────────────────────
+    /// <summary>Part is made at a different plant than the one that owns its Schedule.</summary>
+    public bool IsCrossPlant => PlantId.HasValue && PlantId.Value != SchedulePlantId;
+
     public int CategoryOrder => Category.ToLowerInvariant() switch
     {
         "product"  => 0,

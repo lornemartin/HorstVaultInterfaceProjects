@@ -43,6 +43,9 @@ public class FlatBatchPartRow
     public bool VaultBomImported { get; set; }
 
     // ── Sort helpers ─────────────────────────────────────────────────────────
+    /// <summary>Part is made at a different plant than the one that owns its Batch.</summary>
+    public bool IsCrossPlant => PlantId.HasValue && PlantId.Value != BatchPlantId;
+
     public int CategoryOrder => Category.ToLowerInvariant() switch
     {
         "product"  => 0,

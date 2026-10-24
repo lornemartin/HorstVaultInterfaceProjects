@@ -16,6 +16,7 @@
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Popups
+@using HorstMFG.Web.Components.Shared
 @implements IAsyncDisposable
 
 <PageTitle>Orders - HorstMFG</PageTitle>
@@ -85,10 +86,14 @@
             <input type="checkbox" @bind="_hideReleased" @bind:after="OnHideReleasedChanged" />
             Hide released
         </label>
+        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" @bind="_crossPlantOnly" @bind:after="OnCrossPlantOnlyChanged" />
+            Cross-plant only
+        </label>
     </div>
 </div>
 
-<SfGrid TValue="FlatSchedulePartRow" @ref="_schedGrid" ID="OrdersGrid_v7"
+<SfGrid TValue="FlatSchedulePartRow" @ref="_schedGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="false" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" Height="600">
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
@@ -354,6 +359,7 @@
         <GridColumn Field="CategoryOrder"    Visible="false" Width="0" />
         <GridColumn Field="ThicknessOrder"   Visible="false" Width="0" />
         <GridColumn Field="ScheduleReleased" Visible="false" Width="0" />
+        <GridColumn Field="IsCrossPlant"     Visible="false" Width="0" />
         <GridColumn Field="PartNumber" HeaderText="Number" Width="300">
             <Template>
                 @{
@@ -362,6 +368,9 @@
                     {
                         <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                     }
+                    <CrossPlantMarker PartPlantId="row.PlantId" ParentPlantId="row.SchedulePlantId"
+                                      ViewerPlantId="_selectedPlantId" Plants="_plantLabels" ParentKind="order"
+                                      Status="_scheduleOrderHandoffs.GetValueOrDefault(row.ScheduleOrderId)?.Status" />
                     if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
@@ -553,14 +562,19 @@
         public int?       DateRangeDays      { get; set; } = 30;
         public bool       HideStock          { get; set; } = true;
         public bool       HideReleased       { get; set; } = false;
+        public bool       CrossPlantOnly     { get; set; } = false;
         public List<int>  ExpandedScheduleIds { get; set; } = new();
         public List<int>  ExpandedOrderIds    { get; set; } = new();
     }
     private const string StateKey = "horstmfg.orders.grid.state";
+    // Bump the version whenever the grid's columns change — Syncfusion persists column layout
+    // under this ID, and restoring a stale layout over a changed column set scrambles the order.
+    private const string GridId = "OrdersGrid_v8";
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatSchedulePartRow>? _schedGrid;
     private List<PlantOption> _plantOptions = new();
+    private Dictionary<int, (string Code, string Name)> _plantLabels = new();
     private int? _selectedPlantId;
     private int? _userId;
     private bool _isAdmin;
@@ -573,6 +587,7 @@
     private string _searchTerm = "";
     private bool _hideStock = true;
     private bool _hideReleased = false;
+    private bool _crossPlantOnly = false;
     private HashSet<int> _expandedScheduleIds = new();
     private HashSet<int> _expandedOrderIds    = new();
     private CancellationTokenSource? _searchCts;
@@ -685,6 +700,7 @@
         var plants = await db.Plants.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         _plantOptions = new List<PlantOption> { new(null, "All Plants") };
         _plantOptions.AddRange(plants.Select(p => new PlantOption(p.Id, p.Name)));
+        _plantLabels = plants.ToDictionary(p => p.Id, p => (p.Code, p.Name));
 
         var httpContext = HttpContextAccessor.HttpContext;
         if (httpContext?.User.Identity?.IsAuthenticated == true)
@@ -717,7 +733,7 @@
                    || user?.HasClaim(ClaimTypes.Role, "Engineering") == true;
         await JS.InvokeVoidAsync("setUserCanEdit", canEdit);
         _dotNetRef = DotNetObjectReference.Create(this);
-        try { await JS.InvokeVoidAsync("horstGrid.watchExpansion", "OrdersGrid_v7", _dotNetRef); }
+        try { await JS.InvokeVoidAsync("horstGrid.watchExpansion", GridId, _dotNetRef); }
         catch (JSException) { /* app.js not yet available (stale cache); expansion tracking inactive */ }
         await LoadStateAsync();
         await LoadData();
@@ -900,11 +916,12 @@
     }
 
     // Missing-PDF counts and the custom-plant dropdown options only include rows currently
-    // visible under the "Hide stock parts" filter — a part hidden from the grid shouldn't
-    // count toward the badge or appear as a printable custom-plant value.
+    // visible under the "Hide stock parts" and "Cross-plant only" filters — a part hidden from
+    // the grid shouldn't count toward the badge or appear as a printable custom-plant value.
     private void RecomputeMissingPdfCounts()
     {
-        var visibleRows = _rows.Where(r => !_hideStock || !r.IsStock);
+        var visibleRows = _rows.Where(r => (!_hideStock || !r.IsStock)
+                                         && (!_crossPlantOnly || r.IsCrossPlant));
 
         var missingRows = visibleRows.Where(r => r.PartLineItemId != 0 && r.RequiresPdf && !r.HasPdf);
         _scheduleMissingPdfCount = missingRows
@@ -931,6 +948,8 @@
             await _schedGrid.FilterByColumnAsync("IsStock", "equal", false);
         if (_hideReleased)
             await _schedGrid.FilterByColumnAsync("ScheduleReleased", "equal", false);
+        if (_crossPlantOnly)
+            await _schedGrid.FilterByColumnAsync("IsCrossPlant", "equal", true);
     }
 
     // ── Filter handlers ───────────────────────────────────────────────────────
@@ -971,6 +990,14 @@
         await SaveStateAsync();
     }
 
+    private async Task OnCrossPlantOnlyChanged()
+    {
+        RecomputeMissingPdfCounts();
+        await ApplyGridFilters();
+        await RestoreExpansionAsync();
+        await SaveStateAsync();
+    }
+
     private async Task OnHideReleasedChanged()
     {
         await ApplyGridFilters();
@@ -988,6 +1015,7 @@
         _toDate        = _dateRangeDays.HasValue ? DateTime.Today : null;
         _hideStock     = state.HideStock;
         _hideReleased  = state.HideReleased;
+        _crossPlantOnly = state.CrossPlantOnly;
         _expandedScheduleIds = state.ExpandedScheduleIds.ToHashSet();
         _expandedOrderIds    = state.ExpandedOrderIds.ToHashSet();
     }
@@ -999,6 +1027,7 @@
             DateRangeDays       = _dateRangeDays,
             HideStock           = _hideStock,
             HideReleased        = _hideReleased,
+            CrossPlantOnly      = _crossPlantOnly,
             ExpandedScheduleIds = _expandedScheduleIds.ToList(),
             ExpandedOrderIds    = _expandedOrderIds.ToList(),
         });
@@ -1043,7 +1072,7 @@
             return;
         try
         {
-            await JS.InvokeVoidAsync("horstGrid.restoreExpansion", "OrdersGrid_v7",
+            await JS.InvokeVoidAsync("horstGrid.restoreExpansion", GridId,
                 _expandedScheduleIds.ToList(), _expandedOrderIds.ToList());
         }
         catch (JSException) { }
@@ -1077,7 +1106,7 @@
     {
         _refreshingPartIds.Add(row.PartLineItemId);
         StateHasChanged();
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         try
         {
             var found = await BomService.RefreshPartPdfAsync(row.PartLineItemId);
@@ -1091,7 +1120,7 @@
             _refreshingPartIds.Remove(row.PartLineItemId);
         }
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     // ── Schedule actions ──────────────────────────────────────────────────────
@@ -1172,9 +1201,9 @@
         if (!int.TryParse(rawValue, out var qty) || qty < 1) return;
         _activePartLineItemId = null;
         await BomService.UpdateScheduleOrderQtyAsync(orderId, qty);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnScheduleOrderPlantChanged(int orderId, string rawValue)
@@ -1182,9 +1211,9 @@
         if (!int.TryParse(rawValue, out var plantId)) return;
         _activePartLineItemId = null;
         await BomService.UpdateScheduleOrderPlantAsync(orderId, plantId);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnPartPlantSelectChanged(FlatSchedulePartRow row, string rawValue)
@@ -1226,7 +1255,7 @@
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {
-            _plantDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+            _plantDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             _plantDialogRow = row;
             _plantDialogNewPlantId = plantId;
             _plantDialogNewPlantIdRaw = plantIdRaw;
@@ -1235,10 +1264,10 @@
             StateHasChanged();
             return;
         }
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdatePartPlantAsync(row.PartLineItemId, plantId, plantIdRaw);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnPlantDialogThisOnly()
@@ -1248,7 +1277,7 @@
         await BomService.UpdatePartPlantAsync(_plantDialogRow.PartLineItemId, _plantDialogNewPlantId, _plantDialogNewPlantIdRaw);
         _plantDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", _plantDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _plantDialogScrollTop);
     }
 
     private async Task OnPlantDialogAll()
@@ -1258,7 +1287,7 @@
         await BomService.UpdatePartPlantForAllSiblingsAsync(_plantDialogRow.PartLineItemId, _plantDialogNewPlantId, _plantDialogNewPlantIdRaw);
         _plantDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", _plantDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _plantDialogScrollTop);
     }
 
     private void OnPlantDialogCancel()
@@ -1272,14 +1301,14 @@
         var trimmed = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
         _activePartLineItemId = null;
         await BomService.UpdateScheduleOrderProductNumberAsync(orderId, trimmed);
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await LoadData();
         _statusMessage = trimmed is null
             ? "Product number cleared. Enter a product number and click Re-import BOM."
             : $"Product number set to '{trimmed}'. Click Re-import BOM to fetch the BOM.";
         _statusIsError = false;
         StateHasChanged();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnRetryOrder(int orderId)
@@ -1395,12 +1424,12 @@
 
         await InvokeAsync(async () =>
         {
-            var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+            var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             await LoadData();
             foreach (var id in timedOutIds)
                 _importErrorByOrderId[id] = "Timed out";
             StateHasChanged();
-            await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+            await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
         });
     }
 
@@ -1436,7 +1465,7 @@
         var count = await BomService.CountSiblingsByPartNumberAsync(row.PartLineItemId);
         if (count > 1)
         {
-            _stockDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+            _stockDialogScrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
             _stockDialogRow = row;
             _stockDialogNewValue = newValue;
             _stockDialogSiblingCount = count;
@@ -1444,10 +1473,10 @@
             StateHasChanged();
             return;
         }
-        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", "OrdersGrid_v7");
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdatePartIsStockAsync(row.PartLineItemId, newValue);
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", scrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnStockDialogThisOnly()
@@ -1457,7 +1486,7 @@
         await BomService.UpdatePartIsStockAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
         _stockDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", _stockDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _stockDialogScrollTop);
     }
 
     private async Task OnStockDialogAll()
@@ -1467,7 +1496,7 @@
         await BomService.UpdatePartIsStockForAllSiblingsAsync(_stockDialogRow.PartLineItemId, _stockDialogNewValue);
         _stockDialogRow = null;
         await LoadData();
-        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", "OrdersGrid_v7", _stockDialogScrollTop);
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, _stockDialogScrollTop);
     }
 
     private void OnStockDialogCancel()

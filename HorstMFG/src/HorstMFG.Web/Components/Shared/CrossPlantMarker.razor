@@ -1,0 +1,48 @@
+@* Small outlined pill in the Number cell marking a part made at a different plant than the
+   Batch/Schedule that owns it. Outgoing (viewer's own batch/order, part made elsewhere) and
+   incoming (another plant's part made at the viewer's plant) use different colors. *@
+
+@if (PartPlantId is { } partPlantId && partPlantId != ParentPlantId)
+{
+    var incoming = ViewerPlantId == partPlantId;
+    var color = incoming ? IncomingColor : OutgoingColor;
+    var label = incoming ? $"↙ {Code(ParentPlantId)}" : $"↗ {Code(partPlantId)}";
+    var title = incoming
+        ? $"{Name(ParentPlantId)} part made here at {Name(partPlantId)}"
+        : $"Made at {Name(partPlantId)} for this {Name(ParentPlantId)} {ParentKind}";
+
+    <span title="@($"{title} — {StatusText(Status)}")"
+          style="display: inline-block; margin-right: 0.4rem; padding: 0 4px; border: 1px solid @color; border-radius: 3px;
+                 color: @color; font-size: 0.7rem; font-weight: 600; line-height: 1.3; white-space: nowrap; cursor: default;">
+        @label
+    </span>
+}
+
+@code {
+    private const string OutgoingColor = "#b45309";
+    private const string IncomingColor = "#6d28d9";
+
+    /// <summary>The part's resolved plant (PartLineItem.PlantId).</summary>
+    [Parameter] public int? PartPlantId { get; set; }
+    /// <summary>The plant that owns the part's Batch or Schedule.</summary>
+    [Parameter] public int ParentPlantId { get; set; }
+    /// <summary>The plant selected in the grid's plant picker; null for "All Plants".</summary>
+    [Parameter] public int? ViewerPlantId { get; set; }
+    [Parameter] public IReadOnlyDictionary<int, (string Code, string Name)> Plants { get; set; } = new Dictionary<int, (string Code, string Name)>();
+    /// <summary>"batch" or "order", used in the tooltip.</summary>
+    [Parameter] public string ParentKind { get; set; } = "batch";
+    /// <summary>Latest handoff status for the part's BatchProduct/ScheduleOrder, if one exists.</summary>
+    [Parameter] public HandoffStatus? Status { get; set; }
+
+    private string Code(int plantId) => Plants.TryGetValue(plantId, out var p) ? p.Code : $"#{plantId}";
+    private string Name(int plantId) => Plants.TryGetValue(plantId, out var p) ? p.Name : $"Plant #{plantId}";
+
+    private static string StatusText(HandoffStatus? status) => status switch
+    {
+        HandoffStatus.Draft    => "handoff queued, not yet sent",
+        HandoffStatus.Pending  => "handoff pending acceptance",
+        HandoffStatus.Accepted => "handoff accepted",
+        HandoffStatus.Rejected => "handoff rejected",
+        _                      => "no handoff yet",
+    };
+}
