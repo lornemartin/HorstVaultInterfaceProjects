@@ -99,23 +99,21 @@ try
     app.UseAntiforgery();
 
     // Minimal API: reports
-    app.MapGet("/api/reports/schedule-traveller/{name}", async (string name, ReportService reports, HttpResponse response) =>
+    app.MapGet("/api/reports/schedule-traveller/{scheduleId:int}", async (int scheduleId, ReportService reports, HttpResponse response) =>
     {
-        var n     = Uri.UnescapeDataString(name);
-        var bytes = await reports.GenerateScheduleShopTravellerAsync(n);
-        if (bytes is null) return Results.NotFound();
-        response.Headers.ContentDisposition = $"inline; filename=\"ShopTraveller-{n}.pdf\"";
-        return Results.File(bytes, "application/pdf");
+        var report = await reports.GenerateScheduleShopTravellerAsync(scheduleId);
+        if (report is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
+        return Results.File(report.Bytes, "application/pdf");
     }).RequireAuthorization();
 
-    app.MapGet("/api/reports/schedule-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
+    app.MapGet("/api/reports/schedule-op/{scheduleId:int}/{operation}", async (int scheduleId, string operation, int? plant, ReportService reports, HttpResponse response) =>
     {
-        var n  = Uri.UnescapeDataString(name);
         var op = Uri.UnescapeDataString(operation);
-        var bytes = await reports.GenerateScheduleOperationReportAsync(n, op);
-        if (bytes is null) return Results.NotFound();
-        response.Headers.ContentDisposition = $"inline; filename=\"{op}-Schedule-{n}.pdf\"";
-        return Results.File(bytes, "application/pdf");
+        var report = await reports.GenerateScheduleOperationReportAsync(scheduleId, op, plant);
+        if (report is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
+        return Results.File(report.Bytes, "application/pdf");
     }).RequireAuthorization();
 
     app.MapGet("/api/reports/order-subassemblies/{orderId:int}", async (int orderId, bool hideStock, ReportService reports, HttpResponse response) =>
@@ -134,14 +132,13 @@ try
         return Results.File(bytes, "application/pdf");
     }).RequireAuthorization();
 
-    app.MapGet("/api/reports/batch-op/{name}/{operation}", async (string name, string operation, ReportService reports, HttpResponse response) =>
+    app.MapGet("/api/reports/batch-op/{batchId:int}/{operation}", async (int batchId, string operation, int? plant, ReportService reports, HttpResponse response) =>
     {
-        var n  = Uri.UnescapeDataString(name);
         var op = Uri.UnescapeDataString(operation);
-        var bytes = await reports.GenerateBatchOperationReportAsync(n, op);
-        if (bytes is null) return Results.NotFound();
-        response.Headers.ContentDisposition = $"inline; filename=\"{op}-Batch-{n}.pdf\"";
-        return Results.File(bytes, "application/pdf");
+        var report = await reports.GenerateBatchOperationReportAsync(batchId, op, plant);
+        if (report is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
+        return Results.File(report.Bytes, "application/pdf");
     }).RequireAuthorization();
 
     app.MapGet("/api/reports/schedule-custom-plant/{name}/{plantValue}", async (string name, string plantValue, bool hideStock, ReportService reports, HttpResponse response) =>

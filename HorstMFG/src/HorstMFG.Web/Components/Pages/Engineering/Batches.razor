@@ -177,15 +177,25 @@
                         </button>
                         <span style="border-left: 1px solid #d1d5db; height: 18px; margin: 0 0.2rem;"></span>
                     }
-                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "laser"))" @onclick:stopPropagation="true"
+                    <select value="@PrintPlantFor(batch)"
+                            @onchange="@(e => OnPrintPlantChanged(batch.Id, e.Value?.ToString()))"
+                            @onclick:stopPropagation="true"
+                            title="Print drawing sets for the parts made at this plant"
+                            style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px; font-size: 0.8rem;">
+                        @foreach (var opt in _plantOptions.Where(o => o.Id.HasValue))
+                        {
+                            <option value="@opt.Id" selected="@(opt.Id == PrintPlantFor(batch))">Print for @opt.Name</option>
+                        }
+                    </select>
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Id, "laser", PrintPlantFor(batch)))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Laser</button>
-                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Iron Worker"))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Id, "Iron Worker", PrintPlantFor(batch)))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Iron Worker</button>
-                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Machine Shop"))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Id, "Machine Shop", PrintPlantFor(batch)))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Machine Shop</button>
-                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Bandsaw"))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Id, "Bandsaw", PrintPlantFor(batch)))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Bandsaw</button>
-                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Name, "Purchased"))" @onclick:stopPropagation="true"
+                    <button @onclick="@(async () => await OpenReport("batch-op", batch.Id, "Purchased", PrintPlantFor(batch)))" @onclick:stopPropagation="true"
                             style="@BtnStyle("")">Purchased</button>
                     @if (_batchCustomPlantValues.TryGetValue(batch.Id, out var customPlantValues) && customPlantValues.Count > 0)
                     {
@@ -608,6 +618,8 @@
     private List<PlantOption> _plantOptions = new();
     private Dictionary<int, (string Code, string Name)> _plantLabels = new();
     private int? _selectedPlantId;
+    // Per-batch "Print for" choice; defaults to the plant in focus.
+    private readonly Dictionary<int, int> _printPlantByBatch = new();
     private int? _userId;
     private bool _isAdmin;
     private bool _releasedOnly;
@@ -1560,11 +1572,20 @@
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
-    private async Task OpenReport(string type, string name, string? operation = null)
+    private int PrintPlantFor(BatchCaption batch) =>
+        _printPlantByBatch.TryGetValue(batch.Id, out var plantId) ? plantId : _selectedPlantId ?? batch.PlantId;
+
+    private void OnPrintPlantChanged(int batchId, string? value)
+    {
+        if (int.TryParse(value, out var plantId)) _printPlantByBatch[batchId] = plantId;
+    }
+
+    private async Task OpenReport(string type, int id, string? operation = null, int? plantId = null)
     {
         var url = operation is null
-            ? $"/api/reports/{type}/{Uri.EscapeDataString(name)}"
-            : $"/api/reports/{type}/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(operation)}";
+            ? $"/api/reports/{type}/{id}"
+            : $"/api/reports/{type}/{id}/{Uri.EscapeDataString(operation)}";
+        if (plantId.HasValue) url += $"?plant={plantId}";
         await JS.InvokeVoidAsync("window.open", url, "_blank");
     }
 

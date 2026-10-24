@@ -1,5 +1,6 @@
 using System.Globalization;
 using HorstMFG.Core.Entities;
+using HorstMFG.Core.Enums;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Drawing;
@@ -11,6 +12,9 @@ namespace HorstMFG.Web.Services;
 
 public class ReportService
 {
+    /// <summary>A generated report plus the file name to serve it under.</summary>
+    public sealed record ReportPdf(byte[] Bytes, string FileName);
+
     private readonly ApplicationDbContext _db;
     private readonly ILogger<ReportService> _log;
     private readonly string _localPdfPath;
@@ -24,27 +28,38 @@ public class ReportService
 
     // ── Schedule (Schedule → ScheduleOrder → PartLineItem) ───────────────────
 
-    public async Task<byte[]?> GenerateScheduleShopTravellerAsync(string scheduleName)
+    /// <summary>
+    /// Prints every part regardless of plant, since the traveller belongs to the plant doing the
+    /// assembly. Parts made at another plant get a "MADE AT …" banner on their drawing pages and
+    /// are listed on the product cover under "Arriving from …".
+    /// </summary>
+    public async Task<ReportPdf?> GenerateScheduleShopTravellerAsync(int scheduleId)
     {
-        var schedules = await _db.Schedules
-            .Where(s => s.Name == scheduleName)
+        var schedule = await _db.Schedules
             .Include(s => s.ScheduleOrders)
                 .ThenInclude(so => so.Parts)
-            .ToListAsync();
-
-        if (schedules.Count == 0) return null;
+            .FirstOrDefaultAsync(s => s.Id == scheduleId);
+        if (schedule == null) return null;
+        var scheduleName = schedule.Name;
 
         var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
 
-        var pdfFolder = schedules[0].LocalPdfFolder
+        var pdfFolder = schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
+
+        // Latest handoff per order, for the status line under each cross-plant banner.
+        var orderIds = schedule.ScheduleOrders.Select(so => so.Id).ToList();
+        var handoffStatus = (await _db.ScheduleOrderHandoffs.AsNoTracking()
+                .Where(h => orderIds.Contains(h.ScheduleOrderId))
+                .ToListAsync())
+            .GroupBy(h => h.ScheduleOrderId)
+            .ToDictionary(g => g.Key, g => g.MaxBy(h => h.Id)!.Status);
 
         // Flatten schedule orders; group by the assembly PartNumber (= product key).
         // This grouping/lookup drives which physical drawing gets attached — left exactly
         // as-is (it's the proven-working path). Only the COVER PAGE's displayed number/title/
         // description is resolved separately below, from the true top-level item.
-        var allOrders = schedules
-            .SelectMany(s => s.ScheduleOrders)
+        var allOrders = schedule.ScheduleOrders
             .Select(so => new
             {
                 so.OrderNumber,
@@ -110,7 +125,7 @@ public class ReportService
                 // persisted. Using each group's earliest Id keeps drawings in BOM order rather
                 // than alphabetical.
                 .OrderBy(g => g.Min(x => x.Part.Id))
-                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames))
+                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames, schedule.PlantId, handoffStatus))
                 .ToList();
 
             var components = pg
@@ -121,11 +136,25 @@ public class ReportService
                                  p.Operations.Contains("iron worker", StringComparison.OrdinalIgnoreCase)))
                     .Select(p => new PartOrderQty(p, o.OrderNumber, o.Qty)))
                 .GroupBy(x => x.Part.PartNumber)
-                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames))
+                .Select(g => BuildTravellerComponent(g, pdfFolder, plantNames, schedule.PlantId, handoffStatus))
                 .OrderBy(c => c.StructCode).ThenBy(c => c.Material)
                 .ToList();
 
             if (!assemblies.Any() && !components.Any()) continue;
+
+            // Every non-stock part made elsewhere, not just the ones that get a drawing page,
+            // so the assembler sees everything to wait for.
+            var arriving = pg
+                .SelectMany(o => o.Parts
+                    .Where(p => !p.Category.Equals("Product", StringComparison.OrdinalIgnoreCase))
+                    .Select(p => new PartOrderQty(p, o.OrderNumber, o.Qty)))
+                .Select(x => (x.Part, x.Qty, MadeAt: MadeAtPlantId(x.Part, schedule.PlantId)))
+                .Where(x => x.MadeAt is int id && id != schedule.PlantId)
+                .GroupBy(x => (x.Part.PartNumber, MadeAt: x.MadeAt!.Value))
+                .Select(g => new ArrivingPart(g.Key.PartNumber, g.First().Part.Title,
+                    PlantName(g.Key.MadeAt, plantNames), g.Sum(x => x.Part.Qty * x.Qty)))
+                .OrderBy(a => a.MadeAtPlant).ThenBy(a => a.PartNumber)
+                .ToList();
 
             products.Add(new TravellerProduct
             {
@@ -136,6 +165,7 @@ public class ReportService
                 Orders             = orders,
                 Assemblies         = assemblies,
                 Components         = components,
+                Arriving           = arriving,
             });
         }
 
@@ -167,28 +197,29 @@ public class ReportService
 
         _log.LogInformation("Generating Shop Traveller for schedule '{Name}': {Count} products",
             scheduleName, products.Count);
-        return BuildTravellerPdf(products, scheduleName, _log);
+        return new ReportPdf(BuildTravellerPdf(products, scheduleName, _log), $"ShopTraveller-{scheduleName}.pdf");
     }
 
-    public async Task<byte[]?> GenerateScheduleOperationReportAsync(string scheduleName, string operation)
+    /// <summary>Prints only parts made at <paramref name="plantId"/> (null = every plant).</summary>
+    public async Task<ReportPdf?> GenerateScheduleOperationReportAsync(int scheduleId, string operation, int? plantId)
     {
-        var schedules = await _db.Schedules
-            .Where(s => s.Name == scheduleName)
+        var schedule = await _db.Schedules
             .Include(s => s.ScheduleOrders)
                 .ThenInclude(so => so.Parts)
-            .ToListAsync();
+            .FirstOrDefaultAsync(s => s.Id == scheduleId);
+        if (schedule == null) return null;
+        var scheduleName = schedule.Name;
 
-        if (schedules.Count == 0) return null;
+        var plants     = await _db.Plants.AsNoTracking().ToListAsync();
+        var plantNames = plants.ToDictionary(p => p.Id, p => p.Name);
 
-        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
-
-        var pdfFolder = schedules[0].LocalPdfFolder
+        var pdfFolder = schedule.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
 
-        var groups = schedules
-            .SelectMany(s => s.ScheduleOrders)
+        var groups = schedule.ScheduleOrders
             .SelectMany(so => so.Parts
                 .Where(p => !p.IsStock &&
+                            (plantId == null || MadeAtPlantId(p, schedule.PlantId) == plantId) &&
                             p.Operations != null &&
                             p.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
                 .Select(p => new { Part = p, Label = so.OrderNumber, ParentQty = so.Qty }))
@@ -216,8 +247,10 @@ public class ReportService
             return null;
         }
 
-        _log.LogInformation("Generating '{Op}' report for schedule '{Name}': {Count} parts", operation, scheduleName, groups.Count);
-        return BuildReport(groups, scheduleName, isSchedule: true, operation, _log);
+        _log.LogInformation("Generating '{Op}' report for schedule '{Name}', plant {Plant}: {Count} parts",
+            operation, scheduleName, plantId, groups.Count);
+        return new ReportPdf(BuildReport(groups, scheduleName, isSchedule: true, operation, _log),
+            $"{operation}-Schedule-{scheduleName}{PlantFileSuffix(plantId, plants)}.pdf");
     }
 
     // ── Per-order category reports (one ScheduleOrder's own Sub-Assembly / Part rows) ──
@@ -337,25 +370,26 @@ public class ReportService
 
     // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
 
-    public async Task<byte[]?> GenerateBatchOperationReportAsync(string batchName, string operation)
+    /// <summary>Prints only parts made at <paramref name="plantId"/> (null = every plant).</summary>
+    public async Task<ReportPdf?> GenerateBatchOperationReportAsync(int batchId, string operation, int? plantId)
     {
-        var batches = await _db.Batches
-            .Where(b => b.Name == batchName)
+        var batch = await _db.Batches
             .Include(b => b.BatchProducts)
                 .ThenInclude(bp => bp.Parts)
-            .ToListAsync();
+            .FirstOrDefaultAsync(b => b.Id == batchId);
+        if (batch == null) return null;
+        var batchName = batch.Name;
 
-        if (batches.Count == 0) return null;
+        var plants     = await _db.Plants.AsNoTracking().ToListAsync();
+        var plantNames = plants.ToDictionary(p => p.Id, p => p.Name);
 
-        var plantNames = await _db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Id, p => p.Name);
-
-        var pdfFolder = batches[0].LocalPdfFolder
+        var pdfFolder = batch.LocalPdfFolder
             ?? Path.Combine(_localPdfPath, "Batches", batchName);
 
-        var groups = batches
-            .SelectMany(b => b.BatchProducts)
+        var groups = batch.BatchProducts
             .SelectMany(bp => bp.Parts
                 .Where(p => p.IsStock &&
+                            (plantId == null || MadeAtPlantId(p, batch.PlantId) == plantId) &&
                             p.Operations != null &&
                             p.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
                 .Select(p => new { Part = p, Label = bp.ProductName, ParentQty = bp.Qty }))
@@ -383,8 +417,10 @@ public class ReportService
             return null;
         }
 
-        _log.LogInformation("Generating '{Op}' report for batch '{Name}': {Count} parts", operation, batchName, groups.Count);
-        return BuildReport(groups, batchName, isSchedule: false, operation, _log);
+        _log.LogInformation("Generating '{Op}' report for batch '{Name}', plant {Plant}: {Count} parts",
+            operation, batchName, plantId, groups.Count);
+        return new ReportPdf(BuildReport(groups, batchName, isSchedule: false, operation, _log),
+            $"{operation}-Batch-{batchName}{PlantFileSuffix(plantId, plants)}.pdf");
     }
 
     /// <summary>
@@ -809,6 +845,29 @@ public class ReportService
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// The plant that makes a part: its resolved PlantId, or the owning Batch/Schedule's plant
+    /// when the Plant field is blank. A custom typed value (PlantId null, PlantIdRaw set)
+    /// belongs to no plant, since the Custom Report covers those.
+    /// </summary>
+    private static int? MadeAtPlantId(PartLineItem p, int ownerPlantId) =>
+        p.PlantId ?? (string.IsNullOrWhiteSpace(p.PlantIdRaw) ? ownerPlantId : null);
+
+    private static string PlantName(int plantId, IReadOnlyDictionary<int, string> plantNames) =>
+        plantNames.TryGetValue(plantId, out var name) ? name : $"Plant #{plantId}";
+
+    private static string PlantFileSuffix(int? plantId, IEnumerable<Plant> plants) =>
+        plants.FirstOrDefault(p => p.Id == plantId) is { } plant ? $"-{plant.Code}" : "";
+
+    private static string HandoffStatusText(HandoffStatus? status) => status switch
+    {
+        HandoffStatus.Draft    => "Handoff queued, not yet sent",
+        HandoffStatus.Pending  => "Handoff pending acceptance",
+        HandoffStatus.Accepted => "Handoff accepted",
+        HandoffStatus.Rejected => "Handoff rejected",
+        _                      => "No handoff yet",
+    };
+
     private static LaserPartGroup BuildGroup(
         string partNumber,
         string? title,
@@ -884,9 +943,13 @@ public class ReportService
     /// across every order/parent that references it.
     /// </summary>
     private static TravellerComponent BuildTravellerComponent(
-        IGrouping<string, PartOrderQty> g, string pdfFolder, IReadOnlyDictionary<int, string> plantNames)
+        IGrouping<string, PartOrderQty> g, string pdfFolder, IReadOnlyDictionary<int, string> plantNames,
+        int ownerPlantId, IReadOnlyDictionary<int, HandoffStatus> handoffStatus)
     {
         var path = Path.Combine(pdfFolder, g.Key + ".pdf");
+        var madeAt = MadeAtPlantId(g.First().Part, ownerPlantId) is int madeAtId && madeAtId != ownerPlantId
+            ? PlantName(madeAtId, plantNames)
+            : null;
         return new TravellerComponent
         {
             PartNumber     = g.Key,
@@ -902,6 +965,12 @@ public class ReportService
                               .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
                               .ToList(),
             PdfPath        = File.Exists(path) ? path : null,
+            MadeAtPlant    = madeAt,
+            // One status per order the part appears in; usually they all agree.
+            HandoffStatus  = madeAt == null ? null : string.Join(" / ", g
+                .Select(x => x.Part.ScheduleOrderId).Distinct()
+                .Select(id => HandoffStatusText(id is int i && handoffStatus.TryGetValue(i, out var s) ? s : null))
+                .Distinct()),
         };
     }
 
@@ -935,7 +1004,9 @@ public class ReportService
                     Orders:     asm.OrderBreakdown,
                     SourceName: scheduleName,
                     IsAssembly: true,
-                    AlsoIn:     asm.AlsoInProducts);
+                    AlsoIn:     asm.AlsoInProducts,
+                    MadeAtPlant:   asm.MadeAtPlant,
+                    HandoffStatus: asm.HandoffStatus);
 
                 if (asm.PdfPath != null)
                     TravellerAppendDrawingPages(output, asm.PdfPath, asmInfo, log);
@@ -959,7 +1030,9 @@ public class ReportService
                     Orders:     comp.OrderBreakdown,
                     SourceName: scheduleName,
                     IsAssembly: false,
-                    AlsoIn:     comp.AlsoInProducts);
+                    AlsoIn:     comp.AlsoInProducts,
+                    MadeAtPlant:   comp.MadeAtPlant,
+                    HandoffStatus: comp.HandoffStatus);
 
                 if (comp.PdfPath != null)
                     TravellerAppendDrawingPages(output, comp.PdfPath, info, log);
@@ -1120,6 +1193,25 @@ public class ReportService
         var grayBrush  = new PdfSolidBrush(new PdfColor(110, 110, 110));
         var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 0.5f);
 
+        // Cross-plant: solid black banner (survives B&W printing) so nobody here fabricates it.
+        if (info.MadeAtPlant != null)
+        {
+            var bannerText = $"MADE AT {info.MadeAtPlant.ToUpperInvariant()} — DO NOT FABRICATE";
+            float bannerW  = pw - margin - bx;
+            var fontBanner = new PdfStandardFont(PdfFontFamily.Helvetica, 11, PdfFontStyle.Bold);
+            if (fontBanner.MeasureString(bannerText).Width > bannerW - 12f)
+                fontBanner = new PdfStandardFont(PdfFontFamily.Helvetica, 8.5f, PdfFontStyle.Bold);
+            g.DrawRectangle(PdfBrushes.Black, new RectangleF(bx, by - 4f, bannerW, 20f));
+            g.DrawString(bannerText, fontBanner, PdfBrushes.White, new PointF(bx + 6f, by));
+            by += 22f;
+            if (info.HandoffStatus != null)
+            {
+                g.DrawString(info.HandoffStatus, fontItal9, grayBrush, new PointF(bx, by));
+                by += 14f;
+            }
+            by += 8f;
+        }
+
         g.DrawString(info.PartNumber, fontTitle, black, new PointF(bx, by));
         by += 26f;
 
@@ -1277,6 +1369,35 @@ public class ReportService
             cy += 8f;
             g.DrawString("Total", fontBold12, black, new PointF(labelX, cy));
             g.DrawString($"{totalQty} pcs", fontBold12, black, new PointF(qtyX, cy));
+            cy += 18f;
+        }
+
+        // Parts made at another plant: what the assembler is waiting on.
+        float maxY = ph - margin;
+        foreach (var plantGroup in product.Arriving.GroupBy(a => a.MadeAtPlant))
+        {
+            cy += 28f;
+            if (cy + 40f > maxY) break;
+            var header = $"ARRIVING FROM {plantGroup.Key.ToUpperInvariant()}";
+            g.DrawRectangle(PdfBrushes.Black, new RectangleF(margin * 2f, cy - 4f, pw - margin * 4f, 20f));
+            g.DrawString(header, fontBold12, PdfBrushes.White, new PointF(margin * 2f + 6f, cy - 1f));
+            cy += 24f;
+
+            var rows = plantGroup.ToList();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (cy + 15f > maxY)
+                {
+                    g.DrawString($"…and {rows.Count - i} more", fontReg10, grayBrush, new PointF(margin * 2f, cy));
+                    break;
+                }
+                var a = rows[i];
+                g.DrawString(a.PartNumber, fontReg10, black, new PointF(margin * 2f, cy));
+                if (!string.IsNullOrWhiteSpace(a.Title))
+                    g.DrawString(a.Title, fontReg10, darkBrush, new PointF(margin * 2f + 150f, cy));
+                g.DrawString($"{a.Qty} pcs", fontReg10, black, new PointF(pw - margin * 2f - 45f, cy));
+                cy += 15f;
+            }
         }
     }
 
@@ -1295,7 +1416,11 @@ public class ReportService
         // drawing page (or "No Drawing" placeholder), printed right after the cover.
         public List<TravellerComponent>            Assemblies { get; init; } = new();
         public List<TravellerComponent>            Components { get; init; } = new();
+        // Non-stock parts made at another plant, listed on the cover.
+        public List<ArrivingPart>                  Arriving   { get; init; } = new();
     }
+
+    private sealed record ArrivingPart(string PartNumber, string? Title, string MadeAtPlant, int Qty);
 
     private sealed class TravellerComponent
     {
@@ -1311,6 +1436,9 @@ public class ReportService
         public List<(string OrderNumber, int Qty)> OrderBreakdown { get; init; } = new();
         public string? PdfPath        { get; init; }
         public List<AlsoInEntry> AlsoInProducts { get; set; } = new();
+        /// <summary>Plant name when made somewhere other than the Schedule's plant, else null.</summary>
+        public string? MadeAtPlant    { get; init; }
+        public string? HandoffStatus  { get; init; }
     }
 
     private readonly record struct AlsoInEntry(string ProductLabel, string OrderNumber, int Qty);
@@ -1328,5 +1456,7 @@ public class ReportService
         List<(string OrderNumber, int Qty)> Orders,
         string SourceName,
         bool IsAssembly,
-        IReadOnlyList<AlsoInEntry> AlsoIn);
+        IReadOnlyList<AlsoInEntry> AlsoIn,
+        string? MadeAtPlant,
+        string? HandoffStatus);
 }
