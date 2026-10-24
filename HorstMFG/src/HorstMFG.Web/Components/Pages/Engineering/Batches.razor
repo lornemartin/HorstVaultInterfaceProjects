@@ -116,6 +116,11 @@
                 {
                     <span class="released-marker" style="display:none;"></span>
                     <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
+                }
+                <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="batch.PlantId"
+                                  ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="batch" ShowStatus="false" />
+                @if (batch.IsReleased)
+                {
                     <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
                 }
                 else
@@ -205,6 +210,12 @@
                 {
                     <span class="released-marker" style="display:none;"></span>
                     <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
+                }
+                <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="_batchMeta.GetValueOrDefault(product.BatchId)?.PlantId ?? _selectedPlantId ?? 0"
+                                  ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="product"
+                                  Status="_batchProductHandoffs.GetValueOrDefault(product.Id)?.Status" />
+                @if (product.IsReleased)
+                {
                     <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
                 }
                 else

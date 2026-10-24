@@ -111,6 +111,8 @@
                     <span class="released-marker" style="display:none;"></span>
                     <span style="margin-right: 0.4rem; opacity: 0.75;" title="Released to production">&#128274;</span>
                 }
+                <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="sched.PlantId"
+                                  ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="schedule" ShowStatus="false" />
                 <span style="font-weight: 700; font-size: 1rem;">@sched.Name</span>
                 <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
                     @sched.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
@@ -184,6 +186,9 @@
             else if (ctx.Field == "ScheduleOrderId" && _orderMeta.TryGetValue(key, out var order))
             {
                 <span data-group-key="@order.Id" data-group-level="2" style="display:none;"></span>
+                <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="_scheduleMeta.GetValueOrDefault(order.ScheduleId)?.PlantId ?? _selectedPlantId ?? 0"
+                                  ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="order"
+                                  Status="_scheduleOrderHandoffs.GetValueOrDefault(order.Id)?.Status" />
                 @if (order.IsReleased)
                 {
                     <span class="released-marker" style="display:none;"></span>

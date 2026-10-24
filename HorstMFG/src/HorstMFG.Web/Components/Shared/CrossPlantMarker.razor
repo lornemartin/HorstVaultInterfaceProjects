@@ -8,10 +8,10 @@
     var color = incoming ? IncomingColor : OutgoingColor;
     var label = incoming ? $"↙ {Code(ParentPlantId)}" : $"↗ {Code(partPlantId)}";
     var title = incoming
-        ? $"{Name(ParentPlantId)} part made here at {Name(partPlantId)}"
+        ? $"{Name(ParentPlantId)} {Subject} made here at {Name(partPlantId)}"
         : $"Made at {Name(partPlantId)} for this {Name(ParentPlantId)} {ParentKind}";
 
-    <span title="@($"{title} — {StatusText(Status)}")"
+    <span title="@(ShowStatus ? $"{title} — {StatusText(Status)}" : title)"
           style="display: inline-block; margin-right: 0.4rem; padding: 0 4px; border: 1px solid @color; border-radius: 3px;
                  color: @color; font-size: 0.7rem; font-weight: 600; line-height: 1.3; white-space: nowrap; cursor: default;">
         @label
@@ -31,6 +31,10 @@
     [Parameter] public IReadOnlyDictionary<int, (string Code, string Name)> Plants { get; set; } = new Dictionary<int, (string Code, string Name)>();
     /// <summary>"batch" or "order", used in the tooltip.</summary>
     [Parameter] public string ParentKind { get; set; } = "batch";
+    /// <summary>What the marker sits on ("part", "product", "batch"…), used in the incoming tooltip.</summary>
+    [Parameter] public string Subject { get; set; } = "part";
+    /// <summary>False on Batch/Schedule headers, which have no single handoff status.</summary>
+    [Parameter] public bool ShowStatus { get; set; } = true;
     /// <summary>Latest handoff status for the part's BatchProduct/ScheduleOrder, if one exists.</summary>
     [Parameter] public HandoffStatus? Status { get; set; }
 
