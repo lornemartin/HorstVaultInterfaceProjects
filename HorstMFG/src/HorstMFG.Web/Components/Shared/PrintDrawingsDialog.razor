@@ -1,0 +1,192 @@
+@* Print dialog for a Batch's or Schedule's operation drawing sets: pick the plant, the operation
+   and which thickness / struct-code groups to include, then print as one PDF or one per group. *@
+@using HorstMFG.Web.Services
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+@inject ReportService Reports
+@inject IJSRuntime JS
+
+<SfDialog @bind-Visible="_visible" Width="460px" IsModal="true" ShowCloseIcon="true" AllowDragging="true"
+          Header="@($"Print drawings — {(_source == ReportSource.Batch ? "Batch" : "Schedule")} {_name}")">
+    <DialogTemplates>
+        <Content>
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 0.6rem 0.75rem; align-items: center; font-size: 0.875rem;">
+                <span style="color: #6b7280;">Plant</span>
+                <span style="display: flex; gap: 1rem;">
+                    @foreach (var (plantId, plant) in Plants.OrderBy(p => p.Value.Name))
+                    {
+                        <label style="display: inline-flex; gap: 0.3rem; align-items: center; cursor: pointer;">
+                            <input type="radio" name="print-plant" checked="@(_plantId == plantId)"
+                                   @onchange="@(async () => await OnPlantChanged(plantId))" />
+                            @plant.Name
+                        </label>
+                    }
+                </span>
+                <span style="color: #6b7280;">Operation</span>
+                <select value="@_operation" @onchange="@(async e => await OnOperationChanged(e.Value?.ToString()))"
+                        style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px;">
+                    @foreach (var (value, label) in Operations)
+                    {
+                        <option value="@value" selected="@(value == _operation)">@label</option>
+                    }
+                </select>
+                <span style="color: #6b7280;">2nd Op</span>
+                <select value="@(_secondOp ?? "")" @onchange="@(async e => await OnSecondOpChanged(e.Value?.ToString()))"
+                        style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px;">
+                    <option value="" selected="@(_secondOp == null)">Any</option>
+                    @foreach (var op in _summary.SecondOps)
+                    {
+                        <option value="@op.Key" selected="@(op.Key == _secondOp)">@op.Key (@op.PartCount)</option>
+                    }
+                </select>
+            </div>
+
+            <div style="margin-top: 1rem; font-size: 0.875rem;">
+                @if (_loading)
+                {
+                    <span style="color: #6b7280;">Loading…</span>
+                }
+                else if (_summary.PartCount == 0)
+                {
+                    <span style="color: #6b7280;">No @OperationLabel parts for this plant.</span>
+                }
+                else if (_summary.Groups.Count == 0)
+                {
+                    <span>@_summary.PartCount part@(_summary.PartCount != 1 ? "s" : ""), printed as one set.</span>
+                }
+                else
+                {
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem;">
+                        <strong>@ReportService.GroupLabel(_operation)</strong>
+                        <span style="font-size: 0.8rem;">
+                            @* Buttons, not <a href="">: Blazor's router treats an empty href as navigation to the
+                               site root and tears down the page. *@
+                            <button type="button" @onclick="SelectAll" style="@LinkStyle">Select all</button> ·
+                            <button type="button" @onclick="@(() => _selected.Clear())" style="@LinkStyle">Clear</button>
+                        </span>
+                    </div>
+                    <div style="max-height: 260px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 3px; padding: 0.25rem 0.5rem;">
+                        @foreach (var group in _summary.Groups)
+                        {
+                            <label style="display: flex; justify-content: space-between; gap: 0.5rem; padding: 2px 0; cursor: pointer;">
+                                <span style="display: inline-flex; gap: 0.4rem; align-items: center;">
+                                    <input type="checkbox" checked="@_selected.Contains(group.Key)"
+                                           @onchange="@(e => ToggleGroup(group.Key, e.Value is true))" />
+                                    @group.Key
+                                </span>
+                                <span style="color: #6b7280;">@group.PartCount part@(group.PartCount != 1 ? "s" : "")</span>
+                            </label>
+                        }
+                    </div>
+                    <div style="margin-top: 0.75rem; display: flex; gap: 1rem;">
+                        <span style="color: #6b7280;">Output</span>
+                        <label style="cursor: pointer;"><input type="radio" name="print-output" checked="@(!_perGroup)" @onchange="@(() => _perGroup = false)" /> One PDF</label>
+                        <label style="cursor: pointer;"><input type="radio" name="print-output" checked="@_perGroup" @onchange="@(() => _perGroup = true)" /> One PDF per group</label>
+                    </div>
+                }
+            </div>
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="@(() => _visible = false)">Cancel</SfButton>
+            <SfButton OnClick="PrintAsync" CssClass="e-primary" Disabled="@(!CanPrint)" style="margin-left: 8px;">Print</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    // Values are what the report endpoints already take; "laser" stays lower-case to keep file names unchanged.
+    private static readonly (string Value, string Label)[] Operations =
+    [
+        ("laser", "Laser"), ("Iron Worker", "Iron Worker"), ("Machine Shop", "Machine Shop"),
+        ("Bandsaw", "Bandsaw"), ("Purchased", "Purchased"),
+    ];
+
+    private const string LinkStyle = "border: none; background: none; padding: 0; color: #2563eb; cursor: pointer; font-size: 0.8rem;";
+
+    [Parameter] public IReadOnlyDictionary<int, (string Code, string Name)> Plants { get; set; } = new Dictionary<int, (string Code, string Name)>();
+
+    private bool _visible;
+    private bool _loading;
+    private ReportSource _source;
+    private int _id;
+    private string _name = "";
+    private int _plantId;
+    private string _operation = "laser";   // kept between opens
+    private string? _secondOp;             // null = any
+    private bool _perGroup;
+    private ReportService.OperationGroupSummary _summary = new(0, [], []);
+    private readonly HashSet<string> _selected = new();
+
+    private string OperationLabel => Operations.First(o => o.Value == _operation).Label;
+    private bool CanPrint => !_loading && _summary.PartCount > 0 && (_summary.Groups.Count == 0 || _selected.Count > 0);
+
+    public async Task ShowAsync(ReportSource source, int id, string name, int plantId)
+    {
+        (_source, _id, _name, _plantId) = (source, id, name, plantId);
+        _secondOp = null;
+        _visible = true;
+        await LoadGroupsAsync();
+    }
+
+    private async Task OnPlantChanged(int plantId)
+    {
+        _plantId = plantId;
+        _secondOp = null;
+        await LoadGroupsAsync();
+    }
+
+    private async Task OnOperationChanged(string? operation)
+    {
+        if (operation is null) return;
+        _operation = operation;
+        _secondOp = null;
+        await LoadGroupsAsync();
+    }
+
+    private async Task OnSecondOpChanged(string? secondOp)
+    {
+        _secondOp = string.IsNullOrEmpty(secondOp) ? null : secondOp;
+        await LoadGroupsAsync();
+    }
+
+    private async Task LoadGroupsAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        _summary = await Reports.GetOperationGroupsAsync(_source, _id, _operation, _plantId, _secondOp);
+        SelectAll();
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private void SelectAll()
+    {
+        _selected.Clear();
+        _selected.UnionWith(_summary.Groups.Select(g => g.Key));
+    }
+
+    private void ToggleGroup(string key, bool on)
+    {
+        if (on) _selected.Add(key); else _selected.Remove(key);
+    }
+
+    private async Task PrintAsync()
+    {
+        var type = _source == ReportSource.Batch ? "batch-op" : "schedule-op";
+        var baseUrl = $"/api/reports/{type}/{_id}/{Uri.EscapeDataString(_operation)}?plant={_plantId}";
+        if (_secondOp != null) baseUrl += $"&secondOp={Uri.EscapeDataString(_secondOp)}";
+        var chosen = _summary.Groups.Select(g => g.Key).Where(_selected.Contains).ToList();
+
+        List<string> urls;
+        if (_summary.Groups.Count == 0 || (!_perGroup && chosen.Count == _summary.Groups.Count))
+            urls = [baseUrl];   // whole set
+        else if (_perGroup)
+            urls = chosen.Select(k => $"{baseUrl}&group={Uri.EscapeDataString(k)}").ToList();
+        else
+            urls = [baseUrl + string.Concat(chosen.Select(k => $"&group={Uri.EscapeDataString(k)}"))];
+
+        _visible = false;
+        foreach (var url in urls)
+            await JS.InvokeVoidAsync("window.open", url, "_blank");
+    }
+}

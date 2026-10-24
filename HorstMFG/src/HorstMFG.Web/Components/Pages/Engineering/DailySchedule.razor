@@ -17,6 +17,7 @@
 @using Syncfusion.Blazor.Calendars
 @using Syncfusion.Blazor.Popups
 @using HorstMFG.Web.Components.Shared
+@using HorstMFG.Web.Services
 @implements IAsyncDisposable
 
 <PageTitle>Orders - HorstMFG</PageTitle>
@@ -161,26 +162,8 @@
                         <button @onclick="@(async () => await OpenReport("schedule-traveller", sched.Id))" @onclick:stopPropagation="true"
                                 style="@BtnStyle("")">Shop Traveller</button>
                     }
-                    <select value="@PrintPlantFor(sched)"
-                            @onchange="@(e => OnPrintPlantChanged(sched.Id, e.Value?.ToString()))"
-                            @onclick:stopPropagation="true"
-                            title="Print drawing sets for the parts made at this plant"
-                            style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px; font-size: 0.8rem;">
-                        @foreach (var opt in _plantOptions.Where(o => o.Id.HasValue))
-                        {
-                            <option value="@opt.Id" selected="@(opt.Id == PrintPlantFor(sched))">Print for @opt.Name</option>
-                        }
-                    </select>
-                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Id, "laser", PrintPlantFor(sched)))" @onclick:stopPropagation="true"
-                            style="@BtnStyle("")">Laser</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Id, "Iron Worker", PrintPlantFor(sched)))" @onclick:stopPropagation="true"
-                            style="@BtnStyle("")">Iron Worker</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Id, "Machine Shop", PrintPlantFor(sched)))" @onclick:stopPropagation="true"
-                            style="@BtnStyle("")">Machine Shop</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Id, "Bandsaw", PrintPlantFor(sched)))" @onclick:stopPropagation="true"
-                            style="@BtnStyle("")">Bandsaw</button>
-                    <button @onclick="@(async () => await OpenReport("schedule-op", sched.Id, "Purchased", PrintPlantFor(sched)))" @onclick:stopPropagation="true"
-                            style="@BtnStyle("")">Purchased</button>
+                    <button @onclick="@(() => _printDialog!.ShowAsync(ReportSource.Schedule, sched.Id, sched.Name, _selectedPlantId ?? sched.PlantId))"
+                            @onclick:stopPropagation="true" style="@BtnStyle("")">Print drawings…</button>
                     @if (_scheduleCustomPlantValues.TryGetValue(sched.Id, out var customPlantValues) && customPlantValues.Count > 0)
                     {
                         <select @bind:get="GetCustomPlantSelection(sched.Id)"
@@ -495,6 +478,8 @@
     </div>
 }
 
+<PrintDrawingsDialog @ref="_printDialog" Plants="_plantLabels" />
+
 <SfDialog @bind-Visible="_showStockDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
           Header="Update Stock Flag" AllowDragging="true">
     <DialogTemplates>
@@ -595,8 +580,7 @@
     private List<PlantOption> _plantOptions = new();
     private Dictionary<int, (string Code, string Name)> _plantLabels = new();
     private int? _selectedPlantId;
-    // Per-schedule "Print for" choice; defaults to the plant in focus.
-    private readonly Dictionary<int, int> _printPlantBySchedule = new();
+    private PrintDrawingsDialog? _printDialog;
     private int? _userId;
     private bool _isAdmin;
     private bool _releasedOnly;
@@ -1455,22 +1439,8 @@
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
-    private int PrintPlantFor(ScheduleCaption sched) =>
-        _printPlantBySchedule.TryGetValue(sched.Id, out var plantId) ? plantId : _selectedPlantId ?? sched.PlantId;
-
-    private void OnPrintPlantChanged(int scheduleId, string? value)
-    {
-        if (int.TryParse(value, out var plantId)) _printPlantBySchedule[scheduleId] = plantId;
-    }
-
-    private async Task OpenReport(string type, int id, string? operation = null, int? plantId = null)
-    {
-        var url = operation is null
-            ? $"/api/reports/{type}/{id}"
-            : $"/api/reports/{type}/{id}/{Uri.EscapeDataString(operation)}";
-        if (plantId.HasValue) url += $"?plant={plantId}";
-        await JS.InvokeVoidAsync("window.open", url, "_blank");
-    }
+    private async Task OpenReport(string type, int id) =>
+        await JS.InvokeVoidAsync("window.open", $"/api/reports/{type}/{id}", "_blank");
 
     private async Task OpenOrderReport(string type, int orderId)
     {

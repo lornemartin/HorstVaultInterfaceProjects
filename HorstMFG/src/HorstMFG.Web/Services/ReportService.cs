@@ -6,22 +6,41 @@ using Microsoft.EntityFrameworkCore;
 using Syncfusion.Drawing;
 using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
+using Syncfusion.Pdf.Interactive;
 using Syncfusion.Pdf.Parsing;
 
 namespace HorstMFG.Web.Services;
+
+/// <summary>Which import record an operation report prints from.</summary>
+public enum ReportSource { Batch, Schedule }
 
 public class ReportService
 {
     /// <summary>A generated report plus the file name to serve it under.</summary>
     public sealed record ReportPdf(byte[] Bytes, string FileName);
 
+    /// <summary>One thickness / struct-code group, for the print dialog.</summary>
+    public sealed record OperationGroupCount(string Key, int PartCount);
+    /// <summary>
+    /// Groups is empty for operations that don't split (Purchased). SecondOps counts every part of
+    /// the operation before the 2nd Op filter, so the dialog can always list them all.
+    /// </summary>
+    public sealed record OperationGroupSummary(int PartCount, IReadOnlyList<OperationGroupCount> Groups,
+        IReadOnlyList<OperationGroupCount> SecondOps);
+
+    /// <summary>Group for parts with a blank thickness / struct code.</summary>
+    public const string NoneGroup = "(none)";
+
     private readonly ApplicationDbContext _db;
+    private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly ILogger<ReportService> _log;
     private readonly string _localPdfPath;
 
-    public ReportService(ApplicationDbContext db, ILogger<ReportService> log, IConfiguration config)
+    public ReportService(ApplicationDbContext db, IDbContextFactory<ApplicationDbContext> dbFactory,
+        ILogger<ReportService> log, IConfiguration config)
     {
         _db = db;
+        _dbFactory = dbFactory;
         _log = log;
         _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
     }
@@ -200,29 +219,106 @@ public class ReportService
         return new ReportPdf(BuildTravellerPdf(products, scheduleName, _log), $"ShopTraveller-{scheduleName}.pdf");
     }
 
-    /// <summary>Prints only parts made at <paramref name="plantId"/> (null = every plant).</summary>
-    public async Task<ReportPdf?> GenerateScheduleOperationReportAsync(int scheduleId, string operation, int? plantId)
-    {
-        var schedule = await _db.Schedules
-            .Include(s => s.ScheduleOrders)
-                .ThenInclude(so => so.Parts)
-            .FirstOrDefaultAsync(s => s.Id == scheduleId);
-        if (schedule == null) return null;
-        var scheduleName = schedule.Name;
+    // ── Operation drawing sets (Laser / Iron Worker / Machine Shop / Bandsaw / Purchased) ──
 
-        var plants     = await _db.Plants.AsNoTracking().ToListAsync();
+    /// <summary>
+    /// Prints the parts made at <paramref name="plantId"/> (null = every plant) for one operation.
+    /// With <paramref name="secondOp"/>, only parts with that 2nd Operation print; with
+    /// <paramref name="groupKeys"/>, only those thickness / struct-code groups.
+    /// </summary>
+    public async Task<ReportPdf?> GenerateOperationReportAsync(ReportSource source, int id, string operation,
+        int? plantId, IReadOnlyCollection<string>? groupKeys, string? secondOp)
+    {
+        var loaded = await LoadOperationPartsAsync(_db, source, id, operation, plantId);
+        if (loaded == null) return null;
+
+        var parts = FilterSecondOp(loaded.Parts, secondOp);
+        if (groupKeys is { Count: > 0 } && IsGroupedOperation(operation))
+            parts = parts.Where(p => groupKeys.Contains(GroupKey(operation, p))).ToList();
+
+        var kind = source == ReportSource.Batch ? "Batch" : "Schedule";
+        if (parts.Count == 0)
+        {
+            _log.LogWarning("No '{Op}' parts found for {Kind} '{Name}', plant {Plant}", operation, kind, loaded.SourceName, plantId);
+            return null;
+        }
+
+        _log.LogInformation("Generating '{Op}' report for {Kind} '{Name}', plant {Plant}: {Count} parts",
+            operation, kind, loaded.SourceName, plantId, parts.Count);
+        var secondOpSuffix = secondOp == null ? "" : "-" + SafeFileNamePart(secondOp);
+        var groupSuffix = groupKeys is { Count: 1 } ? "-" + SafeFileNamePart(groupKeys.First()) : "";
+        return new ReportPdf(
+            BuildReport(parts, loaded.SourceName, isSchedule: source == ReportSource.Schedule, operation, _log, secondOp),
+            $"{operation}-{kind}-{loaded.SourceName}{PlantFileSuffix(plantId, loaded.Plants)}{secondOpSuffix}{groupSuffix}.pdf");
+    }
+
+    /// <summary>Part counts per thickness / struct-code group, in print order, for the print dialog.</summary>
+    public async Task<OperationGroupSummary> GetOperationGroupsAsync(ReportSource source, int id, string operation,
+        int plantId, string? secondOp)
+    {
+        // Own context: called from a Blazor circuit, where the scoped one lives as long as the page.
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var loaded = await LoadOperationPartsAsync(db, source, id, operation, plantId);
+        if (loaded == null) return new OperationGroupSummary(0, [], []);
+        var secondOps = loaded.Parts.GroupBy(SecondOpKey)
+            .OrderBy(g => g.Key == NoneGroup).ThenBy(g => g.Key, StringComparer.Ordinal)
+            .Select(g => new OperationGroupCount(g.Key, g.Count())).ToList();
+        var parts = FilterSecondOp(loaded.Parts, secondOp);
+        var groups = IsGroupedOperation(operation)
+            ? parts.GroupBy(p => GroupKey(operation, p))
+                .Select(g => new OperationGroupCount(g.Key, g.Count())).ToList()
+            : [];
+        return new OperationGroupSummary(parts.Count, groups, secondOps);
+    }
+
+    private sealed record OperationParts(string SourceName, List<LaserPartGroup> Parts, List<Plant> Plants);
+
+    /// <summary>
+    /// One entry per part number for the operation, sorted for printing. Batches print stock
+    /// (MTS) parts and Schedules print non-stock (MTO) parts.
+    /// </summary>
+    private async Task<OperationParts?> LoadOperationPartsAsync(ApplicationDbContext db,
+        ReportSource source, int id, string operation, int? plantId)
+    {
+        var plants     = await db.Plants.AsNoTracking().ToListAsync();
         var plantNames = plants.ToDictionary(p => p.Id, p => p.Name);
 
-        var pdfFolder = schedule.LocalPdfFolder
-            ?? Path.Combine(_localPdfPath, "Schedules", scheduleName);
+        string name, pdfFolder;
+        List<(PartLineItem Part, string Label, int ParentQty)> rows;
+        if (source == ReportSource.Batch)
+        {
+            var batch = await db.Batches.AsNoTracking()
+                .Include(b => b.BatchProducts)
+                    .ThenInclude(bp => bp.Parts)
+                .FirstOrDefaultAsync(b => b.Id == id);
+            if (batch == null) return null;
+            name      = batch.Name;
+            pdfFolder = batch.LocalPdfFolder ?? Path.Combine(_localPdfPath, "Batches", name);
+            rows = batch.BatchProducts
+                .SelectMany(bp => bp.Parts
+                    .Where(p => p.IsStock && (plantId == null || MadeAtPlantId(p, batch.PlantId) == plantId))
+                    .Select(p => (p, bp.ProductName ?? "", bp.Qty)))
+                .ToList();
+        }
+        else
+        {
+            var schedule = await db.Schedules.AsNoTracking()
+                .Include(s => s.ScheduleOrders)
+                    .ThenInclude(so => so.Parts)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (schedule == null) return null;
+            name      = schedule.Name;
+            pdfFolder = schedule.LocalPdfFolder ?? Path.Combine(_localPdfPath, "Schedules", name);
+            rows = schedule.ScheduleOrders
+                .SelectMany(so => so.Parts
+                    .Where(p => !p.IsStock && (plantId == null || MadeAtPlantId(p, schedule.PlantId) == plantId))
+                    .Select(p => (p, so.OrderNumber ?? "", so.Qty)))
+                .ToList();
+        }
 
-        var groups = schedule.ScheduleOrders
-            .SelectMany(so => so.Parts
-                .Where(p => !p.IsStock &&
-                            (plantId == null || MadeAtPlantId(p, schedule.PlantId) == plantId) &&
-                            p.Operations != null &&
-                            p.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
-                .Select(p => new { Part = p, Label = so.OrderNumber, ParentQty = so.Qty }))
+        var parts = rows
+            .Where(x => x.Part.Operations != null &&
+                        x.Part.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
             .GroupBy(x => x.Part.PartNumber)
             .Select(g => BuildGroup(g.Key,
                 g.First().Part.Title,
@@ -236,21 +332,11 @@ public class ReportService
                  .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
                  .OrderBy(o => o.Key)
                  .ToList(),
-                Path.Combine(pdfFolder, g.Key + ".pdf")))
+                Path.Combine(pdfFolder, g.Key + ".pdf"),
+                secondOperation: g.First().Part.SecondOperation))
             .ToList();
 
-        groups = SortGroups(groups, operation);
-
-        if (groups.Count == 0)
-        {
-            _log.LogWarning("No '{Op}' parts found for schedule '{Name}'", operation, scheduleName);
-            return null;
-        }
-
-        _log.LogInformation("Generating '{Op}' report for schedule '{Name}', plant {Plant}: {Count} parts",
-            operation, scheduleName, plantId, groups.Count);
-        return new ReportPdf(BuildReport(groups, scheduleName, isSchedule: true, operation, _log),
-            $"{operation}-Schedule-{scheduleName}{PlantFileSuffix(plantId, plants)}.pdf");
+        return new OperationParts(name, SortGroups(parts, operation), plants);
     }
 
     // ── Per-order category reports (one ScheduleOrder's own Sub-Assembly / Part rows) ──
@@ -370,59 +456,6 @@ public class ReportService
 
     // ── Batches (Batch → BatchProduct → PartLineItem) ────────────────────────
 
-    /// <summary>Prints only parts made at <paramref name="plantId"/> (null = every plant).</summary>
-    public async Task<ReportPdf?> GenerateBatchOperationReportAsync(int batchId, string operation, int? plantId)
-    {
-        var batch = await _db.Batches
-            .Include(b => b.BatchProducts)
-                .ThenInclude(bp => bp.Parts)
-            .FirstOrDefaultAsync(b => b.Id == batchId);
-        if (batch == null) return null;
-        var batchName = batch.Name;
-
-        var plants     = await _db.Plants.AsNoTracking().ToListAsync();
-        var plantNames = plants.ToDictionary(p => p.Id, p => p.Name);
-
-        var pdfFolder = batch.LocalPdfFolder
-            ?? Path.Combine(_localPdfPath, "Batches", batchName);
-
-        var groups = batch.BatchProducts
-            .SelectMany(bp => bp.Parts
-                .Where(p => p.IsStock &&
-                            (plantId == null || MadeAtPlantId(p, batch.PlantId) == plantId) &&
-                            p.Operations != null &&
-                            p.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
-                .Select(p => new { Part = p, Label = bp.ProductName, ParentQty = bp.Qty }))
-            .GroupBy(x => x.Part.PartNumber)
-            .Select(g => BuildGroup(g.Key,
-                g.First().Part.Title,
-                g.First().Part.Description,
-                g.First().Part.Thickness,
-                g.First().Part.Material,
-                g.First().Part.StructCode,
-                g.First().Part.IsStock,
-                ResolvePlantDisplay(g.First().Part.PlantId, g.First().Part.PlantIdRaw, plantNames),
-                g.GroupBy(x => x.Label)
-                 .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.ParentQty)))
-                 .OrderBy(o => o.Key)
-                 .ToList(),
-                Path.Combine(pdfFolder, g.Key + ".pdf")))
-            .ToList();
-
-        groups = SortGroups(groups, operation);
-
-        if (groups.Count == 0)
-        {
-            _log.LogWarning("No '{Op}' parts found for batch '{Name}'", operation, batchName);
-            return null;
-        }
-
-        _log.LogInformation("Generating '{Op}' report for batch '{Name}', plant {Plant}: {Count} parts",
-            operation, batchName, plantId, groups.Count);
-        return new ReportPdf(BuildReport(groups, batchName, isSchedule: false, operation, _log),
-            $"{operation}-Batch-{batchName}{PlantFileSuffix(plantId, plants)}.pdf");
-    }
-
     /// <summary>
     /// Prints every part across a schedule whose Plant value is a custom, unresolved entry
     /// (typed via the "Other…" option on the Orders grid rather than picked from the Plant
@@ -532,74 +565,83 @@ public class ReportService
     private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)
         => operation.ToLowerInvariant() switch
         {
-            "laser" or "iron worker"    => [.. groups.OrderBy(g => ParseThickness(g.Thickness)).ThenBy(g => g.Material)],
-            "machine shop" or "bandsaw" => [.. groups.OrderBy(g => g.StructCode).ThenBy(g => g.Material)],
+            // Group key in the sort keeps each exact label contiguous: "3/16" and "10 GA" both parse
+            // to MaxValue and would otherwise interleave by material.
+            "laser" or "iron worker"    => [.. groups.OrderBy(g => GroupKey(operation, g) == NoneGroup)
+                                                     .ThenBy(g => ParseThickness(g.Thickness))
+                                                     .ThenBy(g => GroupKey(operation, g), StringComparer.Ordinal)
+                                                     .ThenBy(g => g.Material)],
+            "machine shop" or "bandsaw" => [.. groups.OrderBy(g => GroupKey(operation, g) == NoneGroup)
+                                                     .ThenBy(g => GroupKey(operation, g), StringComparer.Ordinal)
+                                                     .ThenBy(g => g.Material)],
             _                           => [.. groups.OrderBy(g => g.PartNumber)],
         };
+
+    /// <summary>Laser and Iron Worker split by thickness, Machine Shop and Bandsaw by struct code.</summary>
+    public static bool IsGroupedOperation(string operation) =>
+        operation.ToLowerInvariant() is "laser" or "iron worker" or "machine shop" or "bandsaw";
+
+    public static string GroupLabel(string operation) =>
+        operation.ToLowerInvariant() is "laser" or "iron worker" ? "Thickness" : "Struct Code";
+
+    /// <summary>The part's thickness or struct code exactly as imported (trimmed), or NoneGroup when blank.</summary>
+    private static string GroupKey(string operation, LaserPartGroup part)
+    {
+        var value = operation.ToLowerInvariant() is "laser" or "iron worker" ? part.Thickness : part.StructCode;
+        return string.IsNullOrWhiteSpace(value) ? NoneGroup : value.Trim();
+    }
+
+    /// <summary>The part's 2nd Operation exactly as imported (trimmed), or NoneGroup when blank.</summary>
+    private static string SecondOpKey(LaserPartGroup part) =>
+        string.IsNullOrWhiteSpace(part.SecondOperation) ? NoneGroup : part.SecondOperation.Trim();
+
+    /// <summary>Null secondOp = any 2nd Operation.</summary>
+    private static List<LaserPartGroup> FilterSecondOp(List<LaserPartGroup> parts, string? secondOp) =>
+        secondOp == null ? parts : parts.Where(p => SecondOpKey(p) == secondOp).ToList();
+
+    private static string SafeFileNamePart(string value) =>
+        string.Concat(value.Select(c => Path.GetInvalidFileNameChars().Contains(c) || c == '"' ? '_' : c));
 
     // ── Per-operation report builder ──────────────────────────────────────────
 
     private static byte[] BuildReport(List<LaserPartGroup> groups, string sourceName,
-        bool isSchedule, string operation, ILogger log)
+        bool isSchedule, string operation, ILogger log, string? secondOp = null)
         => operation.ToLowerInvariant() switch
         {
             // Add cases here for operations that need a different layout, e.g.:
             // "purchased" => BuildTablePdf(groups, sourceName, isSchedule, log),
-            _ => BuildLaserPdf(groups, sourceName, isSchedule, operation, log),
+            _ => BuildLaserPdf(groups, sourceName, isSchedule, operation, secondOp, log),
         };
 
     // ── PDF assembly ─────────────────────────────────────────────────────────
 
-    private static byte[] BuildLaserPdf(List<LaserPartGroup> parts, string sourceName, bool isSchedule, string operation, ILogger log)
+    private static byte[] BuildLaserPdf(List<LaserPartGroup> parts, string sourceName, bool isSchedule,
+        string operation, string? secondOp, ILogger log)
     {
         var output = new PdfDocument();
         output.PageSettings.Size = PdfPageSize.Letter;
         output.PageSettings.Margins.All = 0;
 
-        foreach (var part in parts)
+        // parts arrive sorted by SortGroups, so each group is contiguous.
+        var sections = IsGroupedOperation(operation)
+            ? parts.GroupBy(p => (string?)GroupKey(operation, p)).ToList()
+            : parts.GroupBy(_ => (string?)null).ToList();
+        bool separators = sections.Count > 1;
+
+        foreach (var section in sections)
         {
-            if (part.PdfPath is null)
+            int firstPage = output.Pages.Count;
+            int count = section.Count();
+            if (separators)
+                AppendSeparatorPage(output, section.Key!, count, sourceName, isSchedule, operation, secondOp);
+
+            foreach (var part in section)
+                AppendPartPages(output, part, sourceName, isSchedule, operation);
+
+            if (section.Key != null && output.Pages.Count > firstPage)
             {
-                AppendTextOnlyPage(output, part, sourceName, isSchedule, operation);
-                continue;
-            }
-
-            byte[] srcBytes = File.ReadAllBytes(part.PdfPath);
-            var srcDoc = new PdfLoadedDocument(srcBytes);
-            try
-            {
-                if (srcDoc.Pages.Count == 0) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); continue; }
-
-                // Each source page becomes its own duplex sheet: drawing (front) + cover (back).
-                // A multi-page drawing (e.g. a two-sheet assembly) needs one cover PER page, not
-                // one cover after all pages — otherwise duplex printing pairs the wrong pages
-                // together. Mirrors TravellerAppendDrawingPages.
-                for (int i = 0; i < srcDoc.Pages.Count; i++)
-                {
-                    var srcPage = srcDoc.Pages[i] as PdfLoadedPage;
-                    if (srcPage == null) continue;
-
-                    // Build template before importing so it can be drawn onto the cover page.
-                    var template = srcPage.CreateTemplate();
-
-                    // /Rotate is NOT incorporated into the template dimensions, so we must
-                    // swap width/height when the page is stored rotated 90° or 270°.
-                    bool rotated = srcPage.Rotation == PdfPageRotateAngle.RotateAngle90 ||
-                                   srcPage.Rotation == PdfPageRotateAngle.RotateAngle270;
-                    bool isLandscape = rotated ? template.Height > template.Width
-                                               : template.Width  > template.Height;
-
-                    // Front: full-size drawing page
-                    output.ImportPage(srcDoc, i);
-
-                    // Back: cover page with thumbnail + qty breakdown
-                    var cover = output.Pages.Add();
-                    DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule, operation);
-                }
-            }
-            finally
-            {
-                srcDoc.Close();
+                var bookmark = output.Bookmarks.Add($"{GroupLabel(operation)} {section.Key} — {count} part{(count != 1 ? "s" : "")}");
+                bookmark.Destination = new PdfDestination(output.Pages[firstPage]);
             }
         }
 
@@ -607,6 +649,94 @@ public class ReportService
         output.Save(ms);
         output.Close();
         return ms.ToArray();
+    }
+
+    private static void AppendPartPages(PdfDocument output, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
+    {
+        if (part.PdfPath is null)
+        {
+            AppendTextOnlyPage(output, part, sourceName, isSchedule, operation);
+            return;
+        }
+
+        byte[] srcBytes = File.ReadAllBytes(part.PdfPath);
+        var srcDoc = new PdfLoadedDocument(srcBytes);
+        try
+        {
+            if (srcDoc.Pages.Count == 0) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); return; }
+
+            // Each source page becomes its own duplex sheet: drawing (front) + cover (back).
+            // A multi-page drawing (e.g. a two-sheet assembly) needs one cover PER page, not
+            // one cover after all pages — otherwise duplex printing pairs the wrong pages
+            // together. Mirrors TravellerAppendDrawingPages.
+            for (int i = 0; i < srcDoc.Pages.Count; i++)
+            {
+                var srcPage = srcDoc.Pages[i] as PdfLoadedPage;
+                if (srcPage == null) continue;
+
+                // Build template before importing so it can be drawn onto the cover page.
+                var template = srcPage.CreateTemplate();
+
+                // /Rotate is NOT incorporated into the template dimensions, so we must
+                // swap width/height when the page is stored rotated 90° or 270°.
+                bool rotated = srcPage.Rotation == PdfPageRotateAngle.RotateAngle90 ||
+                               srcPage.Rotation == PdfPageRotateAngle.RotateAngle270;
+                bool isLandscape = rotated ? template.Height > template.Width
+                                           : template.Width  > template.Height;
+
+                // Front: full-size drawing page
+                output.ImportPage(srcDoc, i);
+
+                // Back: cover page with thumbnail + qty breakdown
+                var cover = output.Pages.Add();
+                DrawCoverPage(cover, template, rotated, isLandscape, part, sourceName, isSchedule, operation);
+            }
+        }
+        finally
+        {
+            srcDoc.Close();
+        }
+    }
+
+    /// <summary>Divider sheet at the start of each thickness / struct-code group, plus a blank back for duplex.</summary>
+    private static void AppendSeparatorPage(PdfDocument output, string groupKey, int partCount,
+        string sourceName, bool isSchedule, string operation, string? secondOp)
+    {
+        var page   = output.Pages.Add();
+        var g      = page.Graphics;
+        float pw   = page.GetClientSize().Width;
+        float ph   = page.GetClientSize().Height;
+        float margin = 50f;
+
+        var fontHeader = new PdfStandardFont(PdfFontFamily.Helvetica,  9);
+        var fontLabel  = new PdfStandardFont(PdfFontFamily.Helvetica, 14);
+        var fontKey    = new PdfStandardFont(PdfFontFamily.Helvetica, 40, PdfFontStyle.Bold);
+        var fontCount  = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
+        var grayBrush  = new PdfSolidBrush(new PdfColor(130, 130, 130));
+        var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 1f);
+
+        var source = $"{(isSchedule ? "Schedule" : "Batch")} {sourceName}";
+        var header = secondOp == null
+            ? operation.ToUpperInvariant()
+            : $"{operation.ToUpperInvariant()} · 2ND OP {secondOp.ToUpperInvariant()}";
+        g.DrawString(header, fontHeader, grayBrush, new PointF(margin, margin));
+        g.DrawString(source, fontHeader, grayBrush, new PointF(pw - margin - fontHeader.MeasureString(source).Width, margin));
+        g.DrawLine(grayPen, new PointF(margin, margin + 16f), new PointF(pw - margin, margin + 16f));
+
+        float cy = ph * 0.38f;
+        foreach (var (text, font, brush) in new (string, PdfFont, PdfBrush)[]
+        {
+            (GroupLabel(operation), fontLabel, grayBrush),
+            (groupKey, fontKey, PdfBrushes.Black),
+            ($"{partCount} part{(partCount != 1 ? "s" : "")}", fontCount, grayBrush),
+        })
+        {
+            var size = font.MeasureString(text);
+            g.DrawString(text, font, brush, new PointF((pw - size.Width) / 2f, cy));
+            cy += size.Height + 12f;
+        }
+
+        output.Pages.Add(); // blank back for duplex alignment
     }
 
     /// <summary>
@@ -878,7 +1008,8 @@ public class ReportService
         bool isStock,
         string? plantDisplay,
         List<(string Label, int Qty)> orders,
-        string pdfPath) => new()
+        string pdfPath,
+        string? secondOperation = null) => new()
     {
         PartNumber   = partNumber,
         Title        = title,
@@ -886,6 +1017,7 @@ public class ReportService
         Thickness    = thickness,
         Material     = material,
         StructCode   = structCode,
+        SecondOperation = secondOperation,
         IsStock      = isStock,
         PlantDisplay = plantDisplay,
         TotalQty     = orders.Sum(o => o.Qty),
@@ -923,6 +1055,7 @@ public class ReportService
         public string? Thickness   { get; init; }
         public string? Material    { get; init; }
         public string? StructCode  { get; init; }
+        public string? SecondOperation { get; init; }
         public bool IsStock        { get; init; }
         public string? PlantDisplay { get; init; }
         public int TotalQty        { get; init; }
