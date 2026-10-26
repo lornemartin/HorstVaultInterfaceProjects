@@ -215,7 +215,7 @@ public class VaultBomIngestService
             }
             else
             {
-                var thickness = BomFieldMappers.DeriveThicknessForLaser(l.Operations, l.Thickness, l.StructCode);
+                var thickness = BomFieldMappers.DeriveSheetThickness(l.Operations, l.Thickness, l.StructCode);
                 var plantIdRaw = isPlant2 ? l.P2PlantId : l.PlantId;
                 var isStock = BomFieldMappers.ResolveIsStock(
                     isPlant2 ? l.P2IsStock : l.IsStock,

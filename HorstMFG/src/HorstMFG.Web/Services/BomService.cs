@@ -140,8 +140,9 @@ public class BomService : IBomService
                 number = Path.GetFileNameWithoutExtension(number);
             }
 
-            // Derive thickness from structural code for Laser ops
-            if (ops.Equals("Laser", StringComparison.OrdinalIgnoreCase) &&
+            // Derive thickness from structural code for Laser and Shear ops
+            if ((ops.Equals("Laser", StringComparison.OrdinalIgnoreCase) ||
+                 ops.Equals("Shear", StringComparison.OrdinalIgnoreCase)) &&
                 string.IsNullOrEmpty(thickness) &&
                 !string.IsNullOrEmpty(structCode))
             {

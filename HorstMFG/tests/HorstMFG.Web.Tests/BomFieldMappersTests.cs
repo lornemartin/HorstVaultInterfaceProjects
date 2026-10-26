@@ -78,4 +78,15 @@ public class BomFieldMappersTests
     {
         Assert.Equal(expected, BomFieldMappers.NormalizeThickness(input));
     }
+
+    [Theory]
+    [InlineData("Laser",   "",         "SH-188          3/16” SHEET METAL", "0.188")]
+    [InlineData("Shear",   "",         "SH-188          3/16” SHEET METAL", "0.188")]
+    [InlineData("Shear",   "0.250 in", "SH-188          3/16” SHEET METAL", "0.250")]
+    [InlineData("Bandsaw", "",         "SH-188          3/16” SHEET METAL", "")]
+    [InlineData("Shear",   "",         "FB-148             1/4 X 8 FLAT BAR", "")]
+    public void DeriveSheetThickness_UsesStructCodeForLaserAndShear(string ops, string thickness, string structCode, string expected)
+    {
+        Assert.Equal(expected, BomFieldMappers.DeriveSheetThickness(ops, thickness, structCode));
+    }
 }

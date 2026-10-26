@@ -39,6 +39,15 @@
                         <option value="@op.Key" selected="@(op.Key == _secondOp)">@op.Key (@op.PartCount)</option>
                     }
                 </select>
+                <span style="color: #6b7280;">Finish</span>
+                <select value="@(_finish ?? "")" @onchange="@(async e => await OnFinishChanged(e.Value?.ToString()))"
+                        style="border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 4px;">
+                    <option value="" selected="@(_finish == null)">Any</option>
+                    @foreach (var f in _summary.Finishes)
+                    {
+                        <option value="@f.Key" selected="@(f.Key == _finish)">@f.Key (@f.PartCount)</option>
+                    }
+                </select>
             </div>
 
             <div style="margin-top: 1rem; font-size: 0.875rem;">
@@ -97,7 +106,8 @@
     // Values are what the report endpoints already take; "laser" stays lower-case to keep file names unchanged.
     private static readonly (string Value, string Label)[] Operations =
     [
-        ("laser", "Laser"), ("Iron Worker", "Iron Worker"), ("Machine Shop", "Machine Shop"),
+        (ReportService.AllOperations, "All operations"),
+        ("laser", "Laser"), ("Shear", "Shear"), ("Iron Worker", "Iron Worker"), ("Machine Shop", "Machine Shop"),
         ("Bandsaw", "Bandsaw"), ("Purchased", "Purchased"),
     ];
 
@@ -113,8 +123,9 @@
     private int _plantId;
     private string _operation = "laser";   // kept between opens
     private string? _secondOp;             // null = any
+    private string? _finish;               // null = any
     private bool _perGroup;
-    private ReportService.OperationGroupSummary _summary = new(0, [], []);
+    private ReportService.OperationGroupSummary _summary = new(0, [], [], []);
     private readonly HashSet<string> _selected = new();
 
     private string OperationLabel => Operations.First(o => o.Value == _operation).Label;
@@ -123,7 +134,7 @@
     public async Task ShowAsync(ReportSource source, int id, string name, int plantId)
     {
         (_source, _id, _name, _plantId) = (source, id, name, plantId);
-        _secondOp = null;
+        _secondOp = _finish = null;
         _visible = true;
         await LoadGroupsAsync();
     }
@@ -131,7 +142,7 @@
     private async Task OnPlantChanged(int plantId)
     {
         _plantId = plantId;
-        _secondOp = null;
+        _secondOp = _finish = null;
         await LoadGroupsAsync();
     }
 
@@ -139,7 +150,7 @@
     {
         if (operation is null) return;
         _operation = operation;
-        _secondOp = null;
+        _secondOp = _finish = null;
         await LoadGroupsAsync();
     }
 
@@ -149,11 +160,27 @@
         await LoadGroupsAsync();
     }
 
+    private async Task OnFinishChanged(string? finish)
+    {
+        _finish = string.IsNullOrEmpty(finish) ? null : finish;
+        await LoadGroupsAsync();
+    }
+
     private async Task LoadGroupsAsync()
     {
         _loading = true;
         StateHasChanged();
-        _summary = await Reports.GetOperationGroupsAsync(_source, _id, _operation, _plantId, _secondOp);
+        _summary = await Reports.GetOperationGroupsAsync(_source, _id, _operation, _plantId, _secondOp, _finish);
+        // Changing one filter can drop the other's choice from its list; fall back to Any rather than
+        // leave a hidden selection that matches nothing.
+        var staleSecondOp = _secondOp != null && _summary.SecondOps.All(o => o.Key != _secondOp);
+        var staleFinish   = _finish   != null && _summary.Finishes.All(f => f.Key != _finish);
+        if (staleSecondOp || staleFinish)
+        {
+            if (staleSecondOp) _secondOp = null;
+            if (staleFinish)   _finish = null;
+            _summary = await Reports.GetOperationGroupsAsync(_source, _id, _operation, _plantId, _secondOp, _finish);
+        }
         SelectAll();
         _loading = false;
         StateHasChanged();
@@ -175,6 +202,7 @@
         var type = _source == ReportSource.Batch ? "batch-op" : "schedule-op";
         var baseUrl = $"/api/reports/{type}/{_id}/{Uri.EscapeDataString(_operation)}?plant={_plantId}";
         if (_secondOp != null) baseUrl += $"&secondOp={Uri.EscapeDataString(_secondOp)}";
+        if (_finish   != null) baseUrl += $"&finish={Uri.EscapeDataString(_finish)}";
         var chosen = _summary.Groups.Select(g => g.Key).Where(_selected.Contains).ToList();
 
         List<string> urls;

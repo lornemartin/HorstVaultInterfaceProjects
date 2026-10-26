@@ -22,14 +22,21 @@ public class ReportService
     /// <summary>One thickness / struct-code group, for the print dialog.</summary>
     public sealed record OperationGroupCount(string Key, int PartCount);
     /// <summary>
-    /// Groups is empty for operations that don't split (Purchased). SecondOps counts every part of
-    /// the operation before the 2nd Op filter, so the dialog can always list them all.
+    /// Groups is empty for operations that don't split (Purchased). SecondOps is counted with only the
+    /// Finish filter applied and Finishes with only the 2nd Op filter, so each list shows what the
+    /// other choice leaves available.
     /// </summary>
     public sealed record OperationGroupSummary(int PartCount, IReadOnlyList<OperationGroupCount> Groups,
-        IReadOnlyList<OperationGroupCount> SecondOps);
+        IReadOnlyList<OperationGroupCount> SecondOps, IReadOnlyList<OperationGroupCount> Finishes);
 
     /// <summary>Group for parts with a blank thickness / struct code.</summary>
     public const string NoneGroup = "(none)";
+
+    /// <summary>Operation value for "every printable operation", grouped by operation.</summary>
+    public const string AllOperations = "all";
+
+    /// <summary>Operations "All operations" covers, in print order.</summary>
+    private static readonly string[] PrintableOperations = ["Laser", "Shear", "Iron Worker", "Machine Shop", "Bandsaw", "Purchased"];
 
     private readonly ApplicationDbContext _db;
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
@@ -227,12 +234,12 @@ public class ReportService
     /// <paramref name="groupKeys"/>, only those thickness / struct-code groups.
     /// </summary>
     public async Task<ReportPdf?> GenerateOperationReportAsync(ReportSource source, int id, string operation,
-        int? plantId, IReadOnlyCollection<string>? groupKeys, string? secondOp)
+        int? plantId, IReadOnlyCollection<string>? groupKeys, string? secondOp, string? finish)
     {
         var loaded = await LoadOperationPartsAsync(_db, source, id, operation, plantId);
         if (loaded == null) return null;
 
-        var parts = FilterSecondOp(loaded.Parts, secondOp);
+        var parts = FilterFinish(FilterSecondOp(loaded.Parts, secondOp), finish);
         if (groupKeys is { Count: > 0 } && IsGroupedOperation(operation))
             parts = parts.Where(p => groupKeys.Contains(GroupKey(operation, p))).ToList();
 
@@ -246,30 +253,37 @@ public class ReportService
         _log.LogInformation("Generating '{Op}' report for {Kind} '{Name}', plant {Plant}: {Count} parts",
             operation, kind, loaded.SourceName, plantId, parts.Count);
         var secondOpSuffix = secondOp == null ? "" : "-" + SafeFileNamePart(secondOp);
+        var finishSuffix = finish == null ? "" : "-" + SafeFileNamePart(finish);
         var groupSuffix = groupKeys is { Count: 1 } ? "-" + SafeFileNamePart(groupKeys.First()) : "";
+        var opName = operation == AllOperations ? "AllOps" : operation;
         return new ReportPdf(
-            BuildReport(parts, loaded.SourceName, isSchedule: source == ReportSource.Schedule, operation, _log, secondOp),
-            $"{operation}-{kind}-{loaded.SourceName}{PlantFileSuffix(plantId, loaded.Plants)}{secondOpSuffix}{groupSuffix}.pdf");
+            BuildReport(parts, loaded.SourceName, isSchedule: source == ReportSource.Schedule, operation, _log, secondOp, finish),
+            $"{opName}-{kind}-{loaded.SourceName}{PlantFileSuffix(plantId, loaded.Plants)}{secondOpSuffix}{finishSuffix}{groupSuffix}.pdf");
     }
 
     /// <summary>Part counts per thickness / struct-code group, in print order, for the print dialog.</summary>
     public async Task<OperationGroupSummary> GetOperationGroupsAsync(ReportSource source, int id, string operation,
-        int plantId, string? secondOp)
+        int plantId, string? secondOp, string? finish)
     {
         // Own context: called from a Blazor circuit, where the scoped one lives as long as the page.
         await using var db = await _dbFactory.CreateDbContextAsync();
         var loaded = await LoadOperationPartsAsync(db, source, id, operation, plantId);
-        if (loaded == null) return new OperationGroupSummary(0, [], []);
-        var secondOps = loaded.Parts.GroupBy(SecondOpKey)
-            .OrderBy(g => g.Key == NoneGroup).ThenBy(g => g.Key, StringComparer.Ordinal)
-            .Select(g => new OperationGroupCount(g.Key, g.Count())).ToList();
-        var parts = FilterSecondOp(loaded.Parts, secondOp);
+        if (loaded == null) return new OperationGroupSummary(0, [], [], []);
+        var secondOps = CountBy(FilterFinish(loaded.Parts, finish), SecondOpKey);
+        var finishes  = CountBy(FilterSecondOp(loaded.Parts, secondOp), FinishKey);
+        var parts = FilterFinish(FilterSecondOp(loaded.Parts, secondOp), finish);
         var groups = IsGroupedOperation(operation)
             ? parts.GroupBy(p => GroupKey(operation, p))
                 .Select(g => new OperationGroupCount(g.Key, g.Count())).ToList()
             : [];
-        return new OperationGroupSummary(parts.Count, groups, secondOps);
+        return new OperationGroupSummary(parts.Count, groups, secondOps, finishes);
     }
+
+    /// <summary>Counts per key, alphabetical with NoneGroup last.</summary>
+    private static List<OperationGroupCount> CountBy(List<LaserPartGroup> parts, Func<LaserPartGroup, string> key) =>
+        parts.GroupBy(key)
+            .OrderBy(g => g.Key == NoneGroup).ThenBy(g => g.Key, StringComparer.Ordinal)
+            .Select(g => new OperationGroupCount(g.Key, g.Count())).ToList();
 
     private sealed record OperationParts(string SourceName, List<LaserPartGroup> Parts, List<Plant> Plants);
 
@@ -317,8 +331,8 @@ public class ReportService
         }
 
         var parts = rows
-            .Where(x => x.Part.Operations != null &&
-                        x.Part.Operations.Contains(operation, StringComparison.OrdinalIgnoreCase))
+            .Where(x => PrintOperation(x.Part.Operations) is { } op &&
+                        (operation == AllOperations || op.Equals(operation, StringComparison.OrdinalIgnoreCase)))
             .GroupBy(x => x.Part.PartNumber)
             .Select(g => BuildGroup(g.Key,
                 g.First().Part.Title,
@@ -333,7 +347,9 @@ public class ReportService
                  .OrderBy(o => o.Key)
                  .ToList(),
                 Path.Combine(pdfFolder, g.Key + ".pdf"),
-                secondOperation: g.First().Part.SecondOperation))
+                secondOperation: g.First().Part.SecondOperation,
+                finishOps: g.First().Part.FinishOps,
+                operation: PrintOperation(g.First().Part.Operations)))
             .ToList();
 
         return new OperationParts(name, SortGroups(parts, operation), plants);
@@ -565,9 +581,13 @@ public class ReportService
     private static List<LaserPartGroup> SortGroups(List<LaserPartGroup> groups, string operation)
         => operation.ToLowerInvariant() switch
         {
+            // Operation sections in PrintableOperations order, each sorted as its own report would be.
+            AllOperations               => [.. groups.GroupBy(g => g.Operation!)
+                                                     .OrderBy(s => Array.IndexOf(PrintableOperations, s.Key))
+                                                     .SelectMany(s => SortGroups(s.ToList(), s.Key))],
             // Group key in the sort keeps each exact label contiguous: "3/16" and "10 GA" both parse
             // to MaxValue and would otherwise interleave by material.
-            "laser" or "iron worker"    => [.. groups.OrderBy(g => GroupKey(operation, g) == NoneGroup)
+            "laser" or "shear" or "iron worker" => [.. groups.OrderBy(g => GroupKey(operation, g) == NoneGroup)
                                                      .ThenBy(g => ParseThickness(g.Thickness))
                                                      .ThenBy(g => GroupKey(operation, g), StringComparer.Ordinal)
                                                      .ThenBy(g => g.Material)],
@@ -577,19 +597,36 @@ public class ReportService
             _                           => [.. groups.OrderBy(g => g.PartNumber)],
         };
 
-    /// <summary>Laser and Iron Worker split by thickness, Machine Shop and Bandsaw by struct code.</summary>
+    /// <summary>
+    /// Laser, Shear and Iron Worker split by thickness, Machine Shop and Bandsaw by struct code,
+    /// All operations by operation.
+    /// </summary>
     public static bool IsGroupedOperation(string operation) =>
-        operation.ToLowerInvariant() is "laser" or "iron worker" or "machine shop" or "bandsaw";
+        operation.ToLowerInvariant() is "laser" or "shear" or "iron worker" or "machine shop" or "bandsaw" or AllOperations;
 
-    public static string GroupLabel(string operation) =>
-        operation.ToLowerInvariant() is "laser" or "iron worker" ? "Thickness" : "Struct Code";
+    public static string GroupLabel(string operation) => operation.ToLowerInvariant() switch
+    {
+        "laser" or "shear" or "iron worker" => "Thickness",
+        AllOperations                       => "Operation",
+        _                                   => "Struct Code",
+    };
 
-    /// <summary>The part's thickness or struct code exactly as imported (trimmed), or NoneGroup when blank.</summary>
+    /// <summary>The part's thickness, struct code or operation exactly as imported (trimmed), or NoneGroup when blank.</summary>
     private static string GroupKey(string operation, LaserPartGroup part)
     {
-        var value = operation.ToLowerInvariant() is "laser" or "iron worker" ? part.Thickness : part.StructCode;
+        var value = operation.ToLowerInvariant() switch
+        {
+            "laser" or "shear" or "iron worker" => part.Thickness,
+            AllOperations                       => part.Operation,
+            _                                   => part.StructCode,
+        };
         return string.IsNullOrWhiteSpace(value) ? NoneGroup : value.Trim();
     }
+
+    /// <summary>The PrintableOperations entry the part's Operations value names, or null for N/A etc.</summary>
+    private static string? PrintOperation(string? operations) =>
+        operations == null ? null
+            : PrintableOperations.FirstOrDefault(op => operations.Contains(op, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The part's 2nd Operation exactly as imported (trimmed), or NoneGroup when blank.</summary>
     private static string SecondOpKey(LaserPartGroup part) =>
@@ -599,24 +636,32 @@ public class ReportService
     private static List<LaserPartGroup> FilterSecondOp(List<LaserPartGroup> parts, string? secondOp) =>
         secondOp == null ? parts : parts.Where(p => SecondOpKey(p) == secondOp).ToList();
 
+    /// <summary>The part's Finish exactly as imported (trimmed), or NoneGroup when blank.</summary>
+    private static string FinishKey(LaserPartGroup part) =>
+        string.IsNullOrWhiteSpace(part.FinishOps) ? NoneGroup : part.FinishOps.Trim();
+
+    /// <summary>Null finish = any Finish.</summary>
+    private static List<LaserPartGroup> FilterFinish(List<LaserPartGroup> parts, string? finish) =>
+        finish == null ? parts : parts.Where(p => FinishKey(p) == finish).ToList();
+
     private static string SafeFileNamePart(string value) =>
         string.Concat(value.Select(c => Path.GetInvalidFileNameChars().Contains(c) || c == '"' ? '_' : c));
 
     // ── Per-operation report builder ──────────────────────────────────────────
 
     private static byte[] BuildReport(List<LaserPartGroup> groups, string sourceName,
-        bool isSchedule, string operation, ILogger log, string? secondOp = null)
+        bool isSchedule, string operation, ILogger log, string? secondOp = null, string? finish = null)
         => operation.ToLowerInvariant() switch
         {
             // Add cases here for operations that need a different layout, e.g.:
             // "purchased" => BuildTablePdf(groups, sourceName, isSchedule, log),
-            _ => BuildLaserPdf(groups, sourceName, isSchedule, operation, secondOp, log),
+            _ => BuildLaserPdf(groups, sourceName, isSchedule, operation, secondOp, finish, log),
         };
 
     // ── PDF assembly ─────────────────────────────────────────────────────────
 
     private static byte[] BuildLaserPdf(List<LaserPartGroup> parts, string sourceName, bool isSchedule,
-        string operation, string? secondOp, ILogger log)
+        string operation, string? secondOp, string? finish, ILogger log)
     {
         var output = new PdfDocument();
         output.PageSettings.Size = PdfPageSize.Letter;
@@ -633,10 +678,10 @@ public class ReportService
             int firstPage = output.Pages.Count;
             int count = section.Count();
             if (separators)
-                AppendSeparatorPage(output, section.Key!, count, sourceName, isSchedule, operation, secondOp);
+                AppendSeparatorPage(output, section.Key!, count, sourceName, isSchedule, operation, secondOp, finish);
 
             foreach (var part in section)
-                AppendPartPages(output, part, sourceName, isSchedule, operation);
+                AppendPartPages(output, part, sourceName, isSchedule, part.Operation ?? operation);
 
             if (section.Key != null && output.Pages.Count > firstPage)
             {
@@ -700,7 +745,7 @@ public class ReportService
 
     /// <summary>Divider sheet at the start of each thickness / struct-code group, plus a blank back for duplex.</summary>
     private static void AppendSeparatorPage(PdfDocument output, string groupKey, int partCount,
-        string sourceName, bool isSchedule, string operation, string? secondOp)
+        string sourceName, bool isSchedule, string operation, string? secondOp, string? finish)
     {
         var page   = output.Pages.Add();
         var g      = page.Graphics;
@@ -715,9 +760,9 @@ public class ReportService
         var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 1f);
 
         var source = $"{(isSchedule ? "Schedule" : "Batch")} {sourceName}";
-        var header = secondOp == null
-            ? operation.ToUpperInvariant()
-            : $"{operation.ToUpperInvariant()} · 2ND OP {secondOp.ToUpperInvariant()}";
+        var header = (operation == AllOperations ? "ALL OPERATIONS" : operation.ToUpperInvariant())
+            + (secondOp == null ? "" : $" · 2ND OP {secondOp.ToUpperInvariant()}")
+            + (finish   == null ? "" : $" · FINISH {finish.ToUpperInvariant()}");
         g.DrawString(header, fontHeader, grayBrush, new PointF(margin, margin));
         g.DrawString(source, fontHeader, grayBrush, new PointF(pw - margin - fontHeader.MeasureString(source).Width, margin));
         g.DrawLine(grayPen, new PointF(margin, margin + 16f), new PointF(pw - margin, margin + 16f));
@@ -1022,7 +1067,9 @@ public class ReportService
         string? plantDisplay,
         List<(string Label, int Qty)> orders,
         string pdfPath,
-        string? secondOperation = null) => new()
+        string? secondOperation = null,
+        string? finishOps = null,
+        string? operation = null) => new()
     {
         PartNumber   = partNumber,
         Title        = title,
@@ -1031,6 +1078,8 @@ public class ReportService
         Material     = material,
         StructCode   = structCode,
         SecondOperation = secondOperation,
+        FinishOps    = finishOps,
+        Operation    = operation,
         IsStock      = isStock,
         PlantDisplay = plantDisplay,
         TotalQty     = orders.Sum(o => o.Qty),
@@ -1069,6 +1118,9 @@ public class ReportService
         public string? Material    { get; init; }
         public string? StructCode  { get; init; }
         public string? SecondOperation { get; init; }
+        public string? FinishOps   { get; init; }
+        /// <summary>The PrintableOperations entry; set only on operation drawing sets.</summary>
+        public string? Operation   { get; init; }
         public bool IsStock        { get; init; }
         public string? PlantDisplay { get; init; }
         public int TotalQty        { get; init; }

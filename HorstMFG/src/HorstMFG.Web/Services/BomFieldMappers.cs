@@ -41,15 +41,16 @@ internal static class BomFieldMappers
         Regex.Replace(thickness.Trim(), @"\s*in$", "", RegexOptions.IgnoreCase);
 
     /// <summary>
-    /// For Laser operations with no thickness and a known structural code,
+    /// For Laser and Shear operations with no thickness and a known structural code,
     /// returns the derived thickness; otherwise returns the input thickness unchanged.
     /// </summary>
-    public static string DeriveThicknessForLaser(string operations, string thickness, string structCode)
+    public static string DeriveSheetThickness(string operations, string thickness, string structCode)
     {
         thickness = NormalizeThickness(thickness);
         if (!string.IsNullOrEmpty(thickness)) return thickness;
         if (string.IsNullOrEmpty(structCode)) return thickness;
-        if (!operations.Equals("Laser", StringComparison.OrdinalIgnoreCase)) return thickness;
+        if (!operations.Equals("Laser", StringComparison.OrdinalIgnoreCase) &&
+            !operations.Equals("Shear", StringComparison.OrdinalIgnoreCase)) return thickness;
 
         var codePrefix = structCode.Split(' ')[0];
         return StructCodeThickness.TryGetValue(codePrefix, out var derived) ? derived : thickness;

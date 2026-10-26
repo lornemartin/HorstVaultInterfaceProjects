@@ -107,10 +107,10 @@ try
         return Results.File(report.Bytes, "application/pdf");
     }).RequireAuthorization();
 
-    app.MapGet("/api/reports/schedule-op/{scheduleId:int}/{operation}", async (int scheduleId, string operation, int? plant, string[]? group, string? secondOp, ReportService reports, HttpResponse response) =>
+    app.MapGet("/api/reports/schedule-op/{scheduleId:int}/{operation}", async (int scheduleId, string operation, int? plant, string[]? group, string? secondOp, string? finish, ReportService reports, HttpResponse response) =>
     {
         var op = Uri.UnescapeDataString(operation);
-        var report = await reports.GenerateOperationReportAsync(ReportSource.Schedule, scheduleId, op, plant, group, secondOp);
+        var report = await reports.GenerateOperationReportAsync(ReportSource.Schedule, scheduleId, op, plant, group, secondOp, finish);
         if (report is null) return Results.NotFound();
         response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
         return Results.File(report.Bytes, "application/pdf");
@@ -132,10 +132,10 @@ try
         return Results.File(bytes, "application/pdf");
     }).RequireAuthorization();
 
-    app.MapGet("/api/reports/batch-op/{batchId:int}/{operation}", async (int batchId, string operation, int? plant, string[]? group, string? secondOp, ReportService reports, HttpResponse response) =>
+    app.MapGet("/api/reports/batch-op/{batchId:int}/{operation}", async (int batchId, string operation, int? plant, string[]? group, string? secondOp, string? finish, ReportService reports, HttpResponse response) =>
     {
         var op = Uri.UnescapeDataString(operation);
-        var report = await reports.GenerateOperationReportAsync(ReportSource.Batch, batchId, op, plant, group, secondOp);
+        var report = await reports.GenerateOperationReportAsync(ReportSource.Batch, batchId, op, plant, group, secondOp, finish);
         if (report is null) return Results.NotFound();
         response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
         return Results.File(report.Bytes, "application/pdf");
