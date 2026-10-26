@@ -710,7 +710,6 @@ public class ReportService
 
         var fontHeader = new PdfStandardFont(PdfFontFamily.Helvetica,  9);
         var fontLabel  = new PdfStandardFont(PdfFontFamily.Helvetica, 14);
-        var fontKey    = new PdfStandardFont(PdfFontFamily.Helvetica, 40, PdfFontStyle.Bold);
         var fontCount  = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
         var grayBrush  = new PdfSolidBrush(new PdfColor(130, 130, 130));
         var grayPen    = new PdfPen(new PdfColor(200, 200, 200), 1f);
@@ -723,13 +722,18 @@ public class ReportService
         g.DrawString(source, fontHeader, grayBrush, new PointF(pw - margin - fontHeader.MeasureString(source).Width, margin));
         g.DrawLine(grayPen, new PointF(margin, margin + 16f), new PointF(pw - margin, margin + 16f));
 
+        // Struct codes arrive as "HS-1141140188     1-1/4 X 1-1/4 X 0.188 HOLLOW STRUCTURAL": code on the
+        // first line, description underneath. Either line shrinks to fit between the margins.
+        var keyParts = groupKey.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries);
+        var keyLines = new List<(string, PdfFont, PdfBrush)>
+            { (keyParts[0], FitFont(keyParts[0], 40f, pw - 2 * margin), PdfBrushes.Black) };
+        if (keyParts.Length > 1)
+            keyLines.Add((keyParts[1].Trim(), FitFont(keyParts[1].Trim(), 24f, pw - 2 * margin), PdfBrushes.Black));
+
         float cy = ph * 0.38f;
-        foreach (var (text, font, brush) in new (string, PdfFont, PdfBrush)[]
-        {
-            (GroupLabel(operation), fontLabel, grayBrush),
-            (groupKey, fontKey, PdfBrushes.Black),
-            ($"{partCount} part{(partCount != 1 ? "s" : "")}", fontCount, grayBrush),
-        })
+        foreach (var (text, font, brush) in new[] { (GroupLabel(operation), (PdfFont)fontLabel, (PdfBrush)grayBrush) }
+                     .Concat(keyLines)
+                     .Append(($"{partCount} part{(partCount != 1 ? "s" : "")}", fontCount, grayBrush)))
         {
             var size = font.MeasureString(text);
             g.DrawString(text, font, brush, new PointF((pw - size.Width) / 2f, cy));
@@ -737,6 +741,15 @@ public class ReportService
         }
 
         output.Pages.Add(); // blank back for duplex alignment
+    }
+
+    /// <summary>Bold Helvetica at <paramref name="size"/>, stepped down until <paramref name="text"/> fits <paramref name="maxWidth"/>.</summary>
+    private static PdfFont FitFont(string text, float size, float maxWidth)
+    {
+        var font = new PdfStandardFont(PdfFontFamily.Helvetica, size, PdfFontStyle.Bold);
+        while (size > 10f && font.MeasureString(text).Width > maxWidth)
+            font = new PdfStandardFont(PdfFontFamily.Helvetica, size -= 2f, PdfFontStyle.Bold);
+        return font;
     }
 
     /// <summary>
