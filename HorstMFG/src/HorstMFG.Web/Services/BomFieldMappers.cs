@@ -22,7 +22,7 @@ internal static class BomFieldMappers
         ["SH-125"]  = "0.120",
         ["SH-188"]  = "0.188",
         ["SH-250"]  = "0.250",
-        ["SH-312"]  = "0.312",
+        ["SH-312"]  = "0.313",
         ["SH-375"]  = "0.375",
         ["SH-500"]  = "0.500",
         ["SH-625"]  = "0.625",
@@ -34,11 +34,19 @@ internal static class BomFieldMappers
     };
 
     /// <summary>
+    /// Vault sends thickness as "0.375 in"; struct-code derivation yields "0.375". Drop the
+    /// trailing inch unit so both forms store, group and sort as the same value.
+    /// </summary>
+    public static string NormalizeThickness(string thickness) =>
+        Regex.Replace(thickness.Trim(), @"\s*in$", "", RegexOptions.IgnoreCase);
+
+    /// <summary>
     /// For Laser operations with no thickness and a known structural code,
     /// returns the derived thickness; otherwise returns the input thickness unchanged.
     /// </summary>
     public static string DeriveThicknessForLaser(string operations, string thickness, string structCode)
     {
+        thickness = NormalizeThickness(thickness);
         if (!string.IsNullOrEmpty(thickness)) return thickness;
         if (string.IsNullOrEmpty(structCode)) return thickness;
         if (!operations.Equals("Laser", StringComparison.OrdinalIgnoreCase)) return thickness;

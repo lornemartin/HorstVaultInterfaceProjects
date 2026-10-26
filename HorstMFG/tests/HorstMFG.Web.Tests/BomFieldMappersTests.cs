@@ -67,4 +67,15 @@ public class BomFieldMappersTests
     {
         Assert.Equal(expected, BomFieldMappers.ResolveIsStock(baseIsStock, exceptions, product));
     }
+
+    [Theory]
+    [InlineData("0.375 in",   "0.375")]
+    [InlineData("0.375",      "0.375")]
+    [InlineData(" 1.000 IN ", "1.000")]
+    [InlineData("10 GA",      "10 GA")]
+    [InlineData("",           "")]
+    public void NormalizeThickness_StripsInchUnit(string input, string expected)
+    {
+        Assert.Equal(expected, BomFieldMappers.NormalizeThickness(input));
+    }
 }

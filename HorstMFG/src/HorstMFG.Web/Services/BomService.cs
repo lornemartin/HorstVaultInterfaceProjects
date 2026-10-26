@@ -40,7 +40,7 @@ public class BomService : IBomService
         ["SH-125"] = "0.120",
         ["SH-188"] = "0.188",
         ["SH-250"] = "0.250",
-        ["SH-312"] = "0.312",
+        ["SH-312"] = "0.313",
         ["SH-375"] = "0.375",
         ["SH-500"] = "0.500",
         ["SH-625"] = "0.625",
@@ -79,7 +79,7 @@ public class BomService : IBomService
             string title = items[2];
             string itemDesc = items[3];
             string category = items[4];
-            string thickness = items[5];
+            string thickness = BomFieldMappers.NormalizeThickness(items[5]);
             string material = items[6];
             string ops = items[7];
             string qtyString = items[8];
