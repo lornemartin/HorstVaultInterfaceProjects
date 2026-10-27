@@ -18,7 +18,7 @@
 
 @if (_state == State.Upload)
 {
-    <p>Upload a schedule Excel file. The schedule name comes from cell A1; rows below define orders (Col D = Order #, Col C = Qty, Col E = Product #).</p>
+    <p>Upload a schedule Excel file. The schedule name comes from the file name; each row defines an order (Col E = Qty, Col F = Order #, Col G = Product #, Col H = Description / note).</p>
 
     <InputFile OnChange="OnFileSelected" accept=".xlsx" class="form-control" style="max-width: 480px;" />
 
@@ -120,7 +120,7 @@
             ms.Position = 0;
 
             var (plantId, userId) = GetPlantAndUser();
-            _import = await ImportSvc.ImportAsync(ms, plantId, userId);
+            _import = await ImportSvc.ImportAsync(ms, file.Name, plantId, userId);
             if (!_import.Success)
             {
                 _errors = _import.Errors;

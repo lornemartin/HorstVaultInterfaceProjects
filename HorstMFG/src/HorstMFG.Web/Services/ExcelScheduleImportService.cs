@@ -52,9 +52,9 @@ public class ExcelScheduleImportService
     }
 
     public async Task<ExcelScheduleImportResult> ImportAsync(
-        Stream xlsx, int plantId, int userId, CancellationToken ct = default)
+        Stream xlsx, string fileName, int plantId, int userId, CancellationToken ct = default)
     {
-        var parsed = _parser.Parse(xlsx);
+        var parsed = _parser.Parse(xlsx, fileName);
         if (parsed.Errors.Count > 0)
             return new ExcelScheduleImportResult(false, null, null, null, 0, 0, 0,
                 new List<string>(), parsed.Errors);
@@ -227,7 +227,8 @@ public class ExcelScheduleImportService
         {
             if (row.IsContinuation)
             {
-                var note = $"LA- {row.Qty}";
+                // The sheet carries the note text in Description ("PAINT YELLOW", "DONE BY NOV 27").
+                var note = string.IsNullOrEmpty(row.Description) ? $"LA- {row.Qty}" : row.Description;
                 if (mostRecentReal.TryGetValue(row.OrderNumber, out var attachTo))
                 {
                     attachTo.Notes = AppendNote(attachTo.Notes, note);
