@@ -682,7 +682,8 @@
         _orderMeta.Values
             .Where(o => o.ScheduleId == scheduleId)
             .Select(o => _scheduleOrderHandoffs.GetValueOrDefault(o.Id))
-            .Count(h => h is not null && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
+            .Count(h => h is not null && h.DestinationPlantId == _selectedPlantId
+                     && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
 
     // A receiver-visible row is locked for editing once its handoff has been released —
     // the destination plant has already nested it, so it shouldn't change out from under them.
@@ -1151,7 +1152,7 @@
         StateHasChanged();
         try
         {
-            await BomService.ReleaseScheduleToProductionAsync(sched.Id);
+            await BomService.ReleaseScheduleToProductionAsync(sched.Id, _selectedPlantId ?? 0);
 
             await using var db = await DbContextFactory.CreateDbContextAsync();
             var thumbItems = await db.OrderItems

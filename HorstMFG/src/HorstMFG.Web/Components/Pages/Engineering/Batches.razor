@@ -712,7 +712,8 @@
         _productMeta.Values
             .Where(p => p.BatchId == batchId)
             .Select(p => _batchProductHandoffs.GetValueOrDefault(p.Id))
-            .Count(h => h is not null && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
+            .Count(h => h is not null && h.DestinationPlantId == _selectedPlantId
+                     && h.Status == HandoffStatus.Accepted && !h.ReleasedDate.HasValue);
 
     // A receiver-visible row is locked for editing once its handoff has been released —
     // the destination plant has already nested it, so it shouldn't change out from under them.
@@ -1239,7 +1240,7 @@
         StateHasChanged();
         try
         {
-            await BomService.ReleaseBatchToProductionAsync(batch.Id);
+            await BomService.ReleaseBatchToProductionAsync(batch.Id, _selectedPlantId ?? 0);
 
             await using var db = await DbContextFactory.CreateDbContextAsync();
             var thumbItems = await db.BatchItems

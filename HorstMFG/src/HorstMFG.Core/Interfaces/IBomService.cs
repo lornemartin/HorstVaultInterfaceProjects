@@ -157,17 +157,17 @@ public interface IBomService
     /// Release a Batch to production: populates NestBatch and BatchItems for the batch's own
     /// home-plant parts only. Cross-plant accepted parts are released independently by the
     /// destination plant via ReleaseBatchProductHandoffAsync. Throws InvalidOperationException
-    /// if already released.
+    /// if already released, or if <paramref name="releasingPlantId"/> isn't the batch's own plant.
     /// </summary>
-    Task ReleaseBatchToProductionAsync(int batchId);
+    Task ReleaseBatchToProductionAsync(int batchId, int releasingPlantId);
 
     /// <summary>
     /// Release a Schedule to production: populates NestOrders and OrderItems for the schedule's
     /// own home-plant parts only. Cross-plant accepted parts are released independently by the
     /// destination plant via ReleaseScheduleOrderHandoffAsync. Throws InvalidOperationException
-    /// if already released.
+    /// if already released, or if <paramref name="releasingPlantId"/> isn't the schedule's own plant.
     /// </summary>
-    Task ReleaseScheduleToProductionAsync(int scheduleId);
+    Task ReleaseScheduleToProductionAsync(int scheduleId, int releasingPlantId);
 
     /// <summary>
     /// Flips every Draft BatchProductHandoff under the given Batch to Pending, making them

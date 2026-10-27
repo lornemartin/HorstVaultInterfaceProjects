@@ -148,8 +148,9 @@ public class VaultBomIngestService
 
     /// <summary>
     /// Resolves each item's PlantIdRaw (Vault's raw "Plant ID" text) to our own Plant.Id via
-    /// BomFieldMappers.MapVaultPlantCode + Plant.Code. Left null when Vault's value is blank,
-    /// unrecognized, or "Plant 1&amp;2" — PlantIdRaw still preserves the raw text either way.
+    /// BomFieldMappers.MapVaultPlantCode + Plant.Code. Left null when the value is unrecognized
+    /// (PlantIdRaw still preserves the raw text); blank and "Plant 1&amp;2" were already replaced
+    /// with the importing plant by BuildPartLineItems.
     /// </summary>
     private static async Task ResolvePlantIdsAsync(ApplicationDbContext db, List<PartLineItem> items, CancellationToken ct)
     {
@@ -237,7 +238,7 @@ public class VaultBomIngestService
                     IsStock     = isStock,
                     RequiresPdf = l.RequiresPdf,
                     Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
-                    PlantIdRaw  = string.IsNullOrWhiteSpace(plantIdRaw) ? defaultPlantIdRaw : plantIdRaw.Trim(),
+                    PlantIdRaw  = BomFieldMappers.IsImportingPlantValue(plantIdRaw) ? defaultPlantIdRaw : plantIdRaw!.Trim(),
                 };
                 dedupedByNumber[number] = item;
             }

@@ -89,4 +89,17 @@ public class BomFieldMappersTests
     {
         Assert.Equal(expected, BomFieldMappers.DeriveSheetThickness(ops, thickness, structCode));
     }
+
+    [Theory]
+    [InlineData("Plant 1&2",      true)]
+    [InlineData(" plant 1 & 2 ",  true)]
+    [InlineData("",               true)]
+    [InlineData(null,             true)]
+    [InlineData("Plant 1",        false)]
+    [InlineData("Plant 2",        false)]
+    [InlineData("Order from Elo", false)]
+    public void IsImportingPlantValue_BlankAndBothPlants(string? raw, bool expected)
+    {
+        Assert.Equal(expected, BomFieldMappers.IsImportingPlantValue(raw));
+    }
 }

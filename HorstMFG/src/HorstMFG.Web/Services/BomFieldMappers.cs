@@ -58,10 +58,8 @@ internal static class BomFieldMappers
 
     /// <summary>
     /// Vault's raw "Plant ID" custom-property text, mapped to our own Plant.Code. Vault can also
-    /// send "Plant 1&amp;2" (a part shared between both plants) or blank — both intentionally
-    /// return null here, since a single PartLineItem.PlantId FK can't represent "both plants".
-    /// Callers should still store the raw string (PartLineItem.PlantIdRaw) so that case stays
-    /// distinguishable from a genuine blank.
+    /// send "Plant 1&amp;2" (a part either plant makes) or blank — both return null here; the
+    /// importers treat both as "the importing plant" (see <see cref="IsImportingPlantValue"/>).
     /// </summary>
     private static readonly Dictionary<string, string> VaultPlantCodes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -74,6 +72,17 @@ internal static class BomFieldMappers
         => !string.IsNullOrWhiteSpace(raw) && VaultPlantCodes.TryGetValue(raw.Trim(), out var code)
             ? code
             : null;
+
+    /// <summary>Vault's "Plant 1&amp;2": a part either plant can make. Spacing and case vary.</summary>
+    public static bool IsBothPlantsValue(string? raw) =>
+        raw != null && Regex.IsMatch(raw, @"^\s*Plant\s*1\s*&\s*2\s*$", RegexOptions.IgnoreCase);
+
+    /// <summary>
+    /// True when the part should be made by whichever plant imports it: a blank Plant ID, or
+    /// "Plant 1&amp;2" — since the importing plant can make it, it never needs a handoff.
+    /// </summary>
+    public static bool IsImportingPlantValue(string? raw) =>
+        string.IsNullOrWhiteSpace(raw) || IsBothPlantsValue(raw);
 
     /// <summary>
     /// Applies a plant's Vault "Stock Exception" list (pipe-delimited top-level product names)

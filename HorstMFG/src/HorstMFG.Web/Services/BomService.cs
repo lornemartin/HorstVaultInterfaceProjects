@@ -314,7 +314,7 @@ public class BomService : IBomService
                     RequiresPdf = line.RequiresPdf,
                     Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                     HasPdf = line.HasPdf,
-                    PlantIdRaw = string.IsNullOrWhiteSpace(line.PlantId) ? null : line.PlantId,
+                    PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
                     PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
                 };
                 _db.PartLineItems.Add(item);
@@ -390,7 +390,7 @@ public class BomService : IBomService
                 RequiresPdf = line.RequiresPdf,
                 Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
                 HasPdf = line.HasPdf,
-                PlantIdRaw = string.IsNullOrWhiteSpace(line.PlantId) ? null : line.PlantId,
+                PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
                 PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
             };
             _db.PartLineItems.Add(item);
@@ -1411,7 +1411,7 @@ public class BomService : IBomService
         return 1;
     }
 
-    public async Task ReleaseBatchToProductionAsync(int batchId)
+    public async Task ReleaseBatchToProductionAsync(int batchId, int releasingPlantId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -1423,6 +1423,17 @@ public class BomService : IBomService
 
         if (batch.ReadyForProduction)
             throw new InvalidOperationException($"Batch '{batch.Name}' has already been released to production.");
+        // The UI only offers this to the owning plant; enforce it here too. The other plant
+        // releases its share through ReleaseBatchHandoffsAsync.
+        if (batch.PlantId != releasingPlantId)
+            throw new InvalidOperationException($"Batch '{batch.Name}' belongs to another plant and can only be released by that plant.");
+        // "Plant 1&2" resolves to the importing plant at import; any left over predate that
+        // and would be silently skipped by both plants, so they must be reassigned first.
+        var bothPlants = batch.BatchProducts.SelectMany(bp => bp.Parts)
+            .Count(p => BomFieldMappers.IsBothPlantsValue(p.PlantIdRaw));
+        if (bothPlants > 0)
+            throw new InvalidOperationException(
+                $"Batch '{batch.Name}' has {bothPlants} part(s) set to Plant 1&2. Assign each to a single plant before releasing.");
 
         batch.ReadyForProduction = true;
 
@@ -1462,7 +1473,7 @@ public class BomService : IBomService
         _log.LogInformation("Batch '{Name}' (Id={Id}) released to production.", batch.Name, batch.Id);
     }
 
-    public async Task ReleaseScheduleToProductionAsync(int scheduleId)
+    public async Task ReleaseScheduleToProductionAsync(int scheduleId, int releasingPlantId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -1474,6 +1485,17 @@ public class BomService : IBomService
 
         if (schedule.ReadyForProduction)
             throw new InvalidOperationException($"Schedule '{schedule.Name}' has already been released to production.");
+        // The UI only offers this to the owning plant; enforce it here too. The other plant
+        // releases its share through ReleaseScheduleHandoffsAsync.
+        if (schedule.PlantId != releasingPlantId)
+            throw new InvalidOperationException($"Schedule '{schedule.Name}' belongs to another plant and can only be released by that plant.");
+        // "Plant 1&2" resolves to the importing plant at import; any left over predate that
+        // and would be silently skipped by both plants, so they must be reassigned first.
+        var bothPlants = schedule.ScheduleOrders.SelectMany(so => so.Parts)
+            .Count(p => BomFieldMappers.IsBothPlantsValue(p.PlantIdRaw));
+        if (bothPlants > 0)
+            throw new InvalidOperationException(
+                $"Schedule '{schedule.Name}' has {bothPlants} part(s) set to Plant 1&2. Assign each to a single plant before releasing.");
 
         schedule.ReadyForProduction = true;
         await db.SaveChangesAsync();
