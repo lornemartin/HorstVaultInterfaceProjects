@@ -75,10 +75,23 @@ public class BomPdfCopyService
             async (partNumber, c) =>
             {
                 var pdfPath = Path.Combine(_pdfSharePath, partNumber + ".pdf");
-                if (await Task.Run(() => BomFieldMappers.FileExistsWithRetry(pdfPath, _log), c))
+                if (await Task.Run(() => IsDrawingOnShare(pdfPath), c))
                     found.Add(partNumber);
             });
         return new HashSet<string>(found, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The PDF exists on the share and isn't empty. A 0-byte file is a failed print, so it
+    /// counts as missing: the part then shows in the "missing PDFs" warning instead of
+    /// being copied and failing later at print time.
+    /// </summary>
+    private bool IsDrawingOnShare(string pdfPath)
+    {
+        if (!BomFieldMappers.FileExistsWithRetry(pdfPath, _log)) return false;
+        if (new FileInfo(pdfPath).Length > 0) return true;
+        _log.LogWarning("PDF {Path} is empty (0 bytes); treating it as missing", pdfPath);
+        return false;
     }
 
     private async Task<(int Copied, int Total)> CopyAsync(
@@ -105,7 +118,7 @@ public class BomPdfCopyService
                 var destPath = Path.Combine(destinationFolder, partNumber + ".pdf");
                 try
                 {
-                    if (!await Task.Run(() => BomFieldMappers.FileExistsWithRetry(sourcePath, _log), c)) return;
+                    if (!await Task.Run(() => IsDrawingOnShare(sourcePath), c)) return;
                     await Task.Run(() => File.Copy(sourcePath, destPath, overwrite: true), c);
                     Interlocked.Increment(ref copied);
                 }

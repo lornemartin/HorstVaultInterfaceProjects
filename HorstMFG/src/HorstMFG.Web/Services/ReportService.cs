@@ -681,7 +681,7 @@ public class ReportService
                 AppendSeparatorPage(output, section.Key!, count, sourceName, isSchedule, operation, secondOp, finish);
 
             foreach (var part in section)
-                AppendPartPages(output, part, sourceName, isSchedule, part.Operation ?? operation);
+                AppendPartPages(output, part, sourceName, isSchedule, part.Operation ?? operation, log);
 
             if (section.Key != null && output.Pages.Count > firstPage)
             {
@@ -696,7 +696,7 @@ public class ReportService
         return ms.ToArray();
     }
 
-    private static void AppendPartPages(PdfDocument output, LaserPartGroup part, string sourceName, bool isSchedule, string operation)
+    private static void AppendPartPages(PdfDocument output, LaserPartGroup part, string sourceName, bool isSchedule, string operation, ILogger log)
     {
         if (part.PdfPath is null)
         {
@@ -705,7 +705,8 @@ public class ReportService
         }
 
         byte[] srcBytes = File.ReadAllBytes(part.PdfPath);
-        var srcDoc = new PdfLoadedDocument(srcBytes);
+        var srcDoc = TryLoadDrawing(srcBytes, part.PdfPath, log);
+        if (srcDoc == null) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); return; }
         try
         {
             if (srcDoc.Pages.Count == 0) { AppendTextOnlyPage(output, part, sourceName, isSchedule, operation); return; }
@@ -1084,7 +1085,7 @@ public class ReportService
         PlantDisplay = plantDisplay,
         TotalQty     = orders.Sum(o => o.Qty),
         Orders       = orders,
-        PdfPath      = File.Exists(pdfPath) ? pdfPath : null,
+        PdfPath      = HasDrawing(pdfPath) ? pdfPath : null,
     };
 
     /// <summary>
@@ -1162,7 +1163,7 @@ public class ReportService
             OrderBreakdown = g.GroupBy(x => x.OrderNumber)
                               .Select(og => (og.Key, og.Sum(x => x.Part.Qty * x.Qty)))
                               .ToList(),
-            PdfPath        = File.Exists(path) ? path : null,
+            PdfPath        = HasDrawing(path) ? path : null,
             MadeAtPlant    = madeAt,
             // One status per order the part appears in; usually they all agree.
             HandoffStatus  = madeAt == null ? null : string.Join(" / ", g
@@ -1245,6 +1246,24 @@ public class ReportService
         return ms.ToArray();
     }
 
+    /// <summary>
+    /// The local drawing exists and isn't empty. A 0-byte file is a failed print on the share,
+    /// copied at import, so it's treated the same as a missing drawing.
+    /// </summary>
+    private static bool HasDrawing(string path) =>
+        File.Exists(path) && new FileInfo(path).Length > 0;
+
+    /// <summary>Loads a drawing, or returns null (logged) when it isn't a readable PDF.</summary>
+    private static PdfLoadedDocument? TryLoadDrawing(byte[] bytes, string path, ILogger log)
+    {
+        try { return new PdfLoadedDocument(bytes); }
+        catch (PdfException ex)
+        {
+            log.LogWarning("Unreadable PDF {Path}, printing a placeholder instead: {Msg}", path, ex.Message);
+            return null;
+        }
+    }
+
     private static void TravellerAppendDrawingPages(PdfDocument output, string pdfPath,
         TravellerPageInfo info, ILogger log)
     {
@@ -1257,7 +1276,8 @@ public class ReportService
             return;
         }
 
-        var srcDoc = new PdfLoadedDocument(srcBytes);
+        var srcDoc = TryLoadDrawing(srcBytes, pdfPath, log);
+        if (srcDoc == null) { TravellerAppendTextOnlyPage(output, info); return; }
         try
         {
             if (srcDoc.Pages.Count == 0) { TravellerAppendTextOnlyPage(output, info); return; }
