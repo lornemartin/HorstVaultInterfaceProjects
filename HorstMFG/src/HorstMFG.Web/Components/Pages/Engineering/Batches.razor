@@ -100,6 +100,13 @@
     </div>
 </div>
 
+@if (_selectedPartIds.Count > 0)
+{
+    <BulkEditBar SelectedCount="_selectedPartIds.Count" Plants="_plantLabels"
+                 CustomPlantValues="CustomPlantValuesForSelection()"
+                 OnApply="OnBulkApply" OnClear="ClearSelection" />
+}
+
 <SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="true" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" Height="600">
@@ -120,6 +127,14 @@
                 }
                 <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="batch.PlantId"
                                   ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="batch" ShowStatus="false" />
+                @if (SelectableIds(r => r.BatchId == batch.Id) is { Count: > 0 } batchSelectable)
+                {
+                    <input type="checkbox" checked="@batchSelectable.All(_selectedPartIds.Contains)"
+                           @onchange="@(e => SetSelected(batchSelectable, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           title="Select all visible parts in this batch"
+                           style="cursor: pointer; width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: middle;" />
+                }
                 @if (batch.IsReleased)
                 {
                     <span style="font-weight: 700; font-size: 1rem;">@batch.Name</span>
@@ -207,6 +222,14 @@
                 <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="_batchMeta.GetValueOrDefault(product.BatchId)?.PlantId ?? _selectedPlantId ?? 0"
                                   ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="product"
                                   Status="_batchProductHandoffs.GetValueOrDefault(product.Id)?.Status" />
+                @if (SelectableIds(r => r.BatchProductId == product.Id) is { Count: > 0 } productSelectable)
+                {
+                    <input type="checkbox" checked="@productSelectable.All(_selectedPartIds.Contains)"
+                           @onchange="@(e => SetSelected(productSelectable, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           title="Select all visible parts in this batch item"
+                           style="cursor: pointer; width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: middle;" />
+                }
                 @if (product.IsReleased)
                 {
                     <span style="font-style: italic; font-weight: 600;">@product.ProductName</span>
@@ -366,6 +389,20 @@
         <GridColumn Field="CategoryOrder"  Visible="false" Width="0" />
         <GridColumn Field="BatchReleased"  Visible="false" Width="0" />
         <GridColumn Field="IsCrossPlant"   Visible="false" Width="0" />
+        <GridColumn HeaderText="" Width="40" TextAlign="TextAlign.Center" AllowSorting="false" AllowFiltering="false">
+            <Template>
+                @{
+                    var row = context as FlatBatchPartRow;
+                }
+                @if (IsSelectable(row!))
+                {
+                    <input type="checkbox" checked="@_selectedPartIds.Contains(row.PartLineItemId)"
+                           @onchange="@(e => SetSelected(new[] { row.PartLineItemId }, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           style="cursor: pointer; width: 16px; height: 16px;" />
+                }
+            </Template>
+        </GridColumn>
         <GridColumn Field="PartNumber" HeaderText="Number" Width="300">
             <Template>
                 @{
@@ -617,7 +654,7 @@
     private const string StateKey = "horstmfg.batches.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
-    private const string GridId = "BatchesGrid_v8";
+    private const string GridId = "BatchesGrid_v9";
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatBatchPartRow>? _batchGrid;
@@ -656,6 +693,10 @@
 
     // Part rows where the user clicked "Other…" to type a custom Plant value
     private HashSet<int> _customPlantEditIds = new();
+
+    // Multi-select for the bulk edit bar. Tracked here rather than via Syncfusion's own row
+    // selection, which is wiped by every LoadData and only sees rows in expanded lazy groups.
+    private HashSet<int> _selectedPartIds = new();
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -742,6 +783,64 @@
         !IsSenderForBatch(row.BatchId)
         && _batchProductHandoffs.TryGetValue(row.BatchProductId, out var h)
         && h.ReleasedDate.HasValue;
+
+    // ── Multi-select ──────────────────────────────────────────────────────────
+    // Mirrors ApplyGridFilters, so a group-level "select all" never picks up rows the grid is hiding.
+    private bool IsRowVisible(FlatBatchPartRow row) =>
+        (!_hideReleased   || !row.BatchReleased)
+        && (!_hideAssemblies || row.CategoryOrder != 1)
+        && (!_hideNonStock   || row.IsStock)
+        && (!_crossPlantOnly || row.IsCrossPlant);
+
+    // Same lock as the Stock/Notes cells; placeholder rows (no parts yet) have nothing to edit.
+    private bool IsSelectable(FlatBatchPartRow row) =>
+        row.PartLineItemId != 0
+        && !row.BatchReleased
+        && !IsHandoffReleasedForRow(row)
+        && IsRowVisible(row);
+
+    private List<int> SelectableIds(Func<FlatBatchPartRow, bool> predicate) =>
+        _rows.Where(r => predicate(r) && IsSelectable(r)).Select(r => r.PartLineItemId).ToList();
+
+    private void SetSelected(IEnumerable<int> ids, bool selected)
+    {
+        if (selected) _selectedPartIds.UnionWith(ids);
+        else _selectedPartIds.ExceptWith(ids);
+    }
+
+    private void ClearSelection() => _selectedPartIds.Clear();
+
+    // Drop selections that are no longer visible or editable (after a reload or filter change).
+    private void PruneSelection() =>
+        _selectedPartIds.IntersectWith(SelectableIds(_ => true));
+
+    private List<string> CustomPlantValuesForSelection() =>
+        _rows.Where(r => _selectedPartIds.Contains(r.PartLineItemId))
+             .Select(r => r.BatchId)
+             .Distinct()
+             .SelectMany(id => _batchCustomPlantValues.GetValueOrDefault(id) ?? new List<string>())
+             .Distinct(StringComparer.OrdinalIgnoreCase)
+             .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+             .ToList();
+
+    private async Task OnBulkApply(BulkEditBar.BulkEditRequest request)
+    {
+        var ids = _selectedPartIds.ToList();
+        if (ids.Count == 0) return;
+        _activePartLineItemId = null;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
+        if (request.IsStock is { } isStock)
+            await BomService.UpdatePartsIsStockAsync(ids, isStock);
+        if (request.SetPlant)
+            await BomService.UpdatePartsPlantAsync(ids, request.PlantId, request.PlantIdRaw);
+        if (request.SetNotes)
+            await BomService.UpdatePartsNotesAsync(ids, request.Notes);
+        await LoadData();
+        _statusMessage = $"Updated {ids.Count} part{(ids.Count != 1 ? "s" : "")}.";
+        _statusIsError = false;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
+    }
 
     private static string BtnStyle(string variant) => variant switch
     {
@@ -1066,6 +1165,7 @@
 
     private async Task ApplyGridFilters()
     {
+        PruneSelection();
         if (_batchGrid is null) return;
         _restoringExpansion = true;
         await _batchGrid.ClearFilteringAsync();

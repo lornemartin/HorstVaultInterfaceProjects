@@ -1,0 +1,114 @@
+@* Multi-select edit bar for the engineering part grids (Batches / Orders): shown above the grid
+   while any part rows are selected. Each field defaults to "unchanged"; Apply sends only the
+   fields the user actually set. *@
+
+<div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem;
+            padding: 0.5rem 0.75rem; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 4px; font-size: 0.875rem;">
+    <strong>@SelectedCount part@(SelectedCount != 1 ? "s" : "") selected</strong>
+
+    <label style="display: inline-flex; gap: 0.35rem; align-items: center;">
+        Stock:
+        <select @bind="_stock" style="@InputStyle">
+            <option value="">(unchanged)</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+    </label>
+
+    <label style="display: inline-flex; gap: 0.35rem; align-items: center;">
+        Plant:
+        <select @bind="_plant" style="@InputStyle">
+            <option value="">(unchanged)</option>
+            @foreach (var (plantId, plant) in Plants.OrderBy(p => p.Value.Name))
+            {
+                <option value="@plantId">@plant.Name</option>
+            }
+            @foreach (var cv in CustomPlantValues)
+            {
+                <option value="@("custom:" + cv)">@cv</option>
+            }
+            <option value="__other__">Other…</option>
+        </select>
+        @if (_plant == "__other__")
+        {
+            <input type="text" @bind="_plantOther" placeholder="Custom plant…" style="@InputStyle width: 130px;" />
+        }
+    </label>
+
+    <label style="display: inline-flex; gap: 0.35rem; align-items: center;">
+        Notes:
+        <input type="text" @bind="_notes" @bind:event="oninput" maxlength="2000" disabled="@_clearNotes"
+               placeholder="(unchanged)" style="@InputStyle width: 220px;" />
+    </label>
+    <label style="display: inline-flex; gap: 0.3rem; align-items: center; cursor: pointer;">
+        <input type="checkbox" @bind="_clearNotes" />
+        Clear notes
+    </label>
+
+    <span style="display: inline-flex; gap: 0.4rem; margin-left: auto;">
+        <button @onclick="ApplyAsync" disabled="@(!HasChanges)"
+                style="padding: 3px 10px; border-radius: 3px; border: 1px solid #3b82f6; background: #3b82f6; color: white;
+                       cursor: @(HasChanges ? "pointer" : "default"); opacity: @(HasChanges ? "1" : "0.5");">
+            Apply to @SelectedCount
+        </button>
+        <button @onclick="OnClear"
+                style="padding: 3px 10px; border-radius: 3px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer;">
+            Clear selection
+        </button>
+    </span>
+</div>
+
+@code {
+    [Parameter] public int SelectedCount { get; set; }
+    [Parameter] public IReadOnlyDictionary<int, (string Code, string Name)> Plants { get; set; } = new Dictionary<int, (string Code, string Name)>();
+    [Parameter] public IReadOnlyList<string> CustomPlantValues { get; set; } = Array.Empty<string>();
+    [Parameter] public EventCallback<BulkEditRequest> OnApply { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+
+    public sealed record BulkEditRequest(bool? IsStock, bool SetPlant, int? PlantId, string? PlantIdRaw, bool SetNotes, string? Notes);
+
+    private const string InputStyle = "border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px;";
+
+    private string _stock = "";
+    private string _plant = "";
+    private string _plantOther = "";
+    private string _notes = "";
+    private bool _clearNotes;
+
+    // "Other…" with nothing typed counts as no plant change, so it can't silently clear plants.
+    private bool SetsPlant => _plant != "" && (_plant != "__other__" || !string.IsNullOrWhiteSpace(_plantOther));
+    private bool SetsNotes => _clearNotes || !string.IsNullOrWhiteSpace(_notes);
+    private bool HasChanges => _stock != "" || SetsPlant || SetsNotes;
+
+    private async Task ApplyAsync()
+    {
+        if (!HasChanges) return;
+
+        int? plantId = null;
+        string? plantIdRaw = null;
+        if (_plant == "__other__")
+        {
+            // Same resolution as the per-row custom entry: a typed name matching a real plant
+            // sets PlantId too.
+            var trimmed = _plantOther.Trim();
+            plantId = Plants
+                .Where(p => string.Equals(p.Value.Name, trimmed, StringComparison.OrdinalIgnoreCase))
+                .Select(p => (int?)p.Key)
+                .FirstOrDefault();
+            plantIdRaw = trimmed;
+        }
+        else if (_plant.StartsWith("custom:"))
+            plantIdRaw = _plant["custom:".Length..];
+        else if (int.TryParse(_plant, out var parsed))
+            plantId = parsed;
+
+        var request = new BulkEditRequest(
+            IsStock: _stock == "" ? null : _stock == "true",
+            SetPlant: SetsPlant, PlantId: plantId, PlantIdRaw: plantIdRaw,
+            SetNotes: SetsNotes, Notes: _clearNotes ? null : _notes.Trim());
+
+        _stock = _plant = _plantOther = _notes = "";
+        _clearNotes = false;
+        await OnApply.InvokeAsync(request);
+    }
+}

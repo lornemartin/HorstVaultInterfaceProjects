@@ -91,6 +91,22 @@ public interface IBomService
     Task UpdateScheduleOrderNotesAsync(int scheduleOrderId, string? notes);
 
     /// <summary>
+    /// Bulk-set IsStock on the given PartLineItems (multi-select edit in the engineering grids).
+    /// </summary>
+    Task UpdatePartsIsStockAsync(IReadOnlyCollection<int> partLineItemIds, bool isStock);
+
+    /// <summary>
+    /// Bulk-set PlantId/PlantIdRaw on the given PartLineItems, then re-evaluate cross-plant
+    /// handoffs once per affected Batch/Schedule.
+    /// </summary>
+    Task UpdatePartsPlantAsync(IReadOnlyCollection<int> partLineItemIds, int? plantId, string? plantIdRaw);
+
+    /// <summary>
+    /// Bulk-set Notes on the given PartLineItems. Blank clears the note.
+    /// </summary>
+    Task UpdatePartsNotesAsync(IReadOnlyCollection<int> partLineItemIds, string? notes);
+
+    /// <summary>
     /// Update the IsStock flag on a PartLineItem.
     /// </summary>
     Task UpdatePartIsStockAsync(int partLineItemId, bool isStock);

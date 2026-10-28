@@ -94,6 +94,13 @@
     </div>
 </div>
 
+@if (_selectedPartIds.Count > 0)
+{
+    <BulkEditBar SelectedCount="_selectedPartIds.Count" Plants="_plantLabels"
+                 CustomPlantValues="CustomPlantValuesForSelection()"
+                 OnApply="OnBulkApply" OnClear="ClearSelection" />
+}
+
 <SfGrid TValue="FlatSchedulePartRow" @ref="_schedGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="false" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" Height="600">
@@ -114,6 +121,14 @@
                 }
                 <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="sched.PlantId"
                                   ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="schedule" ShowStatus="false" />
+                @if (SelectableIds(r => r.ScheduleId == sched.Id) is { Count: > 0 } schedSelectable)
+                {
+                    <input type="checkbox" checked="@schedSelectable.All(_selectedPartIds.Contains)"
+                           @onchange="@(e => SetSelected(schedSelectable, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           title="Select all visible parts in this schedule"
+                           style="cursor: pointer; width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: middle;" />
+                }
                 @if (sched.IsReleased)
                 {
                     <span style="font-weight: 700; font-size: 1rem;">@sched.Name</span>
@@ -200,6 +215,14 @@
                 <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="_scheduleMeta.GetValueOrDefault(order.ScheduleId)?.PlantId ?? _selectedPlantId ?? 0"
                                   ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="order"
                                   Status="_scheduleOrderHandoffs.GetValueOrDefault(order.Id)?.Status" />
+                @if (SelectableIds(r => r.ScheduleOrderId == order.Id) is { Count: > 0 } orderSelectable)
+                {
+                    <input type="checkbox" checked="@orderSelectable.All(_selectedPartIds.Contains)"
+                           @onchange="@(e => SetSelected(orderSelectable, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           title="Select all visible parts in this order"
+                           style="cursor: pointer; width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: middle;" />
+                }
                 @if (order.IsReleased)
                 {
                     <span class="released-marker" style="display:none;"></span>
@@ -376,6 +399,20 @@
         <GridColumn Field="ThicknessOrder"   Visible="false" Width="0" />
         <GridColumn Field="ScheduleReleased" Visible="false" Width="0" />
         <GridColumn Field="IsCrossPlant"     Visible="false" Width="0" />
+        <GridColumn HeaderText="" Width="40" TextAlign="TextAlign.Center" AllowSorting="false" AllowFiltering="false">
+            <Template>
+                @{
+                    var row = context as FlatSchedulePartRow;
+                }
+                @if (IsSelectable(row!))
+                {
+                    <input type="checkbox" checked="@_selectedPartIds.Contains(row.PartLineItemId)"
+                           @onchange="@(e => SetSelected(new[] { row.PartLineItemId }, (bool)e.Value!))"
+                           @onclick:stopPropagation="true"
+                           style="cursor: pointer; width: 16px; height: 16px;" />
+                }
+            </Template>
+        </GridColumn>
         <GridColumn Field="PartNumber" HeaderText="Number" Width="300">
             <Template>
                 @{
@@ -608,7 +645,7 @@
     private const string StateKey = "horstmfg.orders.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
-    private const string GridId = "OrdersGrid_v8";
+    private const string GridId = "OrdersGrid_v9";
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatSchedulePartRow>? _schedGrid;
@@ -646,6 +683,10 @@
 
     // Part rows where the user clicked "Other…" to type a custom Plant value
     private HashSet<int> _customPlantEditIds = new();
+
+    // Multi-select for the bulk edit bar. Tracked here rather than via Syncfusion's own row
+    // selection, which is wiped by every LoadData and only sees rows in expanded lazy groups.
+    private HashSet<int> _selectedPartIds = new();
 
     // Status message (retry feedback)
     private string? _statusMessage;
@@ -726,6 +767,63 @@
         !IsSenderForSchedule(row.ScheduleId)
         && _scheduleOrderHandoffs.TryGetValue(row.ScheduleOrderId, out var h)
         && h.ReleasedDate.HasValue;
+
+    // ── Multi-select ──────────────────────────────────────────────────────────
+    // Mirrors ApplyGridFilters, so a group-level "select all" never picks up rows the grid is hiding.
+    private bool IsRowVisible(FlatSchedulePartRow row) =>
+        (!_hideStock         || !row.IsStock)
+        && (!_hideReleased   || !row.ScheduleReleased)
+        && (!_crossPlantOnly || row.IsCrossPlant);
+
+    // Same lock as the Stock/Notes cells; placeholder rows (no parts yet) have nothing to edit.
+    private bool IsSelectable(FlatSchedulePartRow row) =>
+        row.PartLineItemId != 0
+        && !row.ScheduleReleased
+        && !IsHandoffReleasedForRow(row)
+        && IsRowVisible(row);
+
+    private List<int> SelectableIds(Func<FlatSchedulePartRow, bool> predicate) =>
+        _rows.Where(r => predicate(r) && IsSelectable(r)).Select(r => r.PartLineItemId).ToList();
+
+    private void SetSelected(IEnumerable<int> ids, bool selected)
+    {
+        if (selected) _selectedPartIds.UnionWith(ids);
+        else _selectedPartIds.ExceptWith(ids);
+    }
+
+    private void ClearSelection() => _selectedPartIds.Clear();
+
+    // Drop selections that are no longer visible or editable (after a reload or filter change).
+    private void PruneSelection() =>
+        _selectedPartIds.IntersectWith(SelectableIds(_ => true));
+
+    private List<string> CustomPlantValuesForSelection() =>
+        _rows.Where(r => _selectedPartIds.Contains(r.PartLineItemId))
+             .Select(r => r.ScheduleId)
+             .Distinct()
+             .SelectMany(id => _scheduleCustomPlantValues.GetValueOrDefault(id) ?? new List<string>())
+             .Distinct(StringComparer.OrdinalIgnoreCase)
+             .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+             .ToList();
+
+    private async Task OnBulkApply(BulkEditBar.BulkEditRequest request)
+    {
+        var ids = _selectedPartIds.ToList();
+        if (ids.Count == 0) return;
+        _activePartLineItemId = null;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
+        if (request.IsStock is { } isStock)
+            await BomService.UpdatePartsIsStockAsync(ids, isStock);
+        if (request.SetPlant)
+            await BomService.UpdatePartsPlantAsync(ids, request.PlantId, request.PlantIdRaw);
+        if (request.SetNotes)
+            await BomService.UpdatePartsNotesAsync(ids, request.Notes);
+        await LoadData();
+        _statusMessage = $"Updated {ids.Count} part{(ids.Count != 1 ? "s" : "")}.";
+        _statusIsError = false;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
+    }
 
     private static string BtnStyle(string variant) => variant switch
     {
@@ -983,6 +1081,7 @@
 
     private async Task ApplyGridFilters()
     {
+        PruneSelection();
         if (_schedGrid is null) return;
         await _schedGrid.ClearFilteringAsync();
         if (_hideStock)

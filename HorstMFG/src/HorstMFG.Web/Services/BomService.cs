@@ -784,6 +784,54 @@ public class BomService : IBomService
             .ExecuteUpdateAsync(s => s.SetProperty(so => so.Notes, trimmed));
     }
 
+    public async Task UpdatePartsIsStockAsync(IReadOnlyCollection<int> partLineItemIds, bool isStock)
+    {
+        if (partLineItemIds.Count == 0) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => partLineItemIds.Contains(p.Id))
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsStock, isStock));
+    }
+
+    public async Task UpdatePartsPlantAsync(IReadOnlyCollection<int> partLineItemIds, int? plantId, string? plantIdRaw)
+    {
+        if (partLineItemIds.Count == 0) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        // Capture the affected parents before updating so each one's handoffs get re-evaluated once.
+        var batchIds = await db.Set<PartLineItem>()
+            .Where(p => partLineItemIds.Contains(p.Id) && p.BatchProductId != null)
+            .Select(p => p.BatchProduct!.BatchId)
+            .Distinct()
+            .ToListAsync();
+        var scheduleIds = await db.Set<PartLineItem>()
+            .Where(p => partLineItemIds.Contains(p.Id) && p.ScheduleOrderId != null)
+            .Select(p => p.ScheduleOrder!.ScheduleId)
+            .Distinct()
+            .ToListAsync();
+
+        await db.Set<PartLineItem>()
+            .Where(p => partLineItemIds.Contains(p.Id))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.PlantId, plantId)
+                .SetProperty(p => p.PlantIdRaw, plantIdRaw));
+
+        foreach (var batchId in batchIds)
+            await EnsureBatchHandoffsAsync(db, batchId);
+        foreach (var scheduleId in scheduleIds)
+            await EnsureScheduleHandoffsAsync(db, scheduleId);
+    }
+
+    public async Task UpdatePartsNotesAsync(IReadOnlyCollection<int> partLineItemIds, string? notes)
+    {
+        if (partLineItemIds.Count == 0) return;
+        var trimmed = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => partLineItemIds.Contains(p.Id))
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Notes, trimmed));
+    }
+
     public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
