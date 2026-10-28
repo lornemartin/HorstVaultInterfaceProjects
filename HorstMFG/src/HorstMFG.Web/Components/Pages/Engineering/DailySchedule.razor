@@ -114,7 +114,21 @@
                 }
                 <CrossPlantMarker PartPlantId="_selectedPlantId" ParentPlantId="sched.PlantId"
                                   ViewerPlantId="_selectedPlantId" Plants="_plantLabels" Subject="schedule" ShowStatus="false" />
-                <span style="font-weight: 700; font-size: 1rem;">@sched.Name</span>
+                @if (sched.IsReleased)
+                {
+                    <span style="font-weight: 700; font-size: 1rem;">@sched.Name</span>
+                }
+                else
+                {
+                    <input type="text" value="@sched.Name"
+                           @onchange="@(async e => await OnScheduleNameChanged(sched.Id, e.Value?.ToString() ?? ""))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                           @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
+                           title="Edit schedule name, press Enter or click elsewhere to save"
+                           style="font-weight: 700; font-size: 1rem; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 4px; color: #111827; min-width: 180px;" />
+                }
                 <span style="margin-left: 1rem; color: #6b7280; font-size: 0.8rem;">
                     @sched.ImportDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")
                 </span>
@@ -463,7 +477,28 @@
             </Template>
         </GridColumn>
         <GridColumn Field="HasPdf" HeaderText="PDF" Width="60" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="Notes" HeaderText="Notes" Width="150" />
+        <GridColumn Field="Notes" HeaderText="Notes" Width="150">
+            <Template>
+                @{
+                    var row = context as FlatSchedulePartRow;
+                    var notesLocked = row!.ScheduleReleased || IsHandoffReleasedForRow(row);
+                }
+                @if (notesLocked)
+                {
+                    <span title="@row.Notes" style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@row.Notes</span>
+                }
+                else
+                {
+                    <input type="text" value="@row.Notes" title="@row.Notes" maxlength="2000"
+                           @onchange="@(async e => await OnNotesChanged(row, e.Value?.ToString()))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                           @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
+                           style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; text-overflow: ellipsis;" />
+                }
+            </Template>
+        </GridColumn>
     </GridColumns>
 </SfGrid>
 
@@ -1300,6 +1335,31 @@
     {
         _showPlantDialog = false;
         _plantDialogRow = null;
+    }
+
+    private async Task OnScheduleNameChanged(int scheduleId, string rawValue)
+    {
+        var trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+        if (_scheduleMeta.TryGetValue(scheduleId, out var current) && current.Name == trimmed) return;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
+        await BomService.UpdateScheduleNameAsync(scheduleId, trimmed);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
+    }
+
+    // Placeholder rows (no parts yet) carry the ScheduleOrder's own Notes, so save there instead.
+    private async Task OnNotesChanged(FlatSchedulePartRow row, string? rawValue)
+    {
+        var notes = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
+        if (notes == row.Notes) return;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
+        if (row.PartLineItemId == 0)
+            await BomService.UpdateScheduleOrderNotesAsync(row.ScheduleOrderId, notes);
+        else
+            await BomService.UpdatePartNotesAsync(row.PartLineItemId, notes);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }
 
     private async Task OnScheduleOrderProductNumberChanged(int orderId, string? rawValue)

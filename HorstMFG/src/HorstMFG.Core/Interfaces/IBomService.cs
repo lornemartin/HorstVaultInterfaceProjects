@@ -49,6 +49,11 @@ public interface IBomService
     Task UpdateBatchNameAsync(int batchId, string name);
 
     /// <summary>
+    /// Rename a Schedule (top-level group in the Orders grid).
+    /// </summary>
+    Task UpdateScheduleNameAsync(int scheduleId, string name);
+
+    /// <summary>
     /// Update the Qty on a BatchProduct (product row in the Batches grid).
     /// </summary>
     Task UpdateBatchProductQtyAsync(int batchProductId, int qty);
@@ -69,6 +74,21 @@ public interface IBomService
     /// re-import button becomes available.
     /// </summary>
     Task UpdateScheduleOrderProductNumberAsync(int scheduleOrderId, string? productNumber);
+
+    /// <summary>
+    /// Update Notes on a PartLineItem. Blank clears the note.
+    /// </summary>
+    Task UpdatePartNotesAsync(int partLineItemId, string? notes);
+
+    /// <summary>
+    /// Update Notes on a BatchProduct — shown on its placeholder row while it has no parts.
+    /// </summary>
+    Task UpdateBatchProductNotesAsync(int batchProductId, string? notes);
+
+    /// <summary>
+    /// Update Notes on a ScheduleOrder — shown on its placeholder row while it has no parts.
+    /// </summary>
+    Task UpdateScheduleOrderNotesAsync(int scheduleOrderId, string? notes);
 
     /// <summary>
     /// Update the IsStock flag on a PartLineItem.

@@ -467,7 +467,28 @@
             </Template>
         </GridColumn>
         <GridColumn Field="HasPdf" HeaderText="PDF" Width="60" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
-        <GridColumn Field="Notes" HeaderText="Notes" Width="150" />
+        <GridColumn Field="Notes" HeaderText="Notes" Width="150">
+            <Template>
+                @{
+                    var row = context as FlatBatchPartRow;
+                    var notesLocked = row!.BatchReleased || IsHandoffReleasedForRow(row);
+                }
+                @if (notesLocked)
+                {
+                    <span title="@row.Notes" style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@row.Notes</span>
+                }
+                else
+                {
+                    <input type="text" value="@row.Notes" title="@row.Notes" maxlength="2000"
+                           @onchange="@(async e => await OnNotesChanged(row, e.Value?.ToString()))"
+                           @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                           @onclick:stopPropagation="true"
+                           @onkeydown:stopPropagation="true"
+                           @onkeyup:stopPropagation="true"
+                           style="width: 100%; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 3px; text-overflow: ellipsis;" />
+                }
+            </Template>
+        </GridColumn>
     </GridColumns>
 </SfGrid>
 
@@ -1305,6 +1326,20 @@
         if (_batchMeta.TryGetValue(batchId, out var current) && current.Name == trimmed) return;
         var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
         await BomService.UpdateBatchNameAsync(batchId, trimmed);
+        await LoadData();
+        await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
+    }
+
+    // Placeholder rows (no parts yet) carry the BatchProduct's own Notes, so save there instead.
+    private async Task OnNotesChanged(FlatBatchPartRow row, string? rawValue)
+    {
+        var notes = string.IsNullOrWhiteSpace(rawValue) ? null : rawValue.Trim();
+        if (notes == row.Notes) return;
+        var scrollTop = await JS.InvokeAsync<double>("horstGrid.saveScrollTop", GridId);
+        if (row.PartLineItemId == 0)
+            await BomService.UpdateBatchProductNotesAsync(row.BatchProductId, notes);
+        else
+            await BomService.UpdatePartNotesAsync(row.PartLineItemId, notes);
         await LoadData();
         await JS.InvokeVoidAsync("horstGrid.restoreScrollTop", GridId, scrollTop);
     }

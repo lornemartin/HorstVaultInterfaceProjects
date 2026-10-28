@@ -667,6 +667,25 @@ public class BomService : IBomService
         await db.SaveChangesAsync();
     }
 
+    public async Task UpdateScheduleNameAsync(int scheduleId, string name)
+    {
+        var trimmed = name.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var schedule = await db.Set<Schedule>()
+            .Include(s => s.Plant)
+            .FirstOrDefaultAsync(s => s.Id == scheduleId);
+        if (schedule is null || schedule.Name == trimmed) return;
+
+        var newFolder = _pdfCopy.GetScheduleFolder(schedule.Plant.Name, trimmed);
+        MoveLocalPdfFolder(schedule.LocalPdfFolder, newFolder);
+
+        schedule.Name = trimmed;
+        schedule.LocalPdfFolder = newFolder;
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>
     /// Moves a batch/schedule's local PDF folder to match a rename, so LocalPdfFolder
     /// never drifts from where the files actually are. If the destination already
@@ -736,6 +755,33 @@ public class BomService : IBomService
         order.ProductNumber = trimmed;
         order.VaultBomImported = false;
         await db.SaveChangesAsync();
+    }
+
+    public async Task UpdatePartNotesAsync(int partLineItemId, string? notes)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<PartLineItem>()
+            .Where(p => p.Id == partLineItemId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Notes, trimmed));
+    }
+
+    public async Task UpdateBatchProductNotesAsync(int batchProductId, string? notes)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<BatchProduct>()
+            .Where(bp => bp.Id == batchProductId)
+            .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.Notes, trimmed));
+    }
+
+    public async Task UpdateScheduleOrderNotesAsync(int scheduleOrderId, string? notes)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.Set<ScheduleOrder>()
+            .Where(so => so.Id == scheduleOrderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(so => so.Notes, trimmed));
     }
 
     public async Task UpdatePartIsStockAsync(int partLineItemId, bool isStock)
