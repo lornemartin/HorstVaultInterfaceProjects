@@ -55,6 +55,7 @@
     {
         <span style="font-size:.8em; color:#6b7280;">@_items.Count rows</span>
     }
+    <button class="btn btn-sm btn-outline-primary" style="margin-left:auto;" @onclick="OpenNewBatchDialogAsync">+ New Batch</button>
 </div>
 
 <SfGrid @ref="_grid"
@@ -187,6 +188,47 @@
     </DialogTemplates>
 </SfDialog>
 
+<SfDialog @bind-Visible="_newBatchDialogVisible" Width="440px" IsModal="true" ShowCloseIcon="true"
+          Header="New Batch" AllowDragging="true">
+    <DialogTemplates>
+        <Content>
+            <p style="font-size:.85rem; color:#6b7280; margin-bottom:.75rem;">
+                Creates an empty batch directly in production. You'll add parts to it next.
+            </p>
+            @if (_newBatchError is not null)
+            {
+                <div style="color:#dc2626; font-size:.85rem; margin-bottom:.5rem; padding:.4rem .6rem; background:#fee2e2; border-radius:3px;">
+                    @_newBatchError
+                </div>
+            }
+            <div style="display:grid; grid-template-columns:130px 1fr; gap:.5rem .75rem; align-items:center;">
+                <label style="font-size:.875rem; font-weight:500;">Batch Name *</label>
+                <input type="text" @bind="_newBatchName" maxlength="200"
+                       style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem; width:100%;" />
+                <label style="font-size:.875rem; font-weight:500;">Plant</label>
+                @if (_isAdmin)
+                {
+                    <select @bind="_newBatchPlantId"
+                            style="border:1px solid #d1d5db; border-radius:3px; padding:4px 6px; font-size:.875rem;">
+                        @foreach (var p in _plants)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <span style="font-size:.875rem;">@(_plants.FirstOrDefault(p => p.Id == _newBatchPlantId)?.Name ?? "—")</span>
+                }
+            </div>
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="OnNewBatchCancel">Cancel</SfButton>
+            <SfButton OnClick="OnNewBatchConfirmAsync" CssClass="e-primary" style="margin-left:8px;">Create &amp; Add Part</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
 <SfDialog @bind-Visible="_addPartDialogVisible" Width="500px" IsModal="true" ShowCloseIcon="true"
           Header="Add Part to Batch" AllowDragging="true">
     <DialogTemplates>
@@ -263,6 +305,13 @@
     private IBrowserFile? _addPartSymFile;
     private string? _addPartError;
 
+    private bool _isAdmin;
+    private bool _newBatchDialogVisible;
+    private string _newBatchName = "";
+    private int _newBatchPlantId;
+    private string? _newBatchError;
+    private List<Plant> _plants = new();
+
     // Load is deferred to OnAfterRenderAsync so we can read stored dates first.
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -291,6 +340,7 @@
     {
         var user    = HttpContextAccessor.HttpContext?.User;
         var isAdmin = user?.HasClaim(ClaimTypes.Role, "Admin") ?? false;
+        _isAdmin = isAdmin;
         int.TryParse(user?.FindFirst("PlantId")?.Value, out _plantId);
         if (int.TryParse(user?.FindFirst("StationId")?.Value, out var sid)) _stationId = sid;
 
@@ -509,6 +559,79 @@
                 "ProductionBatchesGrid_v3", _expandedGroupKeys.ToList());
         }
         catch (JSException) { }
+    }
+
+    // ── New Batch ────────────────────────────────────────────────────────────────
+    // A NestBatch has to hang off an engineering Batch, so a manual batch gets a bare Batch
+    // record (no products, already ReadyForProduction) — the same shape a release produces.
+    // It never shows on the Engineering page, which is built from BatchProducts.
+    private async Task OpenNewBatchDialogAsync()
+    {
+        if (_plants.Count == 0)
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            _plants = await db.Plants.AsNoTracking().Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+        }
+        _newBatchName    = "";
+        _newBatchPlantId = _plantId > 0 ? _plantId : _plants.FirstOrDefault()?.Id ?? 0;
+        _newBatchError   = null;
+        _newBatchDialogVisible = true;
+    }
+
+    private void OnNewBatchCancel() => _newBatchDialogVisible = false;
+
+    private async Task OnNewBatchConfirmAsync()
+    {
+        _newBatchError = null;
+        var name = _newBatchName.Trim();
+        if (string.IsNullOrEmpty(name)) { _newBatchError = "Batch name is required."; return; }
+        if (_newBatchPlantId == 0)      { _newBatchError = "Select a plant."; return; }
+        if (!int.TryParse(HttpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+        {
+            _newBatchError = "Could not determine the current user.";
+            return;
+        }
+
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var existing = await db.Batches
+            .Where(b => b.Name == name && b.PlantId == _newBatchPlantId)
+            .Select(b => new { b.Id, HasProducts = b.BatchProducts.Any() })
+            .FirstOrDefaultAsync();
+        var existingNestBatchIds = existing is null
+            ? new List<int>()
+            : await db.NestBatches.Where(nb => nb.BatchId == existing.Id).Select(nb => nb.Id).ToListAsync();
+
+        int nestBatchId;
+        if (existing is null)
+        {
+            var batch = new Batch
+            {
+                Name               = name,
+                PlantId            = _newBatchPlantId,
+                ImportedByUserId   = userId,
+                ImportDate         = DateTime.UtcNow,
+                ReadyForProduction = true,
+            };
+            var nestBatch = new NestBatch { Batch = batch, PlantId = _newBatchPlantId, EntryDate = DateTime.UtcNow };
+            db.NestBatches.Add(nestBatch);
+            await db.SaveChangesAsync();
+            nestBatchId = nestBatch.Id;
+        }
+        else if (!existing.HasProducts && existingNestBatchIds.Count == 1
+                 && !await db.BatchItems.AnyAsync(i => i.NestBatchId == existingNestBatchIds[0]))
+        {
+            // An earlier manual batch whose Add Part was cancelled — empty batches don't show in
+            // the grid, so reuse it rather than leaving an orphan or blocking the name.
+            nestBatchId = existingNestBatchIds[0];
+        }
+        else
+        {
+            _newBatchError = $"A batch named '{name}' already exists for this plant.";
+            return;
+        }
+
+        _newBatchDialogVisible = false;
+        OpenAddPartDialog(nestBatchId, name);
     }
 
     // ── Add Part ─────────────────────────────────────────────────────────────────
