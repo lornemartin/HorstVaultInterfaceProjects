@@ -289,6 +289,8 @@ public class BomService : IBomService
                 PlantId = plantId,
                 ProductName = productName,
                 Qty = (level1Line?.Qty ?? 1) * (batchQty < 1 ? 1 : batchQty),
+                // The BOM arrives with the manual import, so there's no pending Vault fetch.
+                VaultBomImported = true,
             };
             _db.BatchProducts.Add(product);
             await _db.SaveChangesAsync();
@@ -367,6 +369,8 @@ public class BomService : IBomService
             OrderNumber = orderNumber,
             ProductNumber = level1Line?.Number,
             Qty = orderQty < 1 ? 1 : orderQty,
+            // The BOM arrives with the manual import, so there's no pending Vault fetch.
+            VaultBomImported = true,
         };
         _db.ScheduleOrders.Add(order);
         await _db.SaveChangesAsync();
