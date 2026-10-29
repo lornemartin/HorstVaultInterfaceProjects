@@ -203,9 +203,10 @@ h1:focus {
     font-weight: 700;
 }
 
-/* Hide the filter input bar on grids that use programmatic filtering only */
-#OrdersGrid_v7 .e-filterbar,
-#BatchesGrid_v7 .e-filterbar { display: none !important; }
+/* Hide the filter input bar on grids that use programmatic filtering only.
+   Prefix match so bumping the grid ID version (to reset persisted layout) can't silently re-show it. */
+[id^="OrdersGrid_v"] .e-filterbar,
+[id^="BatchesGrid_v"] .e-filterbar { display: none !important; }
 
 /* The group caption template on these grids packs in a name, badges, and several
    action buttons — far more than Syncfusion's default single-line-text caption is

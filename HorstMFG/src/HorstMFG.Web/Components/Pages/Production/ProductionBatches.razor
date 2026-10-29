@@ -61,7 +61,7 @@
         TValue="BatchItemRow" DataSource="_items" ID="ProductionBatchesGrid_v3"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true" AllowReordering="true"
-        AllowPaging="true" EnablePersistence="true" Height="600">
+        AllowPaging="true" EnablePersistence="true" Height="max(300px, calc(100vh - 530px))">
     <GridPageSettings PageSize="100" PageSizes="@(new int[]{50,100,200,500})" />
     <GridTemplates>
         <DetailTemplate>

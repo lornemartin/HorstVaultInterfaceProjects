@@ -103,7 +103,7 @@
 
 <SfGrid TValue="FlatSchedulePartRow" @ref="_schedGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="false" AllowFiltering="true" EnablePersistence="true"
-        AllowResizing="true" Height="600">
+        AllowResizing="true" Height="calc(100vh - 340px)">
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "ScheduleId", "ScheduleOrderId" })">
         <CaptionTemplate>
