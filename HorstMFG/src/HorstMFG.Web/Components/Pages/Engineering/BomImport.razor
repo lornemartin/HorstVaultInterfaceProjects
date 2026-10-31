@@ -296,7 +296,7 @@ else
         _parsedLines = _rawLines.Count == 0
             ? new()
             : await BomService.BuildImportPreviewAsync(_rawLines, _selectedPlantId);
-        _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+        _missingPdfCount = _parsedLines.Count(IsMissingPdf);
     }
 
     private async Task OnPlantChanged(ChangeEventArgs<int, Plant> args)
@@ -478,9 +478,12 @@ else
         }
     }
 
+    /// <summary>Same rule as the Batches/Daily Schedule grids: parts marked Requires PDF = False never count.</summary>
+    private static bool IsMissingPdf(BomExportLine line) => line.RequiresPdf && !line.HasPdf;
+
     private void OnRowDataBound(RowDataBoundEventArgs<BomExportLine> args)
     {
-        if (!args.Data.HasPdf)
+        if (IsMissingPdf(args.Data))
             args.Row.AddClass(new[] { "row-no-pdf" });
         if (!string.IsNullOrWhiteSpace(args.Data.Notes))
             args.Row.AddClass(new[] { "row-has-notes" });

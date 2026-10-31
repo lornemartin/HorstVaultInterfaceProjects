@@ -82,7 +82,7 @@ public class BomService : IBomService
             line.HasPdf = onShare.Contains(line.Number);
 
         _log.LogInformation("Built BOM import preview: {Count} lines ({MissingPdf} missing PDFs)",
-            preview.Count, preview.Count(l => !l.HasPdf));
+            preview.Count, preview.Count(l => l.RequiresPdf && !l.HasPdf));
         return preview;
     }
 
