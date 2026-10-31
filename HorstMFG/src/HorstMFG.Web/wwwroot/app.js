@@ -89,7 +89,11 @@ window.horstGrid = {
                             (level === 2 && level2Keys.indexOf(key) !== -1);
                 if (want) {
                     console.log('[horstGrid] clicking to expand level', level, 'key', key, gridId);
+                    // Syncfusion moves focus into the grid on click; hand it back if the user
+                    // was typing elsewhere (e.g. the search box) so keystrokes aren't lost.
+                    var active = document.activeElement;
                     icon.click();
+                    if (active && active !== document.body && !el.contains(active)) active.focus();
                     clickedIcon = icon;
                     break;
                 }
