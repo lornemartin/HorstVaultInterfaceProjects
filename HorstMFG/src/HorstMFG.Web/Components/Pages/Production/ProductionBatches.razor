@@ -679,6 +679,15 @@
         if (string.IsNullOrEmpty(fileName)) { _addPartError = "File name is required."; return; }
         if (_addPartQty < 1)               { _addPartError = "Qty must be at least 1."; return; }
 
+        // Copy the .sym first, while the dialog (and its file input) is still open. If it can't
+        // reach the share the Bridge can't build a thumbnail from it, so stop here with the error
+        // shown rather than saving a part with no geometry.
+        if (_addPartSymFile != null)
+        {
+            var copyError = await CopySymToShareAsync(_addPartSymFile, fileName);
+            if (copyError != null) { _addPartError = copyError; return; }
+        }
+
         _addPartDialogVisible = false;
         await using var db = await DbContextFactory.CreateDbContextAsync();
 
@@ -706,22 +715,6 @@
         db.BatchItems.Add(new BatchItem { NestBatchId = _addPartTargetId, PartId = part.Id, QtyRequired = _addPartQty });
         await db.SaveChangesAsync();
 
-        if (_addPartSymFile != null)
-        {
-            var symDir = Configuration["FileSystemPaths:SymNetworkSharePath"];
-            if (!string.IsNullOrEmpty(symDir) && Directory.Exists(symDir))
-            {
-                try
-                {
-                    var symPath = Path.Combine(symDir, fileName + ".sym");
-                    await using var rs = _addPartSymFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-                    await using var fs = File.Create(symPath);
-                    await rs.CopyToAsync(fs);
-                }
-                catch { }
-            }
-        }
-
         var stationId = BridgeHub.GetAnyOnlineStationId();
         if (stationId != null)
         {
@@ -731,6 +724,28 @@
         }
 
         await ReloadAsync();
+    }
+
+    // Returns null on success, otherwise a message for the Add Part dialog.
+    private async Task<string?> CopySymToShareAsync(IBrowserFile file, string fileName)
+    {
+        var symDir = Configuration["FileSystemPaths:SymNetworkSharePath"];
+        if (string.IsNullOrEmpty(symDir))
+            return "No sym share is configured (FileSystemPaths:SymNetworkSharePath), so the .sym file can't be copied.";
+        if (!Directory.Exists(symDir))
+            return $"The sym share isn't reachable: {symDir}";
+        try
+        {
+            var symPath = Path.Combine(symDir, fileName + ".sym");
+            await using var rs = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await using var fs = File.Create(symPath);
+            await rs.CopyToAsync(fs);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return $"Couldn't copy the .sym file to {symDir}: {ex.Message}";
+        }
     }
 
     public async ValueTask DisposeAsync()
