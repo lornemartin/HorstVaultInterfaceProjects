@@ -105,7 +105,9 @@
 
 <SfGrid TValue="FlatSchedulePartRow" @ref="_schedGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="false" AllowFiltering="true" EnablePersistence="true"
-        AllowResizing="true" Height="calc(100vh - 340px)">
+        AllowResizing="true" AllowPaging="true" Height="max(300px, calc(100vh - 390px))">
+    @* Pages count top-level schedules. Search runs on the server, so it still covers every page. *@
+    <GridPageSettings PageSize="25" PageSizes="@PageSizeOptions" />
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "ScheduleId", "ScheduleOrderId" })">
         <CaptionTemplate>
@@ -392,7 +394,7 @@
             <GridSortColumn Field="ThicknessOrder"  Direction="SortDirection.Ascending" />
         </GridSortColumns>
     </GridSortSettings>
-    <GridEvents TValue="FlatSchedulePartRow" RowDataBound="OnRowDataBound" />
+    <GridEvents TValue="FlatSchedulePartRow" RowDataBound="OnRowDataBound" OnActionComplete="OnGridActionComplete" />
     <GridColumns>
         <GridColumn Field="ScheduleId" Visible="false" Width="0" />
         <GridColumn Field="ScheduleOrderId" Visible="false" Width="0" />
@@ -647,7 +649,8 @@
     private const string StateKey = "horstmfg.orders.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
-    private const string GridId = "OrdersGrid_v9";
+    private const string GridId = "OrdersGrid_v10";
+    private static readonly string[] PageSizeOptions = { "10", "25", "50", "100", "All" };
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatSchedulePartRow>? _schedGrid;
@@ -1196,14 +1199,24 @@
     // ── Group expansion tracking ──────────────────────────────────────────────
     // Called from JS after user expands/collapses a group row.
     [JSInvokable]
-    public void UpdateExpansionState(List<int> level1, List<int> level2)
+    public void UpdateExpansionState(List<int> level1, List<int> level2, List<int> visible1, List<int> visible2)
     {
-        _expandedScheduleIds = level1.ToHashSet();
-        _expandedOrderIds    = level2.ToHashSet();
+        // Only groups on the current page are reported; keep saved state for the other pages.
+        _expandedScheduleIds.ExceptWith(visible1);
+        _expandedScheduleIds.UnionWith(level1);
+        _expandedOrderIds.ExceptWith(visible2);
+        _expandedOrderIds.UnionWith(level2);
         DebounceSaveState();
     }
 
     private record ExpandedGroupResult(List<int> Level1, List<int> Level2);
+
+    // Changing page renders a fresh set of collapsed captions; re-expand the saved ones on it.
+    private async Task OnGridActionComplete(ActionEventArgs<FlatSchedulePartRow> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Paging)
+            await RestoreExpansionAsync();
+    }
 
     // Re-expands saved groups after any operation that collapses them.
     // Delegates entirely to JS so row-index arithmetic stays correct as

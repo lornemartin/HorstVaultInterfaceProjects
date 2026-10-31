@@ -111,7 +111,9 @@
 
 <SfGrid TValue="FlatBatchPartRow" @ref="_batchGrid" ID="@GridId"
         DataSource="_rows" AllowGrouping="true" AllowSorting="true" AllowFiltering="true" EnablePersistence="true"
-        AllowResizing="true" Height="calc(100vh - 340px)">
+        AllowResizing="true" AllowPaging="true" Height="max(300px, calc(100vh - 390px))">
+    @* Pages count top-level batches. Search runs on the server, so it still covers every page. *@
+    <GridPageSettings PageSize="25" PageSizes="@PageSizeOptions" />
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "BatchId", "BatchProductId" })">
         <CaptionTemplate>
@@ -383,7 +385,8 @@
             <GridSortColumn Field="PartLineItemId" Direction="SortDirection.Ascending" />
         </GridSortColumns>
     </GridSortSettings>
-    <GridEvents TValue="FlatBatchPartRow" RowDataBound="OnRowDataBound" OnActionBegin="OnSortActionBegin" />
+    <GridEvents TValue="FlatBatchPartRow" RowDataBound="OnRowDataBound" OnActionBegin="OnSortActionBegin"
+                OnActionComplete="OnGridActionComplete" />
     <GridColumns>
         <GridColumn Field="BatchId" Visible="false" Width="0" />
         <GridColumn Field="BatchProductId" Visible="false" Width="0" />
@@ -656,7 +659,8 @@
     private const string StateKey = "horstmfg.batches.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
-    private const string GridId = "BatchesGrid_v9";
+    private const string GridId = "BatchesGrid_v10";
+    private static readonly string[] PageSizeOptions = { "10", "25", "50", "100", "All" };
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatBatchPartRow>? _batchGrid;
@@ -1261,16 +1265,27 @@
     // ── Group expansion tracking ──────────────────────────────────────────────
     // Called from JS after user expands/collapses a group row.
     [JSInvokable]
-    public void UpdateExpansionState(List<int> level1, List<int> level2)
+    public void UpdateExpansionState(List<int> level1, List<int> level2, List<int> visible1, List<int> visible2)
     {
-        _expandedBatchIds   = level1.ToHashSet();
-        _expandedProductIds = level2.ToHashSet();
+        // Only groups on the current page are reported; keep saved state for the other pages.
+        _expandedBatchIds.ExceptWith(visible1);
+        _expandedBatchIds.UnionWith(level1);
+        _expandedProductIds.ExceptWith(visible2);
+        _expandedProductIds.UnionWith(level2);
         Logger.LogWarning("[DBG Batches] UpdateExpansionState: level1=[{L1}] level2=[{L2}]",
             string.Join(",", level1), string.Join(",", level2));
         DebounceSaveState();
     }
 
     private record ExpandedGroupResult(List<int> Level1, List<int> Level2);
+
+    // Changing page renders a fresh set of collapsed captions; re-expand the saved ones on it.
+    private async Task OnGridActionComplete(ActionEventArgs<FlatBatchPartRow> args)
+    {
+        if (args.RequestType != Syncfusion.Blazor.Grids.Action.Paging) return;
+        _restoringExpansion = true;
+        await RestoreExpansionAsync();
+    }
 
     // Re-expands saved groups after any operation that collapses them.
     // Delegates entirely to JS so row-index arithmetic stays correct as

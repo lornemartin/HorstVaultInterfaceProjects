@@ -31,8 +31,18 @@ window.horstGrid = {
     // Queries .e-recordplusexpand icons directly — no dependency on ej.
     getExpandedGroupKeys: function (gridId) {
         var el = document.getElementById(gridId);
-        if (!el) { console.log('[horstGrid] getExpandedGroupKeys: element not found', gridId); return { level1: [], level2: [] }; }
+        if (!el) { console.log('[horstGrid] getExpandedGroupKeys: element not found', gridId); return { level1: [], level2: [], visible1: [], visible2: [] }; }
         var level1 = [], level2 = [];
+        // Every group caption on the current page, expanded or not. With paging, keys not
+        // in this list are on other pages and their saved expansion state must be kept.
+        var visible1 = [], visible2 = [];
+        el.querySelectorAll('[data-group-key]').forEach(function (keyEl) {
+            var key   = parseInt(keyEl.dataset.groupKey,  10);
+            var level = parseInt(keyEl.dataset.groupLevel, 10);
+            if (isNaN(key)) return;
+            if (level === 1) visible1.push(key);
+            else if (level === 2) visible2.push(key);
+        });
         el.querySelectorAll('.e-recordplusexpand').forEach(function (icon) {
             var row = icon.closest('tr');
             if (!row) return;
@@ -48,7 +58,7 @@ window.horstGrid = {
             else if (level === 2) level2.push(key);
         });
         console.log('[horstGrid] getExpandedGroupKeys:', { level1: level1, level2: level2 });
-        return { level1: level1, level2: level2 };
+        return { level1: level1, level2: level2, visible1: visible1, visible2: visible2 };
     },
 
     // Restore expansion state by programmatically clicking the collapse icons.
@@ -157,7 +167,8 @@ window.horstGrid = {
                     setTimeout(function () {
                         var keys = window.horstGrid.getExpandedGroupKeys(gridId);
                         console.log('[horstGrid] watchExpansion: sending to UpdateExpansionState (poll=' + polls + ')', keys);
-                        dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2);
+                        dotNetRef.invokeMethodAsync('UpdateExpansionState', keys.level1, keys.level2,
+                            keys.visible1, keys.visible2);
                     }, 80);
                 } else {
                     polls++;
