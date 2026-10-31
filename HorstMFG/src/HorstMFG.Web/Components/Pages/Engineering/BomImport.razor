@@ -56,6 +56,7 @@ else
                             DataSource="_plants"
                             Enabled="_isAdmin">
                 <DropDownListFieldSettings Text="Name" Value="Id" />
+                <DropDownListEvents TValue="int" TItem="Plant" ValueChange="OnPlantChanged" />
             </SfDropDownList>
         </div>
 
@@ -163,6 +164,9 @@ else
                 <GridColumn Field="@nameof(BomExportLine.Material)"    HeaderText="Material"    Width="110" />
                 <GridColumn Field="@nameof(BomExportLine.Thickness)"   HeaderText="Thickness"   Width="85"  />
                 <GridColumn Field="@nameof(BomExportLine.Operations)"  HeaderText="Operations"  Width="100" />
+                <GridColumn Field="@nameof(BomExportLine.SecondOperation)" HeaderText="2nd Op"  Width="100" />
+                <GridColumn Field="@nameof(BomExportLine.FinishOps)"   HeaderText="Finish"      Width="90"  />
+                <GridColumn Field="@nameof(BomExportLine.PlantId)"     HeaderText="Plant"       Width="90"  />
                 <GridColumn Field="@nameof(BomExportLine.Qty)"         HeaderText="Qty"         Width="55"  TextAlign="TextAlign.Right" />
                 <GridColumn Field="@nameof(BomExportLine.IsStock)"     HeaderText="Stock"       Width="65"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" EditType="EditType.BooleanEdit" />
                 <GridColumn Field="@nameof(BomExportLine.StructCode)"  HeaderText="Struct Code" Width="160" />
@@ -186,10 +190,10 @@ else
 }
 
 @code {
-    private List<BomExportLine> _parsedLines = new();
+    private List<VaultBomLine> _rawLines = new();       // the file as read, one row per BOM placement
+    private List<BomExportLine> _parsedLines = new();   // what the import will create, editable
     private List<Plant> _plants = new();
     private string SelectedBomTypeStr = "Batch";
-    private BomType SelectedBomType => SelectedBomTypeStr == "Order" ? BomType.MakeToStock : BomType.MakeToOrder;
     private bool OrderNumberMissing => SelectedBomTypeStr == "Order" && string.IsNullOrWhiteSpace(_orderNumber);
     private bool OrderQtyMissing    => SelectedBomTypeStr == "Order" && _orderQty == 0;
     private int _selectedPlantId;
@@ -257,15 +261,6 @@ else
             _jsReady = true;
             BridgeEvents.BomExportReceived += OnBomExportReceived;
 
-            // Pre-populate if the user navigated here after clicking the banner.
-            // Must be here (not OnInitializedAsync) to avoid SSR pre-render consuming
-            // and clearing PendingBomExport before the interactive phase runs.
-            // Scoped the same way as the banner: PendingBomExport is a single global slot
-            // shared by every user, so only auto-load it if it's actually relevant to me.
-            if (!string.IsNullOrEmpty(BridgeEvents.PendingBomExport) &&
-                await IsRelevantToMeAsync(BridgeEvents.PendingBomExportStationId))
-                await LoadPendingBomExportAsync();
-
             var savedBomType = await JS.InvokeAsync<string?>("localStorage.getItem", "bomImport_bomType");
             if (savedBomType == "Batch" || savedBomType == "Order")
                 SelectedBomTypeStr = savedBomType;
@@ -278,7 +273,49 @@ else
             if (!string.IsNullOrEmpty(savedBatchName))
                 _batchName = savedBatchName;
 
+            // Pre-populate if the user navigated here after clicking the banner. After the saved
+            // plant is restored, since the preview depends on the plant.
+            // Must be here (not OnInitializedAsync) to avoid SSR pre-render consuming
+            // and clearing PendingBomExport before the interactive phase runs.
+            // Scoped the same way as the banner: PendingBomExport is a single global slot
+            // shared by every user, so only auto-load it if it's actually relevant to me.
+            if (!string.IsNullOrEmpty(BridgeEvents.PendingBomExport) &&
+                await IsRelevantToMeAsync(BridgeEvents.PendingBomExportStationId))
+                await LoadPendingBomExportAsync();
+
             StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Re-runs the shared import processing on the file. Plant 2 imports read the P2 Vault
+    /// properties and stock exceptions, so a plant change rebuilds the preview (and drops edits).
+    /// </summary>
+    private async Task RebuildPreviewAsync()
+    {
+        _parsedLines = _rawLines.Count == 0
+            ? new()
+            : await BomService.BuildImportPreviewAsync(_rawLines, _selectedPlantId);
+        _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+    }
+
+    private async Task OnPlantChanged(ChangeEventArgs<int, Plant> args)
+    {
+        if (_rawLines.Count == 0) return;
+        _parsing = true;
+        StateHasChanged();
+        try
+        {
+            await RebuildPreviewAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error rebuilding the preview: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _parsing = false;
         }
     }
 
@@ -334,14 +371,15 @@ else
         _parsing = true;
         _message = null;
         _parsedLines.Clear();
+        _rawLines.Clear();
         StateHasChanged();
 
         try
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(contents);
             using var ms = new MemoryStream(bytes);
-            _parsedLines     = BomService.ParseExportFile(ms, SelectedBomType);
-            _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+            _rawLines = BomService.ParseExportFile(ms);
+            await RebuildPreviewAsync();
             _message = $"BOM auto-loaded from Vault export — {_parsedLines.Count} item(s). Select import type and fill in name/qty, then click Import.";
             _isError = false;
             BridgeEvents.ClearPendingBomExport();
@@ -363,6 +401,7 @@ else
         _parsing = true;
         _message = null;
         _parsedLines.Clear();
+        _rawLines.Clear();
         StateHasChanged();
 
         try
@@ -373,8 +412,8 @@ else
             await stream.CopyToAsync(ms);
             ms.Position = 0;
 
-            _parsedLines = BomService.ParseExportFile(ms, SelectedBomType);
-            _missingPdfCount = _parsedLines.Count(l => !l.HasPdf);
+            _rawLines = BomService.ParseExportFile(ms);
+            await RebuildPreviewAsync();
 
             if (_parsedLines.Count == 0)
             {
@@ -473,6 +512,7 @@ else
     private void Reset()
     {
         _parsedLines.Clear();
+        _rawLines.Clear();
         _importComplete = false;
         _orderNumber = "";
         _batchQty = 1;

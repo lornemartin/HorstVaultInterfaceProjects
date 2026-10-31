@@ -64,7 +64,7 @@ public class BomPdfCopyService
     /// <summary>
     /// Parallel <c>File.Exists</c> probe on the share — returns the subset of
     /// <paramref name="partNumbers"/> that have a corresponding <c>.pdf</c>.
-    /// Mirrors the existing TSV parser's HasPdf check (BomService.ParseExportFile).
+    /// Also used for the BOM Import page's preview (BomService.BuildImportPreviewAsync).
     /// </summary>
     public async Task<HashSet<string>> WhichExistOnShareAsync(
         IEnumerable<string> partNumbers, CancellationToken ct = default)

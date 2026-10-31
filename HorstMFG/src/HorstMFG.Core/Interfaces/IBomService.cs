@@ -7,18 +7,24 @@ namespace HorstMFG.Core.Interfaces;
 public interface IBomService
 {
     /// <summary>
-    /// Parse a Vault Item Export tab-delimited file into BomExportLines.
+    /// Parse a Vault Item Export tab-delimited file into raw BOM lines, one per placement.
     /// </summary>
-    List<BomExportLine> ParseExportFile(Stream fileStream, BomType bomType);
+    List<VaultBomLine> ParseExportFile(Stream fileStream);
 
     /// <summary>
-    /// Import parsed MakeToOrder BOM lines: groups by Level-1 assembly into BatchProducts,
-    /// creates PartLineItems, and copies PDFs to the local folder.
+    /// The parts an import of <paramref name="lines"/> into <paramref name="plantId"/> would
+    /// create, processed exactly as the VaultGateway imports are, for preview and editing.
+    /// </summary>
+    Task<List<BomExportLine>> BuildImportPreviewAsync(List<VaultBomLine> lines, int plantId);
+
+    /// <summary>
+    /// Import preview lines as MakeToOrder: one BatchProduct per Level-1 product, creates
+    /// PartLineItems, and copies PDFs to the local folder.
     /// </summary>
     Task<Batch> ImportBatchAsync(string name, int batchQty, int plantId, int userId, List<BomExportLine> lines);
 
     /// <summary>
-    /// Import parsed MakeToStock BOM lines: creates a single ScheduleOrder with all lines
+    /// Import preview lines as MakeToStock: creates a single ScheduleOrder with all lines
     /// as PartLineItems, and copies PDFs to the local folder.
     /// </summary>
     Task<Schedule> ImportScheduleAsync(string name, string orderNumber, int orderQty, int plantId, int userId, List<BomExportLine> lines);

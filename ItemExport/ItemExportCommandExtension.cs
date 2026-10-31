@@ -881,12 +881,39 @@ namespace ItemExport
             MapPair revisionNumberPair = new MapPair();
             revisionNumberPair.ToName = "Revision";
             revisionNumberPair.FromName = "Revision";
-            
+
+            // Columns 20-25 for HorstMFG's BOM Import. Same properties and order as the VaultGateway's
+            // VaultBomQueryService — keep in sync. They go after Revision so VaultItemProcessor, which
+            // reads columns by position and only up to 19, is unaffected.
+            MapPair p2PlantIDPair = new MapPair();
+            p2PlantIDPair.ToName = "P2 Plant ID";
+            p2PlantIDPair.FromName = "96db4673-45b2-4b4b-97d9-f824c62cfc23";
+
+            MapPair p2IsStockPair = new MapPair();
+            p2IsStockPair.ToName = "P2 Is Stock";
+            p2IsStockPair.FromName = "364f1fa4-d93c-40fa-a306-b2e712afd96a";
+
+            MapPair p1StockExceptionPair = new MapPair();
+            p1StockExceptionPair.ToName = "P1 Stock Exception";
+            p1StockExceptionPair.FromName = "fc3cce57-4042-4bf2-9ac6-05cb9456f0ac";
+
+            MapPair p2StockExceptionPair = new MapPair();
+            p2StockExceptionPair.ToName = "P2 Stock Exception";
+            p2StockExceptionPair.FromName = "976d4ffa-00a4-4e92-b31d-72d3c5b1f900";
+
+            MapPair secondOperationPair = new MapPair();
+            secondOperationPair.ToName = "2nd Operation";
+            secondOperationPair.FromName = "b0744c34-80e9-4b93-b417-88ce708b4949";
+
+            MapPair finishOpsPair = new MapPair();
+            finishOpsPair.ToName = "FinishOps";
+            finishOpsPair.FromName = "902e0a0b-f905-4f58-8a82-f254eec4df35";
 
             FileNameAndURL fileNameAndUrl = packageSvc.ExportToPackage(pkgBom, FileFormat.TDL_LEVEL,
                     new MapPair[] { parentPair, numberPair, titlePair, descriptionPair,categoryNamePair, thicknessPair,
                                     materialPair,operationsPair,quantityPair,structCodePair,plantIDPair,isStockPair,requiresPDFPair,
-                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,revisionNumberPair});
+                                    commentPair,modDatePair,statePair,stockNamePair,keywordsPair,notesPair,revisionNumberPair,
+                                    p2PlantIDPair,p2IsStockPair,p1StockExceptionPair,p2StockExceptionPair,secondOperationPair,finishOpsPair});
 
             long currentByte = 0;
             long partSize = connection.PartSizeInBytes;

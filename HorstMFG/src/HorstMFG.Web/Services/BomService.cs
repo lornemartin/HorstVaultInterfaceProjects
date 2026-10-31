@@ -30,229 +30,98 @@ public class BomService : IBomService
         _powerJobsScriptPath = config["PowerJobs:ScriptPath"] ?? @"\\HWVMWK02\Jobs\Horst.PrintOnDemand.ps1";
     }
 
+    public List<VaultBomLine> ParseExportFile(Stream fileStream) => BomLineBuilder.ParseExportFile(fileStream);
+
     /// <summary>
-    /// Thickness lookup from structural code, matching the legacy VaultItemProcessor logic.
+    /// Builds the BOM Import page's preview rows with the same code the VaultGateway imports use
+    /// (<see cref="BomLineBuilder"/>), one product per Level-1 line. Plant 2 imports take the P2
+    /// Vault properties, so the preview depends on <paramref name="plantId"/>.
     /// </summary>
-    private static readonly Dictionary<string, string> StructCodeThickness = new(StringComparer.OrdinalIgnoreCase)
+    public async Task<List<BomExportLine>> BuildImportPreviewAsync(List<VaultBomLine> lines, int plantId)
     {
-        ["SH-062"] = "0.062",
-        ["SH-075"] = "0.075",
-        ["SH-125"] = "0.120",
-        ["SH-188"] = "0.188",
-        ["SH-250"] = "0.250",
-        ["SH-312"] = "0.313",
-        ["SH-375"] = "0.375",
-        ["SH-500"] = "0.500",
-        ["SH-625"] = "0.625",
-        ["SH-750"] = "0.750",
-        ["SH-875"] = "0.875",
-        ["SH-1000"] = "1.000",
-        ["SH-1250"] = "1.250",
-        ["SH-1500"] = "1.500",
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var plant = await db.Plants.AsNoTracking().FirstAsync(p => p.Id == plantId);
+
+        var preview = new List<BomExportLine>();
+        foreach (var group in lines.GroupBy(l => GetLevel1Prefix(l.Level)))
+        {
+            var level1 = group.FirstOrDefault(l => !l.Level.Contains('.'));
+            var productNumber = level1 is null ? group.Key : BomLineBuilder.PartNumberOf(level1);
+            var parents = FirstParents(group);
+            foreach (var item in BomLineBuilder.Build(group, plant, productNumber))
+            {
+                bool isProduct = level1 is not null && item.PartNumber.Equals(productNumber, StringComparison.OrdinalIgnoreCase);
+                preview.Add(new BomExportLine
+                {
+                    ProductKey      = group.Key,
+                    IsProductLine   = isProduct,
+                    Parent          = parents.GetValueOrDefault(item.PartNumber, ""),
+                    Number          = item.PartNumber,
+                    Title           = item.Title,
+                    ItemDescription = item.Description,
+                    Category        = item.Category,
+                    Thickness       = item.Thickness,
+                    Material        = item.Material,
+                    Operations      = item.Operations,
+                    SecondOperation = item.SecondOperation,
+                    FinishOps       = item.FinishOps,
+                    Qty             = item.Qty,
+                    StructCode      = item.StructCode,
+                    PlantId         = item.PlantIdRaw ?? "",
+                    IsStock         = item.IsStock,
+                    RequiresPdf     = item.RequiresPdf,
+                    Notes           = item.Notes ?? "",
+                    SortOrder       = isProduct ? 0 : 1,
+                    AssemblyUsages  = item.AssemblyUsages.Select(u => new AssemblyUsage(u.AssemblyNumber, u.Qty, u.DirectQty)).ToList(),
+                });
+            }
+        }
+
+        var onShare = await _pdfCopy.WhichExistOnShareAsync(preview.Select(l => l.Number));
+        foreach (var line in preview)
+            line.HasPdf = onShare.Contains(line.Number);
+
+        _log.LogInformation("Built BOM import preview: {Count} lines ({MissingPdf} missing PDFs)",
+            preview.Count, preview.Count(l => !l.HasPdf));
+        return preview;
+    }
+
+    /// <summary>Each part's parent in its first placement, for the preview's Parent column.</summary>
+    private static Dictionary<string, string> FirstParents(IEnumerable<VaultBomLine> lines)
+    {
+        var numberByLevel = new Dictionary<string, string>();
+        var parents = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var l in lines)
+        {
+            var number = BomLineBuilder.PartNumberOf(l);
+            numberByLevel[l.Level] = number;
+            var dot = l.Level.LastIndexOf('.');
+            parents.TryAdd(number, dot < 0 ? "" : numberByLevel.GetValueOrDefault(l.Level[..dot], ""));
+        }
+        return parents;
+    }
+
+    /// <summary>A preview row, possibly edited on the page, as the PartLineItem to import.</summary>
+    private static PartLineItem ToPartLineItem(BomExportLine line) => new()
+    {
+        PartNumber      = line.Number,
+        Title           = line.Title,
+        Description     = line.ItemDescription,
+        Category        = line.Category,
+        Qty             = line.Qty,
+        Material        = line.Material,
+        Thickness       = line.Thickness,
+        StructCode      = line.StructCode,
+        Operations      = line.Operations,
+        SecondOperation = line.SecondOperation,
+        FinishOps       = line.FinishOps,
+        IsStock         = line.IsStock,
+        RequiresPdf     = line.RequiresPdf,
+        Notes           = string.IsNullOrWhiteSpace(line.Notes) ? null : line.Notes,
+        HasPdf          = line.HasPdf,
+        PlantIdRaw      = string.IsNullOrWhiteSpace(line.PlantId) ? null : line.PlantId,
+        AssemblyUsages  = AssemblyUsageCollector.ToEntities(line.AssemblyUsages),
     };
-
-    public List<BomExportLine> ParseExportFile(Stream fileStream, BomType bomType)
-    {
-        var deduped = new List<BomExportLine>();
-        var dedupedByNumber = new Dictionary<string, BomExportLine>(StringComparer.Ordinal);
-        var parentChildSeen = new HashSet<(string Number, string Parent)>();
-        var parentChildCount = new Dictionary<(string Number, string Parent), int>();
-        var parentDict = new Dictionary<string, string>();
-        var usages = new AssemblyUsageCollector();
-
-        using var reader = new StreamReader(fileStream);
-
-        // Skip header line
-        reader.ReadLine();
-
-        int lineNum = 0;
-        string? rawLine;
-        while ((rawLine = reader.ReadLine()) != null)
-        {
-            rawLine = rawLine.Replace("\"", "");
-            var items = rawLine.Split('\t');
-            if (items.Length < 19) continue;
-
-            lineNum++;
-
-            string level = items[0];
-            string number = items[1];
-            string title = items[2];
-            string itemDesc = items[3];
-            string category = items[4];
-            string thickness = BomFieldMappers.NormalizeThickness(items[5]);
-            string material = items[6];
-            string ops = items[7];
-            string qtyString = items[8];
-            string structCode = items[9];
-            string plantId = items[10];
-            string isStockString = items[11];
-            bool isStock = isStockString.Equals("True", StringComparison.OrdinalIgnoreCase);
-            string requiresPdfString = items[12];
-            bool requiresPdf = !requiresPdfString.Equals("False", StringComparison.OrdinalIgnoreCase);
-            string comment = items[13];
-            string dateString = items[14];
-            string lifecycleState = items[15];
-            string stockName = items[16];
-            string keywords = items[17];
-            string notes = items[18];
-            string revision = items.Length > 19 ? items[19] : "";
-
-            // First line: comment is the order number, clear it from item
-            if (lineNum == 1)
-                comment = "";
-
-            // Stock name overrides number
-            if (!string.IsNullOrEmpty(stockName))
-                number = stockName;
-
-            int qty = 0;
-            if (!string.IsNullOrEmpty(qtyString) && int.TryParse(qtyString, out int parsedQty))
-                qty = parsedQty;
-            if (qty == 0) qty = 1;
-
-            DateTime? dateModified = null;
-            if (!string.IsNullOrEmpty(dateString) && DateTime.TryParse(dateString, out var dt))
-                dateModified = dt;
-
-            // Determine parent from BOM level structure (e.g., "1", "1.1", "1.1.2")
-            string parent = "";
-            if (level == "1")
-            {
-                parent = "<top>";
-            }
-
-            if (level.Contains('.'))
-            {
-                string parentLevel = level[..level.LastIndexOf('.')];
-                parentDict.TryAdd(level, number);
-                if (parentDict.TryGetValue(parentLevel, out var p))
-                    parent = p;
-            }
-            else
-            {
-                parentDict.TryAdd(level, number);
-            }
-
-            // Strip file extensions
-            if (number.EndsWith(".ipt", StringComparison.OrdinalIgnoreCase) ||
-                number.EndsWith(".iam", StringComparison.OrdinalIgnoreCase))
-            {
-                number = Path.GetFileNameWithoutExtension(number);
-            }
-
-            // Derive thickness from structural code for Laser and Shear ops
-            if ((ops.Equals("Laser", StringComparison.OrdinalIgnoreCase) ||
-                 ops.Equals("Shear", StringComparison.OrdinalIgnoreCase)) &&
-                string.IsNullOrEmpty(thickness) &&
-                !string.IsNullOrEmpty(structCode))
-            {
-                var codePrefix = structCode.Split(' ')[0];
-                if (StructCodeThickness.TryGetValue(codePrefix, out var derivedThickness))
-                    thickness = derivedThickness;
-            }
-
-            var line = new BomExportLine
-            {
-                Level = level,
-                Parent = parent,
-                Number = number,
-                Title = title,
-                ItemDescription = itemDesc,
-                Category = category,
-                Thickness = thickness,
-                Material = material,
-                Operations = ops,
-                Qty = qty,
-                StructCode = structCode,
-                PlantId = plantId,
-                IsStock = isStock,
-                RequiresPdf = requiresPdf,
-                Comment = comment,
-                DateModified = dateModified,
-                LifecycleState = lifecycleState,
-                StockName = stockName,
-                Keywords = keywords,
-                Notes = notes,
-                Revision = revision,
-            };
-
-            // Skip purchased items
-            if (category.Equals("Purchased", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Per-sub-assembly split, tracked by level before the merge below loses it.
-            usages.Add(level, number, qty);
-
-            // Calculate quantity based on parent quantity
-            line.Qty = GetCalculatedQty(line, deduped);
-
-            // Deduplicate: same number+parent already seen?
-            var key = (number, parent);
-            bool isDuplicate = parentChildSeen.Contains(key);
-            parentChildSeen.Add(key);
-            parentChildCount[key] = parentChildCount.GetValueOrDefault(key) + 1;
-
-            if (!isDuplicate)
-            {
-                // First time seeing this (number, parent) combo
-                if (dedupedByNumber.TryGetValue(number, out var existing))
-                {
-                    // Part already in deduped list under a different parent — add quantity
-                    existing.Qty += line.Qty;
-                }
-                else
-                {
-                    deduped.Add(line);
-                    dedupedByNumber[number] = line;
-                }
-            }
-            else
-            {
-                // Duplicate parent/child — adjust for multiple instances
-                int relationCount = parentChildCount[key];
-                if (dedupedByNumber.TryGetValue(number, out var existing))
-                {
-                    existing.Qty += line.Qty / relationCount;
-                }
-            }
-        }
-
-        // Check PDF existence in parallel — avoids both sequential round-trips and a full
-        // directory enumeration (which is expensive at 78k+ files on a network share)
-        Parallel.ForEach(deduped, new ParallelOptions { MaxDegreeOfParallelism = 4 }, line =>
-        {
-            var pdfPath = Path.Combine(_pdfSharePath, line.Number + ".pdf");
-            line.HasPdf = BomFieldMappers.FileExistsWithRetry(pdfPath, _log);
-            line.SortOrder = line.Parent == "<top>" ? 0 : 1;
-        });
-        foreach (var line in deduped)
-            line.AssemblyUsages = usages.For(line.Number);
-
-        _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",
-            deduped.Count, deduped.Count(l => !l.HasPdf));
-        return deduped;
-    }
-
-    private static int GetCalculatedQty(BomExportLine item, List<BomExportLine> itemList)
-    {
-        if (item.Parent == "<top>")
-            return item.Qty;
-
-        var parentItem = itemList.FirstOrDefault(i => i.Number == item.Parent);
-        if (parentItem == null)
-        {
-            string parentNoExt = Path.GetFileNameWithoutExtension(item.Parent);
-            parentItem = itemList.FirstOrDefault(i => i.Number == parentNoExt);
-            if (parentItem == null)
-                parentItem = itemList.FirstOrDefault(i => i.Number.Contains(item.Parent));
-        }
-
-        if (parentItem != null)
-            return item.Qty * parentItem.Qty;
-
-        return item.Qty;
-    }
 
     public async Task<Batch> ImportBatchAsync(string name, int batchQty, int plantId, int userId, List<BomExportLine> lines)
     {
@@ -279,55 +148,23 @@ public class BomService : IBomService
             await _db.SaveChangesAsync();
         }
 
-        // Group lines by their Level-1 ancestor prefix
-        // Level-1 lines (no dot in level) become BatchProduct headers
-        // Child lines are keyed by their top-level prefix (e.g., "1", "2")
-        var groups = lines.GroupBy(l => GetLevel1Prefix(l.Level));
-
+        // One BatchProduct per Level-1 line in the file. Its own row is kept as a part, the same
+        // as the VaultGateway import, and its Vault qty is already folded into the parts' qtys.
+        var groups = lines.GroupBy(l => l.ProductKey).ToList();
         foreach (var group in groups)
         {
-            var level1Line = group.FirstOrDefault(l => !l.Level.Contains('.'));
-            string productName = level1Line?.Number ?? group.Key;
-
-            var product = new BatchProduct
+            var parts = group.Select(ToPartLineItem).ToList();
+            BomLineBuilder.ResolvePlantIds(parts, plantCodeToId);
+            _db.BatchProducts.Add(new BatchProduct
             {
                 BatchId = batch.Id,
                 PlantId = plantId,
-                ProductName = productName,
-                Qty = (level1Line?.Qty ?? 1) * (batchQty < 1 ? 1 : batchQty),
+                ProductName = group.FirstOrDefault(l => l.IsProductLine)?.Number ?? group.Key,
+                Qty = batchQty < 1 ? 1 : batchQty,
                 // The BOM arrives with the manual import, so there's no pending Vault fetch.
                 VaultBomImported = true,
-            };
-            _db.BatchProducts.Add(product);
-            await _db.SaveChangesAsync();
-
-            // All non-Level-1 lines in this group become PartLineItems
-            var childLines = group.Where(l => l.Level.Contains('.')).ToList();
-            foreach (var line in childLines)
-            {
-                var linePlantCode = BomFieldMappers.MapVaultPlantCode(line.PlantId);
-                var item = new PartLineItem
-                {
-                    BatchProductId = product.Id,
-                    PartNumber = line.Number,
-                    Title = line.Title,
-                    Description = line.ItemDescription,
-                    Category = line.Category,
-                    Qty = line.Qty,
-                    Material = line.Material,
-                    Thickness = line.Thickness,
-                    StructCode = line.StructCode,
-                    Operations = line.Operations,
-                    IsStock = line.IsStock,
-                    RequiresPdf = line.RequiresPdf,
-                    Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
-                    HasPdf = line.HasPdf,
-                    PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
-                    PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
-                    AssemblyUsages = AssemblyUsageCollector.ToEntities(line.AssemblyUsages),
-                };
-                _db.PartLineItems.Add(item);
-            }
+                Parts = parts,
+            });
         }
 
         await _db.SaveChangesAsync();
@@ -338,7 +175,7 @@ public class BomService : IBomService
 
         _log.LogInformation(
             "Imported batch '{Name}' with {GroupCount} products. Copied {Copied}/{Total} PDFs to {Folder}",
-            name, lines.GroupBy(l => GetLevel1Prefix(l.Level)).Count(), copied, total, localFolder);
+            name, groups.Count, copied, total, localFolder);
 
         return batch;
     }
@@ -368,45 +205,19 @@ public class BomService : IBomService
             await _db.SaveChangesAsync();
         }
 
-        var level1Line = lines.FirstOrDefault(l => !l.Level.Contains('.'));
-        var order = new ScheduleOrder
+        var parts = lines.Select(ToPartLineItem).ToList();
+        BomLineBuilder.ResolvePlantIds(parts, plantCodeToId);
+        _db.ScheduleOrders.Add(new ScheduleOrder
         {
             ScheduleId = schedule.Id,
             PlantId = plantId,
             OrderNumber = orderNumber,
-            ProductNumber = level1Line?.Number,
+            ProductNumber = lines.FirstOrDefault(l => l.IsProductLine)?.Number,
             Qty = orderQty < 1 ? 1 : orderQty,
             // The BOM arrives with the manual import, so there's no pending Vault fetch.
             VaultBomImported = true,
-        };
-        _db.ScheduleOrders.Add(order);
-        await _db.SaveChangesAsync();
-
-        foreach (var line in lines)
-        {
-            var linePlantCode = BomFieldMappers.MapVaultPlantCode(line.PlantId);
-            var item = new PartLineItem
-            {
-                ScheduleOrderId = order.Id,
-                PartNumber = line.Number,
-                Title = line.Title,
-                Description = line.ItemDescription,
-                Category = line.Category,
-                Qty = line.Qty,
-                Material = line.Material,
-                Thickness = line.Thickness,
-                StructCode = line.StructCode,
-                Operations = line.Operations,
-                IsStock = line.IsStock,
-                RequiresPdf = line.RequiresPdf,
-                Notes = string.IsNullOrEmpty(line.Notes) ? null : line.Notes,
-                HasPdf = line.HasPdf,
-                PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
-                PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
-                AssemblyUsages = AssemblyUsageCollector.ToEntities(line.AssemblyUsages),
-            };
-            _db.PartLineItems.Add(item);
-        }
+            Parts = parts,
+        });
 
         await _db.SaveChangesAsync();
 

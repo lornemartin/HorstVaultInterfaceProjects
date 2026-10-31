@@ -4,9 +4,9 @@
 ; Build:
 ;   makensis installer.nsi
 ;
-; The script expects the Release build to already exist at:
-;   ..\HorstMFG.Bridge\bin\Release\net48\
-; (relative to this .nsi file)
+; The script expects these builds to already exist (relative to this .nsi file):
+;   ..\HorstMFG.Bridge\bin\Release\net48\           Bridge, Release
+;   ..\..\ItemExport\bin\x64\Release\               ItemExport Vault extension, Release|x64
 
 !define APP_NAME        "HorstMFG Bridge"
 !define SERVICE_NAME    "HorstMFGBridge"
@@ -14,6 +14,10 @@
 !define APP_VERSION     "1.0.0"
 !define PUBLISHER       "Horst Manufacturing"
 !define UNINST_KEY      "Software\Microsoft\Windows\CurrentVersion\Uninstall\${SERVICE_NAME}"
+; ItemExport ("Export Item Direct") writes the BOM export file the Bridge watches.
+; Must match the Vault SDK ItemExport is built against.
+!define VAULT_VERSION   "2026"
+!define ITEMEXPORT_SRC  "..\..\ItemExport\bin\x64\Release"
 
 ;--------------------------------------------------------------------
 ; Basic setup
@@ -33,6 +37,7 @@ SetCompressor    lzma
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
 !include "StrFunc.nsh"
+!include "FileFunc.nsh"
 
 ; Declare StrRep — must appear outside of sections/functions
 ${StrRep}
@@ -377,6 +382,77 @@ Section "Install" SecMain
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
+SectionEnd
+
+;====================================================================
+; Vault Item Export extension
+; Installs ItemExport into Vault Explorer so "Export Item Direct" writes
+; the BOM export file the Bridge forwards to HorstMFG. Skipped when the
+; Vault client isn't installed. Only ItemExport's own files are copied;
+; the Autodesk assemblies come from the Vault install.
+;====================================================================
+Section "Vault Item Export" SecItemExport
+
+  ReadEnvStr $R0 PROGRAMDATA
+  StrCpy $R1 "$R0\Autodesk\Vault ${VAULT_VERSION}"
+  StrCpy $R2 "$R1\Extensions\ItemExport"
+
+  IfFileExists "$R1\*.*" itemexport_check_vault 0
+    DetailPrint "Vault ${VAULT_VERSION} client not found; skipping the Item Export extension."
+    Goto itemexport_done
+
+  ; Vault Explorer locks the extension DLL while it's open.
+  itemexport_check_vault:
+  nsExec::ExecToStack "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $\"if (Get-Process -Name 'Connectivity.VaultPro','Connectivity.VaultWkg','Connectivity.Vault' -ErrorAction SilentlyContinue) { exit 1 }$\""
+  Pop $0
+  Pop $1
+  ${If} $0 == 1
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+      "Vault Explorer is running. Close it, then click Retry to install the Item Export extension.$\n$\nCancel skips the extension; the rest of the Bridge is still installed." \
+      IDRETRY itemexport_check_vault
+    DetailPrint "Vault Explorer still open; skipped the Item Export extension."
+    Goto itemexport_done
+  ${EndIf}
+
+  DetailPrint "Installing the Item Export Vault extension..."
+  SetOutPath "$R2"
+  File "${ITEMEXPORT_SRC}\ItemExport.dll"
+  File "${ITEMEXPORT_SRC}\ItemExport.dll.config"
+  File "${ITEMEXPORT_SRC}\ItemExport.vcet.config"
+  File "${ITEMEXPORT_SRC}\Microsoft.Web.Services3.dll"
+
+  ; ItemExport reads where to write from ProgramData\VaultExtensions\AppSettings.xml.
+  ; VaultItemProcessor shares that file, so an existing one is never touched; a missing
+  ; one is created pointing at the Bridge's BOM Export File Path.
+  StrCpy $R3 "$R0\VaultExtensions"
+  CreateDirectory "$R3"
+  IfFileExists "$R3\AppSettings.xml" itemexport_settings_kept 0
+    StrCpy $R4 "$BomPath"
+    ${If} $R4 == ""
+      StrCpy $R4 "$R3\VaultExportData.txt"
+    ${EndIf}
+    ${GetParent} "$R4" $R5
+    CreateDirectory "$R5"
+    DetailPrint "Writing $R3\AppSettings.xml..."
+    FileOpen  $9 "$R3\AppSettings.xml" w
+    FileWrite $9 '<?xml version="1.0" encoding="utf-8"?>$\r$\n'
+    FileWrite $9 '<ArrayOfSetting xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">$\r$\n'
+    FileWrite $9 '  <Setting>$\r$\n'
+    FileWrite $9 '    <Key>VaultExportFilePath</Key>$\r$\n'
+    FileWrite $9 '    <Value xsi:type="xsd:string">$R5\</Value>$\r$\n'
+    FileWrite $9 '  </Setting>$\r$\n'
+    FileWrite $9 '  <Setting>$\r$\n'
+    FileWrite $9 '    <Key>ExportFile</Key>$\r$\n'
+    FileWrite $9 '    <Value xsi:type="xsd:string">$R4</Value>$\r$\n'
+    FileWrite $9 '  </Setting>$\r$\n'
+    FileWrite $9 '</ArrayOfSetting>$\r$\n'
+    FileClose $9
+    Goto itemexport_done
+
+  itemexport_settings_kept:
+  DetailPrint "Kept existing $R3\AppSettings.xml (shared with VaultItemProcessor)."
+
+  itemexport_done:
 SectionEnd
 
 ;====================================================================

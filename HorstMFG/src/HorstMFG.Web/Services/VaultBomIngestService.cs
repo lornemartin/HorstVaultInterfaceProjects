@@ -77,8 +77,8 @@ public class VaultBomIngestService
         if (order.Parts.Count > 0)
             db.PartLineItems.RemoveRange(order.Parts);
 
-        var newItems = BuildPartLineItems(payload.Lines, order.Schedule.Plant, order.ProductNumber).ToList();
-        await ResolvePlantIdsAsync(db, newItems, ct);
+        var newItems = BomLineBuilder.Build(payload.Lines, order.Schedule.Plant, order.ProductNumber).ToList();
+        BomLineBuilder.ResolvePlantIds(newItems, await PlantCodeToIdAsync(db, ct));
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
         foreach (var line in newItems)
@@ -126,8 +126,8 @@ public class VaultBomIngestService
         if (product.Parts.Count > 0)
             db.PartLineItems.RemoveRange(product.Parts);
 
-        var newItems = BuildPartLineItems(payload.Lines, product.Batch.Plant, product.ProductName).ToList();
-        await ResolvePlantIdsAsync(db, newItems, ct);
+        var newItems = BomLineBuilder.Build(payload.Lines, product.Batch.Plant, product.ProductName).ToList();
+        BomLineBuilder.ResolvePlantIds(newItems, await PlantCodeToIdAsync(db, ct));
         var partNumbers = newItems.Select(p => p.PartNumber).Distinct().ToList();
         var pdfsOnShare = await _pdfCopy.WhichExistOnShareAsync(partNumbers, ct);
         foreach (var line in newItems)
@@ -146,101 +146,8 @@ public class VaultBomIngestService
             product.Id, product.ProductName, partNumbers.Count, copied, total);
     }
 
-    /// <summary>
-    /// Resolves each item's PlantIdRaw (Vault's raw "Plant ID" text) to our own Plant.Id via
-    /// BomFieldMappers.MapVaultPlantCode + Plant.Code. Left null when the value is unrecognized
-    /// (PlantIdRaw still preserves the raw text); blank and "Plant 1&amp;2" were already replaced
-    /// with the importing plant by BuildPartLineItems.
-    /// </summary>
-    private static async Task ResolvePlantIdsAsync(ApplicationDbContext db, List<PartLineItem> items, CancellationToken ct)
-    {
-        if (items.Count == 0) return;
-        var codeToId = await db.Plants.AsNoTracking()
-            .ToDictionaryAsync(p => p.Code, p => p.Id, StringComparer.OrdinalIgnoreCase, ct);
-        foreach (var item in items)
-        {
-            var code = BomFieldMappers.MapVaultPlantCode(item.PlantIdRaw);
-            if (code != null && codeToId.TryGetValue(code, out var id))
-                item.PlantId = id;
-        }
-    }
-
-    /// <summary>
-    /// Project Vault BOM lines into <see cref="PartLineItem"/> entities, applying the
-    /// same filters, transformations, and dedup as the legacy TSV parser
-    /// (BomService.ParseExportFile lines 114-210):
-    /// skip Purchased rows; derive thickness from structural code for Laser ops;
-    /// strip CAD extensions; apply stock-name override; collapse parts that appear
-    /// under multiple parents into a single row with summed Qty. The Level=1 row
-    /// (the product itself) is preserved as a Category="Product" PartLineItem so
-    /// the schedule grid can render the order header.
-    /// Plant ID and Is Stock come from the importing plant's own Vault properties (P2 … for
-    /// Plant 2, the originals for Plant 1), with Is Stock adjusted by that plant's Stock
-    /// Exception list for this top-level product. A blank Plant ID defaults to the importing plant.
-    /// </summary>
-    private static List<PartLineItem> BuildPartLineItems(IEnumerable<VaultBomLine> lines, Plant importingPlant, string? productName)
-    {
-        bool isPlant2 = importingPlant.Code.Equals("P2", StringComparison.OrdinalIgnoreCase);
-        string defaultPlantIdRaw = isPlant2 ? "Plant 2" : "Plant 1";
-        var usages = new AssemblyUsageCollector();
-        var dedupedByNumber = new Dictionary<string, PartLineItem>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var l in lines)
-        {
-            if (l.Category.Equals("Purchased", StringComparison.OrdinalIgnoreCase)) continue;
-
-            var number = string.IsNullOrEmpty(l.StockName)
-                ? BomFieldMappers.StripCadExtension(l.Number)
-                : l.StockName;
-
-            // Vault reports each line's Qty relative to its own immediate parent, not
-            // pre-multiplied through the whole assembly chain — so a part nested under a
-            // sub-assembly that's itself needed multiple times must have its raw Qty
-            // multiplied by that parent's own (already-resolved) absolute qty. Tracked by
-            // BOM Level (e.g. "1.2.3") rather than part number: a level uniquely identifies
-            // one placement in the tree, so — unlike the legacy TSV path's number-based
-            // lookup — this needs no order-dependent "divide to undo double counting" hack.
-            // The collector also records the per-sub-assembly split that the merge below loses.
-            int qty = usages.Add(l.Level, number, l.Qty < 1 ? 1 : l.Qty);
-
-            if (dedupedByNumber.TryGetValue(number, out var existing))
-            {
-                existing.Qty += qty;
-            }
-            else
-            {
-                var thickness = BomFieldMappers.DeriveSheetThickness(l.Operations, l.Thickness, l.StructCode);
-                var plantIdRaw = isPlant2 ? l.P2PlantId : l.PlantId;
-                var isStock = BomFieldMappers.ResolveIsStock(
-                    isPlant2 ? l.P2IsStock : l.IsStock,
-                    isPlant2 ? l.P2StockException : l.P1StockException,
-                    productName);
-                var item = new PartLineItem
-                {
-                    PartNumber  = number,
-                    Title       = l.Title,
-                    Description = l.ItemDescription,
-                    Category    = l.Category,
-                    Qty         = qty,
-                    Material    = l.Material,
-                    Thickness   = thickness,
-                    StructCode  = l.StructCode,
-                    Operations  = l.Operations,
-                    SecondOperation = l.SecondOperation,
-                    FinishOps   = l.FinishOps,
-                    IsStock     = isStock,
-                    RequiresPdf = l.RequiresPdf,
-                    Notes       = string.IsNullOrEmpty(l.Notes) ? null : l.Notes,
-                    PlantIdRaw  = BomFieldMappers.IsImportingPlantValue(plantIdRaw) ? defaultPlantIdRaw : plantIdRaw!.Trim(),
-                };
-                dedupedByNumber[number] = item;
-            }
-        }
-
-        foreach (var item in dedupedByNumber.Values)
-            item.AssemblyUsages = AssemblyUsageCollector.ToEntities(usages.For(item.PartNumber));
-        return dedupedByNumber.Values.ToList();
-    }
+    private static Task<Dictionary<string, int>> PlantCodeToIdAsync(ApplicationDbContext db, CancellationToken ct) =>
+        db.Plants.AsNoTracking().ToDictionaryAsync(p => p.Code, p => p.Id, StringComparer.OrdinalIgnoreCase, ct);
 
     private static string AppendNote(string? existing, string addition)
         => string.IsNullOrEmpty(existing) ? addition : existing + "\n" + addition;

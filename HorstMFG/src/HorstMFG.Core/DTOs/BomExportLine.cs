@@ -1,10 +1,17 @@
 namespace HorstMFG.Core.DTOs;
 
 /// <summary>
-/// Represents a single line parsed from a Vault Item Export tab-delimited file.
+/// One preview row on the BOM Import page: a part as the import will create it (after the
+/// shared VaultGateway processing), editable before import.
 /// </summary>
 public class BomExportLine
 {
+    /// <summary>The Level-1 prefix ("1", "2", …) of the product this row belongs to.</summary>
+    public string ProductKey { get; set; } = string.Empty;
+    /// <summary>The product's own (Level-1) row.</summary>
+    public bool IsProductLine { get; set; }
+    public string SecondOperation { get; set; } = string.Empty;
+    public string FinishOps { get; set; } = string.Empty;
     public string Level { get; set; } = string.Empty;
     public string Parent { get; set; } = string.Empty;
     public string Number { get; set; } = string.Empty;
