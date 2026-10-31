@@ -80,6 +80,17 @@
                style="width: 100%; padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
     </div>
 
+    <div>
+        <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Per page</label>
+        <select value="@(_pageSize?.ToString() ?? "All")" @onchange="OnPageSizeChanged"
+                style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
+            @foreach (var option in PageSizeOptions)
+            {
+                <option value="@option" selected="@(option == (_pageSize?.ToString() ?? "All"))">@option</option>
+            }
+        </select>
+    </div>
+
     <div style="display: flex; flex-direction: column; gap: 0.4rem; padding-bottom: 0.25rem;">
         <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem;">
             <input type="checkbox" @bind="_hideStock" @bind:after="OnHideStockChanged" />
@@ -107,7 +118,7 @@
         DataSource="_rows" AllowGrouping="true" AllowSorting="false" AllowFiltering="true" EnablePersistence="true"
         AllowResizing="true" AllowPaging="true" Height="max(300px, calc(100vh - 390px))">
     @* Pages count top-level schedules. Search runs on the server, so it still covers every page. *@
-    <GridPageSettings PageSize="25" PageSizes="@PageSizeOptions" />
+    <GridPageSettings PageSize="@GridPageSize" />
     <GridGroupSettings ShowGroupedColumn="false" ShowDropArea="false" EnableLazyLoading="true"
                        Columns="@(new[] { "ScheduleId", "ScheduleOrderId" })">
         <CaptionTemplate>
@@ -654,12 +665,20 @@
         public bool       CrossPlantOnly     { get; set; } = false;
         public List<int>  ExpandedScheduleIds { get; set; } = new();
         public List<int>  ExpandedOrderIds    { get; set; } = new();
+        public int?       PageSize            { get; set; } = DefaultPageSize;
     }
     private const string StateKey = "horstmfg.orders.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
     private const string GridId = "OrdersGrid_v10";
-    private static readonly string[] PageSizeOptions = { "10", "25", "50", "100", "All" };
+    // Our own selector, not the pager's: the pager doesn't reliably report a size change, so the
+    // choice couldn't be saved. Counts are top-level groups per page.
+    private static readonly string[] PageSizeOptions = { "25", "50", "100", "All" };
+    private const int DefaultPageSize = 25;
+    // Bound rather than a literal: Syncfusion re-applies the parameter on every render, so a
+    // literal would reset the user's choice whenever the page reloads its data. Null = All.
+    private int? _pageSize = DefaultPageSize;
+    private int GridPageSize => _pageSize ?? Math.Max(_rows.Count, 1);
 
     // ── UI state ─────────────────────────────────────────────────────────────
     private SfGrid<FlatSchedulePartRow>? _schedGrid;
@@ -1128,9 +1147,20 @@
         await LoadData();
     }
 
+    private async Task OnPageSizeChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _pageSize = int.TryParse(e.Value?.ToString(), out var size) ? size : null;
+        await SaveStateAsync();
+        // The grid redraws with every group collapsed; re-expand the saved ones.
+        StateHasChanged();
+        await RestoreExpansionAsync();
+    }
+
     private async Task SetDateRange(int? days)
     {
         _dateRangeDays = days;
+        // Every row in the database is too many to draw on one page.
+        if (days == null) _pageSize = DefaultPageSize;
         _fromDate = days.HasValue ? DateTime.Today.AddDays(-days.Value) : null;
         _toDate = days.HasValue ? DateTime.Today : null;
         await LoadData();
@@ -1173,6 +1203,8 @@
         _crossPlantOnly = state.CrossPlantOnly;
         _expandedScheduleIds = state.ExpandedScheduleIds.ToHashSet();
         _expandedOrderIds    = state.ExpandedOrderIds.ToHashSet();
+        _pageSize            = state.PageSize;
+        if (_pageSize < DefaultPageSize) _pageSize = DefaultPageSize;   // e.g. 10, no longer offered
     }
 
     private async Task SaveStateAsync()
@@ -1185,6 +1217,7 @@
             CrossPlantOnly      = _crossPlantOnly,
             ExpandedScheduleIds = _expandedScheduleIds.ToList(),
             ExpandedOrderIds    = _expandedOrderIds.ToList(),
+            PageSize            = _pageSize,
         });
     }
 
