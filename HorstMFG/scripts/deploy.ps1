@@ -1,6 +1,6 @@
-# run this on the server
 Import-Module WebAdministration
 
+$scriptPath  = "C:\Users\Lorne\Scripts\"
 $repoRoot    = "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects"
 $projectPath = "$repoRoot\HorstMFG\src\HorstMFG.Web\HorstMFG.Web.csproj"
 $publishPath = "C:\inetpub\horstmfg"
@@ -32,4 +32,5 @@ finally {
     Start-WebAppPool -Name $appPool
 }
 
+Set-Location $scriptPath
 Write-Host "Deploy complete."
