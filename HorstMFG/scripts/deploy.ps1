@@ -6,6 +6,21 @@ $projectPath = "$repoRoot\HorstMFG\src\HorstMFG.Web\HorstMFG.Web.csproj"
 $publishPath = "C:\inetpub\horstmfg"
 $appPool     = "HorstMFG"
 
+$prodSettings = "$publishPath\appsettings.Production.json"
+$backupRoot  = "$publishPath-config-backups"
+
+# Production settings must live in a server-only file. Publish overwrites appsettings.json
+# whenever the repo copy changes, which would silently point the app at the wrong database.
+if (-not (Test-Path $prodSettings)) {
+    throw "Missing $prodSettings. Move the server's production settings (connection string, API keys, paths) into it before deploying."
+}
+
+# Back up the server's config files so they can be restored if publish clobbers anything.
+$backupPath = Join-Path $backupRoot (Get-Date -Format "yyyyMMdd-HHmmss")
+New-Item -ItemType Directory -Force -Path $backupPath | Out-Null
+Copy-Item "$publishPath\appsettings*.json", "$publishPath\web.config" -Destination $backupPath -ErrorAction Stop
+Write-Host "Backed up config files to $backupPath"
+
 Set-Location $repoRoot
 git pull
 

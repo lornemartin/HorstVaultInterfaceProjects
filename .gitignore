@@ -340,3 +340,6 @@ ASALocalRun/
 healthchecksdb
 nul
 HorstMFG.Bridge/Installer/HorstMFG.Bridge.Setup.exe
+
+# Server-only production settings for HorstMFG.Web; never commit
+appsettings.Production.json
