@@ -14,21 +14,27 @@
                     </NavLink>
                 </div>
 
+                <AuthorizeView Policy="EngineeringOnly">
+                    <Authorized Context="importContext">
+                        <div class="nav-section">
+                            <div class="nav-section-title">Import</div>
+                            <NavLink class="nav-link" href="/bom-import">
+                                BOM Import
+                            </NavLink>
+                            <NavLink class="nav-link" href="/engineering/excel-schedule-import">
+                                Schedule from Excel
+                            </NavLink>
+                            <NavLink class="nav-link" href="/engineering/excel-batch-import">
+                                Batch from Excel
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
                 <AuthorizeView Policy="Engineering">
                     <Authorized Context="engContext">
                         <div class="nav-section">
                             <div class="nav-section-title">Engineering</div>
-                            <AuthorizeView Policy="EngineeringOnly">
-                                <NavLink class="nav-link" href="/bom-import">
-                                    BOM Import
-                                </NavLink>
-                                <NavLink class="nav-link" href="/engineering/excel-schedule-import">
-                                    Schedule from Excel
-                                </NavLink>
-                                <NavLink class="nav-link" href="/engineering/excel-batch-import">
-                                    Batch from Excel
-                                </NavLink>
-                            </AuthorizeView>
                             <NavLink class="nav-link" href="/engineering/orders">
                                 Orders
                             </NavLink>
