@@ -33,4 +33,5 @@ public class PartLineItem
     public BatchProduct? BatchProduct { get; set; }
     public ScheduleOrder? ScheduleOrder { get; set; }
     public Plant? Plant { get; set; }
+    public List<PartLineItemAssemblyUsage> AssemblyUsages { get; set; } = new();
 }

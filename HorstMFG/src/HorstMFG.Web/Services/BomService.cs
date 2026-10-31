@@ -58,6 +58,7 @@ public class BomService : IBomService
         var parentChildSeen = new HashSet<(string Number, string Parent)>();
         var parentChildCount = new Dictionary<(string Number, string Parent), int>();
         var parentDict = new Dictionary<string, string>();
+        var usages = new AssemblyUsageCollector();
 
         using var reader = new StreamReader(fileStream);
 
@@ -180,6 +181,9 @@ public class BomService : IBomService
             if (category.Equals("Purchased", StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            // Per-sub-assembly split, tracked by level before the merge below loses it.
+            usages.Add(level, number, qty);
+
             // Calculate quantity based on parent quantity
             line.Qty = GetCalculatedQty(line, deduped);
 
@@ -222,6 +226,8 @@ public class BomService : IBomService
             line.HasPdf = BomFieldMappers.FileExistsWithRetry(pdfPath, _log);
             line.SortOrder = line.Parent == "<top>" ? 0 : 1;
         });
+        foreach (var line in deduped)
+            line.AssemblyUsages = usages.For(line.Number);
 
         _log.LogInformation("Parsed {Count} BOM lines from export file ({MissingPdf} missing PDFs)",
             deduped.Count, deduped.Count(l => !l.HasPdf));
@@ -318,6 +324,7 @@ public class BomService : IBomService
                     HasPdf = line.HasPdf,
                     PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
                     PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
+                    AssemblyUsages = AssemblyUsageCollector.ToEntities(line.AssemblyUsages),
                 };
                 _db.PartLineItems.Add(item);
             }
@@ -396,6 +403,7 @@ public class BomService : IBomService
                 HasPdf = line.HasPdf,
                 PlantIdRaw = BomFieldMappers.IsImportingPlantValue(line.PlantId) ? null : line.PlantId,
                 PlantId = linePlantCode != null && plantCodeToId.TryGetValue(linePlantCode, out var lpid) ? lpid : null,
+                AssemblyUsages = AssemblyUsageCollector.ToEntities(line.AssemblyUsages),
             };
             _db.PartLineItems.Add(item);
         }

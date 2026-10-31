@@ -28,4 +28,9 @@ public class BomExportLine
     public string Revision { get; set; } = string.Empty;
     public bool HasPdf { get; set; }
     public int SortOrder { get; set; }
+    /// <summary>Per-sub-assembly quantities, kept from before duplicate lines were merged.</summary>
+    public List<AssemblyUsage> AssemblyUsages { get; set; } = new();
 }
+
+/// <summary>See PartLineItemAssemblyUsage.</summary>
+public sealed record AssemblyUsage(string AssemblyNumber, int Qty, int DirectQty);

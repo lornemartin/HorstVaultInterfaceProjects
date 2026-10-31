@@ -600,6 +600,35 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("part_line_items", (string)null);
                 });
 
+            modelBuilder.Entity("HorstMFG.Core.Entities.PartLineItemAssemblyUsage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssemblyNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("DirectQty")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PartLineItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Qty")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartLineItemId");
+
+                    b.ToTable("part_line_item_assembly_usages", (string)null);
+                });
+
             modelBuilder.Entity("HorstMFG.Core.Entities.Plant", b =>
                 {
                     b.Property<int>("Id")
@@ -1068,6 +1097,17 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("ScheduleOrder");
                 });
 
+            modelBuilder.Entity("HorstMFG.Core.Entities.PartLineItemAssemblyUsage", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.PartLineItem", "PartLineItem")
+                        .WithMany("AssemblyUsages")
+                        .HasForeignKey("PartLineItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PartLineItem");
+                });
+
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
                 {
                     b.HasOne("HorstMFG.Core.Entities.ApplicationUser", "ImportedByUser")
@@ -1197,6 +1237,11 @@ namespace HorstMFG.Infrastructure.Data.Migrations
             modelBuilder.Entity("HorstMFG.Core.Entities.Part", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.PartLineItem", b =>
+                {
+                    b.Navigation("AssemblyUsages");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Plant", b =>

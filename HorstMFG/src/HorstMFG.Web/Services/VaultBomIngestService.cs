@@ -182,7 +182,7 @@ public class VaultBomIngestService
     {
         bool isPlant2 = importingPlant.Code.Equals("P2", StringComparison.OrdinalIgnoreCase);
         string defaultPlantIdRaw = isPlant2 ? "Plant 2" : "Plant 1";
-        var levelToQty = new Dictionary<string, int>();
+        var usages = new AssemblyUsageCollector();
         var dedupedByNumber = new Dictionary<string, PartLineItem>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var l in lines)
@@ -200,15 +200,8 @@ public class VaultBomIngestService
             // BOM Level (e.g. "1.2.3") rather than part number: a level uniquely identifies
             // one placement in the tree, so — unlike the legacy TSV path's number-based
             // lookup — this needs no order-dependent "divide to undo double counting" hack.
-            int rawQty = l.Qty < 1 ? 1 : l.Qty;
-            int parentQty = 1;
-            if (l.Level.Contains('.'))
-            {
-                var parentLevel = l.Level[..l.Level.LastIndexOf('.')];
-                if (levelToQty.TryGetValue(parentLevel, out var pq)) parentQty = pq;
-            }
-            int qty = rawQty * parentQty;
-            levelToQty[l.Level] = qty;
+            // The collector also records the per-sub-assembly split that the merge below loses.
+            int qty = usages.Add(l.Level, number, l.Qty < 1 ? 1 : l.Qty);
 
             if (dedupedByNumber.TryGetValue(number, out var existing))
             {
@@ -244,6 +237,8 @@ public class VaultBomIngestService
             }
         }
 
+        foreach (var item in dedupedByNumber.Values)
+            item.AssemblyUsages = AssemblyUsageCollector.ToEntities(usages.For(item.PartNumber));
         return dedupedByNumber.Values.ToList();
     }
 

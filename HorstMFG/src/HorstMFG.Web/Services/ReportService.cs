@@ -355,6 +355,160 @@ public class ReportService
         return new OperationParts(name, SortGroups(parts, operation), plants);
     }
 
+    // ── Sub-assembly drawings ─────────────────────────────────────────────────
+
+    /// <param name="PartCount">Parts recorded under the sub-assembly in its own product / order;
+    /// 0 when the BOM was imported before per-sub-assembly quantities were kept.</param>
+    /// <param name="ParentCount">Products / orders in the batch / schedule that contain it.</param>
+    public sealed record SubAssemblyPrintInfo(int PartCount, int ParentCount);
+
+    public async Task<SubAssemblyPrintInfo> GetSubAssemblyPrintInfoAsync(ReportSource source, int parentId, string assemblyNumber)
+    {
+        // Own context: called from a Blazor circuit, where the scoped one lives as long as the page.
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var parts = db.PartLineItems.AsNoTracking();
+        if (source == ReportSource.Batch)
+        {
+            var batchId = await db.BatchProducts.Where(bp => bp.Id == parentId).Select(bp => bp.BatchId).FirstOrDefaultAsync();
+            return new SubAssemblyPrintInfo(
+                await parts.CountAsync(p => p.BatchProductId == parentId && p.AssemblyUsages.Any(u => u.AssemblyNumber == assemblyNumber)),
+                await parts.Where(p => p.BatchProduct!.BatchId == batchId && p.PartNumber == assemblyNumber)
+                    .Select(p => p.BatchProductId).Distinct().CountAsync());
+        }
+        var scheduleId = await db.ScheduleOrders.Where(so => so.Id == parentId).Select(so => so.ScheduleId).FirstOrDefaultAsync();
+        return new SubAssemblyPrintInfo(
+            await parts.CountAsync(p => p.ScheduleOrderId == parentId && p.AssemblyUsages.Any(u => u.AssemblyNumber == assemblyNumber)),
+            await parts.Where(p => p.ScheduleOrder!.ScheduleId == scheduleId && p.PartNumber == assemblyNumber)
+                .Select(p => p.ScheduleOrderId).Distinct().CountAsync());
+    }
+
+    /// <summary>
+    /// Drawings for one sub-assembly and every part under it, nested ones included, in every
+    /// operation and stock type. Quantities cover the sub-assembly in the one BatchProduct /
+    /// ScheduleOrder <paramref name="parentId"/>, or with <paramref name="allInSource"/> in every
+    /// product / order of the same batch / schedule that uses it, listed per product / order.
+    /// Parts also used outside the sub-assembly get a note with the extra quantity.
+    /// Needs the per-sub-assembly quantities recorded at import (PartLineItemAssemblyUsage).
+    /// </summary>
+    public async Task<ReportPdf?> GenerateSubAssemblyReportAsync(ReportSource source, int parentId,
+        string assemblyNumber, bool allInSource)
+    {
+        var plants     = await _db.Plants.AsNoTracking().ToListAsync();
+        var plantNames = plants.ToDictionary(p => p.Id, p => p.Name);
+
+        string name, pdfFolder;
+        List<(string Label, int ParentQty, ICollection<PartLineItem> Parts)> parents;
+        if (source == ReportSource.Batch)
+        {
+            var batchId = await _db.BatchProducts.Where(bp => bp.Id == parentId).Select(bp => (int?)bp.BatchId).FirstOrDefaultAsync();
+            if (batchId == null) return null;
+            var batch = await _db.Batches.AsNoTracking()
+                .Include(b => b.BatchProducts.Where(bp => allInSource || bp.Id == parentId))
+                    .ThenInclude(bp => bp.Parts).ThenInclude(p => p.AssemblyUsages)
+                .FirstAsync(b => b.Id == batchId);
+            name      = batch.Name;
+            pdfFolder = batch.LocalPdfFolder ?? Path.Combine(_localPdfPath, "Batches", name);
+            parents   = batch.BatchProducts.OrderBy(bp => bp.Id)
+                .Select(bp => (bp.ProductName ?? "", bp.Qty, bp.Parts)).ToList();
+        }
+        else
+        {
+            var scheduleId = await _db.ScheduleOrders.Where(so => so.Id == parentId).Select(so => (int?)so.ScheduleId).FirstOrDefaultAsync();
+            if (scheduleId == null) return null;
+            var schedule = await _db.Schedules.AsNoTracking()
+                .Include(s => s.ScheduleOrders.Where(so => allInSource || so.Id == parentId))
+                    .ThenInclude(so => so.Parts).ThenInclude(p => p.AssemblyUsages)
+                .FirstAsync(s => s.Id == scheduleId);
+            name      = schedule.Name;
+            pdfFolder = schedule.LocalPdfFolder ?? Path.Combine(_localPdfPath, "Schedules", name);
+            parents   = schedule.ScheduleOrders.OrderBy(so => so.Id)
+                .Select(so => (so.OrderNumber ?? "", so.Qty, so.Parts)).ToList();
+        }
+
+        var entries = new List<(PartLineItem Part, string Label, int Qty, string? Note)>();
+        foreach (var (label, parentQty, parts) in parents)
+        {
+            // Per-unit qty of each part inside the sub-assembly: the sub-assembly's own line, plus
+            // everything with a usage row for it.
+            var inside = new Dictionary<PartLineItem, int>();
+            foreach (var p in parts)
+            {
+                if (p.PartNumber.Equals(assemblyNumber, StringComparison.OrdinalIgnoreCase))
+                    inside[p] = p.Qty;
+                else if (p.AssemblyUsages.FirstOrDefault(u => u.AssemblyNumber.Equals(assemblyNumber, StringComparison.OrdinalIgnoreCase)) is { } u)
+                    inside[p] = u.Qty;
+            }
+            var insideNumbers = inside.Keys.Select(p => p.PartNumber).Append(assemblyNumber)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (p, qty) in inside)
+                entries.Add((p, label, qty * parentQty, OutsideNote(p, qty, parentQty, label, insideNumbers)));
+        }
+
+        if (entries.Count == 0)
+        {
+            _log.LogWarning("No parts recorded under sub-assembly '{Asm}' for {Source} parent {Id}", assemblyNumber, source, parentId);
+            return null;
+        }
+
+        var groups = entries
+            .GroupBy(e => e.Part.PartNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var first = g.First().Part;
+                var group = BuildGroup(first.PartNumber, first.Title, first.Description, first.Thickness, first.Material,
+                    first.StructCode, first.IsStock, ResolvePlantDisplay(first.PlantId, first.PlantIdRaw, plantNames),
+                    g.GroupBy(e => e.Label).Select(lg => (lg.Key, lg.Sum(e => e.Qty))).ToList(),
+                    Path.Combine(pdfFolder, first.PartNumber + ".pdf"),
+                    secondOperation: first.SecondOperation, finishOps: first.FinishOps,
+                    operation: PrintOperation(first.Operations)
+                               ?? (string.IsNullOrWhiteSpace(first.Operations) ? null : first.Operations.Trim()));
+                group.Notes.AddRange(g.Select(e => e.Note).OfType<string>());
+                return group;
+            })
+            .ToList();
+
+        // The sub-assembly's own drawing first, then the parts by operation in the usual print order.
+        var assembly = groups.FirstOrDefault(g => g.PartNumber.Equals(assemblyNumber, StringComparison.OrdinalIgnoreCase));
+        var ordered = groups.Where(g => g != assembly)
+            .GroupBy(g => g.Operation)
+            .OrderBy(s => s.Key == null)
+            .ThenBy(s => Array.IndexOf(PrintableOperations, s.Key) is var i and >= 0 ? i : PrintableOperations.Length)
+            .ThenBy(s => s.Key, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(s => s.Key != null && PrintableOperations.Contains(s.Key)
+                ? SortGroups(s.ToList(), s.Key)
+                : s.OrderBy(g => g.PartNumber).ToList())
+            .ToList();
+        if (assembly != null) ordered.Insert(0, assembly);
+
+        var kind = source == ReportSource.Batch ? "Batch" : "Schedule";
+        var scope = allInSource ? "All" : parents[0].Label;
+        _log.LogInformation("Generating sub-assembly report for '{Asm}' in {Kind} '{Name}' ({Scope}): {Count} parts",
+            assemblyNumber, kind, name, scope, ordered.Count);
+        return new ReportPdf(
+            BuildReport(ordered, $"{name} · {assemblyNumber}", isSchedule: source == ReportSource.Schedule, AllOperations, _log),
+            SafeFileNamePart($"SubAssembly-{assemblyNumber}-{kind}-{name}-{scope}.pdf"));
+    }
+
+    /// <summary>
+    /// "Also N pcs outside SA-1 for PROD-A (in SA-2, product)" when the part is used outside the
+    /// sub-assembly too, so nobody takes the sub-assembly's quantity for the whole requirement.
+    /// </summary>
+    private static string? OutsideNote(PartLineItem part, int qtyInside, int parentQty, string label,
+        IReadOnlySet<string> insideNumbers)
+    {
+        int outside = part.Qty - qtyInside;
+        if (outside <= 0) return null;
+        var where = part.AssemblyUsages
+            .Where(u => u.DirectQty > 0 && !insideNumbers.Contains(u.AssemblyNumber))
+            .Select(u => u.AssemblyNumber)
+            .ToList();
+        if (part.Qty > part.AssemblyUsages.Sum(u => u.DirectQty))
+            where.Add("product");
+        var whereText = where.Count > 0 ? $" (in {string.Join(", ", where)})" : "";
+        return $"{label}: also {outside * parentQty} pcs outside this sub-assembly{whereText}, {part.Qty * parentQty} total";
+    }
+
     // ── Per-order category reports (one ScheduleOrder's own Sub-Assembly / Part rows) ──
 
     public async Task<byte[]?> GenerateOrderSubAssembliesReportAsync(int scheduleOrderId, bool hideStock)
@@ -1030,6 +1184,18 @@ public class ReportService
             g.DrawString($"{qty} pcs", fontReg9, black, new PointF(qtyColX, by));
             by += 15f;
         }
+
+        if (part.Notes.Count > 0)
+        {
+            by += 6f;
+            var noteFormat = new PdfStringFormat { LineAlignment = PdfVerticalAlignment.Top, WordWrap = PdfWordWrapType.Word };
+            foreach (var note in part.Notes)
+            {
+                float width = pw - margin - bx;
+                g.DrawString(note, fontReg9, grayBrush, new RectangleF(bx, by, width, 40f), noteFormat);
+                by += fontReg9.MeasureString(note, width).Height + 4f;
+            }
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -1126,6 +1292,8 @@ public class ReportService
         public string? PlantDisplay { get; init; }
         public int TotalQty        { get; init; }
         public List<(string Label, int Qty)> Orders { get; init; } = new();
+        /// <summary>Extra lines under the per-order rows, e.g. use outside a printed sub-assembly.</summary>
+        public List<string> Notes  { get; init; } = new();
         public string? PdfPath     { get; init; }
     }
 

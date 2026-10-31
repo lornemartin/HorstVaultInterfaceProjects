@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<ScheduleOrder> ScheduleOrders => Set<ScheduleOrder>();
     public DbSet<PartLineItem> PartLineItems => Set<PartLineItem>();
+    public DbSet<PartLineItemAssemblyUsage> PartLineItemAssemblyUsages => Set<PartLineItemAssemblyUsage>();
     public DbSet<NestOrder> NestOrders => Set<NestOrder>();
     public DbSet<NestBatch> NestBatches => Set<NestBatch>();
     public DbSet<BatchProductHandoff> BatchProductHandoffs => Set<BatchProductHandoff>();
@@ -143,6 +144,17 @@ public class ApplicationDbContext : DbContext
             e.HasOne(p => p.BatchProduct).WithMany(bp => bp.Parts).HasForeignKey(p => p.BatchProductId).IsRequired(false);
             e.HasOne(p => p.ScheduleOrder).WithMany(so => so.Parts).HasForeignKey(p => p.ScheduleOrderId).IsRequired(false);
             e.HasOne(p => p.Plant).WithMany(pl => pl.PartLineItems).HasForeignKey(p => p.PlantId).IsRequired(false);
+        });
+
+        // PartLineItemAssemblyUsage
+        modelBuilder.Entity<PartLineItemAssemblyUsage>(e =>
+        {
+            e.ToTable("part_line_item_assembly_usages");
+            e.HasKey(u => u.Id);
+            e.Property(u => u.AssemblyNumber).HasMaxLength(100).IsRequired();
+            e.HasIndex(u => u.PartLineItemId);
+            e.HasOne(u => u.PartLineItem).WithMany(p => p.AssemblyUsages)
+                .HasForeignKey(u => u.PartLineItemId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // NestBatch

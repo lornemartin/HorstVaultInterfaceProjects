@@ -141,6 +141,18 @@ try
         return Results.File(report.Bytes, "application/pdf");
     }).RequireAuthorization();
 
+    // parentId is the BatchProduct / ScheduleOrder the sub-assembly row belongs to; all=true covers
+    // every product / order in its batch / schedule. The assembly number goes in the query because
+    // part numbers can contain slashes.
+    app.MapGet("/api/reports/subassembly/{source}/{parentId:int}", async (string source, int parentId, string assembly, bool? all, ReportService reports, HttpResponse response) =>
+    {
+        var reportSource = source.Equals("schedule", StringComparison.OrdinalIgnoreCase) ? ReportSource.Schedule : ReportSource.Batch;
+        var report = await reports.GenerateSubAssemblyReportAsync(reportSource, parentId, assembly, all == true);
+        if (report is null) return Results.NotFound();
+        response.Headers.ContentDisposition = $"inline; filename=\"{report.FileName}\"";
+        return Results.File(report.Bytes, "application/pdf");
+    }).RequireAuthorization();
+
     app.MapGet("/api/reports/schedule-custom-plant/{name}/{plantValue}", async (string name, string plantValue, bool hideStock, ReportService reports, HttpResponse response) =>
     {
         var n  = Uri.UnescapeDataString(name);

@@ -419,6 +419,14 @@
                     <CrossPlantMarker PartPlantId="row.PlantId" ParentPlantId="row.BatchPlantId"
                                       ViewerPlantId="_selectedPlantId" Plants="_plantLabels" ParentKind="batch"
                                       Status="_batchProductHandoffs.GetValueOrDefault(row.BatchProductId)?.Status" />
+                    if (row.CategoryOrder == 1)
+                    {
+                        <button @onclick="@(() => _subAssemblyPrintDialog!.ShowAsync(ReportSource.Batch, row.BatchProductId,
+                                              row.PartNumber, row.Description, row.ProductName ?? "", row.BatchName))"
+                                @onclick:stopPropagation="true"
+                                style="margin-right: 0.4rem; border: none; background: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
+                                title="Print this sub-assembly's drawings">&#x1F5A8;</button>
+                    }
                     if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
@@ -546,6 +554,7 @@
 }
 
 <PrintDrawingsDialog @ref="_printDialog" Plants="_plantLabels" />
+<SubAssemblyPrintDialog @ref="_subAssemblyPrintDialog" />
 
 <SfDialog @bind-Visible="_showStockDialog" Width="440px" IsModal="true" ShowCloseIcon="true"
           Header="Update Stock Flag" AllowDragging="true">
@@ -668,6 +677,7 @@
     private Dictionary<int, (string Code, string Name)> _plantLabels = new();
     private int? _selectedPlantId;
     private PrintDrawingsDialog? _printDialog;
+    private SubAssemblyPrintDialog? _subAssemblyPrintDialog;
     private int? _userId;
     private bool _isAdmin;
     private bool _releasedOnly;

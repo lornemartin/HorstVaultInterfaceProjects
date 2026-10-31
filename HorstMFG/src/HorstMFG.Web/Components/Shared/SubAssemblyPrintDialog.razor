@@ -1,0 +1,91 @@
+@* Print dialog for one sub-assembly's drawings, opened from the printer icon on its row in the
+   engineering grids. Quantities cover either this product / order or every product / order in
+   the batch / schedule that uses the same sub-assembly. *@
+@using HorstMFG.Web.Services
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+@inject ReportService Reports
+@inject IJSRuntime JS
+
+<SfDialog @bind-Visible="_visible" Width="460px" IsModal="true" ShowCloseIcon="true" AllowDragging="true"
+          Header="@($"Print drawings — {_assemblyNumber}")">
+    <DialogTemplates>
+        <Content>
+            <div style="font-size: 0.875rem;">
+                @if (!string.IsNullOrWhiteSpace(_description))
+                {
+                    <div style="color: #6b7280; margin-bottom: 0.75rem;">@_description</div>
+                }
+                @if (_loading)
+                {
+                    <span style="color: #6b7280;">Loading…</span>
+                }
+                else if (_info.PartCount == 0)
+                {
+                    <span style="color: #b91c1c;">
+                        No parts are recorded under this sub-assembly. Its BOM was probably imported before
+                        sub-assembly quantities were kept; re-import it to print by sub-assembly.
+                    </span>
+                }
+                else
+                {
+                    <div style="margin-bottom: 0.6rem;">
+                        @_info.PartCount part@(_info.PartCount != 1 ? "s" : "") under this sub-assembly, plus its own drawing.
+                    </div>
+                    <div style="color: #6b7280; margin-bottom: 0.3rem;">Quantities</div>
+                    <label style="display: flex; gap: 0.4rem; align-items: center; cursor: pointer; padding: 2px 0;">
+                        <input type="radio" name="subasm-scope" checked="@(!_allInSource)" @onchange="@(() => _allInSource = false)" />
+                        This @ParentKind only: @_parentLabel
+                    </label>
+                    <label style="display: flex; gap: 0.4rem; align-items: center; cursor: pointer; padding: 2px 0;">
+                        <input type="radio" name="subasm-scope" checked="@_allInSource" @onchange="@(() => _allInSource = true)" />
+                        Every @_assemblyNumber in @SourceKind @_sourceName
+                        (@_info.ParentCount @ParentKind@(_info.ParentCount != 1 ? "s" : ""))
+                    </label>
+                }
+            </div>
+        </Content>
+        <FooterTemplate>
+            <SfButton OnClick="@(() => _visible = false)">Cancel</SfButton>
+            <SfButton OnClick="PrintAsync" CssClass="e-primary" Disabled="@(_loading || _info.PartCount == 0)" style="margin-left: 8px;">Print</SfButton>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    private bool _visible;
+    private bool _loading;
+    private ReportSource _source;
+    private int _parentId;
+    private string _assemblyNumber = "";
+    private string? _description;
+    private string _parentLabel = "";
+    private string _sourceName = "";
+    private bool _allInSource;
+    private ReportService.SubAssemblyPrintInfo _info = new(0, 0);
+
+    private string SourceKind => _source == ReportSource.Batch ? "batch" : "schedule";
+    private string ParentKind => _source == ReportSource.Batch ? "product" : "order";
+
+    /// <param name="parentId">The BatchProduct / ScheduleOrder the sub-assembly row belongs to.</param>
+    public async Task ShowAsync(ReportSource source, int parentId, string assemblyNumber, string? description,
+        string parentLabel, string sourceName)
+    {
+        (_source, _parentId, _assemblyNumber, _description, _parentLabel, _sourceName) =
+            (source, parentId, assemblyNumber, description, parentLabel, sourceName);
+        _allInSource = false;
+        _visible = true;
+        _loading = true;
+        StateHasChanged();
+        _info = await Reports.GetSubAssemblyPrintInfoAsync(source, parentId, assemblyNumber);
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task PrintAsync()
+    {
+        var url = $"/api/reports/subassembly/{SourceKind}/{_parentId}?assembly={Uri.EscapeDataString(_assemblyNumber)}&all={(_allInSource ? "true" : "false")}";
+        _visible = false;
+        await JS.InvokeVoidAsync("window.open", url, "_blank");
+    }
+}
