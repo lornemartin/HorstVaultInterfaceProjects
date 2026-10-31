@@ -1,6 +1,6 @@
 Import-Module WebAdministration
 
-$scriptPath  = "C:\Users\Lorne\Scripts\"
+$scriptPath  = "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects\HorstMFG\scripts"
 $repoRoot    = "C:\Users\lorne\source\repos\HorstVaultInterfaceProjects"
 $projectPath = "$repoRoot\HorstMFG\src\HorstMFG.Web\HorstMFG.Web.csproj"
 $publishPath = "C:\inetpub\horstmfg"
