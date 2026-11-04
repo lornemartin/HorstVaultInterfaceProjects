@@ -123,3 +123,10 @@ public class FinalizeResult
     public string      NewProjectName  { get; set; } = "";
     public string      NewProjectPath  { get; set; } = "";
 }
+
+/// <summary>One .rpd under the station's projects folder, for the web app's project picker.</summary>
+public class ProjectFileEntry
+{
+    public string   Path         { get; set; } = "";
+    public DateTime LastModified { get; set; }
+}

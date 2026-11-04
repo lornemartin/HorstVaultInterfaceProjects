@@ -149,6 +149,18 @@ public class Worker : BackgroundService
 
     private async Task ExecuteCommandAsync(string commandId, string commandType, string payload)
     {
+        // Read-only and doesn't touch the active project, so no project check or watcher suspend.
+        if (commandType == "ListProjects")
+        {
+            try   { await SendResultAsync(commandId, true, JsonSerializer.Serialize(ListProjects())); }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Command {Type} failed", commandType);
+                await SendResultAsync(commandId, false, ex.Message);
+            }
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_activeProjectPath) &&
             commandType is not "RetrieveFromVault" and not "UpdateThumbnail")
         {
@@ -209,6 +221,41 @@ public class Worker : BackgroundService
         // Update file watcher to new project
         _activeProjectPath = result.NewProjectPath;
         _fileWatcher.Attach(_hub!, _config.StationId, result.NewProjectPath);
+        return result;
+    }
+
+    /// <summary>
+    /// The .rpd files under the projects folder, newest first: ones directly in it, plus one per
+    /// project folder (Finalize creates root\yyyy-MM-dd\yyyy-MM-dd.rpd). The folder is
+    /// RadanProjectsRootPath, or — when that's blank or doesn't exist — the one the active
+    /// project's folder sits in.
+    /// </summary>
+    private System.Collections.Generic.List<ProjectFileEntry> ListProjects()
+    {
+        var root = _config.RadanProjectsRootPath;
+        if (!System.IO.Directory.Exists(root) && !string.IsNullOrWhiteSpace(_activeProjectPath))
+        {
+            var fallback = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(_activeProjectPath)) ?? "";
+            _log.LogWarning("RadanProjectsRootPath '{Root}' not found; listing projects from '{Fallback}'", root, fallback);
+            root = fallback;
+        }
+        if (string.IsNullOrWhiteSpace(root) || !System.IO.Directory.Exists(root))
+            throw new InvalidOperationException($"Radan projects folder not found: '{root}'.");
+
+        var files = new System.Collections.Generic.List<string>(
+            System.IO.Directory.EnumerateFiles(root, "*.rpd"));
+        foreach (var dir in System.IO.Directory.EnumerateDirectories(root))
+        {
+            try   { files.AddRange(System.IO.Directory.EnumerateFiles(dir, "*.rpd")); }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        var result = files.ConvertAll(f => new ProjectFileEntry
+        {
+            Path         = f,
+            LastModified = System.IO.File.GetLastWriteTime(f),
+        });
+        result.Sort((a, b) => b.LastModified.CompareTo(a.LastModified));
         return result;
     }
 

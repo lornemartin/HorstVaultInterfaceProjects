@@ -14,6 +14,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Popups
 @using System.Text.Json
 
 <div class="nesting-panel border rounded p-2 bg-light" style="margin-bottom:1.5rem;">
@@ -47,6 +48,10 @@
                        value="@StripProjectRoot(_projectPath)"
                        @onchange="@(e => _projectPath = ExpandProjectRoot(e.Value?.ToString() ?? ""))"
                        disabled="@(_stationId == null)" />
+                <SfButton IconCss="e-icons e-folder-open" OnClick="BrowseProjects"
+                          Disabled="@(_stationId == null)" title="Pick a project from the station's projects folder">
+                    Browse…
+                </SfButton>
                 <SfButton OnClick="SetActiveProjectAsync"
                           Disabled="@(_stationId == null || string.IsNullOrWhiteSpace(_projectPath))">
                     Set
@@ -114,6 +119,49 @@
     }
 </div>
 
+
+@* Project picker: lists the .rpd files on the station itself (the Bridge reads its own disk), since
+   a browser file dialog can't return a full path. *@
+<SfDialog @bind-Visible="_browseVisible" Width="560px" IsModal="true" ShowCloseIcon="true" AllowDragging="true"
+          Header="Select Radan project">
+    <DialogTemplates>
+        <Content>
+            <div style="font-size:.875rem;">
+                @if (_browseError != null)
+                {
+                    <div class="text-danger">@_browseError</div>
+                }
+                else if (_browseCommandId != null)
+                {
+                    <span style="color:#6b7280;">Loading projects from the station…</span>
+                }
+                else if (_browseProjects.Count == 0)
+                {
+                    <span style="color:#6b7280;">No .rpd files found in the station's projects folder.</span>
+                }
+                else
+                {
+                    <input type="text" class="form-control form-control-sm" placeholder="Filter…"
+                           @bind="_browseFilter" @bind:event="oninput" style="margin-bottom:.5rem;" />
+                    <div style="max-height:360px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px;">
+                        @foreach (var p in FilteredBrowseProjects)
+                        {
+                            bool current = string.Equals(p.Path, _projectPath, StringComparison.OrdinalIgnoreCase);
+                            <div @onclick="@(() => PickProject(p.Path))"
+                                 style="display:flex; justify-content:space-between; gap:1rem; padding:.35rem .6rem;
+                                        cursor:pointer; border-bottom:1px solid #f1f3f5; @(current ? "background:#e7f1ff;" : "")"
+                                 title="@p.Path">
+                                <span>@StripProjectRoot(p.Path)</span>
+                                <span style="color:#6b7280; white-space:nowrap;">@p.LastModified.ToString("yyyy-MM-dd HH:mm")</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
 @code {
     // ── Parameters ────────────────────────────────────────────────────────────
     [Parameter] public string  ItemType  { get; set; } = "Order";   // "Order" | "Batch"
@@ -135,7 +183,21 @@
     private bool _eventsSubscribed;
     private int _prevPlantId = -1;
 
+    // Project picker. Its command is tracked apart from _pendingCommandId so browsing never
+    // blocks or swallows the result of a nesting command already in flight.
+    private bool _browseVisible;
+    private string? _browseCommandId;
+    private string? _browseError;
+    private string _browseFilter = "";
+    private List<ProjectFileDto> _browseProjects = new();
+
+    private IEnumerable<ProjectFileDto> FilteredBrowseProjects =>
+        string.IsNullOrWhiteSpace(_browseFilter)
+            ? _browseProjects
+            : _browseProjects.Where(p => p.Path.Contains(_browseFilter.Trim(), StringComparison.OrdinalIgnoreCase));
+
     private record StationOption(int Id, string Label);
+    private record ProjectFileDto(string Path, DateTime LastModified);
     private record StatusLine(string Text, string Css = "");
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -207,6 +269,28 @@
             var station = await db.NestingStations.FindAsync(id.Value);
             _projectPath = station?.ProjectPath ?? "";
         }
+    }
+
+    private void BrowseProjects()
+    {
+        if (_stationId == null) return;
+        _browseProjects  = new();
+        _browseFilter    = "";
+        _browseError     = null;
+        _browseCommandId = Guid.NewGuid().ToString();
+        _browseVisible   = true;
+        if (!BridgeHub.TrySendCommand(HubContext, _stationId.Value, _browseCommandId, "ListProjects", "{}"))
+        {
+            _browseCommandId = null;
+            _browseError     = $"Station {_stationId} is not connected.";
+        }
+    }
+
+    /// <summary>Fills the box with the picked project; Set still applies it to the station.</summary>
+    private void PickProject(string path)
+    {
+        _projectPath   = path;
+        _browseVisible = false;
     }
 
     private async Task SetActiveProjectAsync()
@@ -417,6 +501,26 @@
 
     private void OnCommandCompleted(int stationId, string commandId, bool success, string payload)
     {
+        if (commandId == _browseCommandId)
+        {
+            _ = InvokeAsync(() =>
+            {
+                _browseCommandId = null;
+                if (!success)
+                    _browseError = payload;
+                else
+                {
+                    try
+                    {
+                        _browseProjects = JsonSerializer.Deserialize<List<ProjectFileDto>>(payload,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                    }
+                    catch (Exception ex) { _browseError = $"Couldn't read the project list: {ex.Message}"; }
+                }
+                StateHasChanged();
+            });
+            return;
+        }
         if (commandId != _pendingCommandId) return;
         _ = InvokeAsync(async () =>
         {
