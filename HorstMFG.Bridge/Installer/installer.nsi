@@ -229,7 +229,8 @@ Function PageVault
 
   ${NSD_CreateLabel}    0 114u 100% 12u "Password:"
   Pop $0
-  ${NSD_CreatePassword} 0 128u 100% 13u ""
+  ; Pre-filled (masked) with the saved password so a rerun doesn't blank it in appsettings.json.
+  ${NSD_CreatePassword} 0 128u 100% 13u "$VaultPassword"
   Pop $hVaultPassword
 
   nsDialogs::Show
@@ -414,6 +415,22 @@ Section "Vault Item Export" SecItemExport
     Goto itemexport_done
   ${EndIf}
 
+  ; Back up an existing install to "Extensions Backup\ItemExport <timestamp>", next to Extensions.
+  IfFileExists "$R2\*.*" 0 itemexport_install
+    ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
+    StrCpy $R6 "$R1\Extensions Backup\ItemExport $2-$1-$0 $4$5$6"
+    DetailPrint "Backing up $R2 to $R6..."
+    CreateDirectory "$R6"
+    ClearErrors
+    CopyFiles /SILENT "$R2\*.*" "$R6"
+    IfErrors 0 itemexport_install
+      MessageBox MB_YESNO|MB_ICONEXCLAMATION \
+        "Couldn't back up the existing Item Export extension to:$\n$R6$\n$\nInstall the new version anyway?" \
+        IDYES itemexport_install
+      DetailPrint "Backup failed; skipped the Item Export extension."
+      Goto itemexport_done
+
+  itemexport_install:
   DetailPrint "Installing the Item Export Vault extension..."
   SetOutPath "$R2"
   File "${ITEMEXPORT_SRC}\ItemExport.dll"
