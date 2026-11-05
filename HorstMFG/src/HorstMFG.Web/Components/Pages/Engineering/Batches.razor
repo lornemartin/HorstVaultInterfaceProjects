@@ -177,6 +177,13 @@
                         &#9888; @batchMissing missing PDF@(batchMissing != 1 ? "s" : "")
                     </span>
                 }
+                @if (_batchMissingPropsCount.TryGetValue(batch.Id, out var batchMissingProps) && batchMissingProps > 0)
+                {
+                    <span style="margin-left: 0.5rem; color: #b45309; font-size: 0.75rem; font-weight: 600;"
+                          title="Parts missing an Operation, Thickness/Struct Code or Material in Vault">
+                        &#9888; @batchMissingProps missing props
+                    </span>
+                }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.4rem; align-items: center;">
                     @if (!batch.IsReleased && batch.PlantId == _selectedPlantId)
                     {
@@ -265,6 +272,13 @@
                 {
                     <span style="margin-left: 0.5rem; color: #b91c1c; font-size: 0.75rem; font-weight: 600;">
                         &#9888; @productMissing missing PDF@(productMissing != 1 ? "s" : "")
+                    </span>
+                }
+                @if (_productMissingPropsCount.TryGetValue(product.Id, out var productMissingProps) && productMissingProps > 0)
+                {
+                    <span style="margin-left: 0.5rem; color: #b45309; font-size: 0.75rem; font-weight: 600;"
+                          title="Parts missing an Operation, Thickness/Struct Code or Material in Vault">
+                        &#9888; @productMissingProps missing props
                     </span>
                 }
                 <span style="margin-left: 1.5rem; display: inline-flex; gap: 0.5rem; align-items: center;">
@@ -438,6 +452,7 @@
                                 style="margin-right: 0.4rem; border: none; background: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
                                 title="Print this sub-assembly's drawings">&#x1F5A8;</button>
                     }
+                    <MissingPropertiesBadge Missing="@row.MissingProperties" />
                     if (row.HasPdf)
                     {
                         <a href="/api/pdf-local/@Uri.EscapeDataString(row.PartNumber)" target="_blank"
@@ -475,6 +490,7 @@
         <GridColumn Field="Category" HeaderText="Category" Width="100" AllowSorting="false" />
         <GridColumn Field="Material" HeaderText="Material" Width="120" />
         <GridColumn Field="Thickness" HeaderText="Thickness" Width="90" />
+        <GridColumn Field="StructCode" HeaderText="Struct Code" Width="110" />
         <GridColumn Field="Operations" HeaderText="Operations" Width="110" />
         <GridColumn Field="SecondOperation" HeaderText="2nd Op" Width="110" />
         <GridColumn Field="FinishOps" HeaderText="Finish" Width="100" />
@@ -655,6 +671,8 @@
     private Dictionary<int, ProductCaption> _productMeta = new();
     private Dictionary<int, int> _batchMissingPdfCount = new();
     private Dictionary<int, int> _productMissingPdfCount = new();
+    private Dictionary<int, int> _batchMissingPropsCount = new();
+    private Dictionary<int, int> _productMissingPropsCount = new();
     private Dictionary<int, List<string>> _batchCustomPlantValues = new();
     private Dictionary<int, string> _customPlantReportSelection = new();
 
@@ -680,7 +698,7 @@
     private const string StateKey = "horstmfg.batches.grid.state";
     // Bump the version whenever the grid's columns change — Syncfusion persists column layout
     // under this ID, and restoring a stale layout over a changed column set scrambles the order.
-    private const string GridId = "BatchesGrid_v10";
+    private const string GridId = "BatchesGrid_v11";
     // Our own selector, not the pager's: the pager doesn't reliably report a size change, so the
     // choice couldn't be saved. Counts are top-level groups per page.
     private static readonly string[] PageSizeOptions = { "25", "50", "100", "All" };
@@ -1125,6 +1143,14 @@
             .GroupBy(r => r.BatchId)
             .ToDictionary(g => g.Key, g => g.Count());
         _productMissingPdfCount = missingRows
+            .GroupBy(r => r.BatchProductId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var missingPropsRows = visibleRows.Where(r => r.PartLineItemId != 0 && r.MissingProperties.Length > 0).ToList();
+        _batchMissingPropsCount = missingPropsRows
+            .GroupBy(r => r.BatchId)
+            .ToDictionary(g => g.Key, g => g.Count());
+        _productMissingPropsCount = missingPropsRows
             .GroupBy(r => r.BatchProductId)
             .ToDictionary(g => g.Key, g => g.Count());
 

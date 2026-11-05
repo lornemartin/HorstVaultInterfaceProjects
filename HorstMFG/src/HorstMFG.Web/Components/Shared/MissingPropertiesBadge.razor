@@ -1,0 +1,12 @@
+@* Amber pill placed before the part number on a row whose required Vault properties are missing
+   (see PartPropertyCheck); the tooltip names them. Renders nothing when Missing is empty. *@
+@if (!string.IsNullOrEmpty(Missing))
+{
+    <span title="Missing in Vault: @Missing"
+          style="margin-right: 0.4rem; padding: 0 0.35rem; border-radius: 9999px; background: #fef3c7; color: #92400e;
+                 border: 1px solid #f59e0b; font-size: 0.7rem; font-weight: 600; white-space: nowrap; cursor: default;">&#9888; Props</span>
+}
+
+@code {
+    [Parameter] public string? Missing { get; set; }
+}

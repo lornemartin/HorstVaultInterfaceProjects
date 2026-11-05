@@ -34,6 +34,8 @@ public class BomExportLine
     public string Notes { get; set; } = string.Empty;
     public string Revision { get; set; } = string.Empty;
     public bool HasPdf { get; set; }
+    /// <summary>See <see cref="PartPropertyCheck"/>; "" when nothing required is missing.</summary>
+    public string MissingProperties => PartPropertyCheck.Missing(Category, Operations, Thickness, StructCode, Material);
     public int SortOrder { get; set; }
     /// <summary>Per-sub-assembly quantities, kept from before duplicate lines were merged.</summary>
     public List<AssemblyUsage> AssemblyUsages { get; set; } = new();

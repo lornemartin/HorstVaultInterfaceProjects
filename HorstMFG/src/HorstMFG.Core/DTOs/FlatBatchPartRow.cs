@@ -29,6 +29,7 @@ public class FlatBatchPartRow
     public string Material { get; set; } = string.Empty;
     public string Thickness { get; set; } = string.Empty;
     public string Operations { get; set; } = string.Empty;
+    public string StructCode { get; set; } = string.Empty;
     public string SecondOperation { get; set; } = string.Empty;
     public string FinishOps { get; set; } = string.Empty;
     public int Qty { get; set; }
@@ -38,6 +39,8 @@ public class FlatBatchPartRow
     public string? Notes { get; set; }
     public int? PlantId { get; set; }
     public string? PlantIdRaw { get; set; }
+    /// <summary>See <see cref="PartPropertyCheck"/>; "" when nothing required is missing.</summary>
+    public string MissingProperties => PartPropertyCheck.Missing(Category, Operations, Thickness, StructCode, Material);
 
     // ── Import status ────────────────────────────────────────────────────────
     public bool VaultBomImported { get; set; }

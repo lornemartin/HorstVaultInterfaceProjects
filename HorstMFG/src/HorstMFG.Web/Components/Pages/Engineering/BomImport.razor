@@ -8,6 +8,7 @@
 @inject BridgeNotificationService BridgeEvents
 @implements IDisposable
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Components.Shared
 @using HorstMFG.Web.Services
 @using Microsoft.EntityFrameworkCore
 
@@ -122,6 +123,10 @@ else
             <strong>@_parsedLines.Count items parsed</strong>
             <span>|</span>
             <span style="color: @(_missingPdfCount > 0 ? "#b91c1c" : "#166534");">Missing PDFs: @_missingPdfCount</span>
+            @{ var missingProps = _parsedLines.Count(l => l.MissingProperties.Length > 0); }
+            <span>|</span>
+            <span style="color: @(missingProps > 0 ? "#b45309" : "#166534");"
+                  title="Parts missing an Operation, Thickness/Struct Code or Material in Vault">Missing properties: @missingProps</span>
         </div>
 
         <SfGrid DataSource="_parsedLines" AllowSorting="true" AllowFiltering="true" Height="660px"
@@ -142,11 +147,12 @@ else
             <GridColumns>
                 <GridColumn Field="@nameof(BomExportLine.SortOrder)"   HeaderText="Sort"        Width="0"   Visible="false" />
                 <GridColumn Field="@nameof(BomExportLine.HasPdf)"      HeaderText="PDF"         Width="60"  TextAlign="TextAlign.Center" DisplayAsCheckBox="true" AllowEditing="false" />
-                <GridColumn Field="@nameof(BomExportLine.Number)"      HeaderText="Number"      Width="130" AllowEditing="false">
+                <GridColumn Field="@nameof(BomExportLine.Number)"      HeaderText="Number"      Width="190" AllowEditing="false">
                     <Template>
                         @{
                             var line = context as BomExportLine;
-                            @if (line!.HasPdf)
+                            <MissingPropertiesBadge Missing="@line!.MissingProperties" />
+                            @if (line.HasPdf)
                             {
                                 <span @onmouseenter="@(e => OnThumbEnter(line.Number, e))"
                                       @onmouseleave="OnThumbLeave"
