@@ -668,16 +668,30 @@
             return "No sym share is configured (FileSystemPaths:SymNetworkSharePath), so the .sym file can't be copied.";
         if (!Directory.Exists(symDir))
             return $"The sym share isn't reachable: {symDir}";
+        var symPath = Path.Combine(symDir, fileName + ".sym");
+        var tmpPath = symPath + ".tmp";
         try
         {
-            var symPath = Path.Combine(symDir, fileName + ".sym");
-            await using var rs = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            await using var fs = File.Create(symPath);
-            await rs.CopyToAsync(fs);
+            // Already on the share (usually because it was picked from there): nothing to copy.
+            // An empty file is a broken earlier copy, so that one still gets replaced.
+            var existing = new System.IO.FileInfo(symPath);
+            if (existing.Exists && existing.Length > 0)
+                return null;
+            // Read the whole upload before touching the share, so a failed read can't leave a
+            // truncated .sym behind.
+            using var ms = new MemoryStream();
+            await using (var rs = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                await rs.CopyToAsync(ms);
+            if (ms.Length == 0)
+                return "The selected .sym file is empty.";
+            // Write beside the target and swap it in, so a failed write never leaves a truncated .sym.
+            await File.WriteAllBytesAsync(tmpPath, ms.ToArray());
+            File.Move(tmpPath, symPath, overwrite: true);
             return null;
         }
         catch (Exception ex)
         {
+            try { File.Delete(tmpPath); } catch { /* best effort */ }
             return $"Couldn't copy the .sym file to {symDir}: {ex.Message}";
         }
     }
