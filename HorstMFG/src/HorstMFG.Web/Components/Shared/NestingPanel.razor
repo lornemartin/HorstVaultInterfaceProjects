@@ -45,7 +45,11 @@
         <div style="flex:1; min-width:260px;">
             <label style="font-weight:600; display:block; margin-bottom:.2rem; font-size:.85em;">Active Project</label>
             <div style="display:flex; gap:.4rem;">
+                @* Sized inline: the app loads Syncfusion's theme, not Bootstrap, so form-control alone
+                   leaves the browser's default ~20-character width. *@
                 <input type="text" class="form-control form-control-sm" placeholder="Path to .rpd file…"
+                       style="width:40ch; max-width:100%; padding:.3rem .5rem; border:1px solid #ced4da; border-radius:4px;"
+                       title="@_projectPath"
                        value="@StripProjectRoot(_projectPath)"
                        @onchange="@(e => _projectPath = ExpandProjectRoot(e.Value?.ToString() ?? ""))"
                        disabled="@(_stationId == null)" />
@@ -147,7 +151,9 @@
                         <div class="@(_browseNoticeIsError ? "text-danger" : "text-success")" style="margin-bottom:.5rem;">@_browseNotice</div>
                     }
                     <input type="text" class="form-control form-control-sm" placeholder="Filter…"
-                           @bind="_browseFilter" @bind:event="oninput" style="margin-bottom:.5rem;" />
+                           @bind="_browseFilter" @bind:event="oninput"
+                           style="margin-bottom:.5rem; width:100%; box-sizing:border-box; padding:.3rem .5rem;
+                                  border:1px solid #ced4da; border-radius:4px;" />
                     <div style="max-height:360px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px;">
                         @foreach (var p in FilteredBrowseProjects)
                         {
