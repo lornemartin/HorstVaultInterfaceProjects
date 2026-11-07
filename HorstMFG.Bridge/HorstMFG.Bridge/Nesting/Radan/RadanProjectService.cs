@@ -80,6 +80,12 @@ public class RadanProjectService : INestingProjectService
         return payload;
     }
 
+    public SyncPayload ReadSyncDataFromFile(string path)
+    {
+        if (!File.Exists(path)) throw new FileNotFoundException($"Project file not found: {path}", path);
+        return ReadSyncData(new NestingProjectData { Path = path, Native = RpdService.Load(path) });
+    }
+
     public string? GetOpenProjectPath()
     {
         try

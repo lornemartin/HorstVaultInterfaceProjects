@@ -123,11 +123,13 @@ public class NestingSyncService
     /// the fact. Only that project's nests change; its items' QtyNested is recomputed across all
     /// their projects.
     /// </summary>
-    public async Task<string?> ApplyProjectResyncAsync(int plantId, SyncPayloadDto sync)
+    public async Task<string?> ApplyProjectResyncAsync(int stationId, SyncPayloadDto sync)
     {
         if (string.IsNullOrWhiteSpace(sync.ProjectPath)) return "Re-sync payload has no project path.";
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var project = await FindProjectAsync(db, plantId, sync.ProjectPath);
+        var station = await db.NestingStations.AsNoTracking().FirstOrDefaultAsync(s => s.Id == stationId);
+        if (station == null) return $"Station {stationId} not found.";
+        var project = await FindProjectAsync(db, station.PlantId, sync.ProjectPath);
         if (project == null)
             return $"'{sync.ProjectPath}' isn't a project HorstMFG has nested in.";
         if (project.Status == RadanProjectStatus.Legacy)
@@ -135,6 +137,29 @@ public class NestingSyncService
 
         await ApplyToProjectAsync(db, project, sync);
         return null;
+    }
+
+    /// <summary>
+    /// The status of each given .rpd's project in the station's plant, for the ones HorstMFG knows.
+    /// Keyed by the path as given; projects never nested in are left out.
+    /// </summary>
+    public async Task<Dictionary<string, RadanProjectStatus>> GetProjectStatusesAsync(int stationId, IEnumerable<string> rpdPaths)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var station = await db.NestingStations.AsNoTracking().FirstOrDefaultAsync(s => s.Id == stationId);
+        var result = new Dictionary<string, RadanProjectStatus>(StringComparer.OrdinalIgnoreCase);
+        if (station == null) return result;
+
+        var statusByDir = (await db.RadanProjects.AsNoTracking()
+                .Where(p => p.PlantId == station.PlantId)
+                .Select(p => new { p.ProjectDir, p.Status })
+                .ToListAsync())
+            .GroupBy(p => p.ProjectDir, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Status, StringComparer.OrdinalIgnoreCase);
+        foreach (var path in rpdPaths)
+            if (statusByDir.TryGetValue(ProjectDirOf(path), out var status))
+                result[path] = status;
+        return result;
     }
 
     /// <summary>Records the Radan part IDs the bridge got back for items it added to the active project.</summary>

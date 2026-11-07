@@ -23,6 +23,8 @@ public class Worker : BackgroundService
     private readonly FinalizeHandler _finalize;
     private readonly UpdateThumbnailHandler _updateThumbnail;
     private readonly FileWatcher _fileWatcher;
+    private readonly ProjectFolderWatcher _folderWatcher;
+    private readonly INestingProjectService _nesting;
     private readonly BomExportWatcher _bomExportWatcher;
     private readonly ILogger<Worker> _log;
 
@@ -38,6 +40,8 @@ public class Worker : BackgroundService
                   FinalizeHandler finalize,
                   UpdateThumbnailHandler updateThumbnail,
                   FileWatcher fileWatcher,
+                  ProjectFolderWatcher folderWatcher,
+                  INestingProjectService nesting,
                   BomExportWatcher bomExportWatcher,
                   ILogger<Worker> log)
     {
@@ -50,6 +54,8 @@ public class Worker : BackgroundService
         _finalize            = finalize;
         _updateThumbnail     = updateThumbnail;
         _fileWatcher         = fileWatcher;
+        _folderWatcher       = folderWatcher;
+        _nesting             = nesting;
         _bomExportWatcher    = bomExportWatcher;
         _log                 = log;
     }
@@ -74,6 +80,7 @@ public class Worker : BackgroundService
         }
 
         _fileWatcher.Detach();
+        _folderWatcher.Detach();
         _bomExportWatcher.Detach();
         if (_hub != null) await _hub.DisposeAsync();
     }
@@ -124,6 +131,8 @@ public class Worker : BackgroundService
         await _hub.StartAsync(ct);
         await RegisterAsync();
 
+        _folderWatcher.Attach(_hub, _config.StationId, _config.RadanProjectsRootPath, () => _activeProjectPath);
+
         if (!string.IsNullOrWhiteSpace(_config.BomExportFilePath))
             _bomExportWatcher.Attach(_hub, _config.StationId, _config.BomExportFilePath);
 
@@ -150,9 +159,18 @@ public class Worker : BackgroundService
     private async Task ExecuteCommandAsync(string commandId, string commandType, string payload)
     {
         // Read-only and doesn't touch the active project, so no project check or watcher suspend.
-        if (commandType == "ListProjects")
+        // ReadProject reads any saved .rpd from disk, for a re-sync of a finalized project.
+        if (commandType is "ListProjects" or "ReadProject")
         {
-            try   { await SendResultAsync(commandId, true, JsonSerializer.Serialize(ListProjects())); }
+            try
+            {
+                object result = commandType == "ListProjects"
+                    ? ListProjects()
+                    : _nesting.ReadSyncDataFromFile(
+                        JsonSerializer.Deserialize<ReadProjectRequest>(payload)?.Path
+                        ?? throw new ArgumentException("ReadProject needs a Path."));
+                await SendResultAsync(commandId, true, JsonSerializer.Serialize(result));
+            }
             catch (Exception ex)
             {
                 _log.LogError(ex, "Command {Type} failed", commandType);
@@ -169,6 +187,7 @@ public class Worker : BackgroundService
         }
 
         _fileWatcher.Suspend();
+        _folderWatcher.Suspend();
         try
         {
             void Progress(string msg, int pct) =>
@@ -212,6 +231,7 @@ public class Worker : BackgroundService
         {
             // Cooldown absorbs any async RPD write Radan makes after processing NotifyProjectChanged
             _fileWatcher.Resume(cooldownMs: 4000);
+            _folderWatcher.Resume();
         }
     }
 

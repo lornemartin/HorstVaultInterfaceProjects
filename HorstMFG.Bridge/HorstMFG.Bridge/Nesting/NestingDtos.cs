@@ -130,3 +130,9 @@ public class ProjectFileEntry
     public string   Path         { get; set; } = "";
     public DateTime LastModified { get; set; }
 }
+
+/// <summary>Payload of the ReadProject command: the .rpd to read for a re-sync.</summary>
+public class ReadProjectRequest
+{
+    public string Path { get; set; } = "";
+}

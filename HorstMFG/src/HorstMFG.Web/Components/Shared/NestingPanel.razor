@@ -7,6 +7,7 @@
 @implements IDisposable
 
 @using HorstMFG.Core.Entities
+@using HorstMFG.Core.Enums
 @using HorstMFG.Infrastructure.Data
 @using HorstMFG.Web.Hubs
 @using HorstMFG.Web.Services
@@ -141,17 +142,41 @@
                 }
                 else
                 {
+                    @if (_browseNotice != null)
+                    {
+                        <div class="@(_browseNoticeIsError ? "text-danger" : "text-success")" style="margin-bottom:.5rem;">@_browseNotice</div>
+                    }
                     <input type="text" class="form-control form-control-sm" placeholder="Filter…"
                            @bind="_browseFilter" @bind:event="oninput" style="margin-bottom:.5rem;" />
                     <div style="max-height:360px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px;">
                         @foreach (var p in FilteredBrowseProjects)
                         {
                             bool current = string.Equals(p.Path, _projectPath, StringComparison.OrdinalIgnoreCase);
-                            <div @onclick="@(() => PickProject(p.Path))"
-                                 style="display:flex; justify-content:space-between; gap:1rem; padding:.35rem .6rem;
-                                        cursor:pointer; border-bottom:1px solid #f1f3f5; @(current ? "background:#e7f1ff;" : "")"
-                                 title="@p.Path">
-                                <span>@StripProjectRoot(p.Path)</span>
+                            var status = _browseStatuses.TryGetValue(p.Path, out var s) ? s : (RadanProjectStatus?)null;
+                            // Finalized and legacy projects can't be made active again; a finalized one is
+                            // brought up to date with Re-sync instead.
+                            bool pickable = status is null or RadanProjectStatus.Open;
+                            <div @onclick="@(() => { if (pickable) PickProject(p.Path); })"
+                                 style="display:flex; align-items:center; gap:.75rem; padding:.35rem .6rem;
+                                        cursor:@(pickable ? "pointer" : "default"); border-bottom:1px solid #f1f3f5;
+                                        @(current ? "background:#e7f1ff;" : "") @(pickable ? "" : "color:#6b7280;")"
+                                 title="@(pickable ? p.Path : $"{p.Path} — {status!.Value.ToString().ToLowerInvariant()}, can't be made active")">
+                                <span style="flex:1;">@StripProjectRoot(p.Path)</span>
+                                @if (status is RadanProjectStatus.Finalized or RadanProjectStatus.Legacy)
+                                {
+                                    <span style="font-size:.7rem; padding:0 .4rem; border-radius:9999px; white-space:nowrap;
+                                                 background:#f1f3f5; border:1px solid #ced4da;">@status</span>
+                                }
+                                @if (status == RadanProjectStatus.Finalized)
+                                {
+                                    bool busy = _resyncCommandId != null && string.Equals(_resyncPath, p.Path, StringComparison.OrdinalIgnoreCase);
+                                    <button class="btn btn-outline-secondary btn-sm" style="padding:0 .4rem; font-size:.75rem;"
+                                            disabled="@(_resyncCommandId != null)" @onclick:stopPropagation="true"
+                                            @onclick="@(() => ResyncProject(p.Path))"
+                                            title="Read this project's saved nests from the station and update HorstMFG">
+                                        @(busy ? "Re-syncing…" : "Re-sync")
+                                    </button>
+                                }
                                 <span style="color:#6b7280; white-space:nowrap;">@p.LastModified.ToString("yyyy-MM-dd HH:mm")</span>
                             </div>
                         }
@@ -190,6 +215,14 @@
     private string? _browseError;
     private string _browseFilter = "";
     private List<ProjectFileDto> _browseProjects = new();
+    // Status of each listed project HorstMFG knows about; unknown ones (never nested in) are absent.
+    private Dictionary<string, RadanProjectStatus> _browseStatuses = new();
+    // A Re-sync of a finalized project, read from the station via ReadProject. Tracked like
+    // _browseCommandId so it never collides with a nesting command in flight.
+    private string? _resyncCommandId;
+    private string? _resyncPath;
+    private string? _browseNotice;
+    private bool _browseNoticeIsError;
 
     private IEnumerable<ProjectFileDto> FilteredBrowseProjects =>
         string.IsNullOrWhiteSpace(_browseFilter)
@@ -221,6 +254,7 @@
             BridgeEvents.ProgressReceived  += OnProgress;
             BridgeEvents.CommandCompleted  += OnCommandCompleted;
             BridgeEvents.AutoSyncReceived  += OnAutoSync;
+            BridgeEvents.ProjectResynced   += OnProjectResynced;
         }
         return Task.CompletedTask;
     }
@@ -230,6 +264,7 @@
         BridgeEvents.ProgressReceived -= OnProgress;
         BridgeEvents.CommandCompleted -= OnCommandCompleted;
         BridgeEvents.AutoSyncReceived -= OnAutoSync;
+        BridgeEvents.ProjectResynced  -= OnProjectResynced;
     }
 
     private async Task LoadStationsAsync()
@@ -275,8 +310,10 @@
     {
         if (_stationId == null) return;
         _browseProjects  = new();
+        _browseStatuses  = new();
         _browseFilter    = "";
         _browseError     = null;
+        _browseNotice    = null;
         _browseCommandId = Guid.NewGuid().ToString();
         _browseVisible   = true;
         if (!BridgeHub.TrySendCommand(HubContext, _stationId.Value, _browseCommandId, "ListProjects", "{}"))
@@ -284,6 +321,40 @@
             _browseCommandId = null;
             _browseError     = $"Station {_stationId} is not connected.";
         }
+    }
+
+    /// <summary>
+    /// Has the station read a finalized project's saved .rpd (without making it active, and
+    /// whether or not it's open in Radan) and applies it to that project only.
+    /// </summary>
+    private void ResyncProject(string path)
+    {
+        if (_stationId == null || _resyncCommandId != null) return;
+        _browseNotice    = null;
+        _resyncPath      = path;
+        _resyncCommandId = Guid.NewGuid().ToString();
+        if (!BridgeHub.TrySendCommand(HubContext, _stationId.Value, _resyncCommandId, "ReadProject",
+                JsonSerializer.Serialize(new { Path = path })))
+        {
+            _resyncCommandId     = null;
+            _browseNotice        = $"Station {_stationId} is not connected.";
+            _browseNoticeIsError = true;
+        }
+    }
+
+    private void OnProjectResynced(int stationId, string projectPath, string? rejection)
+    {
+        if (stationId != _stationId) return;
+        _ = InvokeAsync(async () =>
+        {
+            var name = System.IO.Path.GetFileNameWithoutExtension(projectPath);
+            if (rejection == null)
+                Log($"Re-synced {name} after it was saved in Radan.");
+            else
+                Log($"Re-sync of {name} skipped: {rejection}", "text-warning");
+            StateHasChanged();
+            await OnCompleted.InvokeAsync();
+        });
     }
 
     /// <summary>Fills the box with the picked project; Set still applies it to the station.</summary>
@@ -498,7 +569,7 @@
     {
         if (commandId == _browseCommandId)
         {
-            _ = InvokeAsync(() =>
+            _ = InvokeAsync(async () =>
             {
                 _browseCommandId = null;
                 if (!success)
@@ -509,10 +580,39 @@
                     {
                         _browseProjects = JsonSerializer.Deserialize<List<ProjectFileDto>>(payload,
                             new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                        _browseStatuses = await SyncService.GetProjectStatusesAsync(stationId, _browseProjects.Select(p => p.Path));
                     }
                     catch (Exception ex) { _browseError = $"Couldn't read the project list: {ex.Message}"; }
                 }
                 StateHasChanged();
+            });
+            return;
+        }
+        if (commandId == _resyncCommandId)
+        {
+            _ = InvokeAsync(async () =>
+            {
+                var name = System.IO.Path.GetFileNameWithoutExtension(_resyncPath ?? "");
+                _resyncCommandId = null;
+                string? rejection;
+                if (!success)
+                    rejection = payload;
+                else
+                {
+                    try
+                    {
+                        var sync = JsonSerializer.Deserialize<SyncPayloadDto>(payload,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        rejection = sync == null ? "The station returned nothing."
+                                                 : await SyncService.ApplyProjectResyncAsync(stationId, sync);
+                    }
+                    catch (Exception ex) { rejection = ex.Message; }
+                }
+                _browseNoticeIsError = rejection != null;
+                _browseNotice = rejection == null ? $"Re-synced {name}." : $"Re-sync of {name} failed: {rejection}";
+                Log(_browseNotice, rejection == null ? "" : "text-danger");
+                StateHasChanged();
+                if (rejection == null) await OnCompleted.InvokeAsync();
             });
             return;
         }

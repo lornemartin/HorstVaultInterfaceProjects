@@ -231,6 +231,45 @@ public class BridgeHub : Hub
     }
 
     /// <summary>
+    /// Called by the bridge's projects-folder watcher when an .rpd other than the active project
+    /// is saved — typically a finalized project edited in Radan after the fact. Applied server-side
+    /// like AutoSync. Saving an .rpd HorstMFG never nested in is normal, so those are dropped
+    /// quietly; legacy projects are refused by the service and reported.
+    /// </summary>
+    public async Task ProjectResync(int stationId, string syncPayloadJson)
+    {
+        string projectPath = "";
+        string? rejection;
+        try
+        {
+            var sync = JsonSerializer.Deserialize<SyncPayloadDto>(syncPayloadJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (sync == null || string.IsNullOrWhiteSpace(sync.ProjectPath)) return;
+            projectPath = sync.ProjectPath;
+
+            var known = await _syncService.GetProjectStatusesAsync(stationId, new[] { projectPath });
+            if (known.Count == 0)
+            {
+                _log.LogDebug("ProjectResync ignored for station {StationId}: {Project} isn't a HorstMFG project", stationId, projectPath);
+                return;
+            }
+
+            rejection = await _syncService.ApplyProjectResyncAsync(stationId, sync);
+            if (rejection != null)
+                _log.LogInformation("ProjectResync not applied for station {StationId}: {Reason}", stationId, rejection);
+            else
+                _log.LogInformation("ProjectResync applied for station {StationId}: {Project}", stationId, projectPath);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to apply ProjectResync payload for station {StationId}", stationId);
+            rejection = ex.Message;
+        }
+
+        _notifications.OnProjectResynced(stationId, projectPath, rejection);
+    }
+
+    /// <summary>
     /// Called by the BomExportWatcher when ItemExport writes a new export file.
     /// Forwards the raw file contents to any open BOM Import pages for pre-population.
     /// </summary>

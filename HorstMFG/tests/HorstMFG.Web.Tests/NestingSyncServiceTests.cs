@@ -244,7 +244,7 @@ public class NestingSyncServiceTests
         Assert.Equal(7, await OrderQtyNestedAsync(_orderItemA));
 
         // Nest 101 in the old project is edited in Radan: A taken off it.
-        var rejection = await _service.ApplyProjectResyncAsync(PlantId, Payload(Project1, ("101", 2, 2)));
+        var rejection = await _service.ApplyProjectResyncAsync(StationId, Payload(Project1, ("101", 2, 2)));
 
         Assert.Null(rejection);
         Assert.Equal(3, await OrderQtyNestedAsync(_orderItemA));
@@ -260,7 +260,7 @@ public class NestingSyncServiceTests
         await SendAsync(("Order", _orderItemB, 1));
         await SyncAsync(Project2, ("201", 1, 2));
 
-        await _service.ApplyProjectResyncAsync(PlantId, Payload(Project1, ("101", 1, 5)));
+        await _service.ApplyProjectResyncAsync(StationId, Payload(Project1, ("101", 1, 5)));
         await SyncAsync(Project2, ("201", 1, 3));
 
         Assert.Equal(5, await OrderQtyNestedAsync(_orderItemA));
@@ -272,7 +272,7 @@ public class NestingSyncServiceTests
     {
         await SeedLegacyNestAsync(_orderItemA, qty: 5);
 
-        var rejection = await _service.ApplyProjectResyncAsync(PlantId,
+        var rejection = await _service.ApplyProjectResyncAsync(StationId,
             Payload(@"S:\Radan Projects\2024-01-10\2024-01-10.rpd"));
 
         Assert.NotNull(rejection);
@@ -282,7 +282,7 @@ public class NestingSyncServiceTests
     [Fact]
     public async Task ResyncOfUnknownProject_IsRejected()
     {
-        Assert.NotNull(await _service.ApplyProjectResyncAsync(PlantId, Payload(@"C:\Elsewhere\x\x.rpd")));
+        Assert.NotNull(await _service.ApplyProjectResyncAsync(StationId, Payload(@"C:\Elsewhere\x\x.rpd")));
     }
 
     [Fact]
@@ -386,6 +386,25 @@ public class NestingSyncServiceTests
         Assert.Equal(2, await db.RadanPlacements.CountAsync(p => p.RadanProjectId == old.Id));
         Assert.Equal(RadanProjectStatus.Open, (await db.RadanProjects.SingleAsync(p => p.RpdPath == Project2)).Status);
         Assert.Equal(Project2, (await db.NestingStations.SingleAsync()).ProjectPath);
+    }
+
+    // ── Project statuses (Browse dialog) ─────────────────────────────────────
+
+    [Fact]
+    public async Task ProjectStatuses_CoverKnownProjects_AndLeaveOutUnknownOnes()
+    {
+        const string legacyRpd = @"S:\Radan Projects\2024-01-10\2024-01-10.rpd";
+        const string unknownRpd = @"C:\Radan Projects\2020-01-01\2020-01-01.rpd";
+        await SeedLegacyNestAsync(_orderItemA, qty: 5);
+        await SendAsync(("Order", _orderItemA, 1));
+        await FinalizeAsync(Project1, Project2, ("101", 1, 4));
+
+        var statuses = await _service.GetProjectStatusesAsync(StationId, new[] { Project1, Project2, legacyRpd, unknownRpd });
+
+        Assert.Equal(RadanProjectStatus.Finalized, statuses[Project1]);
+        Assert.Equal(RadanProjectStatus.Open, statuses[Project2]);
+        Assert.Equal(RadanProjectStatus.Legacy, statuses[legacyRpd]);
+        Assert.False(statuses.ContainsKey(unknownRpd));
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

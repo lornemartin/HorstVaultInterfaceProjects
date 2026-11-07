@@ -27,6 +27,12 @@ public interface INestingProjectService
     /// </summary>
     bool               UpdatePartQty(NestingProjectData project, long nestingId, int qty, string expectedSymPath);
     SyncPayload        ReadSyncData(NestingProjectData project);
+    /// <summary>
+    /// Reads a project's saved .rpd straight from disk for a re-sync, without the open-project
+    /// check LoadProject makes. Read-only, so it's safe for a project that isn't open in Radan —
+    /// typically a finalized project being brought up to date after edits.
+    /// </summary>
+    SyncPayload        ReadSyncDataFromFile(string path);
     string             CreateNewProject(string currentPath, DateTime date);
     /// <summary>
     /// The project path currently open in the live nesting software GUI, or null if none is open

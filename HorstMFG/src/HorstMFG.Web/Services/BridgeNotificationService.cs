@@ -40,6 +40,10 @@ public class BridgeNotificationService
     /// <summary>stationId, projectName, projectPath</summary>
     public event Action<int, string?, string?>? StationProjectChanged;
 
+    /// <summary>stationId, projectPath, rejection (null if applied) — fired when the bridge's
+    /// projects-folder watcher re-synced a saved project other than the active one.</summary>
+    public event Action<int, string, string?>? ProjectResynced;
+
     internal void OnProgress(int stationId, string commandId, string message, int percent)
         => ProgressReceived?.Invoke(stationId, commandId, message, percent);
 
@@ -58,4 +62,7 @@ public class BridgeNotificationService
 
     internal void OnStationProjectChanged(int stationId, string? projectName, string? projectPath)
         => StationProjectChanged?.Invoke(stationId, projectName, projectPath);
+
+    internal void OnProjectResynced(int stationId, string projectPath, string? rejection)
+        => ProjectResynced?.Invoke(stationId, projectPath, rejection);
 }
