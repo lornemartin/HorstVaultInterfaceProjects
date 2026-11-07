@@ -161,6 +161,17 @@ public class NestingSyncService
                         allNestedParts.Remove(np);
                     }
                 }
+
+                // A nest lists only the parts currently on it, so a part taken off this nest in Radan
+                // just stops appearing here rather than coming through with Qty 0. Drop its row for
+                // this nest; otherwise its old qty stays counted in QtyNested.
+                var listedItemIds = ListedItemIds(syncNest, itemsByRadanId, i => i.Id);
+                foreach (var gone in allNestedParts
+                             .Where(x => x.NestId == nest.Id && !listedItemIds.Contains(x.OrderItemId!.Value)).ToList())
+                {
+                    db.NestedParts.Remove(gone);
+                    allNestedParts.Remove(gone);
+                }
             }
 
             // A sync payload is authoritative for every nest a tracked item's RadanIdNumber
@@ -229,6 +240,14 @@ public class NestingSyncService
                         db.NestedParts.Remove(np);
                         allNestedParts.Remove(np);
                     }
+                }
+
+                var listedItemIds = ListedItemIds(syncNest, itemsByRadanId, i => i.Id);
+                foreach (var gone in allNestedParts
+                             .Where(x => x.NestId == nest.Id && !listedItemIds.Contains(x.BatchItemId!.Value)).ToList())
+                {
+                    db.NestedParts.Remove(gone);
+                    allNestedParts.Remove(gone);
                 }
             }
 
@@ -302,6 +321,14 @@ public class NestingSyncService
         await db.SaveChangesAsync();
         return null;
     }
+
+    /// <summary>Ids of the tracked items (order or batch) that this nest's payload lists.</summary>
+    private static HashSet<int> ListedItemIds<TItem>(
+        SyncNestDto syncNest, Dictionary<int, TItem> itemsByRadanId, Func<TItem, int> itemId)
+        => syncNest.Parts
+            .Where(e => itemsByRadanId.ContainsKey((int)e.RadanIdNumber))
+            .Select(e => itemId(itemsByRadanId[(int)e.RadanIdNumber]))
+            .ToHashSet();
 
     /// <summary>
     /// Of the given NestedParts not touched by this sync, returns only the ones whose Nest
