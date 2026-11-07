@@ -209,8 +209,11 @@
 
         if (_showEngineering)
         {
-            var schedQ = db.Schedules.AsQueryable();
-            var batchQ = db.Batches.AsQueryable();
+            // As the engineering pages show them: production-only batches (no products) and
+            // schedules (only orders already in production with no BOM, e.g. from RadanMaster) are left out.
+            var schedQ = db.Schedules.Where(s => !s.ScheduleOrders.Any() || s.ScheduleOrders.Any(so =>
+                so.Parts.Any() || so.VaultBomImported || !db.NestOrders.Any(no => no.ScheduleOrderId == so.Id)));
+            var batchQ = db.Batches.Where(b => b.BatchProducts.Any());
             if (filterByPlant)
             {
                 schedQ = schedQ.Where(s => s.PlantId == _plantId);

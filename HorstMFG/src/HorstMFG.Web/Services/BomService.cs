@@ -314,9 +314,12 @@ public class BomService : IBomService
         // Surface ScheduleOrders that have no PartLineItems yet (placeholders from the
         // Excel import flow, or orders whose Vault BOM query returned "not found").
         // These need to appear as empty groups so the user can see + edit them.
+        // Production-only orders (already in production, never had a BOM — e.g. brought over
+        // from RadanMaster) are left out, as production-only batches are.
         var seenOrderIds = rows.Select(r => r.ScheduleOrderId).ToHashSet();
         var emptyOrders = await db.Set<ScheduleOrder>()
             .Where(so => !seenOrderIds.Contains(so.Id))
+            .Where(so => so.VaultBomImported || !db.NestOrders.Any(no => no.ScheduleOrderId == so.Id))
             .Where(so => !plantId.HasValue || so.Schedule.PlantId == plantId.Value)
             .Where(so => !fromDate.HasValue || so.Schedule.ImportDate >= fromDate.Value.ToUniversalTime())
             .Where(so => !toDate.HasValue || so.Schedule.ImportDate < toDate.Value.ToUniversalTime().AddDays(1))
