@@ -26,6 +26,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Nest> Nests => Set<Nest>();
     public DbSet<NestedPart> NestedParts => Set<NestedPart>();
     public DbSet<NestingStation> NestingStations => Set<NestingStation>();
+    public DbSet<RadanProject> RadanProjects => Set<RadanProject>();
+    public DbSet<RadanPlacement> RadanPlacements => Set<RadanPlacement>();
     public DbSet<SystemConfiguration> SystemConfigurations => Set<SystemConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -231,6 +233,35 @@ public class ApplicationDbContext : DbContext
             e.Property(n => n.NestName).HasMaxLength(200).IsRequired();
             e.Property(n => n.NestPath).HasMaxLength(500);
             e.HasOne(n => n.Plant).WithMany(p => p.Nests).HasForeignKey(n => n.PlantId);
+            e.HasOne(n => n.RadanProject).WithMany(p => p.Nests).HasForeignKey(n => n.RadanProjectId).IsRequired(false);
+            // Radan reuses nest numbers across projects, so a name is only unique within its project.
+            e.HasIndex(n => new { n.RadanProjectId, n.NestName }).IsUnique();
+        });
+
+        // RadanProject
+        modelBuilder.Entity<RadanProject>(e =>
+        {
+            e.ToTable("radan_projects");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.ProjectDir).HasMaxLength(500).IsRequired();
+            e.Property(p => p.RpdPath).HasMaxLength(500);
+            e.Property(p => p.ProjectName).HasMaxLength(200).IsRequired();
+            e.Property(p => p.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            e.HasOne(p => p.Plant).WithMany().HasForeignKey(p => p.PlantId);
+            e.HasIndex(p => new { p.PlantId, p.ProjectDir }).IsUnique();
+        });
+
+        // RadanPlacement
+        modelBuilder.Entity<RadanPlacement>(e =>
+        {
+            e.ToTable("radan_placements");
+            e.HasKey(p => p.Id);
+            e.HasOne(p => p.RadanProject).WithMany(rp => rp.Placements).HasForeignKey(p => p.RadanProjectId);
+            e.HasOne(p => p.OrderItem).WithMany().HasForeignKey(p => p.OrderItemId).IsRequired(false);
+            e.HasOne(p => p.BatchItem).WithMany().HasForeignKey(p => p.BatchItemId).IsRequired(false);
+            e.HasIndex(p => new { p.RadanProjectId, p.RadanIdNumber }).IsUnique();
+            e.HasIndex(p => p.OrderItemId);
+            e.HasIndex(p => p.BatchItemId);
         });
 
         // NestedPart

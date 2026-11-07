@@ -136,7 +136,7 @@ public class BridgeHub : Hub
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (result == null) { _log.LogWarning("HandleFinalizeResult: payload deserialized to null"); return; }
 
-            var rejection = await _syncService.ApplyFinalizeAsync(stationId, 0, result);
+            var rejection = await _syncService.ApplyFinalizeAsync(stationId, result);
             if (rejection != null)
                 _log.LogWarning("Finalize rejected for station {StationId}: {Reason}", stationId, rejection);
             else
@@ -217,7 +217,7 @@ public class BridgeHub : Hub
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (sync != null)
             {
-                var rejection = await _syncService.ApplySyncPayloadAsync(stationId, 0, sync);
+                var rejection = await _syncService.ApplySyncPayloadAsync(stationId, sync);
                 if (rejection != null)
                     _log.LogWarning("AutoSync rejected for station {StationId}: {Reason}", stationId, rejection);
             }

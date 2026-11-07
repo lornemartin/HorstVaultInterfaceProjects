@@ -275,12 +275,18 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Property<int>("PlantId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("RadanProjectId")
+                        .HasColumnType("integer");
+
                     b.Property<byte[]>("Thumbnail")
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PlantId");
+
+                    b.HasIndex("RadanProjectId", "NestName")
+                        .IsUnique();
 
                     b.ToTable("nests", (string)null);
                 });
@@ -658,6 +664,85 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.ToTable("plants", (string)null);
                 });
 
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanPlacement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BatchItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrderItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RadanIdNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RadanProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchItemId");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("RadanProjectId", "RadanIdNumber")
+                        .IsUnique();
+
+                    b.ToTable("radan_placements", (string)null);
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanProject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FinalizedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PlantId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProjectDir")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RpdPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlantId", "ProjectDir")
+                        .IsUnique();
+
+                    b.ToTable("radan_projects", (string)null);
+                });
+
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
                 {
                     b.Property<int>("Id")
@@ -976,7 +1061,13 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HorstMFG.Core.Entities.RadanProject", "RadanProject")
+                        .WithMany("Nests")
+                        .HasForeignKey("RadanProjectId");
+
                     b.Navigation("Plant");
+
+                    b.Navigation("RadanProject");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.NestBatch", b =>
@@ -1106,6 +1197,40 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("PartLineItem");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanPlacement", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.BatchItem", "BatchItem")
+                        .WithMany()
+                        .HasForeignKey("BatchItemId");
+
+                    b.HasOne("HorstMFG.Core.Entities.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId");
+
+                    b.HasOne("HorstMFG.Core.Entities.RadanProject", "RadanProject")
+                        .WithMany("Placements")
+                        .HasForeignKey("RadanProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BatchItem");
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("RadanProject");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanProject", b =>
+                {
+                    b.HasOne("HorstMFG.Core.Entities.Plant", "Plant")
+                        .WithMany()
+                        .HasForeignKey("PlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plant");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>
@@ -1265,6 +1390,13 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Navigation("Schedules");
 
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("HorstMFG.Core.Entities.RadanProject", b =>
+                {
+                    b.Navigation("Nests");
+
+                    b.Navigation("Placements");
                 });
 
             modelBuilder.Entity("HorstMFG.Core.Entities.Schedule", b =>

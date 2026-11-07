@@ -297,17 +297,12 @@
     {
         if (_stationId == null || string.IsNullOrWhiteSpace(_projectPath)) return;
 
-        await using var db = await DbContextFactory.CreateDbContextAsync();
-        var station = await db.NestingStations.FindAsync(_stationId.Value);
-        if (station == null) return;
-
-        station.ProjectPath = _projectPath.Trim();
-        station.ProjectName = System.IO.Path.GetFileNameWithoutExtension(_projectPath.Trim());
-        await db.SaveChangesAsync();
+        var rejection = await SyncService.SetActiveProjectAsync(_stationId.Value, _projectPath);
+        if (rejection != null) { Log(rejection, "text-danger"); StateHasChanged(); return; }
 
         bool online = BridgeHub.TrySendSetActiveProject(HubContext, _stationId.Value, _projectPath.Trim());
         Log(online
-            ? $"Active project set to: {station.ProjectName}"
+            ? $"Active project set to: {System.IO.Path.GetFileNameWithoutExtension(_projectPath.Trim())}"
             : "Project saved. Station is offline — will apply on next connection.");
         StateHasChanged();
     }
@@ -592,28 +587,11 @@
     {
         var results = JsonSerializer.Deserialize<List<SendToNestingResultDto>>(payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        if (results == null) return;
+        if (results == null || _stationId == null) return;
 
-        int sent = 0, warned = 0;
-        await using var db = await DbContextFactory.CreateDbContextAsync();
-
-        foreach (var r in results)
-        {
-            if (ItemType == "Order")
-            {
-                var item = await db.OrderItems.FindAsync(r.ItemId);
-                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; item.NestingStationId = _stationId; }
-            }
-            else
-            {
-                var item = await db.BatchItems.FindAsync(r.ItemId);
-                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = (int)r.RadanIdNumber; item.NestingStationId = _stationId; }
-            }
-            sent++;
-            if (r.MissingSymFile) warned++;
-        }
-
-        await db.SaveChangesAsync();
+        var rejection = await SyncService.RecordSentToNestingAsync(_stationId.Value, ItemType, results);
+        if (rejection != null) { Log(rejection, "text-danger"); return; }
+        int sent = results.Count, warned = results.Count(r => r.MissingSymFile);
 
         foreach (var r in results)
         {
@@ -639,37 +617,10 @@
     {
         var result = JsonSerializer.Deserialize<RetrieveFromNestingResultDto>(payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        if (result == null) return;
+        if (result == null || _stationId == null) return;
 
-        var rejection = await ApplySyncPayloadAsync(result.Sync);
+        var rejection = await SyncService.ApplyRetrieveAsync(_stationId.Value, ItemType, result);
         if (rejection != null) { Log(rejection, "text-danger"); return; }
-
-        await using var db = await DbContextFactory.CreateDbContextAsync();
-
-        // One DB item = one Radan part, so ClearedItemIds/AdjustedItemIds already are the exact
-        // DB item IDs to update — no expansion across shared RadanIdNumbers needed.
-        if (ItemType == "Order")
-        {
-            var cleared = await db.OrderItems.Where(i => result.ClearedItemIds.Contains(i.Id)).ToListAsync();
-            foreach (var item in cleared)
-                { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
-
-            var adjusted = await db.OrderItems.Where(i => result.AdjustedItemIds.Contains(i.Id)).ToListAsync();
-            foreach (var item in adjusted)
-                { item.IsInRadanProject = false; item.NestingStationId = null; }
-        }
-        else
-        {
-            var cleared = await db.BatchItems.Where(i => result.ClearedItemIds.Contains(i.Id)).ToListAsync();
-            foreach (var item in cleared)
-                { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
-
-            var adjusted = await db.BatchItems.Where(i => result.AdjustedItemIds.Contains(i.Id)).ToListAsync();
-            foreach (var item in adjusted)
-                { item.IsInRadanProject = false; item.NestingStationId = null; }
-        }
-
-        await db.SaveChangesAsync();
         Log($"Retrieved {result.ClearedItemIds.Count + result.AdjustedItemIds.Count} item(s) from nesting project.");
     }
 
@@ -803,7 +754,7 @@
         // Delegate to the shared service — BridgeHub.AutoSync calls the same method directly so
         // this always applies even if no panel is open to receive the broadcast. Calling it again
         // here (when a panel IS open, for manual Sync/Retrieve) is a harmless no-op re-application.
-        return await SyncService.ApplySyncPayloadAsync(_stationId.Value, PlantId, sync);
+        return await SyncService.ApplySyncPayloadAsync(_stationId.Value, sync);
     }
 
     private void Log(string text, string css = "") =>
@@ -811,15 +762,8 @@
 
     // ── Private deserialization DTOs ──────────────────────────────────────────
 
-    // SyncPayloadDto and FinalizeResultDto live in HorstMFG.Web.Services.NestingSyncService —
-    // shared with BridgeHub, which applies AutoSync/Finalize results independent of this panel.
-    private record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile, bool VerifiedInProject);
-    private class RetrieveFromNestingResultDto
-    {
-        public SyncPayloadDto Sync            { get; set; } = new();
-        public List<int>      ClearedItemIds  { get; set; } = new();
-        public List<int>      AdjustedItemIds { get; set; } = new();
-    }
+    // SyncPayloadDto, FinalizeResultDto, SendToNestingResultDto and RetrieveFromNestingResultDto live
+    // in HorstMFG.Web.Services.NestingSyncService, which applies them to the database.
 
     private string _projectsRoot => Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
 

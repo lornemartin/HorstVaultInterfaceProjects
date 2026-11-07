@@ -1,4 +1,5 @@
 using HorstMFG.Core.Entities;
+using HorstMFG.Core.Enums;
 using HorstMFG.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +32,7 @@ public class SyncPayloadDto
     public List<SyncNestDto> Nests { get; set; } = new();
     /// <summary>
     /// The .rpd path the bridge actually read this payload from. Null on payloads from a
-    /// not-yet-updated bridge (pre-dating this field) — treated as "unknown, can't verify."
+    /// not-yet-updated bridge (pre-dating this field) — treated as the station's active project.
     /// </summary>
     public string? ProjectPath { get; set; }
 }
@@ -45,13 +46,28 @@ public class FinalizeResultDto
     public string NewProjectPath { get; set; } = "";
 }
 
+/// <summary>One item the bridge added to (or updated in) the Radan project, with the ID Radan gave it.</summary>
+public record SendToNestingResultDto(int ItemId, long RadanIdNumber, bool MissingSymFile, bool VerifiedInProject);
+
+public class RetrieveFromNestingResultDto
+{
+    public SyncPayloadDto Sync { get; set; } = new();
+    /// <summary>Items removed from the project outright (nothing of them was nested).</summary>
+    public List<int> ClearedItemIds { get; set; } = new();
+    /// <summary>Items whose Radan part stays, cut back to the qty already nested.</summary>
+    public List<int> AdjustedItemIds { get; set; } = new();
+}
+
 /// <summary>
-/// Applies bridge sync/finalize payloads to the database. Deliberately independent of any
-/// Blazor component's lifecycle — AutoSync and Finalize results must be applied whether or not
-/// a browser panel happens to be connected at the moment they arrive, since both can originate
-/// spontaneously (a file-watcher event, or a Finalize command whose initiating browser tab may
-/// have since closed/refreshed/disconnected). Called directly from BridgeHub for those two
-/// cases; NestingPanel.razor calls it too for its own manually-triggered Sync/Retrieve commands.
+/// Applies bridge results to the database. Deliberately independent of any Blazor component's
+/// lifecycle — AutoSync and Finalize results must be applied whether or not a browser panel
+/// happens to be connected at the moment they arrive. Called directly from BridgeHub for those
+/// two cases; NestingPanel.razor calls it for its own manually-triggered commands.
+///
+/// Radan numbers parts and nests per project, so everything is scoped to a RadanProject: a
+/// RadanPlacement says which item a Radan part ID stands for in that project, and nests are found
+/// by project and name. A sync payload is authoritative for its own project's nests only; nests
+/// in other projects (earlier ones, or legacy RadanMaster history) are never touched by it.
 /// </summary>
 public class NestingSyncService
 {
@@ -62,299 +78,323 @@ public class NestingSyncService
         _dbFactory = dbFactory;
     }
 
-    /// <returns>Null if applied. A human-readable rejection reason if the payload's project
-    /// didn't match the station's recorded active project and was refused.</returns>
-    public async Task<string?> ApplySyncPayloadAsync(int stationId, int plantIdOverride, SyncPayloadDto sync)
+    /// <summary>
+    /// Points the station at a project. Refuses finalized and legacy projects — those are changed
+    /// with a re-sync (ApplyProjectResyncAsync), never by making them active again.
+    /// </summary>
+    /// <returns>Null if set, otherwise why not.</returns>
+    public async Task<string?> SetActiveProjectAsync(int stationId, string rpdPath)
+    {
+        rpdPath = rpdPath.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var station = await db.NestingStations.FirstOrDefaultAsync(s => s.Id == stationId);
+        if (station == null) return $"Station {stationId} not found.";
+
+        var existing = await FindProjectAsync(db, station.PlantId, rpdPath);
+        if (existing is { Status: not RadanProjectStatus.Open })
+            return $"'{existing.ProjectName}' is {existing.Status.ToString().ToLowerInvariant()} and can't be made " +
+                   "the active project." + (existing.Status == RadanProjectStatus.Finalized
+                       ? " Edit it in Radan and re-sync it instead." : "");
+
+        await GetOrCreateOpenProjectAsync(db, station.PlantId, rpdPath);
+        station.ProjectPath = rpdPath;
+        station.ProjectName = Path.GetFileNameWithoutExtension(rpdPath);
+        await db.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>Applies a sync of the station's active project (manual Sync, AutoSync, Retrieve, Finalize).</summary>
+    /// <returns>Null if applied, otherwise why it was refused.</returns>
+    public async Task<string?> ApplySyncPayloadAsync(int stationId, SyncPayloadDto sync)
     {
         // NOTE: sync.Parts.Count == 0 is NOT a no-op — it's the live Radan project reporting it
-        // now has zero parts at all (e.g. every part in the project was deleted). That must still
-        // flow through below so stale NestedPart rows get cleaned up and QtyNested gets recomputed
-        // down to 0; an early return here previously left both permanently stuck at their last value.
+        // now has zero parts at all. That must still flow through so stale NestedPart rows get
+        // cleaned up and QtyNested gets recomputed down to 0.
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var (project, rejection) = await GetActiveProjectAsync(db, stationId, sync.ProjectPath);
+        if (project == null) return rejection;
 
-        var station = await db.NestingStations.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == stationId);
+        await ApplyToProjectAsync(db, project, sync);
+        return null;
+    }
 
-        // Refuse a payload for a project other than what the station currently thinks is active —
-        // applying it would scope item matching and stale-nest cleanup to the wrong project,
-        // which is exactly how a deleted nest's cleanup silently broke previously. Fail OPEN
-        // (allow) when either side's project path is unknown/blank — a not-yet-updated bridge
-        // (pre-dating this field), or a station that's never had its active project recorded yet —
-        // since there's nothing meaningful to compare against in that case.
-        if (!string.IsNullOrEmpty(sync.ProjectPath) && !string.IsNullOrEmpty(station?.ProjectPath) &&
-            !string.Equals(sync.ProjectPath, station.ProjectPath, StringComparison.OrdinalIgnoreCase))
+    /// <summary>
+    /// Applies a sync of any non-legacy project, typically a finalized one edited in Radan after
+    /// the fact. Only that project's nests change; its items' QtyNested is recomputed across all
+    /// their projects.
+    /// </summary>
+    public async Task<string?> ApplyProjectResyncAsync(int plantId, SyncPayloadDto sync)
+    {
+        if (string.IsNullOrWhiteSpace(sync.ProjectPath)) return "Re-sync payload has no project path.";
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await FindProjectAsync(db, plantId, sync.ProjectPath);
+        if (project == null)
+            return $"'{sync.ProjectPath}' isn't a project HorstMFG has nested in.";
+        if (project.Status == RadanProjectStatus.Legacy)
+            return $"'{project.ProjectName}' was imported from RadanMaster and is history only; it can't be re-synced.";
+
+        await ApplyToProjectAsync(db, project, sync);
+        return null;
+    }
+
+    /// <summary>Records the Radan part IDs the bridge got back for items it added to the active project.</summary>
+    public async Task<string?> RecordSentToNestingAsync(int stationId, string itemType, IEnumerable<SendToNestingResultDto> results)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var (project, rejection) = await GetActiveProjectAsync(db, stationId, null);
+        if (project == null) return rejection;
+
+        var isBatch = IsBatch(itemType);
+        var placements = await db.RadanPlacements.Where(p => p.RadanProjectId == project.Id).ToListAsync();
+        foreach (var r in results)
         {
-            return $"Sync rejected: payload is for project '{sync.ProjectPath}' but this station's " +
-                   $"recorded active project is '{station.ProjectPath}'. Use \"Set Active Project\" " +
-                   "if the project was changed outside of Finalize.";
+            var radanId = (int)r.RadanIdNumber;
+            var placement = placements.FirstOrDefault(p => p.RadanIdNumber == radanId);
+            if (placement == null)
+            {
+                placement = new RadanPlacement { RadanProject = project, RadanIdNumber = radanId };
+                db.RadanPlacements.Add(placement);
+                placements.Add(placement);
+            }
+            placement.OrderItemId = isBatch ? null : r.ItemId;
+            placement.BatchItemId = isBatch ? r.ItemId : null;
+
+            if (isBatch)
+            {
+                var item = await db.BatchItems.FindAsync(r.ItemId);
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = radanId; item.NestingStationId = stationId; }
+            }
+            else
+            {
+                var item = await db.OrderItems.FindAsync(r.ItemId);
+                if (item != null) { item.IsInRadanProject = true; item.RadanIdNumber = radanId; item.NestingStationId = stationId; }
+            }
         }
-
-        // Resolve plant ID from the station so admin users (plantIdOverride==0) work correctly.
-        var nestPlantId = plantIdOverride > 0 ? plantIdOverride : (station?.PlantId ?? 0);
-
-        // Project folder the station is currently pointed at (parent of the .rpd file). Used to
-        // scope stale-nest cleanup below to nests that could plausibly appear in this payload —
-        // a nest from an earlier, already-finalized project never will, so it must never be
-        // treated as "stale" just because this payload doesn't mention it.
-        var currentProjectDir = station?.ProjectPath != null ? Path.GetDirectoryName(station.ProjectPath) : null;
-
-        // One DB item = one Radan part (see SendToNestingHandler), so every RadanIdNumber maps
-        // to exactly one tracked item — no cross-item qty splitting needed.
-        //
-        // A sync payload always describes the WHOLE shared Radan project — both order and batch
-        // parts together — regardless of which panel (Order or Batch page) happened to trigger it.
-        // Both blocks below therefore always run, unconditionally: each only ever touches its own
-        // table, so running both from either panel is safe, and it's required — Finalize in
-        // particular clears tracking for both item types unconditionally right after this call, so
-        // skipping either branch here would permanently lose that type's final nested quantities.
-        {
-            var items = await db.OrderItems
-                .Where(i => i.NestingStationId == stationId && i.RadanIdNumber != null && i.IsInRadanProject)
-                .ToListAsync();
-            var itemIds = items.Select(i => i.Id).ToList();
-            // GroupBy/First instead of ToDictionary: tolerate leftover legacy items that still
-            // share a RadanIdNumber from before the one-item-one-Radan-part cutover.
-            var itemsByRadanId = items.GroupBy(i => i.RadanIdNumber!.Value).ToDictionary(g => g.Key, g => g.First());
-
-            var allNestedParts = await db.NestedParts
-                .Where(np => np.OrderItemId.HasValue && itemIds.Contains(np.OrderItemId.Value))
-                .ToListAsync();
-
-            var touchedNestIds = new HashSet<int>();
-
-            foreach (var syncNest in sync.Nests)
-            {
-                var nest = await db.Nests
-                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
-                if (nest == null)
-                {
-                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
-                    db.Nests.Add(nest);
-                    await db.SaveChangesAsync();
-                }
-                else
-                {
-                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
-                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
-                }
-                touchedNestIds.Add(nest.Id);
-
-                foreach (var entry in syncNest.Parts)
-                {
-                    if (!itemsByRadanId.TryGetValue((int)entry.RadanIdNumber, out var item)) continue;
-
-                    var np = allNestedParts.FirstOrDefault(x => x.NestId == nest.Id && x.OrderItemId == item.Id);
-                    if (entry.Qty > 0)
-                    {
-                        if (np == null)
-                        {
-                            var newNp = new NestedPart { NestId = nest.Id, OrderItemId = item.Id, Qty = entry.Qty };
-                            db.NestedParts.Add(newNp);
-                            allNestedParts.Add(newNp);
-                        }
-                        else
-                            np.Qty = entry.Qty;
-                    }
-                    else if (np != null)
-                    {
-                        db.NestedParts.Remove(np);
-                        allNestedParts.Remove(np);
-                    }
-                }
-
-                // A nest lists only the parts currently on it, so a part taken off this nest in Radan
-                // just stops appearing here rather than coming through with Qty 0. Drop its row for
-                // this nest; otherwise its old qty stays counted in QtyNested.
-                var listedItemIds = ListedItemIds(syncNest, itemsByRadanId, i => i.Id);
-                foreach (var gone in allNestedParts
-                             .Where(x => x.NestId == nest.Id && !listedItemIds.Contains(x.OrderItemId!.Value)).ToList())
-                {
-                    db.NestedParts.Remove(gone);
-                    allNestedParts.Remove(gone);
-                }
-            }
-
-            // A sync payload is authoritative for every nest a tracked item's RadanIdNumber
-            // currently appears in — but only within the CURRENT project. Any leftover NestedPart
-            // on a nest this sync didn't touch means that nest no longer exists in the live Radan
-            // project, UNLESS the nest belongs to an earlier (already-finalized) project, which
-            // will never appear in any future payload and must be preserved as history.
-            var staleParts = await FilterStaleAsync(db, allNestedParts, touchedNestIds, currentProjectDir);
-            foreach (var stale in staleParts)
-            {
-                db.NestedParts.Remove(stale);
-                allNestedParts.Remove(stale);
-            }
-
-            foreach (var item in items)
-                item.QtyNested = allNestedParts.Where(np => np.OrderItemId == item.Id).Sum(np => np.Qty);
-        }
-        {
-            var items = await db.BatchItems
-                .Where(i => i.NestingStationId == stationId && i.RadanIdNumber != null && i.IsInRadanProject)
-                .ToListAsync();
-            var itemIds = items.Select(i => i.Id).ToList();
-            var itemsByRadanId = items.GroupBy(i => i.RadanIdNumber!.Value).ToDictionary(g => g.Key, g => g.First());
-
-            var allNestedParts = await db.NestedParts
-                .Where(np => np.BatchItemId.HasValue && itemIds.Contains(np.BatchItemId.Value))
-                .ToListAsync();
-
-            var touchedNestIds = new HashSet<int>();
-
-            foreach (var syncNest in sync.Nests)
-            {
-                var nest = await db.Nests
-                    .FirstOrDefaultAsync(n => n.NestName == syncNest.NestName && n.PlantId == nestPlantId);
-                if (nest == null)
-                {
-                    nest = new Nest { NestName = syncNest.NestName, NestPath = syncNest.NestPath, Thumbnail = syncNest.ThumbnailBytes, PlantId = nestPlantId };
-                    db.Nests.Add(nest);
-                    await db.SaveChangesAsync();
-                }
-                else
-                {
-                    if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
-                    if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
-                }
-                touchedNestIds.Add(nest.Id);
-
-                foreach (var entry in syncNest.Parts)
-                {
-                    if (!itemsByRadanId.TryGetValue((int)entry.RadanIdNumber, out var item)) continue;
-
-                    var np = allNestedParts.FirstOrDefault(x => x.NestId == nest.Id && x.BatchItemId == item.Id);
-                    if (entry.Qty > 0)
-                    {
-                        if (np == null)
-                        {
-                            var newNp = new NestedPart { NestId = nest.Id, BatchItemId = item.Id, Qty = entry.Qty };
-                            db.NestedParts.Add(newNp);
-                            allNestedParts.Add(newNp);
-                        }
-                        else
-                            np.Qty = entry.Qty;
-                    }
-                    else if (np != null)
-                    {
-                        db.NestedParts.Remove(np);
-                        allNestedParts.Remove(np);
-                    }
-                }
-
-                var listedItemIds = ListedItemIds(syncNest, itemsByRadanId, i => i.Id);
-                foreach (var gone in allNestedParts
-                             .Where(x => x.NestId == nest.Id && !listedItemIds.Contains(x.BatchItemId!.Value)).ToList())
-                {
-                    db.NestedParts.Remove(gone);
-                    allNestedParts.Remove(gone);
-                }
-            }
-
-            var staleParts = await FilterStaleAsync(db, allNestedParts, touchedNestIds, currentProjectDir);
-            foreach (var stale in staleParts)
-            {
-                db.NestedParts.Remove(stale);
-                allNestedParts.Remove(stale);
-            }
-
-            foreach (var item in items)
-                item.QtyNested = allNestedParts.Where(np => np.BatchItemId == item.Id).Sum(np => np.Qty);
-        }
-
         await db.SaveChangesAsync();
         return null;
     }
 
     /// <summary>
-    /// Applies a Finalize result: writes final NestedPart rows for both item types (via
-    /// ApplySyncPayloadAsync), clears IsInRadanProject/NestingStationId for every item at the
-    /// station, and advances the station's recorded active project to the new one. Must run
-    /// regardless of whether a browser panel is connected — Finalize's real-world effect (Radan
-    /// rotating to a new project) is irreversible, so the DB bookkeeping can't be allowed to
-    /// silently no-op just because nobody's browser tab was open to catch the result.
+    /// Applies a RetrieveFromNesting result. Cleared items had nothing nested, so their Radan part is
+    /// gone and so is their placement. Adjusted items keep their part (cut back to what's nested)
+    /// and their placement, so later syncs of this project still count it.
     /// </summary>
-    /// <returns>Null if applied. A rejection reason if the embedded sync's project didn't match
-    /// (in which case tracking is NOT cleared and the station's project is NOT advanced — a
-    /// mismatch here means something unexpected sent this result, so it's safer to do nothing
-    /// than to rotate the project based on data for the wrong one).</returns>
-    public async Task<string?> ApplyFinalizeAsync(int stationId, int plantIdOverride, FinalizeResultDto result)
+    public async Task<string?> ApplyRetrieveAsync(int stationId, string itemType, RetrieveFromNestingResultDto result)
     {
-        var rejection = await ApplySyncPayloadAsync(stationId, plantIdOverride, result.Sync);
+        var rejection = await ApplySyncPayloadAsync(stationId, result.Sync);
         if (rejection != null) return rejection;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var (project, _) = await GetActiveProjectAsync(db, stationId, null);
+        var isBatch = IsBatch(itemType);
 
-        var nestedQty = result.Sync.Parts.ToDictionary(p => (int)p.RadanIdNumber, p => p.QtyNested);
-
-        var orderItems = await db.OrderItems
-            .Where(i => i.NestingStationId == stationId)
-            .ToListAsync();
-        foreach (var item in orderItems)
+        if (project != null)
         {
-            var qty = item.RadanIdNumber.HasValue
-                   && nestedQty.TryGetValue(item.RadanIdNumber.Value, out var q) ? q : 0;
-            item.IsInRadanProject = false;
-            item.NestingStationId = null;
-            if (qty == 0) item.RadanIdNumber = null;
+            var gone = await db.RadanPlacements
+                .Where(p => p.RadanProjectId == project.Id && (isBatch
+                    ? p.BatchItemId != null && result.ClearedItemIds.Contains(p.BatchItemId.Value)
+                    : p.OrderItemId != null && result.ClearedItemIds.Contains(p.OrderItemId.Value)))
+                .ToListAsync();
+            db.RadanPlacements.RemoveRange(gone);
         }
 
-        var batchItems = await db.BatchItems
-            .Where(i => i.NestingStationId == stationId)
-            .ToListAsync();
-        foreach (var item in batchItems)
+        if (isBatch)
         {
-            var qty = item.RadanIdNumber.HasValue
-                   && nestedQty.TryGetValue(item.RadanIdNumber.Value, out var q) ? q : 0;
-            item.IsInRadanProject = false;
-            item.NestingStationId = null;
-            if (qty == 0) item.RadanIdNumber = null;
+            foreach (var item in await db.BatchItems.Where(i => result.ClearedItemIds.Contains(i.Id)).ToListAsync())
+                { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+            foreach (var item in await db.BatchItems.Where(i => result.AdjustedItemIds.Contains(i.Id)).ToListAsync())
+                { item.IsInRadanProject = false; item.NestingStationId = null; }
         }
-
-        var station = await db.NestingStations.FindAsync(stationId);
-        if (station != null)
+        else
         {
-            station.ProjectName = result.NewProjectName;
-            station.ProjectPath = result.NewProjectPath;
+            foreach (var item in await db.OrderItems.Where(i => result.ClearedItemIds.Contains(i.Id)).ToListAsync())
+                { item.IsInRadanProject = false; item.RadanIdNumber = null; item.NestingStationId = null; }
+            foreach (var item in await db.OrderItems.Where(i => result.AdjustedItemIds.Contains(i.Id)).ToListAsync())
+                { item.IsInRadanProject = false; item.NestingStationId = null; }
         }
 
         await db.SaveChangesAsync();
         return null;
     }
 
-    /// <summary>Ids of the tracked items (order or batch) that this nest's payload lists.</summary>
-    private static HashSet<int> ListedItemIds<TItem>(
-        SyncNestDto syncNest, Dictionary<int, TItem> itemsByRadanId, Func<TItem, int> itemId)
-        => syncNest.Parts
-            .Where(e => itemsByRadanId.ContainsKey((int)e.RadanIdNumber))
-            .Select(e => itemId(itemsByRadanId[(int)e.RadanIdNumber]))
-            .ToHashSet();
+    /// <summary>
+    /// Applies a Finalize result: writes the final nest rows, marks the project finalized (its
+    /// placements stay, so it can be re-synced later), clears the station's items out of the
+    /// "currently in Radan" state and makes the new project active. Must run regardless of
+    /// whether a browser panel is connected — Radan has already rotated to the new project.
+    /// </summary>
+    /// <returns>Null if applied. A rejection reason if the embedded sync's project didn't match,
+    /// in which case nothing is changed or advanced.</returns>
+    public async Task<string?> ApplyFinalizeAsync(int stationId, FinalizeResultDto result)
+    {
+        var rejection = await ApplySyncPayloadAsync(stationId, result.Sync);
+        if (rejection != null) return rejection;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var (project, _) = await GetActiveProjectAsync(db, stationId, null);
+        if (project != null)
+        {
+            project.Status = RadanProjectStatus.Finalized;
+            project.FinalizedDate = DateTime.UtcNow;
+        }
+
+        foreach (var item in await db.OrderItems.Where(i => i.NestingStationId == stationId).ToListAsync())
+            { item.IsInRadanProject = false; item.NestingStationId = null; item.RadanIdNumber = null; }
+        foreach (var item in await db.BatchItems.Where(i => i.NestingStationId == stationId).ToListAsync())
+            { item.IsInRadanProject = false; item.NestingStationId = null; item.RadanIdNumber = null; }
+
+        var station = await db.NestingStations.FirstAsync(s => s.Id == stationId);
+        await GetOrCreateOpenProjectAsync(db, station.PlantId, result.NewProjectPath);
+        station.ProjectName = result.NewProjectName;
+        station.ProjectPath = result.NewProjectPath;
+
+        await db.SaveChangesAsync();
+        return null;
+    }
+
+    // ── Core ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Of the given NestedParts not touched by this sync, returns only the ones whose Nest
-    /// belongs to the currently active project — those are truly stale (removed from the live
-    /// project). NestedParts on nests from a different (older, already-finalized) project are
-    /// left alone, since that project will never appear in a future payload to "confirm" them.
-    /// A nest whose project can't be determined (unresolved NestPath) is also left alone —
-    /// safer to leave a rare leftover row than risk deleting real history.
+    /// Makes the project's nest rows match the payload exactly, then recomputes QtyNested for every
+    /// item that had or now has a row in it. A nest lists only the parts currently on it, so a part
+    /// taken off a nest just stops appearing there; nests missing from the payload were deleted.
+    /// Parts with no placement in this project aren't HorstMFG items and are ignored.
     /// </summary>
-    private static async Task<List<NestedPart>> FilterStaleAsync(
-        ApplicationDbContext db, List<NestedPart> allNestedParts, HashSet<int> touchedNestIds, string? currentProjectDir)
+    private static async Task ApplyToProjectAsync(ApplicationDbContext db, RadanProject project, SyncPayloadDto sync)
     {
-        var untouched = allNestedParts.Where(np => !touchedNestIds.Contains(np.NestId)).ToList();
-        if (untouched.Count == 0 || currentProjectDir == null) return new List<NestedPart>();
+        var itemByRadanId = await db.RadanPlacements
+            .Where(p => p.RadanProjectId == project.Id)
+            .ToDictionaryAsync(p => p.RadanIdNumber, p => new ItemKey(p.OrderItemId, p.BatchItemId));
 
-        var nestIds = untouched.Select(np => np.NestId).Distinct().ToList();
-        var nestPaths = await db.Nests.AsNoTracking()
-            .Where(n => nestIds.Contains(n.Id))
-            .Select(n => new { n.Id, n.NestPath })
-            .ToDictionaryAsync(n => n.Id, n => n.NestPath);
+        var nests = await db.Nests.Where(n => n.RadanProjectId == project.Id).ToListAsync();
+        var nestsByName = nests.ToDictionary(n => n.NestName);
+        var nestIds = nests.Select(n => n.Id).ToList();
+        var rows = await db.NestedParts.Where(np => nestIds.Contains(np.NestId)).ToListAsync();
 
-        return untouched.Where(np =>
+        var affected = rows.Select(r => new ItemKey(r.OrderItemId, r.BatchItemId))
+            .Concat(itemByRadanId.Values).ToHashSet();
+        var seenNests = new HashSet<string>();
+
+        foreach (var syncNest in sync.Nests)
         {
-            if (!nestPaths.TryGetValue(np.NestId, out var nestPath) || nestPath == null) return false;
-            var nestProjectDir = Path.GetDirectoryName(Path.GetDirectoryName(nestPath));
-            return string.Equals(nestProjectDir, currentProjectDir, StringComparison.OrdinalIgnoreCase);
-        }).ToList();
+            if (!nestsByName.TryGetValue(syncNest.NestName, out var nest))
+            {
+                nest = new Nest { NestName = syncNest.NestName, PlantId = project.PlantId, RadanProject = project };
+                db.Nests.Add(nest);
+                nestsByName[nest.NestName] = nest;
+            }
+            if (syncNest.NestPath != null) nest.NestPath = syncNest.NestPath;
+            if (syncNest.ThumbnailBytes != null) nest.Thumbnail = syncNest.ThumbnailBytes;
+            seenNests.Add(nest.NestName);
+
+            var wanted = syncNest.Parts
+                .Where(e => e.Qty > 0 && itemByRadanId.ContainsKey((int)e.RadanIdNumber))
+                .GroupBy(e => itemByRadanId[(int)e.RadanIdNumber])
+                .ToDictionary(g => g.Key, g => g.Sum(e => e.Qty));
+
+            foreach (var row in rows.Where(r => r.NestId == nest.Id && nest.Id != 0).ToList())
+            {
+                var key = new ItemKey(row.OrderItemId, row.BatchItemId);
+                if (wanted.Remove(key, out var qty))
+                    row.Qty = qty;
+                else
+                {
+                    db.NestedParts.Remove(row);
+                    rows.Remove(row);
+                }
+            }
+            foreach (var (key, qty) in wanted)
+                db.NestedParts.Add(new NestedPart { Nest = nest, OrderItemId = key.OrderItemId, BatchItemId = key.BatchItemId, Qty = qty });
+        }
+
+        var nestNameById = nests.ToDictionary(n => n.Id, n => n.NestName);
+        foreach (var row in rows.Where(r => !seenNests.Contains(nestNameById[r.NestId])))
+            db.NestedParts.Remove(row);
+
+        await db.SaveChangesAsync();
+        await RecomputeQtyNestedAsync(db, affected);
     }
+
+    private static async Task RecomputeQtyNestedAsync(ApplicationDbContext db, HashSet<ItemKey> items)
+    {
+        var orderIds = items.Where(k => k.OrderItemId != null).Select(k => k.OrderItemId!.Value).ToList();
+        var batchIds = items.Where(k => k.BatchItemId != null).Select(k => k.BatchItemId!.Value).ToList();
+
+        var orderSums = await db.NestedParts.Where(np => np.OrderItemId != null && orderIds.Contains(np.OrderItemId.Value))
+            .GroupBy(np => np.OrderItemId!.Value).Select(g => new { Id = g.Key, Qty = g.Sum(np => np.Qty) })
+            .ToDictionaryAsync(x => x.Id, x => x.Qty);
+        foreach (var item in await db.OrderItems.Where(i => orderIds.Contains(i.Id)).ToListAsync())
+            item.QtyNested = orderSums.GetValueOrDefault(item.Id);
+
+        var batchSums = await db.NestedParts.Where(np => np.BatchItemId != null && batchIds.Contains(np.BatchItemId.Value))
+            .GroupBy(np => np.BatchItemId!.Value).Select(g => new { Id = g.Key, Qty = g.Sum(np => np.Qty) })
+            .ToDictionaryAsync(x => x.Id, x => x.Qty);
+        foreach (var item in await db.BatchItems.Where(i => batchIds.Contains(i.Id)).ToListAsync())
+            item.QtyNested = batchSums.GetValueOrDefault(item.Id);
+
+        await db.SaveChangesAsync();
+    }
+
+    // ── Projects ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The station's active project, refusing a payload read from some other project — applying it
+    /// would put that project's part IDs onto this project's items. A payload with no project path
+    /// (an older bridge) is taken to be for the active project.
+    /// </summary>
+    private static async Task<(RadanProject? Project, string? Rejection)> GetActiveProjectAsync(
+        ApplicationDbContext db, int stationId, string? payloadProjectPath)
+    {
+        var station = await db.NestingStations.AsNoTracking().FirstOrDefaultAsync(s => s.Id == stationId);
+        if (station == null) return (null, $"Station {stationId} not found.");
+        if (string.IsNullOrWhiteSpace(station.ProjectPath))
+            return (null, "This station has no active project. Use \"Set Active Project\" first.");
+
+        if (!string.IsNullOrEmpty(payloadProjectPath) &&
+            !string.Equals(payloadProjectPath, station.ProjectPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return (null, $"Sync rejected: payload is for project '{payloadProjectPath}' but this station's " +
+                          $"recorded active project is '{station.ProjectPath}'. Use \"Set Active Project\" " +
+                          "if the project was changed outside of Finalize.");
+        }
+
+        var project = await GetOrCreateOpenProjectAsync(db, station.PlantId, station.ProjectPath);
+        if (project.Status != RadanProjectStatus.Open)
+            return (null, $"The station's active project '{project.ProjectName}' is {project.Status.ToString().ToLowerInvariant()}.");
+        return (project, null);
+    }
+
+    private static async Task<RadanProject> GetOrCreateOpenProjectAsync(ApplicationDbContext db, int plantId, string rpdPath)
+    {
+        var project = await FindProjectAsync(db, plantId, rpdPath);
+        if (project != null)
+        {
+            project.RpdPath ??= rpdPath;
+            return project;
+        }
+
+        project = new RadanProject
+        {
+            PlantId = plantId,
+            ProjectDir = ProjectDirOf(rpdPath),
+            RpdPath = rpdPath,
+            ProjectName = Path.GetFileNameWithoutExtension(rpdPath),
+            Status = RadanProjectStatus.Open,
+        };
+        db.RadanProjects.Add(project);
+        await db.SaveChangesAsync();
+        return project;
+    }
+
+    private static Task<RadanProject?> FindProjectAsync(ApplicationDbContext db, int plantId, string rpdPath)
+    {
+        var dir = ProjectDirOf(rpdPath).ToLower();
+        return db.RadanProjects.FirstOrDefaultAsync(p => p.PlantId == plantId && p.ProjectDir.ToLower() == dir);
+    }
+
+    private static string ProjectDirOf(string rpdPath) => Path.GetDirectoryName(rpdPath.Trim()) ?? rpdPath.Trim();
+
+    private static bool IsBatch(string itemType) => string.Equals(itemType, "Batch", StringComparison.OrdinalIgnoreCase);
+
+    private readonly record struct ItemKey(int? OrderItemId, int? BatchItemId);
 }
