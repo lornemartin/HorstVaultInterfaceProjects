@@ -397,14 +397,13 @@
                 })
                 .ToListAsync();
 
-            var nestRoot = Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
             var lookup = nestData
                 .GroupBy(n => n.BatchItemId)
                 .ToDictionary(g => g.Key, g => g.Select(n => new NestInfoRow
                 {
                     NestId   = n.NestId,
                     NestName = n.NestName,
-                    NestPath = StripRoot(n.NestPath, nestRoot),
+                    NestPath = FromProjectFolder(n.NestPath),
                     Qty      = n.Qty,
                 }).ToList());
 
@@ -789,12 +788,15 @@
         public List<NestInfoRow> Nests  { get; set; } = new();
     }
 
-    private static string? StripRoot(string? path, string root)
+    /// <summary>
+    /// A nest path from its project folder down (<c>2026-11-05\nests\75.drg</c>). Stations can each
+    /// keep projects in their own folder, so there's no single root to strip.
+    /// </summary>
+    private static string? FromProjectFolder(string? path)
     {
-        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(root)) return path;
-        if (path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-            return path[root.Length..].TrimStart('\\', '/');
-        return path;
+        if (string.IsNullOrEmpty(path)) return path;
+        var parts = path.Split('\\', '/');
+        return parts.Length <= 3 ? path : string.Join('\\', parts[^3..]);
     }
 
     private class NestInfoRow

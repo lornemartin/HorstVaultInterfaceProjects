@@ -279,6 +279,7 @@ public class ApplicationDbContext : DbContext
         {
             e.ToTable("nesting_stations");
             e.HasKey(n => n.Id);
+            e.Property(n => n.RadanProjectsRootPath).HasMaxLength(500);
             e.HasOne(n => n.Plant).WithMany(p => p.NestingStations).HasForeignKey(n => n.PlantId);
         });
 

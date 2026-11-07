@@ -100,6 +100,11 @@ public class BridgeHub : Hub
             station.BridgeVersion  = version;
             await db.SaveChangesAsync();
 
+            // Projects folder first, so the bridge's folder watcher and project list use this
+            // database's folder. Always sent — blank tells a bridge that kept an earlier folder
+            // across a reconnect to go back to its own setting. Older bridges just ignore it.
+            await Clients.Caller.SendAsync("SetProjectsRoot", station.RadanProjectsRootPath ?? "");
+
             // Send current active project to bridge so it can start watching the file
             if (!string.IsNullOrEmpty(station.ProjectPath))
                 await Clients.Caller.SendAsync("SetActiveProject", station.ProjectPath);
@@ -313,6 +318,15 @@ public class BridgeHub : Hub
     /// Tells the bridge for a given station to switch to a new active project.
     /// Returns false if the station is not connected.
     /// </summary>
+    /// <summary>Tells a connected station's bridge its projects folder changed. False if it's offline
+    /// (it gets the folder when it next connects).</summary>
+    public static bool TrySendProjectsRoot(IHubContext<BridgeHub> hubContext, int stationId, string rootPath)
+    {
+        if (!_stationToConn.TryGetValue(stationId, out var connId)) return false;
+        _ = hubContext.Clients.Client(connId).SendAsync("SetProjectsRoot", rootPath);
+        return true;
+    }
+
     public static bool TrySendSetActiveProject(IHubContext<BridgeHub> hubContext,
                                                int stationId, string projectPath)
     {

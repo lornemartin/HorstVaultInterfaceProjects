@@ -293,7 +293,8 @@
         {
             _stationId = StationId;
             var station = await db.NestingStations.FindAsync(StationId.Value);
-            _projectPath = station?.ProjectPath ?? "";
+            _projectPath         = station?.ProjectPath ?? "";
+            _stationProjectsRoot = station?.RadanProjectsRootPath;
         }
     }
 
@@ -301,14 +302,16 @@
 
     private async Task OnStationChangedAsync(int? id)
     {
-        _stationId   = id;
-        _projectPath = "";
+        _stationId           = id;
+        _projectPath         = "";
+        _stationProjectsRoot = null;
         await LoadStationsAsync();   // refresh ●/○ indicators
         if (id.HasValue)
         {
             await using var db = await DbContextFactory.CreateDbContextAsync();
             var station = await db.NestingStations.FindAsync(id.Value);
-            _projectPath = station?.ProjectPath ?? "";
+            _projectPath         = station?.ProjectPath ?? "";
+            _stationProjectsRoot = station?.RadanProjectsRootPath;
         }
     }
 
@@ -871,7 +874,9 @@
     // SyncPayloadDto, FinalizeResultDto, SendToNestingResultDto and RetrieveFromNestingResultDto live
     // in HorstMFG.Web.Services.NestingSyncService, which applies them to the database.
 
-    private string _projectsRoot => Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
+    // The selected station's projects folder, from the database; appsettings is only the fallback.
+    private string? _stationProjectsRoot;
+    private string _projectsRoot => _stationProjectsRoot ?? Configuration["FileSystemPaths:RadanProjectsRootPath"] ?? "";
 
     private string StripProjectRoot(string path)
     {

@@ -48,6 +48,7 @@ try
 
     // Services
     builder.Services.AddScoped<IBomService, BomService>();
+    builder.Services.AddSingleton<EnvironmentSettings>();
     builder.Services.AddScoped<BomPdfCopyService>();
     builder.Services.AddScoped<VaultBomIngestService>();
     builder.Services.AddScoped<ExcelScheduleParser>();
@@ -84,6 +85,8 @@ try
     {
         var initializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
         await initializer.InitializeAsync();
+        await app.Services.GetRequiredService<EnvironmentSettings>()
+            .LoadAsync(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
     }
 
     if (!app.Environment.IsDevelopment())

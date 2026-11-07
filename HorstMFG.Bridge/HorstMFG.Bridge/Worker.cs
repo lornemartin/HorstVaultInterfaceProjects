@@ -30,6 +30,9 @@ public class Worker : BackgroundService
 
     private HubConnection? _hub;
     private string? _activeProjectPath;
+    // The station's projects folder as recorded in HorstMFG's database, if it has one.
+    private string? _projectsRootOverride;
+    private string ProjectsRoot => _projectsRootOverride ?? _config.RadanProjectsRootPath;
 
     public Worker(IOptions<BridgeConfig> config,
                   IVaultService vault,
@@ -116,6 +119,15 @@ public class Worker : BackgroundService
             _log.LogInformation("Active project set to {Path}", path);
         });
 
+        // Hub method: HorstMFG sends this station's projects folder (kept per database) on connect
+        // and when an admin changes it. Blank means fall back to RadanProjectsRootPath in appsettings.
+        _hub.On<string>("SetProjectsRoot", (path) =>
+        {
+            _projectsRootOverride = string.IsNullOrWhiteSpace(path) ? null : path;
+            _folderWatcher.Attach(_hub, _config.StationId, ProjectsRoot, () => _activeProjectPath);
+            _log.LogInformation("Projects folder set to {Path}", ProjectsRoot);
+        });
+
         // When the server closes the connection, cancel the idle wait so the
         // outer retry loop in ExecuteAsync can reconnect cleanly.
         _hub.Closed += ex =>
@@ -131,7 +143,7 @@ public class Worker : BackgroundService
         await _hub.StartAsync(ct);
         await RegisterAsync();
 
-        _folderWatcher.Attach(_hub, _config.StationId, _config.RadanProjectsRootPath, () => _activeProjectPath);
+        _folderWatcher.Attach(_hub, _config.StationId, ProjectsRoot, () => _activeProjectPath);
 
         if (!string.IsNullOrWhiteSpace(_config.BomExportFilePath))
             _bomExportWatcher.Attach(_hub, _config.StationId, _config.BomExportFilePath);
@@ -247,12 +259,12 @@ public class Worker : BackgroundService
     /// <summary>
     /// The .rpd files under the projects folder, newest first: ones directly in it, plus one per
     /// project folder (Finalize creates root\yyyy-MM-dd\yyyy-MM-dd.rpd). The folder is
-    /// RadanProjectsRootPath, or — when that's blank or doesn't exist — the one the active
-    /// project's folder sits in.
+    /// ProjectsRoot, or — when that's blank or doesn't exist — the one the active project's
+    /// folder sits in.
     /// </summary>
     private System.Collections.Generic.List<ProjectFileEntry> ListProjects()
     {
-        var root = _config.RadanProjectsRootPath;
+        var root = ProjectsRoot;
         if (!System.IO.Directory.Exists(root) && !string.IsNullOrWhiteSpace(_activeProjectPath))
         {
             var fallback = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(_activeProjectPath)) ?? "";

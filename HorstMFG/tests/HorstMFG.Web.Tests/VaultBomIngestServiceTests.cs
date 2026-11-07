@@ -240,7 +240,7 @@ public class VaultBomIngestServiceTests : IDisposable
         var service = new VaultBomIngestService(
             _dbFactory,
             jobs,
-            new BomPdfCopyService(config, NullLogger<BomPdfCopyService>.Instance),
+            new BomPdfCopyService(config, new EnvironmentSettings(config), NullLogger<BomPdfCopyService>.Instance),
             NullLogger<VaultBomIngestService>.Instance);
 
         var lines = new List<VaultBomLine> { new() { Level = "1", Number = ProductName, Category = "Product", Qty = 1 } };

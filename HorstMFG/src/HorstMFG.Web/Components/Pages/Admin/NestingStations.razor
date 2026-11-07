@@ -2,8 +2,11 @@
 @attribute [Authorize(Policy = "Admin")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject IHubContext<BridgeHub> HubContext
 @using HorstMFG.Core.Entities
 @using HorstMFG.Infrastructure.Data
+@using HorstMFG.Web.Hubs
+@using Microsoft.AspNetCore.SignalR
 @using Microsoft.EntityFrameworkCore
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Popups
@@ -25,6 +28,7 @@
         <GridColumn Field="@nameof(StationRow.Name)"        HeaderText="Station Name" Width="200" />
         <GridColumn Field="@nameof(StationRow.PlantName)"   HeaderText="Plant"        Width="160" />
         <GridColumn Field="@nameof(StationRow.ProjectName)" HeaderText="Active Project" Width="180" />
+        <GridColumn Field="@nameof(StationRow.ProjectsRoot)" HeaderText="Radan Projects Folder" Width="220" />
         <GridColumn Field="@nameof(StationRow.BridgeStatus)" HeaderText="Bridge"      Width="100" />
         <GridColumn Field="@nameof(StationRow.BridgeLastSeen)" HeaderText="Last Seen" Width="180" Format="dd/MM/yyyy HH:mm:ss" Type="ColumnType.DateTime" />
         <GridColumn Field="@nameof(StationRow.BridgeVersion)" HeaderText="Version"    Width="100" />
@@ -55,6 +59,15 @@
                                     @bind-Value="_form.PlantId">
                         <DropDownListFieldSettings Text="Name" Value="Id" />
                     </SfDropDownList>
+                </div>
+
+                <div>
+                    <label class="form-label">Radan Projects Folder</label>
+                    <input class="form-control" @bind="_form.ProjectsRoot" placeholder="Leave blank to use the bridge's own setting"
+                           style="width:100%; box-sizing:border-box; padding:.3rem .5rem; border:1px solid #ced4da; border-radius:4px;" />
+                    <div style="font-size:.8rem; color:#6b7280; margin-top:.2rem;">
+                        As the station sees it, e.g. <code>C:\Radan Projects</code> or a shared <code>S:\Radan Projects</code>.
+                    </div>
                 </div>
 
                 @if (_dialogError is not null)
@@ -111,6 +124,7 @@
             Name          = s.Name,
             PlantName     = s.Plant.Name,
             ProjectName   = s.ProjectName,
+            ProjectsRoot  = s.RadanProjectsRootPath,
             BridgeLastSeen = s.BridgeLastSeen?.ToLocalTime(),
             BridgeVersion = s.BridgeVersion,
             BridgeStatus  = s.BridgeLastSeen.HasValue && (now - s.BridgeLastSeen.Value) < _offlineThreshold
@@ -130,7 +144,10 @@
     {
         var row = args.RowData;
         _editId = row.Id;
-        _form = new StationForm { Name = row.Name, PlantId = _plants.First(p => p.Name == row.PlantName).Id };
+        _form = new StationForm
+        {
+            Name = row.Name, PlantId = _plants.First(p => p.Name == row.PlantName).Id, ProjectsRoot = row.ProjectsRoot ?? "",
+        };
         _dialogError = null;
         await _dialog!.ShowAsync();
     }
@@ -157,22 +174,33 @@
                 s.Name == _form.Name.Trim() && s.PlantId == _form.PlantId && s.Id != (_editId ?? -1));
             if (duplicate) { _dialogError = "A station with that name already exists at this plant."; return; }
 
+            var projectsRoot = string.IsNullOrWhiteSpace(_form.ProjectsRoot) ? null : _form.ProjectsRoot.Trim();
+            NestingStation station;
+            bool rootChanged;
             if (_editId is null)
             {
-                db.NestingStations.Add(new NestingStation
+                station = new NestingStation
                 {
                     Name    = _form.Name.Trim(),
                     PlantId = _form.PlantId,
-                });
+                    RadanProjectsRootPath = projectsRoot,
+                };
+                db.NestingStations.Add(station);
+                rootChanged = false;   // a new station's bridge gets it when it first connects
             }
             else
             {
-                var station = await db.NestingStations.FirstAsync(s => s.Id == _editId);
+                station = await db.NestingStations.FirstAsync(s => s.Id == _editId);
+                rootChanged = !string.Equals(station.RadanProjectsRootPath, projectsRoot, StringComparison.OrdinalIgnoreCase);
                 station.Name    = _form.Name.Trim();
                 station.PlantId = _form.PlantId;
+                station.RadanProjectsRootPath = projectsRoot;
             }
 
             await db.SaveChangesAsync();
+            // Blank tells the bridge to go back to its own setting.
+            if (rootChanged)
+                BridgeHub.TrySendProjectsRoot(HubContext, station.Id, projectsRoot ?? "");
             await LoadStationsAsync(db);
             await _dialog!.HideAsync();
         }
@@ -206,6 +234,7 @@
         public string   Name          { get; init; } = "";
         public string   PlantName     { get; init; } = "";
         public string?  ProjectName   { get; init; }
+        public string?  ProjectsRoot  { get; init; }
         public string   BridgeStatus  { get; init; } = "Offline";
         public DateTime? BridgeLastSeen { get; init; }
         public string?  BridgeVersion { get; init; }
@@ -217,5 +246,6 @@
     {
         public string Name    { get; set; } = "";
         public int    PlantId { get; set; }
+        public string ProjectsRoot { get; set; } = "";
     }
 }

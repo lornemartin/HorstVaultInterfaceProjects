@@ -419,6 +419,10 @@ namespace HorstMFG.Infrastructure.Data.Migrations
                     b.Property<string>("ProjectPath")
                         .HasColumnType("text");
 
+                    b.Property<string>("RadanProjectsRootPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PlantId");

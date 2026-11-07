@@ -5,29 +5,27 @@ using Npgsql;
 namespace HorstMFG.Web.Services;
 
 /// <summary>
-/// Copies referenced PDFs from the network share into the local
-/// <c>{LocalPdfPath}\{DatabaseName}\{PlantName}\Schedules\{name}\</c> or
-/// <c>\Batches\{name}\</c> folder. Extracted from <see cref="BomService"/> so the
-/// Vault-callback ingest path can reuse the same copy logic as the legacy TSV import.
+/// Copies referenced PDFs from the network share into this database's local
+/// <c>{LocalPdfRoot}\{PlantName}\Schedules\{name}\</c> or <c>\Batches\{name}\</c> folder.
+/// Extracted from <see cref="BomService"/> so the Vault-callback ingest path can reuse the
+/// same copy logic as the legacy TSV import.
 /// </summary>
 public class BomPdfCopyService
 {
     private readonly string _pdfSharePath;
-    private readonly string _localPdfPath;
-    private readonly string _databaseName;
+    private readonly EnvironmentSettings _environment;
     private readonly ILogger<BomPdfCopyService> _log;
 
-    public BomPdfCopyService(IConfiguration config, ILogger<BomPdfCopyService> log)
+    public BomPdfCopyService(IConfiguration config, EnvironmentSettings environment, ILogger<BomPdfCopyService> log)
     {
         _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
-        _localPdfPath = config["FileSystemPaths:LocalPdfPath"] ?? @"C:\HorstMFG\PDFs\";
-        _databaseName = ResolveDatabaseName(config);
+        _environment = environment;
         _log = log;
     }
 
     /// <summary>
-    /// Extracts the Postgres database name from the DefaultConnection connection string,
-    /// so the local PDF folder layout separates by database without any extra config.
+    /// Extracts the Postgres database name from the DefaultConnection connection string. Used for
+    /// the default local PDF folder ({LocalPdfPath}\{DatabaseName}) a database gets pinned to.
     /// </summary>
     public static string ResolveDatabaseName(IConfiguration config)
     {
@@ -44,8 +42,8 @@ public class BomPdfCopyService
         }
     }
 
-    /// <summary>Root folder for this database's local PDFs — {LocalPdfPath}\{DatabaseName}\.</summary>
-    public string DatabaseRootFolder => Path.Combine(_localPdfPath, _databaseName);
+    /// <summary>Root folder for this database's local PDFs (its LocalPdfRoot setting).</summary>
+    public string DatabaseRootFolder => _environment.LocalPdfRoot;
 
     public string GetBatchFolder(string plantName, string batchName)
         => Path.Combine(DatabaseRootFolder, plantName, "Batches", batchName);

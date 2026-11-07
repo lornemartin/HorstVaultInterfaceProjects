@@ -39,31 +39,36 @@ public class ProjectFolderWatcher : IDisposable
         _log     = log;
     }
 
+    /// <summary>(Re)starts watching rootPath. Safe to call again, from any thread — the server can
+    /// send a new projects folder while the worker is attaching on connect.</summary>
     public void Attach(HubConnection hub, int stationId, string rootPath, Func<string?> activeProjectPath)
     {
-        Detach();
-        _hub               = hub;
-        _stationId         = stationId;
-        _activeProjectPath = activeProjectPath;
-
-        if (string.IsNullOrWhiteSpace(rootPath) || !Directory.Exists(rootPath))
+        lock (_lock)
         {
-            _log.LogWarning("ProjectFolderWatcher: projects folder '{Root}' not found — finalized projects won't re-sync automatically", rootPath);
-            return;
+            Detach();
+            _hub               = hub;
+            _stationId         = stationId;
+            _activeProjectPath = activeProjectPath;
+
+            if (string.IsNullOrWhiteSpace(rootPath) || !Directory.Exists(rootPath))
+            {
+                _log.LogWarning("ProjectFolderWatcher: projects folder '{Root}' not found — finalized projects won't re-sync automatically", rootPath);
+                return;
+            }
+
+            _watcher = new FileSystemWatcher(rootPath, "*.rpd")
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter          = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+                InternalBufferSize    = 64 * 1024,
+            };
+            _watcher.Changed += OnChanged;
+            _watcher.Renamed += OnChanged;   // some savers write a temp file and rename it over the .rpd
+            _watcher.Error   += (_, e) =>
+                _log.LogWarning(e.GetException(), "ProjectFolderWatcher: watcher error (changes may have been missed)");
+            _watcher.EnableRaisingEvents = true;
+            _log.LogInformation("ProjectFolderWatcher: watching {Root} for saved projects", rootPath);
         }
-
-        _watcher = new FileSystemWatcher(rootPath, "*.rpd")
-        {
-            IncludeSubdirectories = true,
-            NotifyFilter          = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
-            InternalBufferSize    = 64 * 1024,
-        };
-        _watcher.Changed += OnChanged;
-        _watcher.Renamed += OnChanged;   // some savers write a temp file and rename it over the .rpd
-        _watcher.Error   += (_, e) =>
-            _log.LogWarning(e.GetException(), "ProjectFolderWatcher: watcher error (changes may have been missed)");
-        _watcher.EnableRaisingEvents = true;
-        _log.LogInformation("ProjectFolderWatcher: watching {Root} for saved projects", rootPath);
     }
 
     /// <summary>Ignore saves while a bridge command is writing project files.</summary>
@@ -73,10 +78,10 @@ public class ProjectFolderWatcher : IDisposable
 
     public void Detach()
     {
-        _watcher?.Dispose();
-        _watcher = null;
         lock (_lock)
         {
+            _watcher?.Dispose();
+            _watcher = null;
             foreach (var timer in _pending.Values) timer.Dispose();
             _pending.Clear();
         }

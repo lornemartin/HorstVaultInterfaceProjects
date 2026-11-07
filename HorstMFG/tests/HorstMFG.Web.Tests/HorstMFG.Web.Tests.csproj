@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HorstMFG.Web\HorstMFG.Web.csproj" />
+    <ProjectReference Include="..\..\tools\HorstMFG.DataTransfer\HorstMFG.DataTransfer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
