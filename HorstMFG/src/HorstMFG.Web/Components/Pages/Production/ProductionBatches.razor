@@ -53,6 +53,16 @@
         <input type="checkbox" checked="@_hideComplete" @onchange="OnHideCompleteChanged" />
         Hide complete / fully nested
     </label>
+    @* Searches only on Enter or the button. Typing doesn't re-render, so a big grid can't lag the keyboard. *@
+    <input type="text" value="@_searchTerm" placeholder="Batch, file name, description, material, notes…"
+           @oninput="EventUtil.AsNonRenderingEventHandler<Microsoft.AspNetCore.Components.ChangeEventArgs>(OnSearchInput)"
+           @onkeydown="EventUtil.AsNonRenderingEventHandler<KeyboardEventArgs>(OnSearchKeyDown)"
+           style="width:260px; padding:.25rem .5rem; border:1px solid #d1d5db; border-radius:4px; font-size:.875rem;" />
+    <button class="btn btn-sm btn-outline-primary" @onclick="SearchAsync">Search</button>
+    @if (!string.IsNullOrEmpty(_searchTerm))
+    {
+        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearSearchAsync">Clear</button>
+    }
     @if (_items.Count > 0)
     {
         <span style="font-size:.8em; color:#6b7280;">@_items.Count rows</span>
@@ -295,6 +305,8 @@
     private DateTime? _fromDate = DateTime.Today.AddDays(-90);
     private DateTime? _toDate;
     private bool _hideComplete;
+    private string _searchInput = "";   // what's in the box
+    private string _searchTerm  = "";   // what the grid was last searched for
     private HashSet<string> _expandedGroupKeys = new();
     private DotNetObjectReference<ProductionBatches>? _dotNetRef;
     private long _thumbnailVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -371,6 +383,17 @@
 
         if (_hideComplete)
             query = query.Where(i => i.QtyRequired > i.QtyNested && !i.IsComplete);
+
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            var like = $"%{_searchTerm.Trim()}%";
+            query = query.Where(i =>
+                EF.Functions.ILike(i.NestBatch.Batch.Name, like) ||
+                (i.Part.FileName    != null && EF.Functions.ILike(i.Part.FileName, like)) ||
+                (i.Part.Description != null && EF.Functions.ILike(i.Part.Description, like)) ||
+                (i.Part.Material    != null && EF.Functions.ILike(i.Part.Material, like)) ||
+                (i.Notes            != null && EF.Functions.ILike(i.Notes, like)));
+        }
 
         _items = await query
             .Select(i => new BatchItemRow
@@ -456,6 +479,29 @@
     private async Task OnHideCompleteChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
         _hideComplete = (bool)(e.Value ?? false);
+        await ReloadAsync();
+    }
+
+    private Task OnSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _searchInput = e.Value?.ToString() ?? "";
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        _searchTerm = _searchInput.Trim();
+        await ReloadAsync();
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _searchInput = _searchTerm = "";
         await ReloadAsync();
     }
 
