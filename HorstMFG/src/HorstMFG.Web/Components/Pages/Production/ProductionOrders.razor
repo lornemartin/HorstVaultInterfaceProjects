@@ -31,6 +31,8 @@
     td.remaining-over     { background-color: #f8d7da !important; }
     .qty-input { width: 55px; text-align: right; border: 1px solid transparent; border-radius: 3px; padding: 1px 3px; background: transparent; }
     .qty-input:hover, .qty-input:focus { border-color: #ced4da; background: #fff; outline: none; }
+    .notes-input { width: 100%; border: 1px solid transparent; border-radius: 3px; padding: 1px 3px; background: transparent; text-overflow: ellipsis; }
+    .notes-input:hover, .notes-input:focus { border-color: #ced4da; background: #fff; outline: none; }
 </style>
 
 <h3>Orders</h3>
@@ -170,7 +172,17 @@
                        style="cursor:@(row.IsComplete && row.QtyNested >= row.QtyRequired ? "not-allowed" : "pointer"); width:16px; height:16px;" />
             </Template>
         </GridColumn>
-        <GridColumn Field="@nameof(OrderItemRow.Notes)"          HeaderText="Notes"      Width="180" />
+        <GridColumn Field="@nameof(OrderItemRow.Notes)"          HeaderText="Notes"      Width="180">
+            <Template>
+                @{ var row = (context as OrderItemRow)!; }
+                <input type="text" class="notes-input" value="@row.Notes" title="@row.Notes" maxlength="1000"
+                       @onchange="@(async e => await OnNotesChangedAsync(row, e.Value?.ToString()))"
+                       @onkeydown="@(async e => { if (e.Key == "Enter") await JS.InvokeVoidAsync("eval", "document.activeElement.blur()"); })"
+                       @onclick:stopPropagation="true"
+                       @onkeydown:stopPropagation="true"
+                       @onkeyup:stopPropagation="true" />
+            </Template>
+        </GridColumn>
     </GridColumns>
 </SfGrid>
 
@@ -437,6 +449,18 @@
         var item = await db.OrderItems.FindAsync(row.Id);
         if (item == null) return;
         item.QtyRequired = qty;
+        await db.SaveChangesAsync();
+    }
+
+    private async Task OnNotesChangedAsync(OrderItemRow row, string? value)
+    {
+        var notes = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        if (notes == row.Notes) return;
+        row.Notes = notes;
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var item = await db.OrderItems.FindAsync(row.Id);
+        if (item == null) return;
+        item.Notes = notes;
         await db.SaveChangesAsync();
     }
 
