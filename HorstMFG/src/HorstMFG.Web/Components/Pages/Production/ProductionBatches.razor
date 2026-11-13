@@ -122,7 +122,7 @@
                 var keyStr = ctx!.Key?.ToString() ?? "";
             }
             <span data-group-key="@keyStr" data-group-level="1" style="display:none;"></span>
-            <span style="font-weight:600;">@keyStr</span>
+            <span style="font-weight:600;">@(ctx.Field == "HasBends" ? (keyStr == "True" ? "Bent" : "Flat") : keyStr)</span>
             <span style="margin-left:.5rem; color:#6b7280; font-size:.8rem;">(@ctx.Count)</span>
             @if (ctx.Field == "BatchName" && _batchNameToNestBatchId.TryGetValue(keyStr, out var addNestBatchId))
             {
@@ -161,7 +161,16 @@
                      onerror="this.style.display='none'" />
             </Template>
         </GridColumn>
-        <GridColumn Field="@nameof(BatchItemRow.Form)"           HeaderText="Flat / Bent" Width="100" />
+        <GridColumn Field="@nameof(BatchItemRow.HasBends)" HeaderText="Bent" Width="75" TextAlign="TextAlign.Center">
+            <Template>
+                @{ var row = (context as BatchItemRow)!; }
+                <input type="checkbox" checked="@row.HasBends"
+                       @onchange="@(async e => await OnHasBendsChangedAsync(row, (bool)e.Value!))"
+                       @onclick:stopPropagation="true"
+                       title="Bent parts have a Brake Press second operation; this applies to the part everywhere it's used"
+                       style="cursor:pointer; width:16px; height:16px;" />
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(BatchItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(BatchItemRow.Material)"       HeaderText="Material"   Width="110" />
         <GridColumn Field="@nameof(BatchItemRow.Description)"    HeaderText="Description" Width="220" />
@@ -531,6 +540,22 @@
         await db.SaveChangesAsync();
     }
 
+    // Bends belong to the part, so every row and selection for that part changes with it.
+    private async Task OnHasBendsChangedAsync(BatchItemRow row, bool hasBends)
+    {
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var part = await db.Parts.FindAsync(row.PartId);
+        if (part == null) return;
+        part.HasBends = hasBends;
+        await db.SaveChangesAsync();
+
+        foreach (var r in _items.Where(r => r.PartId == row.PartId)) r.HasBends = hasBends;
+        for (var i = 0; i < _selectedForNesting.Count; i++)
+            if (_selectedForNesting[i].PartId == row.PartId)
+                _selectedForNesting[i] = _selectedForNesting[i] with { HasBends = hasBends };
+        StateHasChanged();
+    }
+
     private async Task OnIsCompleteChangedAsync(BatchItemRow row, bool newValue)
     {
         if (!newValue && row.QtyNested >= row.QtyRequired) return;
@@ -856,7 +881,6 @@
         public int     Remaining        => QtyRequired - QtyNested;
         public bool    IsInRadanProject { get; set; }
         public bool    HasBends         { get; set; }
-        public string  Form             => HasBends ? "Bent" : "Flat";   // a readable group caption
         public bool    IsComplete       { get; set; }
         public string? Notes            { get; set; }
         public List<NestInfoRow> Nests  { get; set; } = new();
