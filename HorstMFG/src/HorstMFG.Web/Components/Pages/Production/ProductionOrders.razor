@@ -72,7 +72,7 @@
 @* No column reordering: dragging a column while grouped crashes the circuit (Syncfusion doesn't
    support lazy-load grouping with a DetailTemplate, and turning lazy loading off broke paging). *@
 <SfGrid @ref="_grid"
-        TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v4"
+        TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v5"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true"
         AllowPaging="true" EnablePersistence="true" Height="max(300px, calc(100vh - 530px))">
@@ -168,6 +168,7 @@
                      onerror="this.style.display='none'" />
             </Template>
         </GridColumn>
+        <GridColumn Field="@nameof(OrderItemRow.Form)"           HeaderText="Flat / Bent" Width="100" />
         <GridColumn Field="@nameof(OrderItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(OrderItemRow.Material)"       HeaderText="Material"   Width="110" />
         <GridColumn Field="@nameof(OrderItemRow.Description)"    HeaderText="Description" Width="220" />
@@ -326,7 +327,7 @@
         }
         catch { }
         _dotNetRef = DotNetObjectReference.Create(this);
-        try { await JS.InvokeVoidAsync("horstGrid.watchStringExpansion", "ProductionOrdersGrid_v4", _dotNetRef); }
+        try { await JS.InvokeVoidAsync("horstGrid.watchStringExpansion", "ProductionOrdersGrid_v5", _dotNetRef); }
         catch (JSException) { }
         var savedKeys = await LocalSvc.GetAsync<List<string>>("prod-orders-expanded-groups");
         if (savedKeys?.Count > 0) _expandedGroupKeys = savedKeys.ToHashSet();
@@ -610,7 +611,7 @@
         try
         {
             await JS.InvokeVoidAsync("horstGrid.restoreStringExpansion",
-                "ProductionOrdersGrid_v4", _expandedGroupKeys.ToList());
+                "ProductionOrdersGrid_v5", _expandedGroupKeys.ToList());
         }
         catch (JSException) { }
     }
@@ -791,6 +792,7 @@
         public int     Remaining        => QtyRequired - QtyNested;
         public bool    IsInRadanProject { get; set; }
         public bool    HasBends         { get; set; }
+        public string  Form             => HasBends ? "Bent" : "Flat";   // a readable group caption
         public bool    IsComplete       { get; set; }
         public string? Notes            { get; set; }
         public List<NestInfoRow> Nests  { get; set; } = new();

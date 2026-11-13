@@ -1581,8 +1581,15 @@ public class BomService : IBomService
             System.Globalization.CultureInfo.InvariantCulture, out var t) ? t : null;
     }
 
+    /// <summary>A Brake Press second operation means the part is bent. Null when the BOM has no
+    /// second operation, so an existing part's flag is left as it is.</summary>
+    private static bool? HasBrakePress(string? secondOperation) =>
+        string.IsNullOrWhiteSpace(secondOperation) ? null
+            : secondOperation.Contains("Brake Press", StringComparison.OrdinalIgnoreCase);
+
     private async Task<Part> FindOrCreatePartAsync(ApplicationDbContext db, PartLineItem line)
     {
+        var bends = HasBrakePress(line.SecondOperation);
         var part = await db.Parts.FirstOrDefaultAsync(p => p.FileName == line.PartNumber);
         if (part is null)
         {
@@ -1592,6 +1599,7 @@ public class BomService : IBomService
                 Description = line.Description,
                 Material    = line.Material,
                 Thickness   = ParseThickness(line.Thickness),
+                HasBends    = bends ?? false,
             };
             db.Parts.Add(part);
         }
@@ -1602,6 +1610,7 @@ public class BomService : IBomService
             if (thk.HasValue)                              part.Thickness   = thk;
             if (!string.IsNullOrWhiteSpace(line.Material))    part.Material    = line.Material;
             if (!string.IsNullOrWhiteSpace(line.Description)) part.Description = line.Description;
+            if (bends.HasValue)                               part.HasBends    = bends.Value;
         }
         await db.SaveChangesAsync();
         return part;
