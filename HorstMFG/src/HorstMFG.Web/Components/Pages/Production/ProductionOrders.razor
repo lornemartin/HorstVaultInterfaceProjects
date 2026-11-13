@@ -72,7 +72,7 @@
 @* No column reordering: dragging a column while grouped crashes the circuit (Syncfusion doesn't
    support lazy-load grouping with a DetailTemplate, and turning lazy loading off broke paging). *@
 <SfGrid @ref="_grid"
-        TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v3"
+        TValue="OrderItemRow" DataSource="_items" ID="ProductionOrdersGrid_v4"
         AllowSorting="true" AllowMultiSorting="true" AllowResizing="true"
         AllowFiltering="true" AllowGrouping="true"
         AllowPaging="true" EnablePersistence="true" Height="max(300px, calc(100vh - 530px))">
@@ -150,14 +150,7 @@
                 QueryCellInfo="OnQueryCellInfo" />
     <GridColumns>
         <GridColumn Type="ColumnType.CheckBox" Width="50" />
-        <GridColumn HeaderText="" Width="68" AllowSorting="false" AllowFiltering="false" AllowGrouping="false" AllowReordering="false">
-            <Template>
-                @{ var row = (context as OrderItemRow)!; }
-                <img src="/api/thumbnails/part/@row.PartId?v=@_thumbnailVersion" loading="lazy"
-                     style="height:42px; object-fit:contain; display:block; margin:auto;"
-                     onerror="this.style.display='none'" />
-            </Template>
-        </GridColumn>
+        <GridColumn Field="@nameof(OrderItemRow.FileName)"       HeaderText="File Name"  Width="220" />
         <GridColumn Field="@nameof(OrderItemRow.QtyRequired)"    HeaderText="Req'd"      Width="80"  TextAlign="TextAlign.Right">
             <Template>
                 @{ var row = (context as OrderItemRow)!; }
@@ -167,11 +160,17 @@
         </GridColumn>
         <GridColumn Field="@nameof(OrderItemRow.QtyNested)"      HeaderText="Nested"     Width="80"  TextAlign="TextAlign.Right" />
         <GridColumn Field="@nameof(OrderItemRow.Remaining)"      HeaderText="Remaining"  Width="95"  TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(OrderItemRow.FileName)"       HeaderText="File Name"  Width="220" />
-        <GridColumn Field="@nameof(OrderItemRow.Description)"    HeaderText="Description" Width="220" />
-        <GridColumn Field="@nameof(OrderItemRow.Material)"       HeaderText="Material"   Width="110" />
+        <GridColumn HeaderText="" Width="68" AllowSorting="false" AllowFiltering="false" AllowGrouping="false" AllowReordering="false">
+            <Template>
+                @{ var row = (context as OrderItemRow)!; }
+                <img src="/api/thumbnails/part/@row.PartId?v=@_thumbnailVersion" loading="lazy"
+                     style="height:42px; object-fit:contain; display:block; margin:auto;"
+                     onerror="this.style.display='none'" />
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(OrderItemRow.Thickness)"      HeaderText="Thickness"  Width="90"  TextAlign="TextAlign.Right" />
-        <GridColumn Field="@nameof(OrderItemRow.OrderNumber)"    HeaderText="Order #"    Width="120" />
+        <GridColumn Field="@nameof(OrderItemRow.Material)"       HeaderText="Material"   Width="110" />
+        <GridColumn Field="@nameof(OrderItemRow.Description)"    HeaderText="Description" Width="220" />
         <GridColumn Field="@nameof(OrderItemRow.ScheduleName)"   HeaderText="Schedule"   Width="180" />
         <GridColumn Field="@nameof(OrderItemRow.IsComplete)" HeaderText="Complete" Width="95" TextAlign="TextAlign.Center">
             <Template>
@@ -184,7 +183,8 @@
                        style="cursor:@(row.IsComplete && row.QtyNested >= row.QtyRequired ? "not-allowed" : "pointer"); width:16px; height:16px;" />
             </Template>
         </GridColumn>
-        <GridColumn Field="@nameof(OrderItemRow.Notes)"          HeaderText="Notes"      Width="180">
+        <GridColumn Field="@nameof(OrderItemRow.OrderNumber)"    HeaderText="Order #"    Width="120" />
+        <GridColumn Field="@nameof(OrderItemRow.Notes)"         HeaderText="Notes"      Width="180">
             <Template>
                 @{ var row = (context as OrderItemRow)!; }
                 <input type="text" class="notes-input" value="@row.Notes" title="@row.Notes" maxlength="1000"
@@ -326,7 +326,7 @@
         }
         catch { }
         _dotNetRef = DotNetObjectReference.Create(this);
-        try { await JS.InvokeVoidAsync("horstGrid.watchStringExpansion", "ProductionOrdersGrid_v3", _dotNetRef); }
+        try { await JS.InvokeVoidAsync("horstGrid.watchStringExpansion", "ProductionOrdersGrid_v4", _dotNetRef); }
         catch (JSException) { }
         var savedKeys = await LocalSvc.GetAsync<List<string>>("prod-orders-expanded-groups");
         if (savedKeys?.Count > 0) _expandedGroupKeys = savedKeys.ToHashSet();
@@ -610,7 +610,7 @@
         try
         {
             await JS.InvokeVoidAsync("horstGrid.restoreStringExpansion",
-                "ProductionOrdersGrid_v3", _expandedGroupKeys.ToList());
+                "ProductionOrdersGrid_v4", _expandedGroupKeys.ToList());
         }
         catch (JSException) { }
     }
