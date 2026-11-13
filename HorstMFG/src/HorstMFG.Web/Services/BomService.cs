@@ -1370,19 +1370,14 @@ public class BomService : IBomService
 
         // Home-plant parts only — the other plant's accepted handoff parts are released
         // independently, whenever that plant is ready, via ReleaseBatchProductHandoffAsync.
-        var homeBucket = new List<(PartLineItem Sample, int TotalQty)>();
-        int skippedCount = 0;
-
-        foreach (var bp in batch.BatchProducts)
-        {
-            var laserStockParts = bp.Parts
+        // Bucketed across every product at once, so a part used by several products is one
+        // row with their quantities added (as RadanMaster did), not one row per product.
+        var laserStockParts = batch.BatchProducts
+            .SelectMany(bp => bp.Parts
                 .Where(p => p.Operations == "Laser" && p.IsStock)
-                .Select(p => (Part: p, ParentQty: bp.Qty));
+                .Select(p => (Part: p, ParentQty: bp.Qty)));
 
-            var (home, _, skipped) = BucketPartsByPlant(laserStockParts, batch.PlantId, otherPlantId: null);
-            homeBucket.AddRange(home);
-            skippedCount += skipped;
-        }
+        var (homeBucket, _, skippedCount) = BucketPartsByPlant(laserStockParts, batch.PlantId, otherPlantId: null);
 
         if (skippedCount > 0)
             _log.LogInformation(
