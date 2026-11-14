@@ -73,11 +73,18 @@
 
     <div style="min-width: 240px;">
         <label style="display: block; font-weight: 600; margin-bottom: 0.25rem;">Search</label>
-        @* No value binding and no render per keystroke: re-rendering a big grid on every key
-           makes typing lag, and a late render can overwrite characters typed since. *@
-        <input type="text" @oninput="EventUtil.AsNonRenderingEventHandler<Microsoft.AspNetCore.Components.ChangeEventArgs>(OnSearchInput)"
-               placeholder="Order name, part number, description…"
-               style="width: 100%; padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+        @* Searches only on Enter or the button. Typing doesn't re-render, so a big grid can't lag the keyboard. *@
+        <div style="display: flex; gap: 0.25rem;">
+            <input type="text" value="@_searchTerm" placeholder="Order name, part number, description…"
+                   @oninput="EventUtil.AsNonRenderingEventHandler<Microsoft.AspNetCore.Components.ChangeEventArgs>(OnSearchInput)"
+                   @onkeydown="EventUtil.AsNonRenderingEventHandler<KeyboardEventArgs>(OnSearchKeyDown)"
+                   style="flex: 1; min-width: 0; padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+            <button class="btn btn-sm btn-outline-primary" @onclick="SearchAsync">Search</button>
+            @if (!string.IsNullOrEmpty(_searchTerm))
+            {
+                <button class="btn btn-sm btn-outline-secondary" @onclick="ClearSearchAsync">Clear</button>
+            }
+        </div>
     </div>
 
     <div>
@@ -713,13 +720,13 @@
     private int?      _dateRangeDays = 30;
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
-    private string _searchTerm = "";
+    private string _searchInput = "";   // what's in the box
+    private string _searchTerm  = "";   // what the grid was last searched for
     private bool _hideStock = true;
     private bool _hideReleased = false;
     private bool _crossPlantOnly = false;
     private HashSet<int> _expandedScheduleIds = new();
     private HashSet<int> _expandedOrderIds    = new();
-    private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _saveCts;
     private CancellationTokenSource? _pollCts;
     private DotNetObjectReference<DailySchedule>? _dotNetRef;
@@ -1153,18 +1160,27 @@
     }
 
     // ── Filter handlers ───────────────────────────────────────────────────────
-    private async Task OnSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    private Task OnSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
-        _searchTerm = e.Value?.ToString() ?? "";
-        _searchCts?.Cancel();
-        _searchCts = new CancellationTokenSource();
-        var token = _searchCts.Token;
-        try
-        {
-            await Task.Delay(350, token);
-            await LoadData();
-        }
-        catch (TaskCanceledException) { }
+        _searchInput = e.Value?.ToString() ?? "";
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        _searchTerm = _searchInput.Trim();
+        await LoadData();
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _searchInput = _searchTerm = "";
+        await LoadData();
     }
 
     private async Task OnPlantChanged(int? value)
@@ -1754,7 +1770,6 @@
     {
         _dotNetRef?.Dispose();
         _saveCts?.Cancel();
-        _searchCts?.Cancel();
         _pollCts?.Cancel();
         await ValueTask.CompletedTask;
     }
