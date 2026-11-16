@@ -53,14 +53,6 @@ public class DbInitializer
         });
         await _context.SaveChangesAsync();
 
-        // Default configuration values
-        _context.SystemConfigurations.AddRange(
-            new SystemConfiguration { Key = "GhostscriptPath", Value = @"C:\Program Files\gs\gs9.21\bin\", Description = "Path to Ghostscript binaries" },
-            new SystemConfiguration { Key = "PdfOutputPath", Value = @"C:\HorstMFG\PDFs\", Description = "Default PDF output directory" },
-            new SystemConfiguration { Key = "VaultServer", Value = "localhost", Description = "Autodesk Vault server address" }
-        );
-        await _context.SaveChangesAsync();
-
         _logger.LogInformation("Database seeded successfully.");
     }
 }

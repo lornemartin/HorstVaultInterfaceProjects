@@ -1,12 +1,110 @@
 @page "/admin/configuration"
 @attribute [Authorize(Policy = "Admin")]
+@inject IConfiguration AppConfig
+@inject EnvironmentSettings Environment
+@using HorstMFG.Web.Services
 
 <PageTitle>Configuration - HorstMFG</PageTitle>
 
-<h1>System Configuration</h1>
+<h3>System Configuration</h3>
 
-<div class="placeholder-page">
-    <h3>Configuration</h3>
-    <p>Manage system-wide settings such as file paths, Vault connection, and Ghostscript configuration.</p>
-    <p>Settings are stored in the database and replace the legacy AppSettings.xml files.</p>
-</div>
+<p style="color:#6b7280; font-size:.9rem;">
+    Read-only. These are the values the running app is using. Changing any of them needs an app restart.
+</p>
+
+<h5 style="margin-top:1.5rem;">Database settings</h5>
+<p style="color:#6b7280; font-size:.85rem; margin-bottom:.5rem;">
+    Stored in this database, so they move with it when databases are swapped.
+</p>
+<table class="table table-sm" style="max-width:1100px;">
+    <thead><tr><th style="width:220px;">Setting</th><th>Value</th><th style="width:90px;">Found</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Local PDF folder<div style="font-size:.75rem; color:#6b7280;">@EnvironmentSettings.LocalPdfRootKey</div></td>
+            <td>
+                <code>@Environment.LocalPdfRoot</code>
+                <div style="font-size:.8rem; color:#6b7280; margin-top:.2rem;">
+                    Batches and schedules store their PDF folders as full paths under this one, so changing it
+                    means moving the files and rewriting those paths too. It can't be edited here for that reason.
+                </div>
+            </td>
+            <td>@Found(Environment.LocalPdfRoot)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h5 style="margin-top:1.5rem;">Server settings</h5>
+<p style="color:#6b7280; font-size:.85rem; margin-bottom:.5rem;">
+    From the web server's appsettings. "Found" is checked from the web server, not from a nesting station.
+</p>
+<table class="table table-sm" style="max-width:1100px;">
+    <thead><tr><th style="width:220px;">Setting</th><th>Value</th><th style="width:90px;">Found</th></tr></thead>
+    <tbody>
+        @foreach (var s in _serverSettings)
+        {
+            <tr>
+                <td>@s.Label<div style="font-size:.75rem; color:#6b7280;">@s.Key</div></td>
+                <td>
+                    @if (string.IsNullOrWhiteSpace(s.Value))
+                    {
+                        <span style="color:#b91c1c;">Not set</span>
+                    }
+                    else
+                    {
+                        <code>@s.Value</code>
+                        @if (s.IsDefault)
+                        {
+                            <span style="font-size:.75rem; color:#6b7280;"> (built-in default)</span>
+                        }
+                    }
+                    @if (s.Note is not null)
+                    {
+                        <div style="font-size:.8rem; color:#6b7280; margin-top:.2rem;">@s.Note</div>
+                    }
+                </td>
+                <td>@if (s.IsPath) { @Found(s.Value) }</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private record ServerSetting(string Label, string Key, string? Value, bool IsDefault, bool IsPath, string? Note = null);
+
+    private List<ServerSetting> _serverSettings = new();
+
+    protected override void OnInitialized()
+    {
+        // Defaults match what the code that reads each setting falls back to.
+        _serverSettings =
+        [
+            Setting("PDF share",              "FileSystemPaths:PdfSharePath",          @"S:\PDF Drawing Files\", isPath: true),
+            Setting("Local PDF base folder",  "FileSystemPaths:LocalPdfPath",          @"C:\HorstMFG\PDFs\",     isPath: true,
+                    "Where reports look for local PDFs, and the starting point for a new database's local PDF folder."),
+            Setting("Sym share",              "FileSystemPaths:SymNetworkSharePath",   null,                     isPath: true),
+            Setting("Radan projects folder",  "FileSystemPaths:RadanProjectsRootPath", null,                     isPath: true,
+                    "Used for stations that have no folder of their own (set on the Nesting Stations page)."),
+            Setting("Ghostscript",            "FileSystemPaths:GhostscriptPath",       @"C:\Program Files\gs\gs9.21\bin\gswin64c.exe", isPath: true),
+            Setting("Vault gateway",          "Gateway:BaseUrl",                       "http://127.0.0.1:5050",  isPath: false),
+            Setting("Vault gateway callback", "Gateway:CallbackUrl",                   "http://localhost:5150/api/internal/vault-bom-result", isPath: false),
+        ];
+    }
+
+    private ServerSetting Setting(string label, string key, string? fallback, bool isPath, string? note = null)
+    {
+        var value = AppConfig[key];
+        return string.IsNullOrWhiteSpace(value)
+            ? new ServerSetting(label, key, fallback, fallback is not null, isPath, note)
+            : new ServerSetting(label, key, value, false, isPath, note);
+    }
+
+    private static RenderFragment Found(string? path) => builder =>
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        var exists = Directory.Exists(path) || File.Exists(path);
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "style", exists ? "color:#15803d;" : "color:#b91c1c;");
+        builder.AddContent(2, exists ? "Yes" : "No");
+        builder.CloseElement();
+    };
+}
