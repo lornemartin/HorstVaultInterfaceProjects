@@ -31,11 +31,6 @@
     </GridColumns>
 </SfGrid>
 
-@if (_error is not null)
-{
-    <div style="color:red; margin-top:0.5rem;">@_error</div>
-}
-
 <!-- Add / Edit dialog -->
 <SfDialog @ref="_dialog" Width="480px" IsModal="true" ShowCloseIcon="true"
           Header="@(_editId is null ? "Add User" : "Edit User")"
@@ -110,7 +105,6 @@
     private List<UserRow>     _users    = new();
     private List<PlantOption>   _plants   = new();
     private List<StationOption> _stations = new();
-    private string? _error;
 
     private static readonly UserRoleType[] _allRoles =
         Enum.GetValues<UserRoleType>();
@@ -163,7 +157,7 @@
 
     private async Task OnRowDoubleClick(RecordDoubleClickEventArgs<UserRow> args)
     {
-        await OpenEditDialog(args.RowData.Id);
+        if (args.RowData is { } row) await OpenEditDialog(row.Id);
     }
 
     // ── Dialog helpers ────────────────────────────────────────────────────────

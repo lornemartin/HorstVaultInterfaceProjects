@@ -429,9 +429,9 @@
         <GridColumn HeaderText="" Width="40" TextAlign="TextAlign.Center" AllowSorting="false" AllowFiltering="false">
             <Template>
                 @{
-                    var row = context as FlatBatchPartRow;
+                    var row = (context as FlatBatchPartRow)!;
                 }
-                @if (IsSelectable(row!))
+                @if (IsSelectable(row))
                 {
                     <input type="checkbox" checked="@_selectedPartIds.Contains(row.PartLineItemId)"
                            @onchange="@(e => SetSelected(new[] { row.PartLineItemId }, (bool)e.Value!))"
@@ -1279,7 +1279,8 @@
             " col=" + args.ColumnName +
             " managingSort=" + _managingSort +
             " restoringExpansion=" + _restoringExpansion);
-        if (args.RequestType != Syncfusion.Blazor.Grids.Action.Sorting || _managingSort || args.ColumnName == "CategoryOrder")
+        if (args.RequestType != Syncfusion.Blazor.Grids.Action.Sorting || _managingSort
+            || args.ColumnName is null || args.ColumnName == "CategoryOrder")
             return;
         if (_restoringExpansion) { args.Cancel = true; return; }
 
@@ -1399,13 +1400,14 @@
     // ── Row styling ───────────────────────────────────────────────────────────
     private void OnRowDataBound(RowDataBoundEventArgs<FlatBatchPartRow> args)
     {
-        if (args.Data.BatchReleased)
+        if (args.Data is not { } row || args.Row is null) return;
+        if (row.BatchReleased)
             args.Row.AddClass(new[] { "row-released" });
-        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+        if (!string.IsNullOrWhiteSpace(row.Notes))
             args.Row.AddClass(new[] { "row-has-notes" });
-        if (!args.Data.IsStock)
+        if (!row.IsStock)
             args.Row.AddClass(new[] { "row-dimmed" });
-        if (args.Data.PartLineItemId == _activePartLineItemId)
+        if (row.PartLineItemId == _activePartLineItemId)
             args.Row.AddClass(new[] { "row-active-part" });
     }
 

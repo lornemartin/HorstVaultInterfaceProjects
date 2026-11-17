@@ -489,11 +489,12 @@ else
 
     private void OnRowDataBound(RowDataBoundEventArgs<BomExportLine> args)
     {
-        if (IsMissingPdf(args.Data))
+        if (args.Data is not { } line || args.Row is null) return;
+        if (IsMissingPdf(line))
             args.Row.AddClass(new[] { "row-no-pdf" });
-        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+        if (!string.IsNullOrWhiteSpace(line.Notes))
             args.Row.AddClass(new[] { "row-has-notes" });
-        if (args.Data.HasPdf)
+        if (line.HasPdf)
             args.Row.AddClass(new[] { "row-leaf-pdf" });
     }
 
@@ -514,7 +515,7 @@ else
 
     private async Task OnContextMenuClicked(ContextMenuClickEventArgs<BomExportLine> args)
     {
-        if (args.Item.Id == "view-pdf" && args.RowInfo?.RowData?.Number is string number)
+        if (args.Item?.Id == "view-pdf" && args.RowInfo?.RowData?.Number is string number)
             await JS.InvokeVoidAsync("window.open", $"/api/pdf/{Uri.EscapeDataString(number)}", "_blank");
     }
 

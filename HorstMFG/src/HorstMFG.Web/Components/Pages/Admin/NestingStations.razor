@@ -35,11 +35,6 @@
     </GridColumns>
 </SfGrid>
 
-@if (_error is not null)
-{
-    <div style="color:red; margin-top:0.5rem;">@_error</div>
-}
-
 <SfDialog @ref="_dialog" Width="420px" IsModal="true" ShowCloseIcon="true"
           Header="@(_editId is null ? "Add Station" : "Edit Station")"
           Visible="false">
@@ -90,7 +85,6 @@
 @code {
     private List<StationRow> _stations = new();
     private List<PlantOption> _plants = new();
-    private string? _error;
 
     private SfDialog? _dialog;
     private int? _editId;
@@ -142,7 +136,7 @@
 
     private async Task OnRowDoubleClick(RecordDoubleClickEventArgs<StationRow> args)
     {
-        var row = args.RowData;
+        if (args.RowData is not { } row) return;
         _editId = row.Id;
         _form = new StationForm
         {

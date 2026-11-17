@@ -471,8 +471,9 @@
     {
         try
         {
-            await LocalStorage.SetAsync("prod-batches-from", _fromDate);
-            await LocalStorage.SetAsync("prod-batches-to", _toDate);
+            // A cleared date is saved as null on purpose (no bound), so it isn't reset to the default.
+            await LocalStorage.SetAsync("prod-batches-from", _fromDate!);
+            await LocalStorage.SetAsync("prod-batches-to", _toDate!);
             await LocalStorage.SetAsync("prod-batches-hide-complete", _hideComplete);
         }
         catch { }
@@ -598,7 +599,7 @@
 
     private void OnRowSelected(RowSelectEventArgs<BatchItemRow> args)
     {
-        var row = args.Data;
+        if (args.Data is not { } row) return;
         if (_selectedForNesting.Any(x => x.ItemId == row.Id)) return;
         _selectedForNesting.Add(new NestingSelectionItem(
             ItemId:          row.Id,
@@ -620,19 +621,18 @@
 
     private void OnRowDeselected(RowDeselectEventArgs<BatchItemRow> args)
     {
-        _selectedForNesting.RemoveAll(x => x.ItemId == args.Data.Id);
+        if (args.Data is { } row) _selectedForNesting.RemoveAll(x => x.ItemId == row.Id);
     }
 
     private void OnRowDataBound(RowDataBoundEventArgs<BatchItemRow> args)
     {
-        if (args.Data.IsInRadanProject)
-            args.Row.AddClass(new[] { "row-in-project" });
+        if (args.Data?.IsInRadanProject == true)
+            args.Row?.AddClass(new[] { "row-in-project" });
     }
 
     private void OnQueryCellInfo(QueryCellInfoEventArgs<BatchItemRow> args)
     {
-        if (args.Column.Field != nameof(BatchItemRow.Remaining)) return;
-        var row = args.Data;
+        if (args.Column?.Field != nameof(BatchItemRow.Remaining) || args.Data is not { } row || args.Cell is null) return;
         if (row.QtyNested == 0) return;
         var css = row.QtyNested > row.QtyRequired ? "remaining-over"
                 : row.QtyNested == row.QtyRequired ? "remaining-complete"

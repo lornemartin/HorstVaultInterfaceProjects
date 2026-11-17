@@ -438,9 +438,9 @@
         <GridColumn HeaderText="" Width="40" TextAlign="TextAlign.Center" AllowSorting="false" AllowFiltering="false">
             <Template>
                 @{
-                    var row = context as FlatSchedulePartRow;
+                    var row = (context as FlatSchedulePartRow)!;
                 }
-                @if (IsSelectable(row!))
+                @if (IsSelectable(row))
                 {
                     <input type="checkbox" checked="@_selectedPartIds.Contains(row.PartLineItemId)"
                            @onchange="@(e => SetSelected(new[] { row.PartLineItemId }, (bool)e.Value!))"
@@ -1321,13 +1321,14 @@
     // ── Row styling ───────────────────────────────────────────────────────────
     private void OnRowDataBound(RowDataBoundEventArgs<FlatSchedulePartRow> args)
     {
-        if (args.Data.ScheduleReleased)
+        if (args.Data is not { } row || args.Row is null) return;
+        if (row.ScheduleReleased)
             args.Row.AddClass(new[] { "row-released" });
-        if (!string.IsNullOrWhiteSpace(args.Data.Notes))
+        if (!string.IsNullOrWhiteSpace(row.Notes))
             args.Row.AddClass(new[] { "row-has-notes" });
-        if (args.Data.IsStock)
+        if (row.IsStock)
             args.Row.AddClass(new[] { "row-dimmed" });
-        if (args.Data.PartLineItemId == _activePartLineItemId)
+        if (row.PartLineItemId == _activePartLineItemId)
             args.Row.AddClass(new[] { "row-active-part" });
     }
 
