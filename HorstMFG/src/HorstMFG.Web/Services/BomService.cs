@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HorstMFG.Core.DTOs;
 using HorstMFG.Core.Entities;
 using HorstMFG.Core.Enums;
@@ -16,7 +15,6 @@ public class BomService : IBomService
     private readonly BomPdfCopyService _pdfCopy;
     private readonly ILogger<BomService> _log;
     private readonly string _pdfSharePath;
-    private readonly string _powerJobsScriptPath;
 
     public BomService(IDbContextFactory<ApplicationDbContext> dbFactory,
                       BomPdfCopyService pdfCopy,
@@ -26,9 +24,7 @@ public class BomService : IBomService
         _dbFactory = dbFactory;
         _pdfCopy = pdfCopy;
         _log = log;
-        _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";
-        _powerJobsScriptPath = config["PowerJobs:ScriptPath"] ?? @"\\HWVMWK02\Jobs\Horst.PrintOnDemand.ps1";
-    }
+        _pdfSharePath = config["FileSystemPaths:PdfSharePath"] ?? @"S:\PDF Drawing Files\";    }
 
     public List<VaultBomLine> ParseExportFile(Stream fileStream) => BomLineBuilder.ParseExportFile(fileStream);
 
@@ -1665,46 +1661,6 @@ public class BomService : IBomService
     {
         var path = Path.Combine(_pdfSharePath, partNumber + ".pdf");
         return File.Exists(path);
-    }
-
-    public async Task<bool> GeneratePdfAsync(string partNumber)
-    {
-        _log.LogInformation("Triggering PowerJobs PDF generation for {PartNumber}", partNumber);
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = "powershell.exe",
-            Arguments = $"-ExecutionPolicy Bypass -File \"{_powerJobsScriptPath}\" -PartName \"{partNumber}\" -OutputFolder \"{_pdfSharePath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        try
-        {
-            using var process = Process.Start(psi);
-            if (process is null) return false;
-
-            var output = await process.StandardOutput.ReadToEndAsync();
-            var error = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode != 0)
-            {
-                _log.LogWarning("PowerJobs script failed for {PartNumber}. Exit code: {ExitCode}. Error: {Error}",
-                    partNumber, process.ExitCode, error);
-                return false;
-            }
-
-            _log.LogInformation("PowerJobs PDF generation completed for {PartNumber}", partNumber);
-            return PdfExistsOnShare(partNumber);
-        }
-        catch (Exception ex)
-        {
-            _log.LogError(ex, "Failed to run PowerJobs script for {PartNumber}", partNumber);
-            return false;
-        }
     }
 
     private static string GetLevel1Prefix(string level)

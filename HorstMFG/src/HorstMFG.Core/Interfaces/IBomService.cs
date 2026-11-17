@@ -283,12 +283,6 @@ public interface IBomService
     bool PdfExistsOnShare(string partNumber);
 
     /// <summary>
-    /// Trigger PowerJobs script to generate a PDF for the given part number.
-    /// Returns true if the script completed successfully.
-    /// </summary>
-    Task<bool> GeneratePdfAsync(string partNumber);
-
-    /// <summary>
     /// Re-checks the network share for a PartLineItem's PDF and, if now present, copies it
     /// into the batch/schedule's local folder and marks HasPdf = true for every PartLineItem
     /// sharing that part number within the same Batch or Schedule. Returns false if the PDF
