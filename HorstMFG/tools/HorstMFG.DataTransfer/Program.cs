@@ -198,6 +198,9 @@ async Task<Check?> CheckAsync(string plantArg)
     var problems = new List<string>(plan.Errors);
     var warnings = new List<string>();
 
+    // Text longer than its column would otherwise fail partway through `run`.
+    problems.AddRange(TooLongValues(db, plan));
+
     // A plant is loaded once. (Parts are shared by all plants, so they don't count.)
     var existing = new (string Table, int Count)[]
     {
@@ -427,6 +430,46 @@ static string? GetArg(string[] args, string flag)
 {
     var idx = Array.IndexOf(args, flag);
     return idx >= 0 && idx + 1 < args.Length ? args[idx + 1] : null;
+}
+
+/// <summary>Source text longer than the HorstMFG column it would be written to, one problem per
+/// column. Limits come from the EF model, so they follow the schema. Values are checked as
+/// WriteAsync writes them (trimmed names, order number or legacy ID).</summary>
+static IEnumerable<string> TooLongValues(ApplicationDbContext db, TransferPlan plan)
+{
+    var isBatch = plan.Orders.ToDictionary(o => o.Id, o => o.IsBatch);
+    var batchOrders = plan.Orders.Where(o => o.IsBatch).ToList();
+    var schedOrders = plan.Orders.Where(o => !o.IsBatch).ToList();
+    var batchItems  = plan.Items.Where(i => isBatch[i.Source.OrderId]).ToList();
+    var orderItems  = plan.Items.Where(i => !isBatch[i.Source.OrderId]).ToList();
+
+    var checks = new (Type Entity, string Property, IEnumerable<(string Row, string? Value)> Values)[]
+    {
+        (typeof(ScheduleOrder), nameof(ScheduleOrder.OrderNumber), schedOrders.Select(o => ($"order {o.Id}", (string?)LegacyTransform.OrderNumber(o)))),
+        (typeof(Schedule),      nameof(Schedule.Name),             schedOrders.Select(o => ($"order {o.Id}", o.ScheduleName?.Trim()))),
+        (typeof(Batch),         nameof(Batch.Name),                batchOrders.Select(o => ($"order {o.Id}", o.BatchName?.Trim()))),
+        (typeof(BatchItem),     nameof(BatchItem.Notes),           batchItems.Select(i => ($"order item {i.Source.Id}", i.Source.Notes))),
+        (typeof(OrderItem),     nameof(OrderItem.Notes),           orderItems.Select(i => ($"order item {i.Source.Id}", i.Source.Notes))),
+        (typeof(Part),          nameof(Part.FileName),             plan.Parts.Select(p => ($"part {p.Id}", p.FileName))),
+        (typeof(Part),          nameof(Part.Description),          plan.Parts.Select(p => ($"part {p.Id}", p.Description))),
+        (typeof(Part),          nameof(Part.Material),             plan.Parts.Select(p => ($"part {p.Id}", p.Material))),
+        (typeof(RadanProject),  nameof(RadanProject.ProjectDir),   plan.Projects.Select(p => ($"project folder of {p.Name}", (string?)p.Dir))),
+        (typeof(RadanProject),  nameof(RadanProject.ProjectName),  plan.Projects.Select(p => ($"project {p.Dir}", (string?)p.Name))),
+        (typeof(Nest),          nameof(Nest.NestName),             plan.Nests.Select(n => ($"nest {n.LegacyId}", (string?)n.Name))),
+    };
+
+    foreach (var (entity, property, values) in checks)
+    {
+        var type = db.Model.FindEntityType(entity);
+        if (type?.FindProperty(property)?.GetMaxLength() is not int limit) continue;
+        var tooLong = values.Where(v => v.Value != null && v.Value.Length > limit).ToList();
+        if (tooLong.Count == 0) continue;
+
+        yield return $"{type.GetTableName()}.{property} allows {limit} characters; {tooLong.Count:N0} value(s) are longer: " +
+                     string.Join(", ", tooLong.Take(5).Select(v => $"{v.Row} ({v.Value!.Length} chars: \"{v.Value[..Math.Min(30, v.Value.Length)]}...\")")) +
+                     (tooLong.Count > 5 ? $", and {tooLong.Count - 5:N0} more" : "") +
+                     ". Shorten them in RadanMaster and run again.";
+    }
 }
 
 static int RequirePlant() => Fail("Error: --plant <name> is required.");
