@@ -17,7 +17,8 @@ public static class BomLineBuilder
     /// Category="Product" PartLineItem so the schedule grid can render the order header.
     /// Plant ID and Is Stock come from the importing plant's own Vault properties (P2 … for
     /// Plant 2, the originals for Plant 1), with Is Stock adjusted by that plant's Stock
-    /// Exception list for this top-level product. A blank Plant ID defaults to the importing plant.
+    /// Exception list for this top-level product. A Plant 2 import whose P2 Is Stock is unset uses
+    /// Plant 1's Is Stock, still adjusted by Plant 2's exceptions. A blank Plant ID defaults to the importing plant.
     /// PlantId is left for <see cref="ResolvePlantIds"/>.
     /// </summary>
     public static List<PartLineItem> Build(IEnumerable<VaultBomLine> lines, Plant importingPlant, string? productName)
@@ -52,7 +53,7 @@ public static class BomLineBuilder
                 var thickness = BomFieldMappers.DeriveSheetThickness(l.Operations, l.Thickness, l.StructCode);
                 var plantIdRaw = isPlant2 ? l.P2PlantId : l.PlantId;
                 var isStock = BomFieldMappers.ResolveIsStock(
-                    isPlant2 ? l.P2IsStock : l.IsStock,
+                    isPlant2 ? l.P2IsStock ?? l.IsStock : l.IsStock,
                     isPlant2 ? l.P2StockException : l.P1StockException,
                     productName);
                 var item = new PartLineItem
@@ -146,7 +147,8 @@ public static class BomLineBuilder
                 Notes            = cols[18],
                 Revision         = Col(cols, 19),
                 P2PlantId        = Col(cols, 20),
-                P2IsStock        = Col(cols, 21).Equals("True", StringComparison.OrdinalIgnoreCase),
+                P2IsStock        = string.IsNullOrWhiteSpace(Col(cols, 21)) ? null
+                                   : Col(cols, 21).Trim().Equals("True", StringComparison.OrdinalIgnoreCase),
                 P1StockException = Col(cols, 22),
                 P2StockException = Col(cols, 23),
                 SecondOperation  = Col(cols, 24),

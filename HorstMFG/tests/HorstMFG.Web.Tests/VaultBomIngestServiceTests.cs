@@ -63,6 +63,46 @@ public class VaultBomIngestServiceTests : IDisposable
         Assert.False(part.IsStock);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Plant2Import_UnsetP2IsStock_UsesPlant1IsStock(bool plant1IsStock)
+    {
+        var part = await IngestSinglePartAsync(BomType.MakeToStock, Plant2Id, l =>
+        {
+            l.IsStock = plant1IsStock;
+            l.P2IsStock = null;
+        });
+
+        Assert.Equal(plant1IsStock, part.IsStock);
+    }
+
+    [Fact]
+    public async Task Plant2Import_UnsetP2IsStock_StillAppliesP2Exceptions()
+    {
+        var part = await IngestSinglePartAsync(BomType.MakeToOrder, Plant2Id, l =>
+        {
+            l.IsStock = true;
+            l.P2IsStock = null;
+            l.P1StockException = "OTHER";
+            l.P2StockException = ProductName;
+        });
+
+        Assert.False(part.IsStock);
+    }
+
+    [Fact]
+    public async Task Plant1Import_IgnoresP2IsStock()
+    {
+        var part = await IngestSinglePartAsync(BomType.MakeToStock, Plant1Id, l =>
+        {
+            l.IsStock = false;
+            l.P2IsStock = true;
+        });
+
+        Assert.False(part.IsStock);
+    }
+
     [Fact]
     public async Task Plant2Import_CrossPlantP2PlantId_IsKept()
     {

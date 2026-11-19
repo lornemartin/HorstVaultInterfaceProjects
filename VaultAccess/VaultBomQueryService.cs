@@ -30,7 +30,8 @@ namespace VaultAccess
         public string Notes { get; set; } = "";
         public string Revision { get; set; } = "";
         public string P2PlantId { get; set; } = "";
-        public bool P2IsStock { get; set; }
+        /// <summary>Null when Plant 2's Is Stock is left unset in Vault, so the import can fall back to Plant 1's.</summary>
+        public bool? P2IsStock { get; set; }
         public string P1StockException { get; set; } = "";
         public string P2StockException { get; set; } = "";
         public string SecondOperation { get; set; } = "";
@@ -228,6 +229,10 @@ namespace VaultAccess
         // Thickness, Material, Operations, Qty, StructCode, PlantId, IsStock, RequiresPdf,
         // Comment, ModDate, State, StockName, Keywords, Notes, Revision, P2PlantId, P2IsStock,
         // P1StockException, P2StockException, SecondOperation, FinishOps.
+        // Blank (property never set) is null; anything else reads as before: "True" or not.
+        private static bool? ParseOptionalBool(string value) =>
+            string.IsNullOrWhiteSpace(value) ? (bool?)null : value.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
+
         private static List<VaultBomItem> ParseTsv(byte[] tsvBytes, Dictionary<string, string> fileNameByItemNum)
         {
             var result = new List<VaultBomItem>();
@@ -273,7 +278,7 @@ namespace VaultAccess
                         Notes           = cols[18],
                         Revision        = cols.Length > 19 ? cols[19] : "",
                         P2PlantId        = cols.Length > 20 ? cols[20] : "",
-                        P2IsStock        = cols.Length > 21 && cols[21].Equals("True", StringComparison.OrdinalIgnoreCase),
+                        P2IsStock        = ParseOptionalBool(cols.Length > 21 ? cols[21] : ""),
                         P1StockException = cols.Length > 22 ? cols[22] : "",
                         P2StockException = cols.Length > 23 ? cols[23] : "",
                         SecondOperation  = cols.Length > 24 ? cols[24] : "",

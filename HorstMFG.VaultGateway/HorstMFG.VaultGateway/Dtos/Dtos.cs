@@ -60,7 +60,7 @@ public class VaultBomLine
     public string Notes { get; set; } = "";
     public string Revision { get; set; } = "";
     public string P2PlantId { get; set; } = "";
-    public bool P2IsStock { get; set; }
+    public bool? P2IsStock { get; set; }   // null: unset in Vault, falls back to Is Stock
     public string P1StockException { get; set; } = "";
     public string P2StockException { get; set; } = "";
     public string SecondOperation { get; set; } = "";
