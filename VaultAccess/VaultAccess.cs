@@ -66,7 +66,7 @@ namespace VaultAccess
                         //System.IO.File.SetAttributes(file, FileAttributes.Normal);  // not sure if this is proper, but can't access file otherwise to delete it...
                         //System.IO.File.Delete(file);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // if file can't be deleted, it will just stay in temp folder...
                     }
@@ -138,7 +138,7 @@ namespace VaultAccess
                 else
                     return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -216,7 +216,7 @@ namespace VaultAccess
                 else
                     return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -385,7 +385,7 @@ namespace VaultAccess
                 m_conn.FileManager.AcquireFiles(settings);
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -441,7 +441,7 @@ namespace VaultAccess
                 m_conn.FileManager.AcquireFiles(settings);
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -495,7 +495,7 @@ namespace VaultAccess
                 m_conn.FileManager.AcquireFiles(settings);
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -1351,7 +1351,7 @@ namespace VaultAccess
 
                             await GetComponents(prog, fileName, oSubComponentOccurences, ref inventorPropDictList);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             // create undefined component
                             inventorPropDict.Clear();
@@ -1372,7 +1372,7 @@ namespace VaultAccess
                         }
                     }
 
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // create undefined component
                         // not fully tested yet....
@@ -1586,7 +1586,7 @@ namespace VaultAccess
                     return null;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
@@ -1728,7 +1728,6 @@ namespace VaultAccess
 
 
                 string TargetFolder = System.IO.Path.GetTempPath();
-                string VaultSearchEntity = "Name";
 
                 // make sure folder exists for downloading idw into.
                 logMessage += "Checking Target Directory...";
@@ -1764,7 +1763,7 @@ namespace VaultAccess
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 errMessage += "Unknown Error in function PrintPDF\r\n";
                 return false;
@@ -1790,7 +1789,7 @@ namespace VaultAccess
                         {
                             if (dv.ReferencedFile.DisplayName != sh._DisplayName)
                             {
-                                int i = 0;//return true;       // found out of date idw...
+                                // return true;       // found out of date idw...
                             }
                         }
                     }
@@ -2128,7 +2127,7 @@ namespace VaultAccess
                     productList = exportFileList;
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     logMessage = "Unknown Error in Importing Batch.  \nPossible Formatting Error in Batch File.";
                     return logMessage;
@@ -2194,7 +2193,7 @@ namespace VaultAccess
                     itemSvc.UpdateAndCommitItems(itemsToCommit);
                 }
             }
-            catch (Exception originalException)
+            catch (Exception)
             {
                 try
                 {
