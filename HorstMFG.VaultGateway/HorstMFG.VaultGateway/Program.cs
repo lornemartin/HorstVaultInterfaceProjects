@@ -52,7 +52,18 @@ try
     if (!isConsole)
         builder.UseWindowsService();
 
-    await builder.Build().RunAsync();
+    var host = builder.Build();
+
+    // Secrets are blank in appsettings.json; on the server they live in appsettings.Production.json,
+    // which deploys never overwrite. Say so up front rather than failing later with a 401 or a login error.
+    var config = host.Services.GetRequiredService<IConfiguration>();
+    foreach (var key in new[] { "Gateway:CallbackApiKey", "Vault:Username", "Vault:Password" })
+    {
+        if (string.IsNullOrWhiteSpace(config[key]))
+            Log.Error("{Key} is not set — on the server it belongs in appsettings.Production.json", key);
+    }
+
+    await host.RunAsync();
 }
 catch (Exception ex)
 {

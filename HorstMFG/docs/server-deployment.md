@@ -399,13 +399,32 @@ Start-ScheduledTask -TaskName "HorstMFGVaultGateway"
 > password is incorrect" error even when the password is actually correct. Single quotes are
 > fully literal. Do not commit the actual password to git — this file should only ever show a placeholder.
 
-To redeploy after a code change: stop the task, copy the new build output over (but do **not**
-overwrite `appsettings.json`, which holds the server's real `ListenUrl`/`CallbackApiKey`/`Vault`
-values), then restart the task:
+The server's real settings live in `C:\Services\VaultGateway\appsettings.Production.json`, which
+is not in git and is never part of the build output. It is loaded on top of `appsettings.json`
+(the scheduled task runs with no environment set, which .NET treats as Production). The repo's
+`appsettings.json` leaves the secrets blank, so copying the whole build output over is safe:
+
+```json
+{
+  "Gateway": {
+    "CallbackApiKey": "<must match Gateway:CallbackApiKey in HorstMFG.Web's server config>"
+  },
+  "Vault": {
+    "Username": "<Vault account>",
+    "Password": "<Vault password>"
+  }
+}
+```
+
+Only the values that differ from `appsettings.json` need to be in it; add `Gateway:ListenUrl` or
+`Vault:Server`/`Vault:Vault` there too if the server's differ. If any of the three secrets is
+missing, the gateway logs `... is not set` at startup.
+
+To redeploy after a code change: stop the task, copy the new build output over, then restart the task:
 
 ```powershell
 Stop-ScheduledTask -TaskName "HorstMFGVaultGateway"
-# copy new build output here, excluding appsettings.json
+# copy new build output here (appsettings.Production.json is left alone)
 Start-ScheduledTask -TaskName "HorstMFGVaultGateway"
 ```
 
